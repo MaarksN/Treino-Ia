@@ -288,3 +288,72 @@ export interface WorkoutHistoryRecord {
   durationMinutes: number;
   exercises: Exercise[];
 }
+
+export interface WorkoutHistoryEntry {
+  id: string;
+  planId: string;
+  planName: string;
+  date: string;
+  dayFocus: string;
+  exerciseCount: number;
+  completedCount: number;
+  totalVolume: number;
+  durationMinutes?: number;
+  readinessScore?: number;
+  prsBroken?: string[];
+}
+
+export interface WeeklyStats {
+  weekLabel: string;
+  sessions: number;
+  totalVolume: number;
+  avgReadiness: number;
+  adherence: number;
+}
+
+export interface MuscleGroupVolume {
+  group: string;
+  volume: number;
+  sessions: number;
+}
+
+export interface StreakData {
+  currentStreak: number;
+  longestStreak: number;
+  lastWorkoutDate: string | null;
+  totalWorkouts: number;
+  workoutDates: string[];
+}
+
+export interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  emoji: string;
+  unlockedAt?: number;
+  unlocked: boolean;
+  category: 'consistency' | 'volume' | 'pr' | 'nutrition' | 'recovery' | 'special';
+}
+
+export interface Challenge {
+  id: string;
+  name: string;
+  description: string;
+  emoji: string;
+  type: 'weekly' | 'monthly' | 'custom';
+  target: number;
+  current: number;
+  unit: string;
+  startDate: string;
+  endDate: string;
+  completed: boolean;
+  reward?: string;
+}
+
+export interface ReminderConfig {
+  enabled: boolean;
+  days: number[];
+  time: string;
+  message: string;
+  reactivationDays: number;
+}
