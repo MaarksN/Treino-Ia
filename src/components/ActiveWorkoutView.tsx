@@ -17,7 +17,18 @@ export function ActiveWorkoutView({ day, workoutHistory, onComplete, onCancel }:
   const [restTimeLeft, setRestTimeLeft] = useState(0);
   const [activeExercises, setActiveExercises] = useState<Exercise[]>(JSON.parse(JSON.stringify(day.exercises)));
 
+  const [isFinished, setIsFinished] = useState(false);
+  
   const currentExercise = activeExercises[currentExerciseIndex];
+
+  useEffect(() => {
+    if ('speechSynthesis' in window && currentExercise && !isResting && !isFinished) {
+      window.speechSynthesis.cancel();
+      const msg = new SpeechSynthesisUtterance(`Agora: ${currentExercise.name}. ${currentExercise.sets} séries de ${currentExercise.reps}.`);
+      msg.lang = 'pt-BR';
+      window.speechSynthesis.speak(msg);
+    }
+  }, [currentExerciseIndex, isResting, isFinished]);
 
   // Attempt to map previous status
   let prevWeight = '-';
@@ -60,7 +71,13 @@ export function ActiveWorkoutView({ day, workoutHistory, onComplete, onCancel }:
       setRestTimeLeft(restSec);
       setIsResting(true);
     } else {
-      onComplete({ ...day, exercises: newExs });
+      setIsFinished(true);
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const msg = new SpeechSynthesisUtterance(`Treino Concluído. Você é uma máquina. Recomendo alongamento e proteína agora.`);
+        msg.lang = 'pt-BR';
+        window.speechSynthesis.speak(msg);
+      }
     }
   };
 
@@ -100,7 +117,34 @@ export function ActiveWorkoutView({ day, workoutHistory, onComplete, onCancel }:
 
       <div className="flex-1 flex flex-col items-center justify-center p-6 relative">
         <AnimatePresence mode="wait">
-          {!isResting ? (
+          {isFinished ? (
+            <motion.div 
+              key="finished"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="w-full max-w-2xl text-center"
+            >
+              <h2 className="font-display font-black text-6xl uppercase tracking-tighter text-brand-neon mb-6 text-shadow-neon">
+                TREINO ESMAGADO.
+              </h2>
+              <div className="bg-white/5 border border-white/10 p-8 rounded-3xl mb-8">
+                <h3 className="text-xl font-bold uppercase tracking-widest text-brand-magenta mb-4 flex items-center justify-center">
+                  <Flame className="w-6 h-6 mr-2" /> Protocolo de Recuperação I.A.
+                </h3>
+                <ul className="text-left space-y-4 font-mono text-sm opacity-80">
+                  <li className="flex items-start"><CheckCircle className="w-5 h-5 mr-3 text-brand-neon shrink-0 mt-0.5" /> <strong>Janela Anabólica:</strong> Consuma de 25g a 40g de proteína de rápida absorção em até 60 minutos. Atrasar isso limitará os ganhos de {day.focus}.</li>
+                  <li className="flex items-start"><CheckCircle className="w-5 h-5 mr-3 text-brand-neon shrink-0 mt-0.5" /> <strong>Hidratação Celular:</strong> Você perdeu água e minerais. Beba ao menos 700ml de água nas próximas 2 horas. Considere adicionar uma pitada de sal marinho.</li>
+                  <li className="flex items-start"><CheckCircle className="w-5 h-5 mr-3 text-brand-neon shrink-0 mt-0.5" /> <strong>SNC (Sistema Nervoso Central):</strong> Seu corpo está em modo lutar-ou-fugir. Faça 5 minutos de respiração box-breathing (inspire 4s, segure 4s, expire 4s, segure 4s) agora. Sério. Pare tudo e respire.</li>
+                </ul>
+              </div>
+              <button 
+                onClick={() => onComplete({ ...day, exercises: activeExercises })}
+                className="w-full bg-brand-neon text-black font-black font-display uppercase tracking-widest text-2xl py-6 rounded-3xl shadow-[0_0_30px_rgba(0,240,255,0.3)] hover:scale-105 transition-transform flex items-center justify-center"
+              >
+                SALVAR E COLETAR XP <CheckCircle className="w-8 h-8 ml-3" />
+              </button>
+            </motion.div>
+          ) : !isResting ? (
             <motion.div 
               key={`ex-${currentExercise.id}`}
               initial={{ opacity: 0, x: 50 }}

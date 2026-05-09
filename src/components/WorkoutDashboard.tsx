@@ -5,6 +5,8 @@ import { ExerciseCard } from './ExerciseCard';
 import { CheckInModule } from './CheckInModule';
 import { NutritionModule } from './NutritionModule';
 import { ActiveWorkoutView } from './ActiveWorkoutView';
+import { WeeklyReportModule } from './WeeklyReportModule';
+import { ProgressPhotosModule } from './ProgressPhotosModule';
 
 interface Props {
   plan: WorkoutPlan;
@@ -173,13 +175,20 @@ export function WorkoutDashboard({ plan, history, workoutHistory, onUpdatePlan, 
           <h1 className="font-display text-5xl md:text-7xl tracking-tighter uppercase text-brand-light mb-2 text-shadow-neon">
             {plan.planName}
           </h1>
-          <div className="flex items-center text-brand-neon font-medium">
-            <Target className="w-5 h-5 mr-3" />
-            <p className="max-w-2xl text-sm md:text-base leading-relaxed text-brand-light/90">
-              {plan.goalDescription}
-            </p>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center text-brand-neon font-medium">
+              <Target className="w-5 h-5 mr-3" />
+              <p className="max-w-2xl text-sm md:text-base leading-relaxed text-brand-light/90">
+                {plan.goalDescription}
+              </p>
+            </div>
           </div>
-          {userProfile && <NutritionModule profile={userProfile} />}
+          {userProfile && (
+            <div className="flex flex-col gap-4 mt-8">
+              <NutritionModule profile={userProfile} />
+              <ProgressPhotosModule profile={userProfile} />
+            </div>
+          )}
         </div>
         
         <div className="flex flex-col md:flex-row gap-3 mt-6 md:mt-0 relative print:hidden">
@@ -242,24 +251,12 @@ export function WorkoutDashboard({ plan, history, workoutHistory, onUpdatePlan, 
       </div>
 
       {allDaysCompleted && (
-        <div className="mb-12 bg-brand-neon/10 border-2 border-brand-neon p-6 md:p-8 rounded-3xl shadow-brutal-neon flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative">
-           <div className="absolute top-0 right-0 w-64 h-64 bg-brand-neon/10 blur-3xl rounded-full pointer-events-none"></div>
-           <div>
-             <h2 className="font-display font-black text-3xl md:text-4xl uppercase tracking-tighter text-brand-light text-shadow-neon mb-2">Semana Concluída!</h2>
-             <p className="font-mono text-brand-light/80 text-sm max-w-xl">
-               Sua inteligência artificial coletou os dados de carga, repetições e percepção de esforço desta semana. 
-               Podemos gerar o próximo microciclo aplicando sobrecarga progressiva, ou uma semana de deload se os dados indicarem fadiga nervosa.
-             </p>
-           </div>
-           <div className="flex flex-col gap-3 shrink-0 relative z-10 w-full md:w-auto">
-             <button onClick={() => onNew()} className="px-6 py-3 bg-brand-neon text-brand-dark font-black font-display uppercase tracking-widest text-xl shadow-lg border-2 border-brand-neon hover:bg-white hover:border-white transition-colors">
-               Gerar Próxima Semana
-             </button>
-             <button onClick={() => onNew()} className="px-6 py-3 bg-transparent text-brand-neon font-black font-display uppercase tracking-widest text-lg border-2 border-brand-neon hover:bg-brand-neon/20 transition-colors">
-               Forçar Deload
-             </button>
-           </div>
-        </div>
+        <WeeklyReportModule 
+          plan={plan}
+          workoutHistory={workoutHistory}
+          onGenerateNextWeek={() => onNew()}
+          onDeload={() => onNew()}
+        />
       )}
 
       {/* Days grid */}
