@@ -94,6 +94,105 @@ export interface RecoveryCheckin {
   timestamp: number;
 }
 
+export interface DailyCheckin {
+  id: string;
+  date: string;
+  sleepHours: number;
+  sleepQuality: number;
+  stressLevel: number;
+  sorenessMap: Record<string, number>;
+  energyLevel: number;
+  hydrationGlasses: number;
+  sleepGoalHours: number;
+  notes?: string;
+  timestamp: number;
+}
+
+export interface ReadinessScore {
+  score: number;
+  label: 'Excelente' | 'Boa' | 'Moderada' | 'Baixa' | 'Ruim';
+  color: string;
+  recommendation: 'Treino completo' | 'Treino moderado' | 'Treino leve' | 'Recuperação ativa' | 'Descanso';
+  adjustedIntensity: number;
+}
+
+export interface InjuryRecord {
+  id: string;
+  region: string;
+  description: string;
+  severity: 'leve' | 'moderada' | 'grave';
+  startDate: string;
+  resolved?: boolean;
+  resolvedDate?: string;
+  notes?: string;
+}
+
+export interface SymptomRecord {
+  id: string;
+  date: string;
+  region: string;
+  symptom: string;
+  intensity: number;
+}
+
+export interface MacroTargets {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
+export interface MealEntry {
+  id: string;
+  date: string;
+  mealType: 'Café da manhã' | 'Almoço' | 'Jantar' | 'Lanche' | 'Pré-treino' | 'Pós-treino';
+  description: string;
+  estimatedCalories?: number;
+  estimatedProtein?: number;
+  estimatedCarbs?: number;
+  estimatedFat?: number;
+  photoBase64?: string;
+  aiAnalysis?: string;
+}
+
+export interface FavoriteFood {
+  id: string;
+  name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
+export interface SupplementEntry {
+  id: string;
+  name: string;
+  dose: string;
+  timing: string;
+}
+
+export interface BodyMetric {
+  id: string;
+  date: string;
+  weight?: number;
+  bodyFatPercent?: number;
+  chest?: number;
+  waist?: number;
+  hip?: number;
+  arm?: number;
+  thigh?: number;
+  photoBase64?: string;
+  aiAnalysis?: string;
+}
+
+export interface NutritionWeekSummary {
+  avgCalories: number;
+  avgProtein: number;
+  adherencePercent: number;
+  bestDay: string;
+  worstDay: string;
+}
+
 export interface ExerciseLog {
   exerciseId?: string;
   exerciseName: string;

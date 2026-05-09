@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  DailyCheckin,
   Exercise,
   RecoveryCheckin,
   UserProfile,
@@ -46,6 +47,7 @@ import { getTrackedExerciseNames } from '../services/analyticsService';
 import { detectPlateau, parseFirstNumber, shouldSuggestDeload } from '../utils/workoutMetrics';
 import { getJSON, STORAGE_KEYS, updateWorkoutStreak, WorkoutStreak } from '../utils/storage';
 import { extractAndSavePRsFromPlan, getPRForExercise } from '../utils/prUtils';
+import { calculateReadiness as calculateDailyReadiness, getOvertrainingRisk } from '../utils/readinessUtils';
 
 interface Props {
   plan: WorkoutPlan;
@@ -64,6 +66,8 @@ interface Props {
   onStartActiveWorkout?: () => void;
   voiceEnabled?: boolean;
   onVoiceEnabledChange?: (enabled: boolean) => void;
+  dailyCheckin?: DailyCheckin | null;
+  allDailyCheckins?: DailyCheckin[];
   userProfile?: UserProfile;
 }
 
@@ -107,6 +111,8 @@ export function WorkoutDashboard({
   onStartActiveWorkout,
   voiceEnabled: controlledVoiceEnabled,
   onVoiceEnabledChange,
+  dailyCheckin,
+  allDailyCheckins = [],
   userProfile,
 }: Props) {
   const [showHistory, setShowHistory] = useState(false);
@@ -155,6 +161,8 @@ export function WorkoutDashboard({
   }, [exerciseOptions, selectedExerciseName]);
 
   const recoveryScore = useMemo(() => getRecoveryScore(dailyReadiness), [dailyReadiness]);
+  const dailyReadinessScore = useMemo(() => dailyCheckin ? calculateDailyReadiness(dailyCheckin) : null, [dailyCheckin]);
+  const overtrainingRisk = useMemo(() => getOvertrainingRisk(allDailyCheckins), [allDailyCheckins]);
   const chartExerciseName = selectedExerciseName || exerciseOptions[0] || '';
   const plateauStatus = chartExerciseName ? detectPlateau(history, chartExerciseName, workoutHistory) : null;
   const deloadSuggested = shouldSuggestDeload(plan);
@@ -646,6 +654,11 @@ export function WorkoutDashboard({
             {plateauStatus && (
               <div className={`border-l-2 pl-3 ${plateauStatus.plateau ? 'border-brand-magenta text-brand-magenta' : 'border-brand-neon text-brand-light/80'}`}>
                 {chartExerciseName}: {plateauStatus.reason}
+              </div>
+            )}
+            {dailyReadinessScore && (
+              <div className="border-l-2 pl-3 border-brand-neon text-brand-light/80">
+                Prontidão diária: {dailyReadinessScore.label} ({dailyReadinessScore.score}/100) - risco {overtrainingRisk}
               </div>
             )}
           </div>
