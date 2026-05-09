@@ -37,12 +37,18 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+    localStorage.setItem('@TreinoApp:theme', darkMode ? 'dark' : 'light');
   }, [darkMode]);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('@TreinoApp:user');
     const savedPlans = localStorage.getItem('@TreinoApp:plans');
     const savedHistory = localStorage.getItem('@TreinoApp:history');
+    const savedTheme = localStorage.getItem('@TreinoApp:theme');
+
+    if (savedTheme) {
+      setDarkMode(savedTheme === 'dark');
+    }
 
     if (savedHistory) {
       setWorkoutHistory(JSON.parse(savedHistory));
