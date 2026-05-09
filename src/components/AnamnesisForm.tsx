@@ -8,19 +8,32 @@ interface Props {
 }
 
 export function AnamnesisForm({ onSubmit, isLoading }: Props) {
-  const [profile, setProfile] = useState<UserProfile>({
-    age: 25,
-    gender: 'Masculino',
-    weight: 70,
-    height: 175,
-    experienceLevel: 'Iniciante',
-    goal: 'Hipertrofia (Ganho de Massa)',
-    daysPerWeek: 3,
-    injuries: '',
-    timePerWorkout: 60,
-    workoutLocation: 'Academia',
-    secondaryFocus: '',
+  const [profile, setProfile] = useState<UserProfile>(() => {
+    const saved = localStorage.getItem('@TreinoApp:draftProfile');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return {
+      age: 25,
+      gender: 'Masculino',
+      weight: 70,
+      height: 175,
+      experienceLevel: 'Iniciante',
+      goal: 'Hipertrofia (Ganho de Massa)',
+      daysPerWeek: 3,
+      injuries: '',
+      timePerWorkout: 60,
+      workoutLocation: 'Academia',
+      secondaryFocus: '',
+      preferredTime: '07:00'
+    };
   });
+
+  React.useEffect(() => {
+    localStorage.setItem('@TreinoApp:draftProfile', JSON.stringify(profile));
+  }, [profile]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -29,6 +42,7 @@ export function AnamnesisForm({ onSubmit, isLoading }: Props) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    localStorage.removeItem('@TreinoApp:draftProfile');
     onSubmit(profile);
   };
 
@@ -204,6 +218,19 @@ export function AnamnesisForm({ onSubmit, isLoading }: Props) {
                 </select>
               </div>
               <div>
+                <label className="block text-xs font-bold text-brand-muted uppercase tracking-widest mb-2">Horário Preferido</label>
+                <input 
+                  type="time" 
+                  name="preferredTime" 
+                  value={profile.preferredTime || '07:00'} 
+                  onChange={handleChange} 
+                  className="w-full bg-brand-dark border-2 border-brand-light/20 px-4 py-4 text-brand-light font-mono focus:outline-none focus:border-brand-neon transition-colors"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-brand-muted uppercase tracking-widest mb-2">Foco Secundário (Opcional)</label>
                 <input 
                   type="text" 

@@ -72,7 +72,17 @@ export default function App() {
   const handleRegister = (newUser: User) => {
     localStorage.setItem('@TreinoApp:user', JSON.stringify(newUser));
     setUser(newUser);
-    setView('home');
+    
+    // Attempt to request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+
+    if (newUser.profile && plans.length > 0) {
+      setView('dashboard');
+    } else {
+      setView('home');
+    }
   };
 
   const saveNewPlan = (generatedPlan: WorkoutPlan) => {
@@ -89,6 +99,21 @@ export default function App() {
     try {
       const generatedPlan = await generateWorkoutPlan(profile, plans);
       saveNewPlan(generatedPlan);
+      
+      if (user) {
+         const updatedUser = { ...user, profile };
+         setUser(updatedUser);
+         localStorage.setItem('@TreinoApp:user', JSON.stringify(updatedUser));
+         
+         if ('Notification' in window && Notification.permission === 'default') {
+           Notification.requestPermission().catch(() => {});
+         } else if ('Notification' in window && Notification.permission === 'granted' && profile.preferredTime) {
+           new Notification('Treino IA Gerado', {
+             body: `Lembrete diário configurado para as ${profile.preferredTime}.`,
+             icon: '/vite.svg'
+           });
+         }
+      }
     } catch (err: any) {
       setError(err.message || 'Erro inesperado. Tente novamente.');
     } finally {
@@ -268,6 +293,7 @@ export default function App() {
           plan={plans.find(p => p.id === currentPlanId)!} 
           history={plans}
           workoutHistory={workoutHistory}
+          userProfile={user?.profile}
           onUpdatePlan={handleUpdatePlan}
           onSelectHistory={(id) => setCurrentPlanId(id)}
           onNew={() => setView('home')} 

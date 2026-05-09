@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Exercise, WorkoutPlan, UserProfile } from '../types';
-import { Dumbbell, Flame, Clock, CheckCircle, Edit2, Save, X, ThumbsUp, ThumbsDown, AlertTriangle, TrendingUp, Smile, Play, Pause, RotateCcw, Zap, ChevronDown, ChevronUp } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { Exercise, WorkoutPlan, UserProfile, WorkoutHistoryRecord } from '../types';
+import { Dumbbell, Flame, Clock, CheckCircle, Edit2, Save, X, ThumbsUp, ThumbsDown, AlertTriangle, TrendingUp, Smile, Play, Pause, RotateCcw, Zap, ChevronDown, ChevronUp, Video, ChevronRight } from 'lucide-react';
+import { motion, AnimatePresence, useAnimation } from 'motion/react';
 import { LineChart, Line, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 import { suggestExerciseVariations } from '../services/geminiService';
 
@@ -191,18 +191,42 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
   return (
     <motion.div 
       layout
+      drag="x"
+      dragConstraints={{ left: 0, right: 0 }}
+      onDragEnd={(e, info) => {
+        if (info.offset.x > 100) {
+          toggleComplete();
+        }
+      }}
       initial={false}
       animate={{ 
         borderColor: exercise.completed ? '#ccff00' : 'rgba(255,255,255,0.2)',
         backgroundColor: exercise.completed ? 'rgba(204,255,0,0.02)' : 'var(--color-brand-dark)',
       }}
       transition={{ duration: 0.3 }}
-      className={`p-5 flex flex-col justify-between group border-2 ${exercise.completed ? 'shadow-brutal-neon border-brand-neon' : 'shadow-brutal-light border-brand-light/20'}`}
+      className={`p-5 flex flex-col justify-between group border-2 ${exercise.completed ? 'shadow-brutal-neon border-brand-neon' : 'shadow-brutal-light border-brand-light/20'} relative overflow-hidden`}
     >
+      {/* Swipe indicator visual hint */}
+      {!exercise.completed && (
+        <div className="absolute top-1/2 left-2 -translate-y-1/2 opacity-0 group-hover:opacity-10 transition-opacity pointer-events-none flex flex-col items-center">
+          <ChevronRight className="w-12 h-12 text-brand-neon -mb-6 animate-pulse" />
+          <ChevronRight className="w-12 h-12 text-brand-neon animate-pulse delay-75" />
+        </div>
+      )}
+
       <div className="mb-4">
         <div className="flex items-start justify-between mb-1">
-          <h3 className="font-display font-black text-2xl uppercase tracking-tight max-w-[75%] leading-tight text-brand-light">{exercise.name}</h3>
-          <div className="flex items-center space-x-2">
+          <div className="max-w-[70%]">
+            <h3 className="font-display font-black text-2xl uppercase tracking-tight leading-tight text-brand-light relative z-10">{exercise.name}</h3>
+            <a 
+              href={`https://www.youtube.com/results?search_query=${encodeURIComponent(exercise.name + ' form execution')}`}
+              target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center text-[10px] uppercase font-bold text-brand-muted hover:text-[#FF0000] transition-colors mt-1"
+            >
+              <Video className="w-3 h-3 mr-1" /> Ver Execução
+            </a>
+          </div>
+          <div className="flex items-center space-x-2 relative z-10">
             <button onClick={() => setIsEditing(true)} className="p-1.5 text-brand-muted hover:text-brand-magenta transition-colors" title="Editar Exercício">
               <Edit2 className="w-5 h-5" />
             </button>

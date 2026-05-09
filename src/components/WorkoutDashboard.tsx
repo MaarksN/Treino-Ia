@@ -3,6 +3,7 @@ import { WorkoutPlan, Exercise, WorkoutDay, WorkoutFeedback, WorkoutHistoryRecor
 import { Target, RotateCcw, PlusCircle, Calendar, History, ChevronDown, Download, Printer, FileJson, FileText, CheckCircle2, TrendingUp } from 'lucide-react';
 import { ExerciseCard } from './ExerciseCard';
 import { CheckInModule } from './CheckInModule';
+import { NutritionModule } from './NutritionModule';
 
 interface Props {
   plan: WorkoutPlan;
@@ -12,9 +13,10 @@ interface Props {
   onSelectHistory: (id: string) => void;
   onNew: () => void;
   onCompleteDay: (record: WorkoutHistoryRecord) => void;
+  userProfile?: any;
 }
 
-export function WorkoutDashboard({ plan, history, workoutHistory, onUpdatePlan, onSelectHistory, onNew, onCompleteDay }: Props) {
+export function WorkoutDashboard({ plan, history, workoutHistory, onUpdatePlan, onSelectHistory, onNew, onCompleteDay, userProfile }: Props) {
   const [showHistory, setShowHistory] = useState(false);
   const [showExport, setShowExport] = useState(false);
 
@@ -127,6 +129,7 @@ export function WorkoutDashboard({ plan, history, workoutHistory, onUpdatePlan, 
               {plan.goalDescription}
             </p>
           </div>
+          {userProfile && <NutritionModule profile={userProfile} />}
         </div>
         
         <div className="flex flex-col md:flex-row gap-3 mt-6 md:mt-0 relative print:hidden">

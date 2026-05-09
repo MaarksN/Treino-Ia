@@ -27,6 +27,7 @@ export interface UserProfile {
   timePerWorkout: number;
   workoutLocation: string;
   secondaryFocus?: string;
+  preferredTime?: string;
 }
 
 export type ExerciseFeedback = 'easy' | 'hard' | 'painful' | 'good' | null;
