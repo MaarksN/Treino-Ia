@@ -11,9 +11,20 @@ import { RecoveryProtocol } from './components/RecoveryProtocol';
 import { InjuryTracker } from './components/InjuryTracker';
 import { NutritionPanel } from './components/NutritionPanel';
 import { BodyCompositionTracker } from './components/BodyCompositionTracker';
+import { AnalyticsDashboard } from './components/AnalyticsDashboard';
+import { ConsistencyHeatmap } from './components/ConsistencyHeatmap';
+import { StreakTracker } from './components/StreakTracker';
+import { BadgeSystem } from './components/BadgeSystem';
+import { ChallengeCenter } from './components/ChallengeCenter';
+import { HabitReminder } from './components/HabitReminder';
+import { ReactivationEngine } from './components/ReactivationEngine';
 import { generateWorkoutPlan, extractWorkoutFromFile } from './services/geminiService';
-import { DailyCheckin as DailyCheckinType, RecoveryCheckin, User, UserProfile, WorkoutHistoryRecord, WorkoutPlan, WorkoutSession } from './types';
-import { getTodayCheckin, loadCheckins } from './utils/readinessUtils';
+import { Badge, DailyCheckin as DailyCheckinType, RecoveryCheckin, StreakData, User, UserProfile, WorkoutHistoryEntry, WorkoutHistoryRecord, WorkoutPlan, WorkoutSession } from './types';
+import { calculateReadiness, getTodayCheckin, loadCheckins } from './utils/readinessUtils';
+import { loadHistory, recordWorkoutSession, getTotalVolumeLifted } from './utils/analyticsUtils';
+import { loadStreak, recordWorkoutForStreak } from './utils/streakUtils';
+import { evaluateAndUnlockBadges } from './utils/badgeUtils';
+import { syncChallengeProgress } from './utils/challengeUtils';
 import { Activity, Dumbbell, Globe2, Moon, Sun } from 'lucide-react';
 
 type ViewState = 'loading' | 'registration' | 'home' | 'anamnesis' | 'import' | 'dashboard' | 'active-workout' | 'global_feed';
@@ -33,6 +44,10 @@ export default function App() {
   const [plans, setPlans] = useState<WorkoutPlan[]>([]);
   const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
   const [workoutHistory, setWorkoutHistory] = useState<WorkoutHistoryRecord[]>([]);
+  const [analyticsHistory, setAnalyticsHistory] = useState<WorkoutHistoryEntry[]>(() => loadHistory());
+  const [streakData, setStreakData] = useState<StreakData>(() => loadStreak());
+  const [newBadges, setNewBadges] = useState<Badge[]>([]);
+  const [challengeVersion, setChallengeVersion] = useState(0);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [recoveryCheckin, setRecoveryCheckin] = useState<RecoveryCheckin | null>(null);
@@ -196,15 +211,64 @@ export default function App() {
     localStorage.setItem('@TreinoApp:recovery', JSON.stringify(checkin));
   };
 
+  const getStoredArrayCount = (key: string) => {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(key) || '[]');
+      return Array.isArray(parsed) ? parsed.length : 0;
+    } catch {
+      return 0;
+    }
+  };
+
+  const refreshEngagement = (
+    nextStreak = streakData,
+    nextHistory = analyticsHistory,
+    nextCheckins = allCheckins
+  ) => {
+    syncChallengeProgress(
+      nextHistory.length,
+      getTotalVolumeLifted(nextHistory),
+      nextCheckins.length
+    );
+    setChallengeVersion(value => value + 1);
+
+    const newly = evaluateAndUnlockBadges(
+      nextStreak,
+      nextHistory,
+      nextCheckins.length,
+      getStoredArrayCount('@TreinoApp:prs'),
+      getStoredArrayCount('@TreinoApp:meals')
+    );
+    if (newly.length) setNewBadges(newly);
+  };
+
   const handleSaveCheckin = (checkin: DailyCheckinType) => {
+    const updatedCheckins = loadCheckins();
     setTodayCheckin(checkin);
-    setAllCheckins(loadCheckins());
+    setAllCheckins(updatedCheckins);
+    refreshEngagement(streakData, analyticsHistory, updatedCheckins);
   };
 
   const handleCompleteDay = (record: WorkoutHistoryRecord) => {
     const newHistory = [...workoutHistory, record];
     setWorkoutHistory(newHistory);
     localStorage.setItem('@TreinoApp:history', JSON.stringify(newHistory));
+
+    const completedPlan = plans.find(plan => plan.id === record.planId);
+    const completedDayIndex = completedPlan?.days.findIndex(day => day.id === record.dayId) ?? -1;
+    if (completedPlan && completedDayIndex >= 0) {
+      recordWorkoutSession(
+        completedPlan,
+        completedDayIndex,
+        record.durationMinutes,
+        todayCheckin ? calculateReadiness(todayCheckin).score : undefined
+      );
+      const nextAnalyticsHistory = loadHistory();
+      const nextStreak = recordWorkoutForStreak();
+      setAnalyticsHistory(nextAnalyticsHistory);
+      setStreakData(nextStreak);
+      refreshEngagement(nextStreak, nextAnalyticsHistory, allCheckins);
+    }
     
     if (user) {
       const g = user.gamification || { xp: 0, level: 1, currentStreak: 0, longestStreak: 0, lastWorkoutDate: null, badges: [] };
@@ -374,6 +438,29 @@ export default function App() {
           dailyCheckin={todayCheckin}
           allDailyCheckins={allCheckins}
         />
+      )}
+
+      {view === 'dashboard' && currentPlan && (
+        <div className="max-w-5xl mx-auto mt-8 space-y-6 print:hidden">
+          <ReactivationEngine
+            streak={streakData}
+            userName={user?.name}
+            goal={activeProfile?.goal}
+          />
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <StreakTracker streak={streakData} />
+            <HabitReminder />
+          </div>
+
+          <AnalyticsDashboard history={analyticsHistory} plans={plans} />
+          <ConsistencyHeatmap history={analyticsHistory} checkins={allCheckins} />
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <BadgeSystem newlyUnlocked={newBadges} onDismiss={() => setNewBadges([])} />
+            <ChallengeCenter key={challengeVersion} />
+          </div>
+        </div>
       )}
 
       {view === 'dashboard' && currentPlan && activeProfile && (
