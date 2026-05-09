@@ -8,11 +8,13 @@ import { suggestExerciseVariations } from '../services/geminiService';
 interface Props {
   exercise: Exercise;
   history?: WorkoutPlan[];
+  workoutHistory?: WorkoutHistoryRecord[];
   userProfile?: UserProfile;
+  previousStat?: { date: number, weight?: number, reps?: string };
   onUpdate: (updated: Exercise) => void;
 }
 
-export const ExerciseCard: React.FC<Props> = ({ exercise, history, userProfile, onUpdate }) => {
+export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistory, userProfile, previousStat, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState(exercise);
   
@@ -31,7 +33,11 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, userProfile, 
       interval = setInterval(() => {
         setTime(prev => {
           if (timerMode === 'rest' && prev <= 1) {
-            setTimerMode('work');
+            setTimerMode('idle');
+            try {
+              if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+              new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(()=>{});
+            } catch(e) {}
             return 0;
           }
           return timerMode === 'rest' ? prev - 1 : prev + 1;
@@ -81,6 +87,11 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, userProfile, 
 
   const toggleComplete = () => {
     onUpdate({ ...exercise, completed: !exercise.completed });
+    if (!exercise.completed) {
+      setTimerMode('rest');
+      const restSeconds = parseInt(exercise.rest) || 60;
+      setTime(restSeconds);
+    }
   };
 
   const updateFeedback = (feedback: Exercise['feedback']) => {
@@ -121,23 +132,21 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, userProfile, 
   };
 
   const chartData = useMemo(() => {
-    if (!history) return [];
+    if (!workoutHistory) return [];
     const data: any[] = [];
-    const chronologicalHistory = [...history].reverse();
+    const chronologicalHistory = [...workoutHistory].sort((a, b) => a.date - b.date);
     
-    chronologicalHistory.forEach(plan => {
-      plan.days.forEach(day => {
-        const pastExc = day.exercises.find(e => e.name.toLowerCase() === exercise.name.toLowerCase() && e.actualWeight);
-        if (pastExc) {
-          data.push({
-            date: new Date(plan.createdAt || Date.now()).toLocaleDateString([], { month: 'short', day: 'numeric' }),
-            weight: pastExc.actualWeight,
-          });
-        }
-      });
+    chronologicalHistory.forEach(record => {
+      const pastExc = record.exercises.find(e => e.name.toLowerCase() === exercise.name.toLowerCase() && e.actualWeight);
+      if (pastExc) {
+        data.push({
+          date: new Date(record.date).toLocaleDateString([], { month: 'short', day: 'numeric' }),
+          weight: pastExc.actualWeight,
+        });
+      }
     });
     return data;
-  }, [history, exercise.name]);
+  }, [workoutHistory, exercise.name]);
 
   if (isEditing) {
     return (
@@ -285,8 +294,22 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, userProfile, 
             <span>Progresso Real</span>
             <TrendingUp className="w-3 h-3 text-brand-neon" />
           </div>
+
+          {previousStat && (
+            <div className="mb-4 p-2 bg-brand-neon/10 border-l-2 border-brand-neon flex items-center justify-between">
+              <div>
+                <p className="text-[10px] text-brand-muted uppercase font-bold">Última Vez ({new Date(previousStat.date).toLocaleDateString()})</p>
+                <p className="text-sm font-mono font-bold text-brand-light">
+                  {previousStat.weight ? `${previousStat.weight}kg` : '-'} / {previousStat.reps || '-'} reps
+                </p>
+              </div>
+              <div className="text-xs text-brand-neon font-display font-black uppercase tracking-widest text-right">
+                Bater a meta!
+              </div>
+            </div>
+          )}
           
-          {chartData.length > 1 && (
+          {chartData.length > 0 && (
             <div className="mb-4 h-24 w-full relative group">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>

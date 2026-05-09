@@ -1,18 +1,20 @@
-import React, { useState } from 'react';
-import { WorkoutPlan, Exercise, WorkoutDay, WorkoutFeedback } from '../types';
-import { Target, RotateCcw, PlusCircle, Calendar, History, ChevronDown, Download, Printer, FileJson, FileText, CheckCircle2 } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { WorkoutPlan, Exercise, WorkoutDay, WorkoutFeedback, WorkoutHistoryRecord } from '../types';
+import { Target, RotateCcw, PlusCircle, Calendar, History, ChevronDown, Download, Printer, FileJson, FileText, CheckCircle2, TrendingUp } from 'lucide-react';
 import { ExerciseCard } from './ExerciseCard';
 import { CheckInModule } from './CheckInModule';
 
 interface Props {
   plan: WorkoutPlan;
   history: WorkoutPlan[];
+  workoutHistory: WorkoutHistoryRecord[];
   onUpdatePlan: (updatedPlan: WorkoutPlan) => void;
   onSelectHistory: (id: string) => void;
   onNew: () => void;
+  onCompleteDay: (record: WorkoutHistoryRecord) => void;
 }
 
-export function WorkoutDashboard({ plan, history, onUpdatePlan, onSelectHistory, onNew }: Props) {
+export function WorkoutDashboard({ plan, history, workoutHistory, onUpdatePlan, onSelectHistory, onNew, onCompleteDay }: Props) {
   const [showHistory, setShowHistory] = useState(false);
   const [showExport, setShowExport] = useState(false);
 
@@ -26,6 +28,54 @@ export function WorkoutDashboard({ plan, history, onUpdatePlan, onSelectHistory,
     const newDays = [...plan.days];
     newDays[dayIndex].workoutFeedback = feedback;
     onUpdatePlan({ ...plan, days: newDays });
+  };
+
+  const handleFinishWorkout = (dayIndex: number) => {
+    const day = plan.days[dayIndex];
+    let volumeLoad = 0;
+    day.exercises.forEach(exc => {
+      const weight = exc.actualWeight || 0;
+      let reps = 0;
+      if (exc.actualReps) {
+         reps = parseInt(exc.actualReps.replace(/[^0-9]/g, ''), 10) || 0;
+      } else {
+         reps = parseInt(exc.reps.replace(/[^0-9]/g, ''), 10) || 0;
+      }
+      volumeLoad += (weight * reps * exc.sets);
+    });
+
+    const record: WorkoutHistoryRecord = {
+      id: Math.random().toString(36).substring(7),
+      date: Date.now(),
+      planId: plan.id,
+      dayId: day.id,
+      dayName: day.dayName,
+      focus: day.focus,
+      volumeLoad,
+      durationMinutes: 45, // roughly
+      exercises: JSON.parse(JSON.stringify(day.exercises))
+    };
+    onCompleteDay(record);
+
+    // Reset day for next week
+    const newDays = [...plan.days];
+    newDays[dayIndex] = {
+      ...newDays[dayIndex],
+      workoutFeedback: undefined,
+      exercises: newDays[dayIndex].exercises.map(e => ({
+        ...e,
+        completed: false,
+        actualWeight: undefined,
+        actualReps: undefined,
+        feedback: undefined,
+        performanceNotes: undefined
+      }))
+    };
+    onUpdatePlan({ ...plan, days: newDays });
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    alert('TREINO CONCLUÍDO! XP ADICIONADO! 💪💀');
   };
 
   const isDayCompleted = (day: WorkoutDay) => day.exercises.length > 0 && day.exercises.every(e => e.completed);
@@ -167,14 +217,27 @@ export function WorkoutDashboard({ plan, history, onUpdatePlan, onSelectHistory,
 
               {/* Exercises Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {day.exercises.map((exc, excIndex) => (
+                {day.exercises.map((exc, excIndex) => {
+                  let previousStat = null;
+                  for (let i = workoutHistory.length - 1; i >= 0; i--) {
+                    const prevRec = workoutHistory[i];
+                    const prevExc = prevRec.exercises.find(e => e.name === exc.name);
+                    if (prevExc && (prevExc.actualWeight || prevExc.actualReps)) {
+                      previousStat = { date: prevRec.date, weight: prevExc.actualWeight, reps: prevExc.actualReps };
+                      break;
+                    }
+                  }
+
+                  return (
                   <ExerciseCard 
                     key={exc.id || excIndex} 
                     exercise={exc} 
                     history={history}
+                    workoutHistory={workoutHistory}
+                    previousStat={previousStat}
                     onUpdate={(updated) => handleUpdateExercise(dayIndex, excIndex, updated)} 
                   />
-                ))}
+                )})}
               </div>
               
               {/* Workout Feedback (Appears when day is complete) */}
@@ -223,6 +286,15 @@ export function WorkoutDashboard({ plan, history, onUpdatePlan, onSelectHistory,
                       onChange={(e) => handleUpdateDayFeedback(dayIndex, { ...day.workoutFeedback, comments: e.target.value } as WorkoutFeedback)}
                       className="w-full bg-brand-gray border-2 border-brand-light/20 p-3 text-brand-light font-mono outline-none focus:border-brand-magenta resize-none"
                     />
+                  </div>
+                  
+                  <div className="mt-8 flex justify-end">
+                    <button 
+                      onClick={() => handleFinishWorkout(dayIndex)}
+                      className="px-8 py-4 bg-brand-neon text-brand-dark font-black font-display uppercase tracking-widest text-xl shadow-lg border-2 border-brand-neon hover:bg-brand-neon-hover hover:scale-105 transition-transform"
+                    >
+                      FINALIZAR & SALVAR TREINO
+                    </button>
                   </div>
                 </div>
               )}

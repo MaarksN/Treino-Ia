@@ -1,8 +1,18 @@
+export interface GamificationData {
+  xp: number;
+  level: number;
+  currentStreak: number;
+  longestStreak: number;
+  lastWorkoutDate: number | null;
+  badges: string[];
+}
+
 export interface User {
   name: string;
   email: string;
   avatarUrl?: string;
   notificationsEnabled?: boolean;
+  gamification?: GamificationData;
 }
 
 export interface UserProfile {
@@ -60,4 +70,16 @@ export interface WorkoutPlan {
   planName: string;
   goalDescription: string;
   days: WorkoutDay[];
+}
+
+export interface WorkoutHistoryRecord {
+  id: string;
+  date: number;
+  planId: string;
+  dayId: string;
+  dayName: string;
+  focus: string;
+  volumeLoad: number; // total kg lifted
+  durationMinutes: number;
+  exercises: Exercise[];
 }

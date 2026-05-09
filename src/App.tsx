@@ -16,17 +16,21 @@ import { GlobalFeed } from './components/GlobalFeed';
 import { MusicPlayer } from './components/MusicPlayer';
 import { CheckInModule } from './components/CheckInModule';
 import { FuturisticHUD } from './components/FuturisticHUD';
+import { AICoachChat } from './components/AICoachChat';
+import { BotMessageSquare } from 'lucide-react';
 
 export default function App() {
   const [view, setView] = useState<ViewState>('loading');
   const [user, setUser] = useState<User | null>(null);
   const [plans, setPlans] = useState<WorkoutPlan[]>([]);
   const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
+  const [workoutHistory, setWorkoutHistory] = useState<WorkoutHistoryRecord[]>([]);
   const [darkMode, setDarkMode] = useState(true);
   const [language, setLanguage] = useState<'PT' | 'EN'>('PT');
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showCoachChat, setShowCoachChat] = useState(false);
 
   // For tab navigation when a user is logged in
   const [activeTab, setActiveTab] = useState<'my_workouts' | 'global_feed'>('my_workouts');
@@ -38,6 +42,11 @@ export default function App() {
   useEffect(() => {
     const savedUser = localStorage.getItem('@TreinoApp:user');
     const savedPlans = localStorage.getItem('@TreinoApp:plans');
+    const savedHistory = localStorage.getItem('@TreinoApp:history');
+
+    if (savedHistory) {
+      setWorkoutHistory(JSON.parse(savedHistory));
+    }
 
     if (savedUser) {
       setUser(JSON.parse(savedUser));
@@ -104,6 +113,39 @@ export default function App() {
     const newPlans = plans.map(p => p.id === updatedPlan.id ? updatedPlan : p);
     setPlans(newPlans);
     localStorage.setItem('@TreinoApp:plans', JSON.stringify(newPlans));
+  };
+
+  const handleCompleteDay = (record: WorkoutHistoryRecord) => {
+    const newHistory = [...workoutHistory, record];
+    setWorkoutHistory(newHistory);
+    localStorage.setItem('@TreinoApp:history', JSON.stringify(newHistory));
+    
+    if (user) {
+      const g = user.gamification || { xp: 0, level: 1, currentStreak: 0, longestStreak: 0, lastWorkoutDate: null, badges: [] };
+      const newXp = g.xp + 150 + record.exercises.length * 10;
+      const today = new Date().setHours(0,0,0,0);
+      let newStreak = g.currentStreak;
+      
+      if (g.lastWorkoutDate) {
+         const diff = today - new Date(g.lastWorkoutDate).setHours(0,0,0,0);
+         if (diff === 86400000) newStreak += 1; // 1 day
+         else if (diff > 86400000) newStreak = 1; // Reset
+      } else {
+         newStreak = 1;
+      }
+      const updatedUser = { 
+        ...user, 
+        gamification: {
+          ...g,
+          xp: newXp,
+          level: Math.floor(newXp / 1000) + 1,
+          currentStreak: newStreak,
+          longestStreak: Math.max(g.longestStreak, newStreak),
+          lastWorkoutDate: Date.now()
+        } 
+      };
+      handleRegister(updatedUser);
+    }
   };
 
   if (view === 'loading') {
@@ -174,7 +216,7 @@ export default function App() {
 
       {user && view !== 'registration' && view !== 'loading' && (
         <div className="max-w-5xl mx-auto">
-          <FuturisticHUD />
+          <FuturisticHUD user={user} />
         </div>
       )}
 
@@ -225,9 +267,11 @@ export default function App() {
         <WorkoutDashboard 
           plan={plans.find(p => p.id === currentPlanId)!} 
           history={plans}
+          workoutHistory={workoutHistory}
           onUpdatePlan={handleUpdatePlan}
           onSelectHistory={(id) => setCurrentPlanId(id)}
           onNew={() => setView('home')} 
+          onCompleteDay={handleCompleteDay}
         />
       )}
 
@@ -237,6 +281,22 @@ export default function App() {
 
       <MusicPlayer />
       <AssistantPopup />
+      
+      {user && view === 'dashboard' && (
+        <>
+           {!showCoachChat && (
+             <button 
+               onClick={() => setShowCoachChat(true)}
+               className="fixed bottom-6 left-6 bg-brand-neon text-brand-dark p-4 rounded-full shadow-brutal-neon border-brutal hover:scale-110 transition-transform z-40 flex items-center group"
+             >
+               <BotMessageSquare className="w-6 h-6" />
+             </button>
+           )}
+           {showCoachChat && (
+             <AICoachChat user={user} onClose={() => setShowCoachChat(false)} />
+           )}
+        </>
+      )}
     </div>
   );
 }
