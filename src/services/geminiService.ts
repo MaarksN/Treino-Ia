@@ -40,6 +40,18 @@ export const workoutPlanSchema: Schema = {
             type: Type.STRING,
             description: "Foco principal do dia (ex: Peito e Tríceps, Membros Inferiores, etc)",
           },
+          warmup: {
+            type: Type.STRING,
+            description: "Rotina de aquecimento recomendada para este dia",
+          },
+          cooldown: {
+            type: Type.STRING,
+            description: "Rotina de cooldown e mobilidade após o treino",
+          },
+          estimatedDuration: {
+            type: Type.STRING,
+            description: "Duração estimada da sessão (ex: 55-70 min)",
+          },
           exercises: {
             type: Type.ARRAY,
             description: "Lista de exercícios do dia",
@@ -62,6 +74,23 @@ export const workoutPlanSchema: Schema = {
                   type: Type.STRING,
                   description: "Tempo de descanso (ex: 60s, 90s)",
                 },
+                muscleGroup: {
+                  type: Type.STRING,
+                  description: "Grupo muscular principal trabalhado",
+                },
+                movementPattern: {
+                  type: Type.STRING,
+                  description: "Padrão de movimento principal",
+                },
+                tags: {
+                  type: Type.ARRAY,
+                  items: { type: Type.STRING },
+                  description: "Tags úteis para busca, equipamento e grupo muscular",
+                },
+                videoUrl: {
+                  type: Type.STRING,
+                  description: "URL opcional de vídeo de execução",
+                },
                 executionDetails: {
                   type: Type.STRING,
                   description: "Explicação detalhada de como realizar o exercício passo a passo.",
@@ -83,7 +112,7 @@ export const workoutPlanSchema: Schema = {
             },
           },
         },
-        required: ["dayName", "focus", "exercises"],
+        required: ["dayName", "focus", "warmup", "cooldown", "estimatedDuration", "exercises"],
       },
     },
   },
@@ -177,7 +206,7 @@ O usuário enviou uma foto de progressão. Analise a imagem em relação ao biot
 4. Mantenha o formato Markdown, usando emojis e tom hardcore.
 IMPORTANTE: Não dê conselhos médicos, fale estritamente como um bodybuilder avaliando um atleta.`;
 
-  const response = await ai.models.generateContent({
+  const response = await getAI().models.generateContent({
     model: "gemini-2.5-pro",
     contents: [
       {
@@ -202,7 +231,7 @@ Baseado no usuário (Peso: ${profile.weight}kg, Objetivo: ${profile.goal}):
 
 Formate em Markdown curto e grosso.`;
 
-  const response = await ai.models.generateContent({
+  const response = await getAI().models.generateContent({
     model: "gemini-2.5-pro",
     contents: [
       {
@@ -218,7 +247,7 @@ Formate em Markdown curto e grosso.`;
   return response.text || "Não foi possível analisar a refeição.";
 }
 
-export async function generateWeeklyReport(workoutHistory: WorkoutHistoryRecord[]): Promise<string> {
+export async function generateWorkoutHistoryReport(workoutHistory: WorkoutHistoryRecord[]): Promise<string> {
   const prompt = `ATENÇÃO: Você é a I.A. Treinadora Supremo.
 Aqui estão os registros de treino das últimas sessões do usuário. Analise os dados e gere um relatório brutal de avaliação de final de microciclo:
 1. Resumo do volume.
@@ -231,7 +260,7 @@ Use emojis, formato Markdown (com listas e bolds) e seja super motivacional por�
 Dados do histórico recente (apenas para contexto, não imprima o JSON na resposta):
 ${JSON.stringify(workoutHistory.map(r => ({ date: new Date(r.date).toISOString(), focus: r.focus, load: r.volumeLoad })).slice(0, 10))}`;
 
-  const response = await ai.models.generateContent({
+  const response = await getAI().models.generateContent({
     model: "gemini-2.5-pro",
     contents: prompt,
   });
@@ -440,4 +469,48 @@ Responda apenas com JSON array de strings.
   } catch {
     return [];
   }
+}
+
+export async function generateQuickWorkout(
+  type: string,
+  goal?: string,
+  equipment?: string
+): Promise<WorkoutPlan> {
+  const constraints: Record<string, string> = {
+    express: "Treino completo em 15-20 minutos. Máximo 5 exercícios, descanso curto e foco em eficiência.",
+    bodyweight: "Apenas exercícios com peso corporal. Sem equipamentos.",
+    equipment: `Apenas exercícios que possam ser feitos com: ${equipment || 'equipamentos básicos'}.`,
+    goal: `Foco total no objetivo: ${goal || 'geral'}.`,
+  };
+
+  const prompt = `
+Crie um treino rápido e eficiente em português do Brasil.
+Restrição principal: ${constraints[type] || 'Treino geral equilibrado.'}
+
+Inclua aquecimento, cooldown, duração estimada, grupos musculares, padrões de movimento e tags por exercício.
+Responda estritamente em JSON no schema de WorkoutPlan.
+`;
+
+  const response = await getAI().models.generateContent({
+    model: "gemini-2.5-pro",
+    contents: prompt,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: workoutPlanSchema,
+    },
+  });
+
+  const parsed = JSON.parse(response.text || '{}') as WorkoutPlan;
+  parsed.id = crypto.randomUUID();
+  parsed.createdAt = Date.now();
+  parsed.days = (parsed.days || []).map(day => ({
+    ...day,
+    id: crypto.randomUUID(),
+    exercises: (day.exercises || []).map(ex => ({
+      ...ex,
+      id: crypto.randomUUID(),
+    })),
+  }));
+
+  return parsed;
 }

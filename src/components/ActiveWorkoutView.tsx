@@ -1,14 +1,30 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { WorkoutDay, Exercise, WorkoutHistoryRecord } from '../types';
-import { X, ChevronRight, Camera } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight, CheckCircle2, Video, X } from 'lucide-react';
+import { Exercise, WorkoutDay, WorkoutHistoryRecord, WorkoutPlan } from '../types';
+import { RestTimer } from './RestTimer';
+import { SetTracker } from './SetTracker';
 
-interface Props {
+type DayModeProps = {
   day: WorkoutDay;
-  workoutHistory: WorkoutHistoryRecord[];
+  workoutHistory?: WorkoutHistoryRecord[];
   onComplete: (completedDay: WorkoutDay) => void;
   onCancel: () => void;
-}
+  voiceEnabled?: boolean;
+};
+
+type PlanModeProps = {
+  plan: WorkoutPlan;
+  onClose: () => void;
+  onUpdatePlan: (plan: WorkoutPlan) => void;
+  voiceEnabled?: boolean;
+};
+
+type Props = DayModeProps | PlanModeProps;
+
+const parseRest = (rest: string) => {
+  const match = rest.match(/\d+/);
+  return match ? Number(match[0]) : 90;
+};
 
 function speakText(text: string) {
   if (!('speechSynthesis' in window)) return;
@@ -20,254 +36,238 @@ function speakText(text: string) {
   window.speechSynthesis.speak(utterance);
 }
 
-export function ActiveWorkoutView({ day, workoutHistory, onComplete, onCancel }: Props) {
-  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
-  const [isResting, setIsResting] = useState(false);
-  const [showCamera, setShowCamera] = useState(false);
-  const [restTimeLeft, setRestTimeLeft] = useState(0);
-  const [activeExercises, setActiveExercises] = useState<Exercise[]>(JSON.parse(JSON.stringify(day.exercises)));
-  const spokenExerciseRef = useRef<string | null>(null);
+function cloneDay(day: WorkoutDay): WorkoutDay {
+  return JSON.parse(JSON.stringify(day));
+}
 
-  const currentExercise = activeExercises[currentExerciseIndex];
-
-  useEffect(() => {
-    if (!currentExercise || isResting) return;
-
-    const spokenKey = `${currentExercise.id}-${currentExerciseIndex}`;
-    if (spokenExerciseRef.current === spokenKey) return;
-
-    spokenExerciseRef.current = spokenKey;
-    speakText(`Próximo exercício: ${currentExercise.name}. ${currentExercise.sets} séries de ${currentExercise.reps}. Descanso de ${currentExercise.rest}.`);
-  }, [currentExercise, currentExerciseIndex, isResting]);
-
-  // Attempt to map previous status
-  let prevWeight = '-';
-  let prevReps = '-';
-  const prevRecs = [...workoutHistory].sort((a, b) => b.date - a.date);
-  for (const pr of prevRecs) {
-    const pExc = pr.exercises.find(e => e.name === currentExercise?.name);
-    if (pExc && (pExc.actualWeight || pExc.actualReps)) {
-      if (pExc.actualWeight) prevWeight = pExc.actualWeight.toString();
-      if (pExc.actualReps) prevReps = pExc.actualReps.toString();
-      break;
-    }
-  }
+export function ActiveWorkoutView(props: Props) {
+  const isPlanMode = 'plan' in props;
+  const initialDay = isPlanMode ? null : props.day;
+  const [localDay, setLocalDay] = useState<WorkoutDay | null>(() => initialDay ? cloneDay(initialDay) : null);
+  const [index, setIndex] = useState(0);
+  const [restKey, setRestKey] = useState<number | undefined>(undefined);
+  const [restSecs, setRestSecs] = useState(90);
+  const spokenRef = useRef<string | null>(null);
 
   useEffect(() => {
-    let interval: any;
-    if (isResting && restTimeLeft > 0) {
-      interval = setInterval(() => {
-        setRestTimeLeft(v => v - 1);
-      }, 1000);
-    } else if (isResting && restTimeLeft === 0) {
-      setIsResting(false);
-      try {
-        if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
-        new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(()=>{});
-      } catch (e) {}
+    if (!initialDay) return;
+    setLocalDay(cloneDay(initialDay));
+    setIndex(0);
+  }, [initialDay?.id]);
+
+  const days = isPlanMode ? props.plan.days : localDay ? [localDay] : [];
+  const entries = useMemo(() =>
+    days.flatMap((day, dIdx) =>
+      day.exercises.map((ex, eIdx) => ({ ex, dIdx, eIdx, day }))
+    ),
+  [days]);
+
+  const current = entries[index];
+  const total = entries.length;
+  const progress = total ? ((index + 1) / total) * 100 : 0;
+  const voiceEnabled = props.voiceEnabled;
+  const workoutHistory = isPlanMode ? [] : props.workoutHistory || [];
+
+  const previousData = useMemo(() => {
+    if (!current) return null;
+
+    for (let i = workoutHistory.length - 1; i >= 0; i--) {
+      const found = workoutHistory[i].exercises.find(ex =>
+        ex.name.toLowerCase() === current.ex.name.toLowerCase() &&
+        (ex.actualWeight || ex.actualReps || ex.rpe || ex.setLogs?.length)
+      );
+      if (found) return found;
     }
-    return () => clearInterval(interval);
-  }, [isResting, restTimeLeft]);
 
-  const handleNextExercise = () => {
-    const newExs = [...activeExercises];
-    newExs[currentExerciseIndex].completed = true;
-    setActiveExercises(newExs);
+    return null;
+  }, [current, workoutHistory]);
 
-    if (currentExerciseIndex < activeExercises.length - 1) {
-      setCurrentExerciseIndex(v => v + 1);
-      const nextEx = newExs[currentExerciseIndex + 1];
-      const restSec = parseInt(currentExercise.rest.replace(/[^0-9]/g, '')) || 60;
-      setRestTimeLeft(restSec);
-      setIsResting(true);
+  useEffect(() => {
+    if (!current || !voiceEnabled) return;
+
+    const spokenKey = `${current.ex.id}-${index}`;
+    if (spokenRef.current === spokenKey) return;
+    spokenRef.current = spokenKey;
+
+    speakText(`${current.ex.name}. ${current.ex.sets} series de ${current.ex.reps}. Descanso de ${current.ex.rest}.`);
+  }, [current, index, voiceEnabled]);
+
+  const close = () => {
+    if (isPlanMode) {
+      props.onClose();
     } else {
-      onComplete({ ...day, exercises: newExs });
+      props.onCancel();
     }
   };
 
-  const handleSkipRest = () => {
-    setIsResting(false);
-    setRestTimeLeft(0);
-  };
+  const persistExercise = (updated: Exercise) => {
+    if (!current) return null;
 
-  const updateCurrentData = (field: 'actualWeight' | 'actualReps' | 'rpe', value: string) => {
-    const newExs = [...activeExercises];
-    if (field === 'actualWeight') {
-       newExs[currentExerciseIndex].actualWeight = Number(value);
-    } else if (field === 'rpe') {
-       newExs[currentExerciseIndex].rpe = Number(value) || undefined;
-    } else {
-       newExs[currentExerciseIndex].actualReps = value;
+    if (isPlanMode) {
+      const nextPlan: WorkoutPlan = {
+        ...props.plan,
+        days: props.plan.days.map((day, dIdx) =>
+          dIdx === current.dIdx
+            ? {
+                ...day,
+                exercises: day.exercises.map((ex, eIdx) => eIdx === current.eIdx ? updated : ex),
+              }
+            : day
+        ),
+      };
+      props.onUpdatePlan(nextPlan);
+      return nextPlan.days[current.dIdx];
     }
-    setActiveExercises(newExs);
+
+    if (!localDay) return null;
+
+    const nextDay = {
+      ...localDay,
+      exercises: localDay.exercises.map((ex, eIdx) => eIdx === current.eIdx ? updated : ex),
+    };
+    setLocalDay(nextDay);
+    return nextDay;
   };
 
-  if (!currentExercise) return null;
+  const completeAndNext = () => {
+    if (!current) return;
+
+    const updated = { ...current.ex, completed: true };
+    const updatedDay = persistExercise(updated);
+    setRestSecs(parseRest(current.ex.rest));
+    setRestKey(Date.now());
+
+    if (index < total - 1) {
+      setIndex(value => value + 1);
+      return;
+    }
+
+    if (!isPlanMode && updatedDay) {
+      props.onComplete(updatedDay);
+    }
+  };
+
+  if (!current) return null;
 
   return (
-    <div className="fixed inset-0 bg-black z-50 flex flex-col font-sans text-white overflow-y-auto">
-      <div className="flex items-center justify-between p-6 border-b border-white/10 shrink-0">
-        <div className="flex items-center">
-           <button onClick={onCancel} className="p-2 hover:bg-white/10 rounded-full transition-colors mr-2">
-             <X className="w-6 h-6" />
-           </button>
-           <div>
-             <h2 className="text-sm text-brand-neon uppercase tracking-widest font-bold">TREINO ATIVO</h2>
-             <p className="font-display text-2xl uppercase tracking-tighter">{day.dayName}: {day.focus}</p>
-           </div>
+    <div className="fixed inset-0 z-50 bg-brand-dark text-brand-light flex flex-col overflow-y-auto">
+      <div className="flex items-center justify-between p-5 border-b border-white/10">
+        <button onClick={close} className="p-2 rounded-xl bg-white/10 text-white hover:bg-white/15 transition-colors" title="Fechar">
+          <X size={20} />
+        </button>
+
+        <div className="text-center min-w-0">
+          <p className="text-xs text-brand-muted uppercase tracking-widest truncate">
+            {isPlanMode ? props.plan.planName : current.day.dayName}
+          </p>
+          <p className="text-sm font-bold text-white">{index + 1} / {total}</p>
         </div>
-        <div className="font-mono text-sm opacity-50">
-           {currentExerciseIndex + 1} / {activeExercises.length}
-        </div>
+
+        <div className="w-10" />
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center p-6 relative">
-        <AnimatePresence mode="wait">
-          {!isResting ? (
-            <motion.div 
-              key={`ex-${currentExercise.id}`}
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              className="w-full max-w-2xl text-center"
-            >
-               <h1 className="font-display text-5xl md:text-7xl uppercase tracking-tighter mb-4 text-shadow-neon text-brand-neon">
-                 {currentExercise.name}
-               </h1>
-               
-               <div className="flex flex-wrap justify-center gap-4 mb-8">
-                  <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex flex-col items-center">
-                    <span className="text-xs uppercase tracking-widest opacity-50 mb-1">Séries</span>
-                    <span className="text-3xl font-black font-mono">{currentExercise.sets}</span>
-                  </div>
-                  <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex flex-col items-center">
-                    <span className="text-xs uppercase tracking-widest opacity-50 mb-1">Reps</span>
-                    <span className="text-3xl font-black font-mono">{currentExercise.reps}</span>
-                  </div>
-               </div>
-
-               {/* Logging inputs */}
-               <div className="bg-white/5 p-6 rounded-3xl border border-white/10 mb-8 max-w-sm mx-auto shadow-2xl">
-                 <p className="text-xs uppercase tracking-widest text-brand-magenta font-bold mb-4">Meta a Bater (Última vez: {prevWeight}kg x {prevReps})</p>
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                   <div>
-                     <label className="block text-[10px] uppercase opacity-50 mb-1 font-bold tracking-widest">Carga (kg)</label>
-                     <input 
-                       type="number" 
-                       value={currentExercise.actualWeight || ''}
-                       onChange={e => updateCurrentData('actualWeight', e.target.value)}
-                       className="w-full bg-black/50 border border-white/20 p-4 text-center font-mono text-xl rounded-xl focus:border-brand-neon outline-none transition-colors"
-                       placeholder={prevWeight}
-                     />
-                   </div>
-                   <div>
-                     <label className="block text-[10px] uppercase opacity-50 mb-1 font-bold tracking-widest">Reps Feitas</label>
-                     <input 
-                       type="text" 
-                       value={currentExercise.actualReps || ''}
-                       onChange={e => updateCurrentData('actualReps', e.target.value)}
-                       className="w-full bg-black/50 border border-white/20 p-4 text-center font-mono text-xl rounded-xl focus:border-brand-neon outline-none transition-colors"
-                       placeholder={currentExercise.reps}
-                     />
-                   </div>
-                   <div>
-                     <label className="block text-[10px] uppercase opacity-50 mb-1 font-bold tracking-widest">RPE</label>
-                     <input 
-                       type="number"
-                       min={1}
-                       max={10}
-                       value={currentExercise.rpe || ''}
-                       onChange={e => updateCurrentData('rpe', e.target.value)}
-                       className="w-full bg-black/50 border border-white/20 p-4 text-center font-mono text-xl rounded-xl focus:border-brand-magenta outline-none transition-colors"
-                       placeholder="8"
-                     />
-                   </div>
-                 </div>
-               </div>
-               
-               {currentExercise.executionDetails && (
-                 <p className="text-sm font-mono opacity-60 mb-6 max-w-md mx-auto">{currentExercise.executionDetails}</p>
-               )}
-               
-               <div className="mb-8">
-                 <AnimatePresence>
-                   {showCamera ? (
-                     <motion.div 
-                       initial={{ opacity: 0, height: 0 }}
-                       animate={{ opacity: 1, height: 'auto' }}
-                       exit={{ opacity: 0, height: 0 }}
-                       className="w-full max-w-sm mx-auto overflow-hidden rounded-2xl border-2 border-brand-neon relative bg-black"
-                     >
-                       <div className="absolute top-2 left-2 px-2 py-1 bg-brand-magenta text-white font-bold font-mono text-[10px] uppercase tracking-widest z-10 animate-pulse">
-                         REC - AVALIAÇÃO IA
-                       </div>
-                       <button onClick={() => setShowCamera(false)} className="absolute top-2 right-2 bg-black/50 p-1 rounded-full z-10 text-white hover:text-brand-magenta">
-                         <X className="w-5 h-5" />
-                       </button>
-                       <div className="relative aspect-[3/4] w-full flex items-center justify-center border-b-2 border-brand-neon/30">
-                         {/* Fake camera feed background */}
-                         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1470&auto=format&fit=crop')] bg-cover bg-center opacity-40 mix-blend-luminosity"></div>
-                         {/* "Pose" skeleton lines */}
-                         <div className="absolute inset-x-12 top-1/4 bottom-1/3 border-2 border-brand-neon/50 rounded-lg"></div>
-                         <div className="absolute top-1/4 left-1/2 w-4 h-4 bg-brand-neon rounded-full -translate-x-1/2 -translate-y-1/2 shadow-[0_0_10px_var(--color-brand-neon)]"></div>
-                         
-                         <div className="flex flex-col items-center justify-center text-brand-light z-10 relative mt-20">
-                           <Camera className="w-12 h-12 text-brand-neon mb-2 animate-pulse" />
-                           <p className="font-mono text-xs uppercase tracking-widest text-brand-neon font-bold text-center bg-black/50 p-2 rounded">Escaneando Músculo-Alvo...<br/>Alinhamento: 92%</p>
-                         </div>
-                       </div>
-                     </motion.div>
-                   ) : (
-                     <button 
-                       onClick={() => setShowCamera(true)}
-                       className="flex items-center justify-center w-full max-w-sm mx-auto bg-brand-dark border-2 border-brand-neon text-brand-neon py-3 rounded-2xl hover:bg-brand-neon hover:text-black transition-colors font-bold uppercase tracking-widest text-sm relative group overflow-hidden"
-                     >
-                       <span className="absolute inset-0 w-full h-full bg-brand-neon/20 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></span>
-                       <Camera className="w-5 h-5 mr-2" /> Ativar Câmera Neural (Postura IA)
-                     </button>
-                   )}
-                 </AnimatePresence>
-               </div>
-
-               <button 
-                 onClick={handleNextExercise}
-                 className="w-full max-w-sm mx-auto bg-brand-neon text-black font-black font-display uppercase tracking-widest text-2xl py-6 rounded-3xl shadow-[0_0_30px_rgba(0,240,255,0.3)] hover:scale-105 transition-transform flex items-center justify-center border-4 border-black ring-2 ring-brand-neon"
-               >
-                 {currentExerciseIndex === activeExercises.length - 1 ? 'FINALIZAR TREINO' : 'PRÓXIMO'} <ChevronRight className="w-8 h-8 ml-2" />
-               </button>
-            </motion.div>
-          ) : (
-            <motion.div 
-              key={`rest-${currentExercise.id}`}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.1 }}
-              className="text-center"
-            >
-               <h3 className="font-display uppercase tracking-widest text-4xl mb-8 text-brand-magenta">Descanso</h3>
-               <div className="relative flex items-center justify-center w-64 h-64 mx-auto mb-12">
-                 <div className="absolute inset-0 border-8 border-brand-magenta/20 rounded-full"></div>
-                 <div className="absolute inset-0 border-8 border-brand-magenta rounded-full border-t-transparent animate-spin" style={{ animationDuration: '3s' }}></div>
-                 <span className="font-display text-8xl tabular-nums tracking-tighter text-shadow-magenta">
-                   {Math.floor(restTimeLeft / 60)}:{(restTimeLeft % 60).toString().padStart(2, '0')}
-                 </span>
-               </div>
-               
-               <p className="text-sm font-mono uppercase opacity-50 tracking-widest mb-4">Próximo:</p>
-               <h2 className="text-2xl font-black font-display uppercase text-brand-neon mb-12">
-                 {activeExercises[currentExerciseIndex].name}
-               </h2>
-
-               <button 
-                 onClick={handleSkipRest}
-                 className="px-8 py-4 bg-white/10 hover:bg-white/20 rounded-full font-bold uppercase tracking-widest transition-colors font-mono"
-               >
-                 Pular Descanso
-               </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+      <div className="w-full h-1.5 bg-white/10">
+        <div
+          className="h-full bg-brand-neon transition-all duration-500"
+          style={{ width: `${progress}%` }}
+        />
       </div>
+
+      <main className="flex-1 p-5 md:p-8 max-w-3xl mx-auto w-full">
+        <p className="text-brand-muted text-sm uppercase tracking-widest mb-2">
+          {current.ex.muscleGroup || current.day.focus}
+        </p>
+        <h1 className="font-display text-5xl md:text-7xl uppercase tracking-tighter text-brand-neon text-shadow-neon mb-4">
+          {current.ex.name}
+        </h1>
+
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          <div className="bg-brand-gray border-2 border-brand-light/10 p-4 text-center">
+            <p className="text-2xl font-black text-brand-neon">{current.ex.sets}</p>
+            <p className="text-xs text-brand-muted mt-1 uppercase tracking-widest">Series</p>
+          </div>
+          <div className="bg-brand-gray border-2 border-brand-light/10 p-4 text-center min-w-0">
+            <p className="text-2xl font-black text-white truncate">{current.ex.reps}</p>
+            <p className="text-xs text-brand-muted mt-1 uppercase tracking-widest">Reps</p>
+          </div>
+          <div className="bg-brand-gray border-2 border-brand-light/10 p-4 text-center min-w-0">
+            <p className="text-2xl font-black text-white truncate">{current.ex.rest}</p>
+            <p className="text-xs text-brand-muted mt-1 uppercase tracking-widest">Descanso</p>
+          </div>
+        </div>
+
+        {previousData && (
+          <div className="mb-6 p-3 bg-brand-neon/10 border-2 border-brand-neon/30 text-xs font-mono text-brand-light/80">
+            Ultima vez: {previousData.actualWeight ? `${previousData.actualWeight}kg` : '-'} x {previousData.actualReps || '-'}
+          </div>
+        )}
+
+        {current.ex.notes && (
+          <div className="mb-6 p-4 bg-white/5 border-2 border-white/10 text-sm text-white/70">
+            {current.ex.notes}
+          </div>
+        )}
+
+        {(current.ex.executionDetails || current.ex.concentricPhase || current.ex.eccentricPhase) && (
+          <div className="mb-6 bg-brand-gray/50 border-2 border-brand-light/10 p-4 space-y-3 text-sm text-brand-light/80">
+            {current.ex.executionDetails && <p>{current.ex.executionDetails}</p>}
+            {current.ex.concentricPhase && <p className="text-brand-magenta">{current.ex.concentricPhase}</p>}
+            {current.ex.eccentricPhase && <p className="text-brand-neon">{current.ex.eccentricPhase}</p>}
+          </div>
+        )}
+
+        <div className="bg-brand-gray border-2 border-brand-light/10 p-4 mb-6">
+          <SetTracker exercise={current.ex} onUpdate={(updated) => persistExercise(updated)} />
+        </div>
+
+        <textarea
+          value={current.ex.performanceNotes || ''}
+          onChange={event => persistExercise({ ...current.ex, performanceNotes: event.target.value })}
+          rows={2}
+          placeholder="Nota rápida do exercício..."
+          className="w-full mb-6 bg-brand-gray border-2 border-brand-light/10 px-4 py-3 text-sm text-brand-light outline-none resize-none placeholder:text-brand-light/30 focus:border-brand-neon"
+        />
+
+        {current.ex.videoUrl && (
+          <a
+            href={current.ex.videoUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-brand-neon text-sm font-bold uppercase tracking-widest hover:text-brand-light transition-colors"
+          >
+            <Video size={16} /> Ver execução
+          </a>
+        )}
+      </main>
+
+      <footer className="p-5 border-t border-white/10">
+        <div className="max-w-3xl mx-auto w-full flex gap-3">
+          <button
+            onClick={() => setIndex(value => Math.max(0, value - 1))}
+            className="flex-1 py-4 bg-white/10 text-white font-bold flex items-center justify-center gap-2 hover:bg-white/15 transition-colors"
+          >
+            <ChevronLeft size={20} /> Anterior
+          </button>
+
+          <button
+            onClick={completeAndNext}
+            className="flex-[1.4] py-4 px-6 bg-brand-neon text-brand-dark font-black flex items-center justify-center gap-2 hover:bg-brand-neon-hover transition-colors"
+          >
+            <CheckCircle2 size={20} /> {index === total - 1 && !isPlanMode ? 'Finalizar' : 'Concluir'}
+          </button>
+
+          <button
+            onClick={() => setIndex(value => Math.min(total - 1, value + 1))}
+            className="flex-1 py-4 bg-white/10 text-white font-bold flex items-center justify-center gap-2 hover:bg-white/15 transition-colors"
+          >
+            Proximo <ChevronRight size={20} />
+          </button>
+        </div>
+
+        <div className="max-w-3xl mx-auto mt-4">
+          <RestTimer initialSeconds={restSecs} autoStartKey={restKey} onVoiceAlert={voiceEnabled} />
+        </div>
+      </footer>
     </div>
   );
 }

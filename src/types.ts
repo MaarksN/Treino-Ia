@@ -42,6 +42,17 @@ export interface UserProfile {
 
 export type ExerciseFeedback = 'easy' | 'hard' | 'painful' | 'good' | null;
 
+export interface SetLog {
+  setNumber: number;
+  weight?: number;
+  reps?: number;
+  rpe?: number;
+  failed?: boolean;
+  technicalFailure?: boolean;
+  note?: string;
+  completedAt?: number;
+}
+
 export interface Exercise {
   id: string;
   name: string;
@@ -49,6 +60,11 @@ export interface Exercise {
   reps: string;
   rest: string;
   videoUrl?: string;
+  muscleGroup?: string;
+  movementPattern?: string;
+  tags?: string[];
+  favorited?: boolean;
+  isCustom?: boolean;
   executionDetails?: string;
   concentricPhase?: string;
   eccentricPhase?: string;
@@ -59,6 +75,15 @@ export interface Exercise {
   actualReps?: string;
   performanceNotes?: string;
   rpe?: number;
+  setLogs?: SetLog[];
+}
+
+export interface PersonalRecord {
+  exerciseName: string;
+  weight: number;
+  reps: number;
+  date: number;
+  planId: string;
 }
 
 export interface RecoveryCheckin {
@@ -76,6 +101,7 @@ export interface ExerciseLog {
   actualWeight?: number;
   actualReps?: string;
   rpe?: number;
+  setLogs?: SetLog[];
   feedback?: ExerciseFeedback;
   performanceNotes?: string;
 }
@@ -137,6 +163,9 @@ export interface WorkoutDay {
   dayName: string;
   focus: string;
   exercises: Exercise[];
+  warmup?: string;
+  cooldown?: string;
+  estimatedDuration?: string;
   completed?: boolean;
   workoutFeedback?: WorkoutFeedback;
 }

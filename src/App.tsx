@@ -4,11 +4,12 @@ import { WorkoutDashboard } from './components/WorkoutDashboard';
 import { RegistrationForm } from './components/RegistrationForm';
 import { HomeMenu } from './components/HomeMenu';
 import { ImportWorkoutView } from './components/ImportWorkoutView';
+import { ActiveWorkoutView } from './components/ActiveWorkoutView';
 import { generateWorkoutPlan, extractWorkoutFromFile } from './services/geminiService';
 import { RecoveryCheckin, User, UserProfile, WorkoutHistoryRecord, WorkoutPlan, WorkoutSession } from './types';
 import { Activity, Dumbbell, Globe2, Moon, Sun } from 'lucide-react';
 
-type ViewState = 'loading' | 'registration' | 'home' | 'anamnesis' | 'import' | 'dashboard' | 'global_feed';
+type ViewState = 'loading' | 'registration' | 'home' | 'anamnesis' | 'import' | 'dashboard' | 'active-workout' | 'global_feed';
 
 import { AssistantPopup } from './components/AssistantPopup';
 
@@ -30,6 +31,7 @@ export default function App() {
   const [recoveryCheckin, setRecoveryCheckin] = useState<RecoveryCheckin | null>(null);
   const [darkMode, setDarkMode] = useState(true);
   const [language, setLanguage] = useState<'PT' | 'EN'>('PT');
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -284,7 +286,7 @@ export default function App() {
         )}
       </div>
 
-      {user && view !== 'registration' && view !== 'loading' && (
+      {user && view !== 'registration' && (
         <div className="max-w-5xl mx-auto">
           <FuturisticHUD user={user} />
         </div>
@@ -348,6 +350,19 @@ export default function App() {
           onSelectHistory={(id) => setCurrentPlanId(id)}
           onNew={() => setView('home')} 
           onCompleteDay={handleCompleteDay}
+          onSaveNewPlan={saveNewPlan}
+          onStartActiveWorkout={() => setView('active-workout')}
+          voiceEnabled={voiceEnabled}
+          onVoiceEnabledChange={setVoiceEnabled}
+        />
+      )}
+
+      {view === 'active-workout' && currentPlanId && (
+        <ActiveWorkoutView
+          plan={plans.find(p => p.id === currentPlanId)!}
+          onClose={() => setView('dashboard')}
+          onUpdatePlan={handleUpdatePlan}
+          voiceEnabled={voiceEnabled}
         />
       )}
 
