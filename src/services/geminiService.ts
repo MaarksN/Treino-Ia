@@ -1,8 +1,19 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
-import { UserProfile, WorkoutPlan } from "../types";
+import { UserProfile, WorkoutHistoryRecord, WorkoutPlan } from "../types";
 
-// Initialize the Google Gen AI SDK
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiClient: GoogleGenAI | null = null;
+
+function getAI() {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY não configurada.");
+  }
+
+  if (!aiClient) {
+    aiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  }
+
+  return aiClient;
+}
 
 export const workoutPlanSchema: Schema = {
   type: Type.OBJECT,
@@ -95,18 +106,28 @@ export async function generateWorkoutPlan(profile: UserProfile, history?: Workou
     }
   }
 
+  const sessionDuration = profile.sessionDuration || `${profile.timePerWorkout || 60} minutos`;
+  const trainingEnvironment = profile.gymType || profile.workoutLocation || 'Academia';
+  const availableEquipment = profile.equipment || trainingEnvironment;
+  const secondaryGoal = profile.secondaryGoal || profile.secondaryFocus || 'Nenhum';
+
   const prompt = `ATENÇÃO: Você é a Inteligência Artificial Supremo de Treinamento, responsável por forjar atletas de elite e mudar vidas.
 O usuário enviou este perfil e precisa do melhor plano de treinamento do MUNDO:
 - Idade: ${profile.age} anos
 - Sexo: ${profile.gender}
 - Peso: ${profile.weight} kg
 - Altura: ${profile.height} cm
+- Percentual de gordura estimado: ${profile.bodyFatPercent || 'Não informado'}
 - Experiência: ${profile.experienceLevel}
 - Objetivo: ${profile.goal}
+- Objetivo secundário: ${secondaryGoal}
 - Dias de Treino/Semana: ${profile.daysPerWeek}
-- Duração das Sessões: ${profile.timePerWorkout} minutos
-- Ambiente de Treino: ${profile.workoutLocation}
-- Foco Secundário: ${profile.secondaryFocus || "Nenhum"}
+- Duração das Sessões: ${sessionDuration}
+- Ambiente de Treino: ${trainingEnvironment}
+- Equipamentos disponíveis: ${availableEquipment}
+- Sono médio: ${profile.sleepHours || 'Não informado'}
+- Estresse: ${profile.stressLevel || 'Não informado'}
+- Pontos fracos: ${profile.weakPoints || 'Não informado'}
 - Lesões ou Restrições: ${profile.injuries || "Nenhuma"}
 -${feedbackContext}
 
@@ -118,7 +139,7 @@ REGRAS OBRIGATÓRIAS (FALHAR NÃO É UMA OPÇÃO):
 5. EXECUÇÃO DIVINA: 'executionDetails' deve soar como um treinador espartano ensinando a postura perfeita.
 6. JSON VALIDO: Você deve retornar o plano estritamente validado com o schema exigido.`;
 
-  const response = await ai.models.generateContent({
+  const response = await getAI().models.generateContent({
     model: "gemini-2.5-pro",
     contents: prompt,
     config: {
@@ -158,7 +179,7 @@ REGRAS OBRIGATÓRIAS (FALHAR NÃO É UMA OPÇÃO):
 5. TEMPO E DESCANSO: No campo 'rest', use apenas inteiros que representam segundos (ex: 60, 90).
 6. RETORNE JSON EXATAMENTE SEGUNDO O SCHEMA.`;
 
-  const response = await ai.models.generateContent({
+  const response = await getAI().models.generateContent({
     model: "gemini-2.5-pro",
     contents: [
       {
@@ -223,7 +244,7 @@ ${userProfile ? `Perfil do usuário (para adaptar as sugestões):
     }
   };
 
-  const response = await ai.models.generateContent({
+  const response = await getAI().models.generateContent({
     model: "gemini-2.5-pro",
     contents: prompt,
     config: {
@@ -237,6 +258,115 @@ ${userProfile ? `Perfil do usuário (para adaptar as sugestões):
     return JSON.parse(jsonStr);
   } catch (error) {
     console.error("Failed to parse variations:", error);
+    return [];
+  }
+}
+
+export async function adjustWorkoutForRecovery(plan: WorkoutPlan, recoveryLabel: string): Promise<string> {
+  const prompt = `
+Avalie este treino e sugira ajustes para hoje.
+Recuperação do aluno: ${recoveryLabel}
+Plano: ${JSON.stringify(plan)}
+
+Se a recuperação estiver baixa, reduza volume/intensidade.
+Se estiver média, faça ajustes moderados.
+Se estiver alta, mantenha ou avance com prudência.
+Responda em tópicos curtos, em português do Brasil.
+`;
+
+  const response = await getAI().models.generateContent({
+    model: "gemini-2.5-pro",
+    contents: prompt,
+  });
+
+  return response.text || "Sem ajuste necessário.";
+}
+
+export async function generateWeeklyReport(
+  plans: WorkoutPlan[],
+  workoutHistory: WorkoutHistoryRecord[] = []
+): Promise<string> {
+  const recentRecords = workoutHistory.slice(-7).map(record => ({
+    day: record.dayName,
+    focus: record.focus,
+    date: new Date(record.date).toLocaleDateString('pt-BR'),
+    volumeLoad: record.volumeLoad,
+    durationMinutes: record.durationMinutes,
+    completed: record.exercises.filter(ex => ex.completed).length,
+    total: record.exercises.length,
+    hard: record.exercises.filter(ex => ex.feedback === 'hard').length,
+    painful: record.exercises.filter(ex => ex.feedback === 'painful').length,
+    avgRpe:
+      record.exercises.reduce((sum, ex) => sum + (ex.rpe || 0), 0) /
+      Math.max(1, record.exercises.filter(ex => ex.rpe).length),
+  }));
+
+  const planSummary = plans.slice(0, 3).map(plan => ({
+    name: plan.planName,
+    goal: plan.goalDescription,
+    days: plan.days.map(day => ({
+      day: day.dayName,
+      focus: day.focus,
+      completed: day.exercises.filter(ex => ex.completed).length,
+      total: day.exercises.length,
+      hard: day.exercises.filter(ex => ex.feedback === 'hard').length,
+      painful: day.exercises.filter(ex => ex.feedback === 'painful').length,
+    })),
+  }));
+
+  const prompt = `
+Gere um relatório semanal premium em português com:
+1. resumo da aderência,
+2. grupos fortes,
+3. pontos de atenção,
+4. recomendação da próxima semana.
+
+Dados das sessões:
+${JSON.stringify(recentRecords, null, 2)}
+
+Dados dos planos:
+${JSON.stringify(planSummary, null, 2)}
+`;
+
+  const response = await getAI().models.generateContent({
+    model: "gemini-2.5-pro",
+    contents: prompt,
+  });
+
+  return response.text || "Não foi possível gerar o relatório.";
+}
+
+export async function suggestExerciseAlternatives(
+  exerciseName: string,
+  injuries: string,
+  equipment: string
+): Promise<string[]> {
+  const prompt = `
+Sugira 5 exercícios substitutos para "${exerciseName}".
+Considere:
+- lesões/limitações: ${injuries || 'nenhuma'}
+- equipamentos disponíveis: ${equipment || 'academia padrão'}
+
+Responda apenas com JSON array de strings.
+`;
+
+  const schema: Schema = {
+    type: Type.ARRAY,
+    items: { type: Type.STRING },
+  };
+
+  const response = await getAI().models.generateContent({
+    model: "gemini-2.5-pro",
+    contents: prompt,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: schema,
+    },
+  });
+
+  try {
+    return JSON.parse(response.text || '[]');
+  } catch {
     return [];
   }
 }

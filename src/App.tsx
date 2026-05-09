@@ -5,10 +5,10 @@ import { RegistrationForm } from './components/RegistrationForm';
 import { HomeMenu } from './components/HomeMenu';
 import { ImportWorkoutView } from './components/ImportWorkoutView';
 import { generateWorkoutPlan, extractWorkoutFromFile } from './services/geminiService';
-import { User, UserProfile, WorkoutPlan } from './types';
+import { RecoveryCheckin, User, UserProfile, WorkoutHistoryRecord, WorkoutPlan, WorkoutSession } from './types';
 import { Activity, Dumbbell, Globe2, Moon, Sun } from 'lucide-react';
 
-type ViewState = 'loading' | 'registration' | 'home' | 'anamnesis' | 'import' | 'dashboard';
+type ViewState = 'loading' | 'registration' | 'home' | 'anamnesis' | 'import' | 'dashboard' | 'global_feed';
 
 import { AssistantPopup } from './components/AssistantPopup';
 
@@ -25,6 +25,9 @@ export default function App() {
   const [plans, setPlans] = useState<WorkoutPlan[]>([]);
   const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
   const [workoutHistory, setWorkoutHistory] = useState<WorkoutHistoryRecord[]>([]);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [sessions, setSessions] = useState<WorkoutSession[]>([]);
+  const [recoveryCheckin, setRecoveryCheckin] = useState<RecoveryCheckin | null>(null);
   const [darkMode, setDarkMode] = useState(true);
   const [language, setLanguage] = useState<'PT' | 'EN'>('PT');
   
@@ -44,6 +47,9 @@ export default function App() {
     const savedUser = localStorage.getItem('@TreinoApp:user');
     const savedPlans = localStorage.getItem('@TreinoApp:plans');
     const savedHistory = localStorage.getItem('@TreinoApp:history');
+    const savedProfile = localStorage.getItem('@TreinoApp:profile');
+    const savedSessions = localStorage.getItem('@TreinoApp:sessions');
+    const savedRecovery = localStorage.getItem('@TreinoApp:recovery');
     const savedTheme = localStorage.getItem('@TreinoApp:theme');
 
     if (savedTheme) {
@@ -54,8 +60,24 @@ export default function App() {
       setWorkoutHistory(JSON.parse(savedHistory));
     }
 
+    if (savedProfile) {
+      setProfile(JSON.parse(savedProfile));
+    }
+
+    if (savedSessions) {
+      setSessions(JSON.parse(savedSessions));
+    }
+
+    if (savedRecovery) {
+      setRecoveryCheckin(JSON.parse(savedRecovery));
+    }
+
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      const parsedUser = JSON.parse(savedUser);
+      setUser(parsedUser);
+      if (parsedUser.profile && !savedProfile) {
+        setProfile(parsedUser.profile);
+      }
       if (savedPlans) {
         try {
           const parsed = JSON.parse(savedPlans);
@@ -78,6 +100,10 @@ export default function App() {
   const handleRegister = (newUser: User) => {
     localStorage.setItem('@TreinoApp:user', JSON.stringify(newUser));
     setUser(newUser);
+    if (newUser.profile) {
+      setProfile(newUser.profile);
+      localStorage.setItem('@TreinoApp:profile', JSON.stringify(newUser.profile));
+    }
     
     // Attempt to request notification permission
     if ('Notification' in window && Notification.permission === 'default') {
@@ -103,6 +129,8 @@ export default function App() {
     setIsLoading(true);
     setError(null);
     try {
+      localStorage.setItem('@TreinoApp:profile', JSON.stringify(profile));
+      setProfile(profile);
       const generatedPlan = await generateWorkoutPlan(profile, plans);
       saveNewPlan(generatedPlan);
       
@@ -144,6 +172,17 @@ export default function App() {
     const newPlans = plans.map(p => p.id === updatedPlan.id ? updatedPlan : p);
     setPlans(newPlans);
     localStorage.setItem('@TreinoApp:plans', JSON.stringify(newPlans));
+  };
+
+  const handleSaveSession = (session: WorkoutSession) => {
+    const updated = [...sessions, session];
+    setSessions(updated);
+    localStorage.setItem('@TreinoApp:sessions', JSON.stringify(updated));
+  };
+
+  const handleSaveRecoveryCheckin = (checkin: RecoveryCheckin) => {
+    setRecoveryCheckin(checkin);
+    localStorage.setItem('@TreinoApp:recovery', JSON.stringify(checkin));
   };
 
   const handleCompleteDay = (record: WorkoutHistoryRecord) => {
@@ -227,7 +266,7 @@ export default function App() {
               <Dumbbell className="w-4 h-4 mr-2" /> Meus Treinos
             </button>
             <button 
-              onClick={() => { setActiveTab('global_feed'); setView('global_feed' as any); }}
+              onClick={() => { setActiveTab('global_feed'); setView('global_feed'); }}
               className={`px-5 py-2 font-mono font-bold text-sm uppercase flex items-center transition-colors rounded-full ${view === 'global_feed' ? 'bg-brand-neon text-brand-dark shadow-[0_0_10px_var(--color-brand-neon)]' : 'text-brand-muted hover:text-brand-light hover:bg-brand-light/5'}`}
             >
               <Globe2 className="w-4 h-4 mr-2" /> Comunidade
@@ -299,8 +338,13 @@ export default function App() {
           plan={plans.find(p => p.id === currentPlanId)!} 
           history={plans}
           workoutHistory={workoutHistory}
-          userProfile={user?.profile}
+          sessions={sessions}
+          profile={profile || user?.profile || null}
+          recoveryCheckin={recoveryCheckin}
+          userProfile={profile || user?.profile}
           onUpdatePlan={handleUpdatePlan}
+          onSaveSession={handleSaveSession}
+          onSaveRecoveryCheckin={handleSaveRecoveryCheckin}
           onSelectHistory={(id) => setCurrentPlanId(id)}
           onNew={() => setView('home')} 
           onCompleteDay={handleCompleteDay}

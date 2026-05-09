@@ -1,22 +1,28 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Exercise, WorkoutPlan, UserProfile, WorkoutHistoryRecord } from '../types';
 import { Dumbbell, Flame, Clock, CheckCircle, Edit2, Save, X, ThumbsUp, ThumbsDown, AlertTriangle, TrendingUp, Smile, Play, Pause, RotateCcw, Zap, ChevronDown, ChevronUp, Video, ChevronRight } from 'lucide-react';
-import { motion, AnimatePresence, useAnimation } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { LineChart, Line, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
-import { suggestExerciseVariations } from '../services/geminiService';
+import { suggestExerciseAlternatives, suggestExerciseVariations } from '../services/geminiService';
+import { findExerciseLibraryEntry } from '../data/exerciseLibrary';
 
 interface Props {
   exercise: Exercise;
   history?: WorkoutPlan[];
   workoutHistory?: WorkoutHistoryRecord[];
   userProfile?: UserProfile;
-  previousStat?: { date: number, weight?: number, reps?: string };
+  previousStat?: { date: number, weight?: number, reps?: string, rpe?: number };
   onUpdate: (updated: Exercise) => void;
 }
 
 export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistory, userProfile, previousStat, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState(exercise);
+  const libraryEntry = useMemo(() => findExerciseLibraryEntry(exercise.name), [exercise.name]);
+  const executionVideoUrl =
+    exercise.videoUrl ||
+    libraryEntry?.videoUrl ||
+    `https://www.youtube.com/results?search_query=${encodeURIComponent(exercise.name + ' execução correta')}`;
   
   // Variations State
   const [showVariations, setShowVariations] = useState(false);
@@ -112,6 +118,28 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
       setVariations(res);
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoadingVariations(false);
+    }
+  };
+
+  const fetchAlternatives = async () => {
+    setShowVariations(true);
+    setLoadingVariations(true);
+    try {
+      const res = await suggestExerciseAlternatives(
+        exercise.name,
+        userProfile?.injuries || '',
+        userProfile?.workoutLocation || ''
+      );
+      setVariations(res.map(name => ({
+        name,
+        description: `Substituição adaptada para ${exercise.name}.`,
+        difficulty: 'Different Focus',
+      })));
+    } catch (error) {
+      console.error(error);
+      setVariations([]);
     } finally {
       setLoadingVariations(false);
     }
@@ -219,9 +247,10 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
           <div className="max-w-[70%]">
             <h3 className="font-display font-black text-2xl uppercase tracking-tight leading-tight text-brand-light relative z-10">{exercise.name}</h3>
             <a 
-              href={`https://www.youtube.com/results?search_query=${encodeURIComponent(exercise.name + ' form execution')}`}
+              href={executionVideoUrl}
               target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center text-[10px] uppercase font-bold text-brand-muted hover:text-[#FF0000] transition-colors mt-1"
+              title={libraryEntry ? `${libraryEntry.muscleGroup} - vídeo da biblioteca` : 'Buscar vídeo de execução'}
             >
               <Video className="w-3 h-3 mr-1" /> Ver Execução
             </a>
@@ -327,9 +356,18 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
                   {previousStat.weight ? `${previousStat.weight}kg` : '-'} / {previousStat.reps || '-'} reps
                 </p>
               </div>
-              <div className="text-xs text-brand-neon font-display font-black uppercase tracking-widest text-right">
-                Bater a meta!
-              </div>
+              <button
+                type="button"
+                onClick={() => onUpdate({
+                  ...exercise,
+                  actualWeight: exercise.actualWeight || previousStat.weight,
+                  actualReps: exercise.actualReps || previousStat.reps,
+                  rpe: exercise.rpe || previousStat.rpe,
+                })}
+                className="text-xs text-brand-neon font-display font-black uppercase tracking-widest text-right hover:text-brand-light transition-colors"
+              >
+                Preencher
+              </button>
             </div>
           )}
           
@@ -349,7 +387,7 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
             <div>
               <label className="block text-[10px] uppercase text-brand-muted mb-1 font-bold">Carga Real (kg)</label>
               <input 
@@ -368,6 +406,18 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
                 value={exercise.actualReps || ''}
                 onChange={e => onUpdate({ ...exercise, actualReps: e.target.value })}
                 className="w-full bg-brand-dark border-2 border-brand-light/20 px-3 py-2 text-sm font-mono text-brand-light outline-none focus:border-brand-neon focus:shadow-brutal-neon transition-all"
+              />
+            </div>
+            <div className="col-span-2 md:col-span-1">
+              <label className="block text-[10px] uppercase text-brand-muted mb-1 font-bold">RPE (1-10)</label>
+              <input 
+                type="number"
+                min={1}
+                max={10}
+                placeholder="Ex: 8"
+                value={exercise.rpe || ''}
+                onChange={e => onUpdate({ ...exercise, rpe: Number(e.target.value) || undefined })}
+                className="w-full bg-brand-dark border-2 border-brand-light/20 px-3 py-2 text-sm font-mono text-brand-magenta outline-none focus:border-brand-magenta focus:shadow-brutal-magenta transition-all"
               />
             </div>
           </div>
@@ -392,6 +442,15 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
                 Sugestões da IA (Variações)
               </div>
               {showVariations ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+
+            <button
+              type="button"
+              onClick={fetchAlternatives}
+              className="mt-2 w-full flex items-center justify-center px-4 py-3 bg-brand-magenta/5 border-2 border-brand-magenta/50 text-brand-magenta hover:bg-brand-magenta/10 transition-colors uppercase font-bold text-xs"
+            >
+              <Zap className="w-4 h-4 mr-2" />
+              Substituir com IA
             </button>
             
             <AnimatePresence>

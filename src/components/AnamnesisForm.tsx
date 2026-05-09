@@ -20,10 +20,19 @@ export function AnamnesisForm({ onSubmit, isLoading }: Props) {
       gender: 'Masculino',
       weight: 70,
       height: 175,
+      bodyFatPercent: 15,
       experienceLevel: 'Iniciante',
       goal: 'Hipertrofia (Ganho de Massa)',
+      secondaryGoal: '',
       daysPerWeek: 3,
+      sessionDuration: '60 minutos',
       injuries: '',
+      equipment: 'Academia completa',
+      gymType: 'Academia',
+      sleepHours: '7',
+      stressLevel: 'Médio',
+      preferredMethods: [],
+      weakPoints: '',
       timePerWorkout: 60,
       workoutLocation: 'Academia',
       secondaryFocus: '',
@@ -37,7 +46,8 @@ export function AnamnesisForm({ onSubmit, isLoading }: Props) {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setProfile(prev => ({ ...prev, [name]: value }));
+    const numericFields = new Set(['age', 'weight', 'height', 'bodyFatPercent', 'daysPerWeek', 'timePerWorkout']);
+    setProfile(prev => ({ ...prev, [name]: numericFields.has(name) ? Number(value) : value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -113,6 +123,19 @@ export function AnamnesisForm({ onSubmit, isLoading }: Props) {
                 className="w-full bg-brand-dark border-2 border-brand-light/20 px-4 py-4 text-brand-light font-mono focus:outline-none focus:border-brand-neon transition-colors"
               />
             </div>
+            <div className="md:col-span-2">
+              <label className="block text-xs font-bold text-brand-muted uppercase tracking-widest mb-2">% Gordura Estimado</label>
+              <input
+                type="number"
+                name="bodyFatPercent"
+                value={profile.bodyFatPercent || ''}
+                onChange={handleChange}
+                min="3"
+                max="60"
+                step="0.1"
+                className="w-full bg-brand-dark border-2 border-brand-light/20 px-4 py-4 text-brand-light font-mono focus:outline-none focus:border-brand-neon transition-colors"
+              />
+            </div>
           </div>
         </div>
 
@@ -156,6 +179,17 @@ export function AnamnesisForm({ onSubmit, isLoading }: Props) {
                 <option value="Manutenção">Manutenção de Saúde</option>
               </select>
             </div>
+            <div>
+              <label className="block text-xs font-bold text-brand-muted uppercase tracking-widest mb-2 mt-4">Objetivo Secundário</label>
+              <input
+                type="text"
+                name="secondaryGoal"
+                value={profile.secondaryGoal || ''}
+                onChange={handleChange}
+                placeholder="Ex: força no supino, condicionamento, mobilidade"
+                className="w-full bg-brand-dark border-2 border-brand-light/20 px-4 py-4 text-brand-light font-mono focus:outline-none focus:border-brand-neon transition-colors"
+              />
+            </div>
           </div>
         </div>
 
@@ -192,7 +226,7 @@ export function AnamnesisForm({ onSubmit, isLoading }: Props) {
                 min="20" 
                 max="120" 
                 step="5"
-                value={profile.timePerWorkout} 
+                value={profile.timePerWorkout || 60} 
                 onChange={handleChange}
                 className="w-full accent-brand-neon h-3 bg-brand-dark rounded-none border border-brand-neon appearance-none cursor-pointer"
               />
@@ -203,6 +237,21 @@ export function AnamnesisForm({ onSubmit, isLoading }: Props) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label className="block text-xs font-bold text-brand-muted uppercase tracking-widest mb-2">Tempo por sessão</label>
+                <select
+                  name="sessionDuration"
+                  value={profile.sessionDuration || '60 minutos'}
+                  onChange={handleChange}
+                  className="w-full bg-brand-dark border-2 border-brand-light/20 px-4 py-4 text-brand-light font-mono focus:outline-none focus:border-brand-neon transition-colors"
+                >
+                  <option>30 minutos</option>
+                  <option>45 minutos</option>
+                  <option>60 minutos</option>
+                  <option>75 minutos</option>
+                  <option>90 minutos</option>
+                </select>
+              </div>
               <div>
                 <label className="block text-xs font-bold text-brand-muted uppercase tracking-widest mb-2">Local de Treino</label>
                 <select 
@@ -215,6 +264,21 @@ export function AnamnesisForm({ onSubmit, isLoading }: Props) {
                   <option value="Casa (Com Equipamentos)">Casa (Com Equipamentos)</option>
                   <option value="Casa (Peso Corporal)">Casa (Peso Corporal)</option>
                   <option value="Calistenia/Parque">Calistenia/Parque</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-brand-muted uppercase tracking-widest mb-2">Tipo de academia</label>
+                <select
+                  name="gymType"
+                  value={profile.gymType || 'Academia'}
+                  onChange={handleChange}
+                  className="w-full bg-brand-dark border-2 border-brand-light/20 px-4 py-4 text-brand-light font-mono focus:outline-none focus:border-brand-neon transition-colors"
+                >
+                  <option>Academia</option>
+                  <option>Condomínio</option>
+                  <option>Casa</option>
+                  <option>Box / Funcional</option>
+                  <option>Parque / Calistenia</option>
                 </select>
               </div>
               <div>
@@ -231,11 +295,57 @@ export function AnamnesisForm({ onSubmit, isLoading }: Props) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               <div className="md:col-span-2">
+                <label className="block text-xs font-bold text-brand-muted uppercase tracking-widest mb-2">Equipamentos disponíveis</label>
+                <input
+                  type="text"
+                  name="equipment"
+                  value={profile.equipment || ''}
+                  onChange={handleChange}
+                  placeholder="Ex: halteres, barra, smith, polias"
+                  className="w-full bg-brand-dark border-2 border-brand-light/20 px-4 py-4 text-brand-light font-mono focus:outline-none focus:border-brand-neon transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-brand-muted uppercase tracking-widest mb-2">Horas médias de sono</label>
+                <input
+                  type="text"
+                  name="sleepHours"
+                  value={profile.sleepHours || ''}
+                  onChange={handleChange}
+                  placeholder="Ex: 7"
+                  className="w-full bg-brand-dark border-2 border-brand-light/20 px-4 py-4 text-brand-light font-mono focus:outline-none focus:border-brand-neon transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-brand-muted uppercase tracking-widest mb-2">Nível de estresse</label>
+                <select
+                  name="stressLevel"
+                  value={profile.stressLevel || 'Médio'}
+                  onChange={handleChange}
+                  className="w-full bg-brand-dark border-2 border-brand-light/20 px-4 py-4 text-brand-light font-mono focus:outline-none focus:border-brand-neon transition-colors"
+                >
+                  <option>Baixo</option>
+                  <option>Médio</option>
+                  <option>Alto</option>
+                </select>
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold text-brand-muted uppercase tracking-widest mb-2">Pontos fracos</label>
+                <input
+                  type="text"
+                  name="weakPoints"
+                  value={profile.weakPoints || ''}
+                  onChange={handleChange}
+                  placeholder="Ex: peito superior, posterior de coxa, panturrilha"
+                  className="w-full bg-brand-dark border-2 border-brand-light/20 px-4 py-4 text-brand-light font-mono focus:outline-none focus:border-brand-neon transition-colors"
+                />
+              </div>
+              <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-brand-muted uppercase tracking-widest mb-2">Foco Secundário (Opcional)</label>
                 <input 
                   type="text" 
                   name="secondaryFocus" 
-                  value={profile.secondaryFocus} 
+                  value={profile.secondaryFocus || ''} 
                   onChange={handleChange} 
                   placeholder="Ex: Abdômen Trincado, Mobilidade..."
                   className="w-full bg-brand-dark border-2 border-brand-light/20 px-4 py-4 text-brand-light font-mono focus:outline-none focus:border-brand-neon transition-colors"

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { WorkoutDay, Exercise, WorkoutHistoryRecord } from '../types';
-import { CheckCircle, X, ChevronRight, Play, Pause, Flame, ChevronLeft, Camera } from 'lucide-react';
+import { X, ChevronRight, Camera } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface Props {
@@ -10,14 +10,35 @@ interface Props {
   onCancel: () => void;
 }
 
+function speakText(text: string) {
+  if (!('speechSynthesis' in window)) return;
+
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'pt-BR';
+  utterance.rate = 1;
+  window.speechSynthesis.speak(utterance);
+}
+
 export function ActiveWorkoutView({ day, workoutHistory, onComplete, onCancel }: Props) {
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [isResting, setIsResting] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [restTimeLeft, setRestTimeLeft] = useState(0);
   const [activeExercises, setActiveExercises] = useState<Exercise[]>(JSON.parse(JSON.stringify(day.exercises)));
+  const spokenExerciseRef = useRef<string | null>(null);
 
   const currentExercise = activeExercises[currentExerciseIndex];
+
+  useEffect(() => {
+    if (!currentExercise || isResting) return;
+
+    const spokenKey = `${currentExercise.id}-${currentExerciseIndex}`;
+    if (spokenExerciseRef.current === spokenKey) return;
+
+    spokenExerciseRef.current = spokenKey;
+    speakText(`Próximo exercício: ${currentExercise.name}. ${currentExercise.sets} séries de ${currentExercise.reps}. Descanso de ${currentExercise.rest}.`);
+  }, [currentExercise, currentExerciseIndex, isResting]);
 
   // Attempt to map previous status
   let prevWeight = '-';
@@ -69,10 +90,12 @@ export function ActiveWorkoutView({ day, workoutHistory, onComplete, onCancel }:
     setRestTimeLeft(0);
   };
 
-  const updateCurrentData = (field: 'actualWeight' | 'actualReps', value: string) => {
+  const updateCurrentData = (field: 'actualWeight' | 'actualReps' | 'rpe', value: string) => {
     const newExs = [...activeExercises];
     if (field === 'actualWeight') {
        newExs[currentExerciseIndex].actualWeight = Number(value);
+    } else if (field === 'rpe') {
+       newExs[currentExerciseIndex].rpe = Number(value) || undefined;
     } else {
        newExs[currentExerciseIndex].actualReps = value;
     }
@@ -118,7 +141,7 @@ export function ActiveWorkoutView({ day, workoutHistory, onComplete, onCancel }:
                     <span className="text-3xl font-black font-mono">{currentExercise.sets}</span>
                   </div>
                   <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex flex-col items-center">
-                    <span className="text-xs uppercase tracking-widest opacity-50 mb-1">Mercas</span>
+                    <span className="text-xs uppercase tracking-widest opacity-50 mb-1">Reps</span>
                     <span className="text-3xl font-black font-mono">{currentExercise.reps}</span>
                   </div>
                </div>
@@ -126,8 +149,8 @@ export function ActiveWorkoutView({ day, workoutHistory, onComplete, onCancel }:
                {/* Logging inputs */}
                <div className="bg-white/5 p-6 rounded-3xl border border-white/10 mb-8 max-w-sm mx-auto shadow-2xl">
                  <p className="text-xs uppercase tracking-widest text-brand-magenta font-bold mb-4">Meta a Bater (Última vez: {prevWeight}kg x {prevReps})</p>
-                 <div className="flex gap-4">
-                   <div className="flex-1">
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                   <div>
                      <label className="block text-[10px] uppercase opacity-50 mb-1 font-bold tracking-widest">Carga (kg)</label>
                      <input 
                        type="number" 
@@ -137,7 +160,7 @@ export function ActiveWorkoutView({ day, workoutHistory, onComplete, onCancel }:
                        placeholder={prevWeight}
                      />
                    </div>
-                   <div className="flex-1">
+                   <div>
                      <label className="block text-[10px] uppercase opacity-50 mb-1 font-bold tracking-widest">Reps Feitas</label>
                      <input 
                        type="text" 
@@ -145,6 +168,18 @@ export function ActiveWorkoutView({ day, workoutHistory, onComplete, onCancel }:
                        onChange={e => updateCurrentData('actualReps', e.target.value)}
                        className="w-full bg-black/50 border border-white/20 p-4 text-center font-mono text-xl rounded-xl focus:border-brand-neon outline-none transition-colors"
                        placeholder={currentExercise.reps}
+                     />
+                   </div>
+                   <div>
+                     <label className="block text-[10px] uppercase opacity-50 mb-1 font-bold tracking-widest">RPE</label>
+                     <input 
+                       type="number"
+                       min={1}
+                       max={10}
+                       value={currentExercise.rpe || ''}
+                       onChange={e => updateCurrentData('rpe', e.target.value)}
+                       className="w-full bg-black/50 border border-white/20 p-4 text-center font-mono text-xl rounded-xl focus:border-brand-magenta outline-none transition-colors"
+                       placeholder="8"
                      />
                    </div>
                  </div>

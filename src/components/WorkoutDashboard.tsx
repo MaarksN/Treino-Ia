@@ -1,30 +1,248 @@
-import React, { useState, useMemo } from 'react';
-import { WorkoutPlan, Exercise, WorkoutDay, WorkoutFeedback, WorkoutHistoryRecord } from '../types';
-import { Target, RotateCcw, PlusCircle, Calendar, History, ChevronDown, Download, Printer, FileJson, FileText, CheckCircle2, TrendingUp, Play } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Exercise,
+  RecoveryCheckin,
+  UserProfile,
+  WorkoutDay,
+  WorkoutFeedback,
+  WorkoutHistoryRecord,
+  WorkoutPlan,
+  WorkoutSession,
+} from '../types';
+import { Target, PlusCircle, History, ChevronDown, Download, Printer, FileJson, FileText, CheckCircle2, Play, Brain, Activity, Flame, BarChart3 } from 'lucide-react';
 import { ExerciseCard } from './ExerciseCard';
 import { CheckInModule } from './CheckInModule';
 import { NutritionModule } from './NutritionModule';
 import { ActiveWorkoutView } from './ActiveWorkoutView';
+import { RestTimer } from './RestTimer';
+import { CoachChat } from './CoachChat';
+import { ProgressCharts } from './ProgressCharts';
+import { WeeklyReportCard } from './WeeklyReportCard';
+import { ReadinessCard } from './ReadinessCard';
+import { WeeklyInsightsCard } from './WeeklyInsightsCard';
+import {
+  adaptWeeklyPlan,
+  adjustBySleepAndStress,
+  adjustWorkoutForAvailableTime,
+  adjustWorkoutForRecovery,
+  generateAdvancedWorkoutPlan,
+  generateDayVariations,
+  generateDeloadAdvice,
+  generateLoadProgressionAdvice,
+  generateMacrocycle,
+  generateMicrocycles,
+  generatePremiumPostWorkoutFeedback,
+  predictPlateau,
+  recommendIdealFrequency,
+  recommendWeeklyVolume,
+  suggestAdvancedMethods,
+  suggestExerciseAlternatives as suggestContextualExerciseAlternatives,
+} from '../services/aiPersonalizationService';
+import { getRecoveryScore } from '../services/recoveryService';
+import { getTrackedExerciseNames } from '../services/analyticsService';
+import { detectPlateau, parseFirstNumber, shouldSuggestDeload } from '../utils/workoutMetrics';
+import { getJSON, STORAGE_KEYS, updateWorkoutStreak, WorkoutStreak } from '../utils/storage';
 
 interface Props {
   plan: WorkoutPlan;
   history: WorkoutPlan[];
   workoutHistory: WorkoutHistoryRecord[];
+  sessions: WorkoutSession[];
+  profile: UserProfile | null;
+  recoveryCheckin: RecoveryCheckin | null;
   onUpdatePlan: (updatedPlan: WorkoutPlan) => void;
+  onSaveSession: (session: WorkoutSession) => void;
+  onSaveRecoveryCheckin: (checkin: RecoveryCheckin) => void;
   onSelectHistory: (id: string) => void;
   onNew: () => void;
   onCompleteDay: (record: WorkoutHistoryRecord) => void;
-  userProfile?: any;
+  userProfile?: UserProfile;
 }
 
-export function WorkoutDashboard({ plan, history, workoutHistory, onUpdatePlan, onSelectHistory, onNew, onCompleteDay, userProfile }: Props) {
+const parseRestToSeconds = (rest: string) => {
+  const match = rest.match(/\d+/);
+  return match ? Number(match[0]) : 90;
+};
+
+const RECOVERY_FIELDS = [
+  { key: 'sorenessLevel', label: 'Dor' },
+  { key: 'stressLevel', label: 'Stress' },
+  { key: 'energyLevel', label: 'Energia' },
+] as const;
+
+function createDefaultReadiness(profile: UserProfile | null): RecoveryCheckin {
+  const parsedSleep = Number(profile?.sleepHours || 7);
+
+  return {
+    sleepHours: Number.isFinite(parsedSleep) ? parsedSleep : 7,
+    stressLevel: profile?.stressLevel === 'Alto' ? 8 : profile?.stressLevel === 'Baixo' ? 3 : 5,
+    sorenessLevel: 4,
+    energyLevel: 7,
+    timestamp: Date.now(),
+  };
+}
+
+export function WorkoutDashboard({
+  plan,
+  history,
+  workoutHistory,
+  sessions,
+  profile,
+  recoveryCheckin: savedRecoveryCheckin,
+  onUpdatePlan,
+  onSaveSession,
+  onSaveRecoveryCheckin,
+  onSelectHistory,
+  onNew,
+  onCompleteDay,
+  userProfile,
+}: Props) {
   const [showHistory, setShowHistory] = useState(false);
   const [showExport, setShowExport] = useState(false);
+  const [restSeconds, setRestSeconds] = useState(90);
+  const [timerKey, setTimerKey] = useState(0);
+  const [streak, setStreak] = useState<WorkoutStreak>(() =>
+    getJSON<WorkoutStreak>(STORAGE_KEYS.streak, { count: 0, lastDate: null })
+  );
+  const [selectedExerciseName, setSelectedExerciseName] = useState('');
+  const [dailyReadiness, setDailyReadiness] = useState<RecoveryCheckin>(() =>
+    savedRecoveryCheckin || createDefaultReadiness(profile)
+  );
+  const [recoveryAdvice, setRecoveryAdvice] = useState('');
+  const [loadingRecoveryAdvice, setLoadingRecoveryAdvice] = useState(false);
+  const [aiPanel, setAiPanel] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+
+  useEffect(() => {
+    if (savedRecoveryCheckin) {
+      setDailyReadiness(savedRecoveryCheckin);
+    }
+  }, [savedRecoveryCheckin]);
+
+  const exerciseOptions = useMemo(() => {
+    const tracked = getTrackedExerciseNames(history, workoutHistory);
+    if (tracked.length) return tracked;
+
+    return Array.from(new Set(plan.days.flatMap(day => day.exercises.map(ex => ex.name))));
+  }, [history, plan.days, workoutHistory]);
+
+  useEffect(() => {
+    if (!exerciseOptions.length) return;
+    if (!selectedExerciseName || !exerciseOptions.includes(selectedExerciseName)) {
+      setSelectedExerciseName(exerciseOptions[0]);
+    }
+  }, [exerciseOptions, selectedExerciseName]);
+
+  const recoveryScore = useMemo(() => getRecoveryScore(dailyReadiness), [dailyReadiness]);
+  const chartExerciseName = selectedExerciseName || exerciseOptions[0] || '';
+  const plateauStatus = chartExerciseName ? detectPlateau(history, chartExerciseName, workoutHistory) : null;
+  const deloadSuggested = shouldSuggestDeload(plan);
+
+  const getPreviousExerciseStat = (exerciseName: string) => {
+    for (let i = workoutHistory.length - 1; i >= 0; i--) {
+      const prevRec = workoutHistory[i];
+      const prevExc = prevRec.exercises.find(ex => ex.name.toLowerCase() === exerciseName.toLowerCase());
+      if (prevExc && (prevExc.actualWeight || prevExc.actualReps || prevExc.rpe)) {
+        return {
+          date: prevRec.date,
+          weight: prevExc.actualWeight,
+          reps: prevExc.actualReps,
+          rpe: prevExc.rpe,
+        };
+      }
+    }
+    return null;
+  };
 
   const handleUpdateExercise = (dayIndex: number, exerciseIndex: number, updatedExercise: Exercise) => {
     const newDays = [...plan.days];
     newDays[dayIndex].exercises[exerciseIndex] = updatedExercise;
     onUpdatePlan({ ...plan, days: newDays });
+  };
+
+  const handleExerciseUpdateWithRest = (
+    dayIndex: number,
+    exerciseIndex: number,
+    currentExercise: Exercise,
+    updatedExercise: Exercise
+  ) => {
+    const previousStat = getPreviousExerciseStat(currentExercise.name);
+    const isNewlyCompleted = !currentExercise.completed && Boolean(updatedExercise.completed);
+    const nextExercise: Exercise = isNewlyCompleted && previousStat
+      ? {
+          ...updatedExercise,
+          actualWeight: updatedExercise.actualWeight || previousStat.weight,
+          actualReps: updatedExercise.actualReps || previousStat.reps,
+          rpe: updatedExercise.rpe || previousStat.rpe,
+        }
+      : updatedExercise;
+
+    handleUpdateExercise(dayIndex, exerciseIndex, nextExercise);
+
+    if (isNewlyCompleted) {
+      setRestSeconds(parseRestToSeconds(updatedExercise.rest));
+      setTimerKey(Date.now());
+      setStreak(updateWorkoutStreak());
+    }
+  };
+
+  const handleRecoveryAdvice = async () => {
+    setLoadingRecoveryAdvice(true);
+    try {
+      const advice = await adjustWorkoutForRecovery(plan, dailyReadiness);
+      setRecoveryAdvice(advice);
+    } catch {
+      setRecoveryAdvice('Não consegui gerar o ajuste agora. Verifique a chave Gemini e tente novamente.');
+    } finally {
+      setLoadingRecoveryAdvice(false);
+    }
+  };
+
+  const runAiAction = async (action: () => Promise<string>) => {
+    setAiLoading(true);
+    try {
+      setAiPanel(await action());
+    } catch {
+      setAiPanel('Não consegui executar esta ação agora. Verifique a chave Gemini e tente novamente.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const buildSessionFromDay = (day: WorkoutDay, durationMinutes = 45): WorkoutSession => ({
+    id: crypto.randomUUID(),
+    planId: plan.id,
+    dayId: day.id,
+    completedAt: Date.now(),
+    durationMinutes,
+    readiness: dailyReadiness,
+    logs: day.exercises
+      .filter(ex => ex.completed || ex.actualWeight || ex.actualReps || ex.rpe || ex.feedback)
+      .map(ex => ({
+        exerciseId: ex.id,
+        exerciseName: ex.name,
+        date: Date.now(),
+        actualWeight: ex.actualWeight,
+        actualReps: ex.actualReps,
+        rpe: ex.rpe,
+        feedback: ex.feedback,
+        performanceNotes: ex.performanceNotes,
+      })),
+  });
+
+  const saveCurrentSession = (dayIndex = 0) => {
+    const day = plan.days[dayIndex];
+    if (!day) return null;
+
+    const session = buildSessionFromDay(day);
+    onSaveSession(session);
+    return session;
+  };
+
+  const handleSaveReadiness = () => {
+    const updated = { ...dailyReadiness, timestamp: Date.now() };
+    setDailyReadiness(updated);
+    onSaveRecoveryCheckin(updated);
   };
 
   const handleUpdateDayFeedback = (dayIndex: number, feedback: WorkoutFeedback) => {
@@ -38,12 +256,7 @@ export function WorkoutDashboard({ plan, history, workoutHistory, onUpdatePlan, 
     let volumeLoad = 0;
     day.exercises.forEach(exc => {
       const weight = exc.actualWeight || 0;
-      let reps = 0;
-      if (exc.actualReps) {
-         reps = parseInt(exc.actualReps.replace(/[^0-9]/g, ''), 10) || 0;
-      } else {
-         reps = parseInt(exc.reps.replace(/[^0-9]/g, ''), 10) || 0;
-      }
+      const reps = parseFirstNumber(exc.actualReps || exc.reps);
       volumeLoad += (weight * reps * exc.sets);
     });
 
@@ -59,6 +272,7 @@ export function WorkoutDashboard({ plan, history, workoutHistory, onUpdatePlan, 
       exercises: JSON.parse(JSON.stringify(day.exercises))
     };
     onCompleteDay(record);
+    onSaveSession(buildSessionFromDay(day, record.durationMinutes));
 
     // Reset day for next week
     const newDays = [...plan.days];
@@ -70,11 +284,13 @@ export function WorkoutDashboard({ plan, history, workoutHistory, onUpdatePlan, 
         completed: false,
         actualWeight: undefined,
         actualReps: undefined,
+        rpe: undefined,
         feedback: undefined,
         performanceNotes: undefined
       }))
     };
     onUpdatePlan({ ...plan, days: newDays });
+    setStreak(updateWorkoutStreak());
     
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -89,17 +305,19 @@ export function WorkoutDashboard({ plan, history, workoutHistory, onUpdatePlan, 
 
   const handleCompleteActiveWorkout = (completedDay: WorkoutDay) => {
     setActiveDayIndex(null);
-    onCompleteDay({
+    const record: WorkoutHistoryRecord = {
       id: Math.random().toString(36).substring(7),
       date: Date.now(),
       planId: plan.id,
       dayId: completedDay.id,
       dayName: completedDay.dayName,
       focus: completedDay.focus,
-      volumeLoad: completedDay.exercises.reduce((acc, exc) => acc + ((exc.actualWeight || 0) * parseInt(exc.actualReps || exc.reps) * exc.sets), 0),
+      volumeLoad: completedDay.exercises.reduce((acc, exc) => acc + ((exc.actualWeight || 0) * parseFirstNumber(exc.actualReps || exc.reps) * exc.sets), 0),
       durationMinutes: 45,
       exercises: completedDay.exercises
-    });
+    };
+    onCompleteDay(record);
+    onSaveSession(buildSessionFromDay(completedDay, record.durationMinutes));
 
     const newDays = [...plan.days];
     newDays[activeDayIndex!] = {
@@ -109,10 +327,14 @@ export function WorkoutDashboard({ plan, history, workoutHistory, onUpdatePlan, 
         ...e,
         completed: false,
         actualWeight: undefined,
-        actualReps: undefined
+        actualReps: undefined,
+        rpe: undefined,
+        feedback: undefined,
+        performanceNotes: undefined
       }))
     };
     onUpdatePlan({ ...plan, days: newDays });
+    setStreak(updateWorkoutStreak());
     window.scrollTo({ top: 0, behavior: 'smooth' });
     alert('TREINO CONCLUÍDO! XP ADICIONADO! 💪💀');
   };
@@ -179,7 +401,7 @@ export function WorkoutDashboard({ plan, history, workoutHistory, onUpdatePlan, 
               {plan.goalDescription}
             </p>
           </div>
-          {userProfile && <NutritionModule profile={userProfile} />}
+          {(userProfile || profile) && <NutritionModule profile={(userProfile || profile)!} />}
         </div>
         
         <div className="flex flex-col md:flex-row gap-3 mt-6 md:mt-0 relative print:hidden">
@@ -241,6 +463,219 @@ export function WorkoutDashboard({ plan, history, workoutHistory, onUpdatePlan, 
         </div>
       </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 print:hidden">
+        <div className="bg-brand-gray border-2 border-brand-light/10 p-5 shadow-brutal-light">
+          <div className="flex items-center gap-2 text-brand-magenta mb-3">
+            <Flame className="w-5 h-5" />
+            <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">Streak</h3>
+          </div>
+          <div className="font-display text-5xl text-brand-neon text-shadow-neon">{streak.count}</div>
+          <p className="font-mono text-xs uppercase text-brand-muted mt-2">
+            Último treino: {streak.lastDate ? new Date(streak.lastDate).toLocaleDateString('pt-BR') : 'ainda não registrado'}
+          </p>
+        </div>
+
+        <div className="bg-brand-gray border-2 border-brand-light/10 p-5 shadow-brutal-light">
+          <div className="flex items-center justify-between gap-4 mb-4">
+            <div className="flex items-center gap-2">
+              <Activity className="w-5 h-5 text-brand-neon" />
+              <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">Recuperação</h3>
+            </div>
+            <span className="font-mono text-sm text-brand-neon">{Math.round(recoveryScore.score)}/100</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <label className="text-[10px] uppercase font-bold text-brand-muted">
+              Sono
+              <input
+                type="number"
+                min={0}
+                max={12}
+                value={dailyReadiness.sleepHours}
+                onChange={event => setDailyReadiness(prev => ({ ...prev, sleepHours: Number(event.target.value) }))}
+                className="mt-1 w-full bg-brand-dark border-2 border-brand-light/10 px-3 py-2 text-brand-light font-mono outline-none focus:border-brand-neon"
+              />
+            </label>
+            {RECOVERY_FIELDS.map(({ key, label }) => (
+              <label key={key} className="text-[10px] uppercase font-bold text-brand-muted">
+                {label}: {dailyReadiness[key]}
+                <input
+                  type="range"
+                  min={1}
+                  max={10}
+                  value={dailyReadiness[key]}
+                  onChange={event => setDailyReadiness(prev => ({ ...prev, [key]: Number(event.target.value) }))}
+                  className="mt-2 w-full accent-brand-neon"
+                />
+              </label>
+            ))}
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={handleSaveReadiness}
+              className="bg-brand-light/10 text-brand-light border-2 border-brand-light/20 py-2 font-black uppercase tracking-widest text-xs hover:border-brand-neon hover:text-brand-neon transition-colors"
+            >
+              Salvar prontidão
+            </button>
+            <button
+              type="button"
+              onClick={handleRecoveryAdvice}
+              disabled={loadingRecoveryAdvice}
+              className="bg-brand-neon text-brand-dark border-brutal py-2 font-black uppercase tracking-widest text-xs disabled:opacity-50"
+            >
+              Ajustar hoje
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-brand-gray border-2 border-brand-light/10 p-5 shadow-brutal-light">
+          <div className="flex items-center gap-2 mb-3">
+            <Brain className="w-5 h-5 text-brand-neon" />
+            <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">Sinais IA</h3>
+          </div>
+          <div className="space-y-3 font-mono text-sm">
+            <div className={`border-l-2 pl-3 ${deloadSuggested ? 'border-brand-magenta text-brand-magenta' : 'border-brand-neon text-brand-light/80'}`}>
+              {deloadSuggested ? 'Sinais de fadiga detectados. Considere deload.' : 'Deload não indicado pelos dados atuais.'}
+            </div>
+            {plateauStatus && (
+              <div className={`border-l-2 pl-3 ${plateauStatus.plateau ? 'border-brand-magenta text-brand-magenta' : 'border-brand-neon text-brand-light/80'}`}>
+                {chartExerciseName}: {plateauStatus.reason}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {(loadingRecoveryAdvice || recoveryAdvice) && (
+        <div className="mb-8 bg-brand-dark border-2 border-brand-neon p-5 shadow-brutal-neon whitespace-pre-wrap font-mono text-sm text-brand-light print:hidden">
+          {loadingRecoveryAdvice ? 'Gerando ajuste...' : recoveryAdvice}
+        </div>
+      )}
+
+      <div className="mb-12 print:hidden">
+        <div className="grid md:grid-cols-3 gap-3 mb-4">
+          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => profile && runAiAction(() => generateAdvancedWorkoutPlan(profile, sessions))}>
+            Anamnese avançada
+          </button>
+          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => runAiAction(() => adaptWeeklyPlan(plan, sessions))}>
+            Adaptação semanal
+          </button>
+          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => runAiAction(() => generateLoadProgressionAdvice(plan, sessions))}>
+            Progressão de carga
+          </button>
+          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => runAiAction(() => predictPlateau(plan, sessions))}>
+            Predição de platô
+          </button>
+          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => runAiAction(() => generateDeloadAdvice(plan, sessions))}>
+            Deload inteligente
+          </button>
+          <button
+            className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors"
+            onClick={() => runAiAction(() => {
+              const firstExercise = plan.days.flatMap(day => day.exercises)[0]?.name || 'exercício principal';
+              return suggestContextualExerciseAlternatives(
+                firstExercise,
+                profile?.equipment || profile?.gymType || profile?.workoutLocation || '',
+                profile?.injuries || ''
+              );
+            })}
+          >
+            Substituições
+          </button>
+          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => profile && runAiAction(() => recommendWeeklyVolume(profile))}>
+            Volume semanal
+          </button>
+          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => runAiAction(() => adjustWorkoutForAvailableTime(plan, 45))}>
+            Ajustar para 45 min
+          </button>
+          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => runAiAction(() => adjustWorkoutForRecovery(plan, dailyReadiness))}>
+            Ajustar por recuperação
+          </button>
+          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => profile && runAiAction(async () => JSON.stringify(await generateMacrocycle(profile), null, 2))}>
+            Macrociclo anual
+          </button>
+          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => profile && runAiAction(async () => JSON.stringify(await generateMicrocycles(profile, profile.goal), null, 2))}>
+            Microciclos
+          </button>
+          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => profile && runAiAction(() => suggestAdvancedMethods(profile))}>
+            Métodos avançados
+          </button>
+          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => profile && runAiAction(() => recommendIdealFrequency(profile))}>
+            Frequência ideal
+          </button>
+          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => runAiAction(() => adjustBySleepAndStress(plan, profile?.sleepHours || String(dailyReadiness.sleepHours), profile?.stressLevel || 'Médio'))}>
+            Sono/estresse
+          </button>
+          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => runAiAction(() => generateDayVariations(plan, 'Hoje estou cansado, sem muito tempo e com academia cheia.'))}>
+            Variações do dia
+          </button>
+          <button
+            className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors"
+            onClick={() => runAiAction(async () => {
+              const session = sessions[sessions.length - 1] || saveCurrentSession(0);
+              if (!session) return 'Sem sessão disponível para análise.';
+              return JSON.stringify(await generatePremiumPostWorkoutFeedback(session, plan), null, 2);
+            })}
+          >
+            Devolutiva pós-treino
+          </button>
+        </div>
+
+        <div className="bg-brand-gray border-2 border-brand-light/10 p-5 shadow-brutal-light">
+          <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light mb-2">Painel de IA</h3>
+          <div className="text-sm text-brand-light/80 whitespace-pre-wrap font-mono">
+            {aiLoading ? 'Analisando...' : aiPanel || (profile ? 'Escolha uma ação acima.' : 'Complete a anamnese para liberar todas as ações de perfil.')}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12 print:hidden">
+        {profile ? <CoachChat profile={profile} plan={plan} sessions={sessions} /> : <ReadinessCard checkin={dailyReadiness} />}
+        <WeeklyReportCard plans={history} workoutHistory={workoutHistory} />
+        <div>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-brand-neon" />
+              <span className="font-mono text-xs uppercase tracking-widest text-brand-muted">Histórico de carga</span>
+            </div>
+            {exerciseOptions.length > 0 && (
+              <select
+                value={chartExerciseName}
+                onChange={event => setSelectedExerciseName(event.target.value)}
+                className="bg-brand-gray border-2 border-brand-light/10 text-brand-light text-xs font-mono px-3 py-2 outline-none focus:border-brand-neon max-w-[220px]"
+              >
+                {exerciseOptions.map(name => (
+                  <option key={name} value={name}>{name}</option>
+                ))}
+              </select>
+            )}
+          </div>
+          {chartExerciseName && (
+            <ProgressCharts plans={history} workoutHistory={workoutHistory} exerciseName={chartExerciseName} />
+          )}
+        </div>
+        <div className="bg-brand-gray border-2 border-brand-light/10 p-5 shadow-brutal-light">
+          <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light mb-3">Recuperação aplicada</h3>
+          <p className="font-mono text-sm text-brand-light/80">
+            Estado atual: <span className="text-brand-neon">{recoveryScore.label}</span>. Use o ajuste do dia para reduzir volume, manter progressão ou avançar com prudência.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6 mb-12 print:hidden">
+        <ReadinessCard checkin={dailyReadiness} />
+        {profile ? (
+          <WeeklyInsightsCard profile={profile} sessions={sessions} />
+        ) : (
+          <div className="bg-brand-gray border-2 border-brand-light/10 p-5 shadow-brutal-light">
+            <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light mb-2">Insights da semana</h3>
+            <p className="text-brand-muted text-sm font-mono">Complete a anamnese para gerar insights personalizados.</p>
+          </div>
+        )}
+      </div>
+
       {allDaysCompleted && (
         <div className="mb-12 bg-brand-neon/10 border-2 border-brand-neon p-6 md:p-8 rounded-3xl shadow-brutal-neon flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative">
            <div className="absolute top-0 right-0 w-64 h-64 bg-brand-neon/10 blur-3xl rounded-full pointer-events-none"></div>
@@ -299,15 +734,7 @@ export function WorkoutDashboard({ plan, history, workoutHistory, onUpdatePlan, 
               {/* Exercises Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {day.exercises.map((exc, excIndex) => {
-                  let previousStat = null;
-                  for (let i = workoutHistory.length - 1; i >= 0; i--) {
-                    const prevRec = workoutHistory[i];
-                    const prevExc = prevRec.exercises.find(e => e.name === exc.name);
-                    if (prevExc && (prevExc.actualWeight || prevExc.actualReps)) {
-                      previousStat = { date: prevRec.date, weight: prevExc.actualWeight, reps: prevExc.actualReps };
-                      break;
-                    }
-                  }
+                  const previousStat = getPreviousExerciseStat(exc.name);
 
                   return (
                   <ExerciseCard 
@@ -315,8 +742,9 @@ export function WorkoutDashboard({ plan, history, workoutHistory, onUpdatePlan, 
                     exercise={exc} 
                     history={history}
                     workoutHistory={workoutHistory}
+                    userProfile={userProfile || profile || undefined}
                     previousStat={previousStat}
-                    onUpdate={(updated) => handleUpdateExercise(dayIndex, excIndex, updated)} 
+                    onUpdate={(updated) => handleExerciseUpdateWithRest(dayIndex, excIndex, exc, updated)} 
                   />
                 )})}
               </div>
@@ -369,7 +797,17 @@ export function WorkoutDashboard({ plan, history, workoutHistory, onUpdatePlan, 
                     />
                   </div>
                   
-                  <div className="mt-8 flex justify-end">
+                  <div className="mt-8 flex flex-col md:flex-row justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        saveCurrentSession(dayIndex);
+                        alert('Sessão salva para a IA.');
+                      }}
+                      className="px-6 py-4 bg-brand-light/10 text-brand-light font-black font-display uppercase tracking-widest text-lg border-2 border-brand-light/20 hover:border-brand-neon hover:text-brand-neon transition-colors"
+                    >
+                      SALVAR SESSÃO PARA IA
+                    </button>
                     <button 
                       onClick={() => handleFinishWorkout(dayIndex)}
                       className="px-8 py-4 bg-brand-neon text-brand-dark font-black font-display uppercase tracking-widest text-xl shadow-lg border-2 border-brand-neon hover:bg-brand-neon-hover hover:scale-105 transition-transform"
@@ -383,6 +821,7 @@ export function WorkoutDashboard({ plan, history, workoutHistory, onUpdatePlan, 
           </div>
         )})}
       </div>
+      <RestTimer initialSeconds={restSeconds} autoStartKey={timerKey} />
     </div>
   );
 }

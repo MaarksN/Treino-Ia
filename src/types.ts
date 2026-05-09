@@ -13,6 +13,7 @@ export interface User {
   avatarUrl?: string;
   notificationsEnabled?: boolean;
   gamification?: GamificationData;
+  profile?: UserProfile;
 }
 
 export interface UserProfile {
@@ -20,14 +21,23 @@ export interface UserProfile {
   gender: string;
   weight: number;
   height: number;
+  bodyFatPercent?: number;
   experienceLevel: string;
   goal: string;
+  secondaryGoal?: string;
   daysPerWeek: number;
-  injuries: string;
-  timePerWorkout: number;
-  workoutLocation: string;
-  secondaryFocus?: string;
+  sessionDuration?: string;
   preferredTime?: string;
+  injuries: string;
+  equipment?: string;
+  gymType?: string;
+  sleepHours?: string;
+  stressLevel?: string;
+  preferredMethods?: string[];
+  weakPoints?: string;
+  timePerWorkout?: number;
+  workoutLocation?: string;
+  secondaryFocus?: string;
 }
 
 export type ExerciseFeedback = 'easy' | 'hard' | 'painful' | 'good' | null;
@@ -38,6 +48,7 @@ export interface Exercise {
   sets: number;
   reps: string;
   rest: string;
+  videoUrl?: string;
   executionDetails?: string;
   concentricPhase?: string;
   eccentricPhase?: string;
@@ -47,6 +58,71 @@ export interface Exercise {
   actualWeight?: number;
   actualReps?: string;
   performanceNotes?: string;
+  rpe?: number;
+}
+
+export interface RecoveryCheckin {
+  sleepHours: number;
+  stressLevel: number;
+  sorenessLevel: number;
+  energyLevel: number;
+  timestamp: number;
+}
+
+export interface ExerciseLog {
+  exerciseId?: string;
+  exerciseName: string;
+  date: number;
+  actualWeight?: number;
+  actualReps?: string;
+  rpe?: number;
+  feedback?: ExerciseFeedback;
+  performanceNotes?: string;
+}
+
+export interface WorkoutSession {
+  id: string;
+  planId: string;
+  dayId: string;
+  completedAt: number;
+  durationMinutes?: number;
+  logs: ExerciseLog[];
+  readiness?: RecoveryCheckin;
+}
+
+export interface WeeklyInsight {
+  title: string;
+  description: string;
+  severity: 'good' | 'warning' | 'critical' | 'info';
+}
+
+export interface MacrocyclePhase {
+  name: string;
+  objective: string;
+  durationWeeks: number;
+  intensity: string;
+  volume: string;
+}
+
+export interface Microcycle {
+  week: number;
+  focus: string;
+  notes: string;
+}
+
+export interface AiCoachMessage {
+  role: 'user' | 'assistant';
+  text: string;
+  createdAt: number;
+}
+
+export interface AiFeedback {
+  overallAssessment: string;
+  strengths: string[];
+  improvements: string[];
+  nextStepTips: string[];
+  motivationalNote: string;
+  progressIndicator: number;
 }
 
 export interface WorkoutFeedback {
