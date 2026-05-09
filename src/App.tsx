@@ -5,8 +5,15 @@ import { RegistrationForm } from './components/RegistrationForm';
 import { HomeMenu } from './components/HomeMenu';
 import { ImportWorkoutView } from './components/ImportWorkoutView';
 import { ActiveWorkoutView } from './components/ActiveWorkoutView';
+import { DailyCheckinForm } from './components/DailyCheckin';
+import { ReadinessIndex } from './components/ReadinessIndex';
+import { RecoveryProtocol } from './components/RecoveryProtocol';
+import { InjuryTracker } from './components/InjuryTracker';
+import { NutritionPanel } from './components/NutritionPanel';
+import { BodyCompositionTracker } from './components/BodyCompositionTracker';
 import { generateWorkoutPlan, extractWorkoutFromFile } from './services/geminiService';
-import { RecoveryCheckin, User, UserProfile, WorkoutHistoryRecord, WorkoutPlan, WorkoutSession } from './types';
+import { DailyCheckin as DailyCheckinType, RecoveryCheckin, User, UserProfile, WorkoutHistoryRecord, WorkoutPlan, WorkoutSession } from './types';
+import { getTodayCheckin, loadCheckins } from './utils/readinessUtils';
 import { Activity, Dumbbell, Globe2, Moon, Sun } from 'lucide-react';
 
 type ViewState = 'loading' | 'registration' | 'home' | 'anamnesis' | 'import' | 'dashboard' | 'active-workout' | 'global_feed';
@@ -29,6 +36,8 @@ export default function App() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [recoveryCheckin, setRecoveryCheckin] = useState<RecoveryCheckin | null>(null);
+  const [todayCheckin, setTodayCheckin] = useState<DailyCheckinType | null>(() => getTodayCheckin());
+  const [allCheckins, setAllCheckins] = useState<DailyCheckinType[]>(() => loadCheckins());
   const [darkMode, setDarkMode] = useState(true);
   const [language, setLanguage] = useState<'PT' | 'EN'>('PT');
   const [voiceEnabled, setVoiceEnabled] = useState(false);
@@ -187,6 +196,11 @@ export default function App() {
     localStorage.setItem('@TreinoApp:recovery', JSON.stringify(checkin));
   };
 
+  const handleSaveCheckin = (checkin: DailyCheckinType) => {
+    setTodayCheckin(checkin);
+    setAllCheckins(loadCheckins());
+  };
+
   const handleCompleteDay = (record: WorkoutHistoryRecord) => {
     const newHistory = [...workoutHistory, record];
     setWorkoutHistory(newHistory);
@@ -219,6 +233,9 @@ export default function App() {
       handleRegister(updatedUser);
     }
   };
+
+  const activeProfile = profile || user?.profile || null;
+  const currentPlan = currentPlanId ? plans.find(p => p.id === currentPlanId) || null : null;
 
   if (view === 'loading') {
     return (
@@ -335,15 +352,15 @@ export default function App() {
         </div>
       )}
 
-      {view === 'dashboard' && currentPlanId && (
+      {view === 'dashboard' && currentPlan && (
         <WorkoutDashboard 
-          plan={plans.find(p => p.id === currentPlanId)!} 
+          plan={currentPlan} 
           history={plans}
           workoutHistory={workoutHistory}
           sessions={sessions}
-          profile={profile || user?.profile || null}
+          profile={activeProfile}
           recoveryCheckin={recoveryCheckin}
-          userProfile={profile || user?.profile}
+          userProfile={activeProfile || undefined}
           onUpdatePlan={handleUpdatePlan}
           onSaveSession={handleSaveSession}
           onSaveRecoveryCheckin={handleSaveRecoveryCheckin}
@@ -354,12 +371,33 @@ export default function App() {
           onStartActiveWorkout={() => setView('active-workout')}
           voiceEnabled={voiceEnabled}
           onVoiceEnabledChange={setVoiceEnabled}
+          dailyCheckin={todayCheckin}
+          allDailyCheckins={allCheckins}
         />
       )}
 
-      {view === 'active-workout' && currentPlanId && (
+      {view === 'dashboard' && currentPlan && activeProfile && (
+        <div className="max-w-5xl mx-auto mt-8 space-y-6 print:hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <DailyCheckinForm existing={todayCheckin} onSave={handleSaveCheckin} />
+            <ReadinessIndex checkin={todayCheckin} allCheckins={allCheckins} />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <RecoveryProtocol plan={currentPlan} checkin={todayCheckin} allCheckins={allCheckins} profile={activeProfile} />
+            <InjuryTracker />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <NutritionPanel profile={activeProfile} />
+            <BodyCompositionTracker />
+          </div>
+        </div>
+      )}
+
+      {view === 'active-workout' && currentPlan && (
         <ActiveWorkoutView
-          plan={plans.find(p => p.id === currentPlanId)!}
+          plan={currentPlan}
           onClose={() => setView('dashboard')}
           onUpdatePlan={handleUpdatePlan}
           voiceEnabled={voiceEnabled}
