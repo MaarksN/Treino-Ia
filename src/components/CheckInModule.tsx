@@ -32,7 +32,29 @@ export function CheckInModule() {
   const connectDevice = async () => {
     setStatusMsg('Conectando Wearable...');
     try {
-      const device = await navigator.bluetooth.requestDevice({
+      const bluetooth = (navigator as Navigator & {
+        bluetooth?: {
+          requestDevice: (options: { filters: Array<{ services: string[] }> }) => Promise<{
+            gatt?: {
+              connect: () => Promise<{
+                getPrimaryService: (service: string) => Promise<{
+                  getCharacteristic: (characteristic: string) => Promise<EventTarget & {
+                    startNotifications: () => Promise<void>;
+                  }>;
+                }>;
+              }>;
+            };
+          }>;
+        };
+      }).bluetooth;
+
+      if (!bluetooth) {
+        setStatusMsg('Bluetooth não suportado neste navegador.');
+        setTimeout(() => setStatusMsg(''), 4000);
+        return;
+      }
+
+      const device = await bluetooth.requestDevice({
         filters: [{ services: ['heart_rate'] }]
       });
       const server = await device.gatt?.connect();

@@ -1,10 +1,12 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { Exercise, WorkoutPlan, UserProfile, WorkoutHistoryRecord } from '../types';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { Exercise, PersonalRecord, WorkoutPlan, UserProfile, WorkoutHistoryRecord } from '../types';
 import { Dumbbell, Flame, Clock, CheckCircle, Edit2, Save, X, ThumbsUp, ThumbsDown, AlertTriangle, TrendingUp, Smile, Play, Pause, RotateCcw, Zap, ChevronDown, ChevronUp, Video, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LineChart, Line, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 import { suggestExerciseAlternatives, suggestExerciseVariations } from '../services/geminiService';
 import { findExerciseLibraryEntry } from '../data/exerciseLibrary';
+import { getPRForExercise } from '../utils/prUtils';
+import { SetTracker } from './SetTracker';
 
 interface Props {
   exercise: Exercise;
@@ -12,10 +14,12 @@ interface Props {
   workoutHistory?: WorkoutHistoryRecord[];
   userProfile?: UserProfile;
   previousStat?: { date: number, weight?: number, reps?: string, rpe?: number };
+  previousData?: Exercise | null;
+  previousPR?: PersonalRecord | null;
   onUpdate: (updated: Exercise) => void;
 }
 
-export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistory, userProfile, previousStat, onUpdate }) => {
+export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistory, userProfile, previousStat, previousData, previousPR, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState(exercise);
   const libraryEntry = useMemo(() => findExerciseLibraryEntry(exercise.name), [exercise.name]);
@@ -23,6 +27,7 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
     exercise.videoUrl ||
     libraryEntry?.videoUrl ||
     `https://www.youtube.com/results?search_query=${encodeURIComponent(exercise.name + ' execução correta')}`;
+  const pr = useMemo(() => previousPR || getPRForExercise(exercise.name), [exercise.name, previousPR]);
   
   // Variations State
   const [showVariations, setShowVariations] = useState(false);
@@ -32,6 +37,8 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
   // Timer State
   const [timerMode, setTimerMode] = useState<'idle' | 'work' | 'rest'>('idle');
   const [time, setTime] = useState(0);
+  const [swipeX, setSwipeX] = useState(0);
+  const touchStart = useRef(0);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -145,6 +152,22 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
     }
   };
 
+  const onTouchStart = (event: React.TouchEvent) => {
+    touchStart.current = event.touches[0].clientX;
+  };
+
+  const onTouchMove = (event: React.TouchEvent) => {
+    const delta = event.touches[0].clientX - touchStart.current;
+    if (delta > 0) setSwipeX(Math.min(delta, 100));
+  };
+
+  const onTouchEnd = () => {
+    if (swipeX > 60) {
+      toggleComplete();
+    }
+    setSwipeX(0);
+  };
+
   const FeedbackButton = ({ type, icon: Icon, label, activeColor }: { type: Exercise['feedback'], icon: any, label: string, activeColor: string }) => {
     const isActive = exercise.feedback === type;
     return (
@@ -226,6 +249,10 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
           toggleComplete();
         }
       }}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      style={{ transform: `translateX(${swipeX}px)`, transition: swipeX === 0 ? 'transform 0.3s' : 'none' }}
       initial={false}
       animate={{ 
         borderColor: exercise.completed ? '#ccff00' : 'rgba(255,255,255,0.2)',
@@ -242,10 +269,21 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
         </div>
       )}
 
+      {swipeX > 30 && (
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-neon font-black text-xs uppercase tracking-widest pointer-events-none z-20">
+          Concluir
+        </div>
+      )}
+
       <div className="mb-4">
         <div className="flex items-start justify-between mb-1">
           <div className="max-w-[70%]">
             <h3 className="font-display font-black text-2xl uppercase tracking-tight leading-tight text-brand-light relative z-10">{exercise.name}</h3>
+            {pr && (
+              <div className="mt-1 text-[10px] uppercase tracking-widest text-yellow-400 font-black">
+                PR: {pr.weight}kg x {pr.reps} reps
+              </div>
+            )}
             <a 
               href={executionVideoUrl}
               target="_blank" rel="noopener noreferrer"
@@ -370,6 +408,25 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
               </button>
             </div>
           )}
+
+          {previousData && (
+            <div className="mb-4 p-3 bg-brand-light/5 border-2 border-brand-light/10 text-xs text-brand-muted">
+              <span className="text-brand-light/60 font-bold uppercase">Ultima vez:</span>{' '}
+              {previousData.actualWeight ? `${previousData.actualWeight}kg` : '-'} x {previousData.actualReps || '-'}
+              <button
+                type="button"
+                className="ml-3 text-brand-neon font-bold uppercase hover:text-brand-light transition-colors"
+                onClick={() => onUpdate({
+                  ...exercise,
+                  actualWeight: previousData.actualWeight,
+                  actualReps: previousData.actualReps,
+                  setLogs: previousData.setLogs,
+                })}
+              >
+                Usar como base
+              </button>
+            </div>
+          )}
           
           {chartData.length > 0 && (
             <div className="mb-4 h-24 w-full relative group">
@@ -420,6 +477,21 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
                 className="w-full bg-brand-dark border-2 border-brand-light/20 px-3 py-2 text-sm font-mono text-brand-magenta outline-none focus:border-brand-magenta focus:shadow-brutal-magenta transition-all"
               />
             </div>
+          </div>
+
+          <div className="mb-4 bg-brand-gray/40 border-2 border-brand-light/10 p-3">
+            <SetTracker exercise={exercise} onUpdate={onUpdate} />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-[10px] uppercase text-brand-muted mb-1 font-bold">Nota rápida do exercício</label>
+            <textarea
+              value={exercise.performanceNotes || ''}
+              onChange={e => onUpdate({ ...exercise, performanceNotes: e.target.value })}
+              placeholder="Ex.: cotovelo incomodou, manter carga, melhorar amplitude..."
+              rows={2}
+              className="w-full bg-brand-dark border-2 border-brand-light/20 px-3 py-2 text-sm text-brand-light outline-none resize-none placeholder:text-brand-light/30 focus:border-brand-neon transition-colors"
+            />
           </div>
 
           <div className="mb-4">

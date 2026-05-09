@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { WorkoutHistoryRecord, WorkoutPlan } from '../types';
-import { generateWeeklyReport } from '../services/geminiService';
+import { generateWorkoutHistoryReport } from '../services/geminiService';
 import { Sparkles, Activity, AlertTriangle, RefreshCw } from 'lucide-react';
 import Markdown from 'react-markdown';
 
@@ -19,7 +19,7 @@ export function WeeklyReportModule({ plan, workoutHistory, onGenerateNextWeek, o
     let mounted = true;
     const fetchReport = async () => {
       try {
-        const text = await generateWeeklyReport(workoutHistory);
+        const text = await generateWorkoutHistoryReport(workoutHistory);
         if (mounted) setReport(text);
       } catch (e) {
         if (mounted) setReport("Erro ao gerar relatório com a IA. Recarregue os sistemas de inteligência.");

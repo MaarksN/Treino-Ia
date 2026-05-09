@@ -9,7 +9,7 @@ import {
   WorkoutPlan,
   WorkoutSession,
 } from '../types';
-import { Target, PlusCircle, History, ChevronDown, Download, Printer, FileJson, FileText, CheckCircle2, Play, Brain, Activity, Flame, BarChart3 } from 'lucide-react';
+import { Target, PlusCircle, History, ChevronDown, Download, Printer, FileJson, FileText, CheckCircle2, Play, Brain, Activity, Flame, BarChart3, BookOpen, Volume2, VolumeX } from 'lucide-react';
 import { ExerciseCard } from './ExerciseCard';
 import { CheckInModule } from './CheckInModule';
 import { NutritionModule } from './NutritionModule';
@@ -20,6 +20,9 @@ import { ProgressCharts } from './ProgressCharts';
 import { WeeklyReportCard } from './WeeklyReportCard';
 import { ReadinessCard } from './ReadinessCard';
 import { WeeklyInsightsCard } from './WeeklyInsightsCard';
+import { ExerciseLibraryModal } from './ExerciseLibraryModal';
+import { QuickWorkoutCard } from './QuickWorkoutCard';
+import { generateQuickWorkout } from '../services/geminiService';
 import {
   adaptWeeklyPlan,
   adjustBySleepAndStress,
@@ -42,6 +45,7 @@ import { getRecoveryScore } from '../services/recoveryService';
 import { getTrackedExerciseNames } from '../services/analyticsService';
 import { detectPlateau, parseFirstNumber, shouldSuggestDeload } from '../utils/workoutMetrics';
 import { getJSON, STORAGE_KEYS, updateWorkoutStreak, WorkoutStreak } from '../utils/storage';
+import { extractAndSavePRsFromPlan, getPRForExercise } from '../utils/prUtils';
 
 interface Props {
   plan: WorkoutPlan;
@@ -56,6 +60,10 @@ interface Props {
   onSelectHistory: (id: string) => void;
   onNew: () => void;
   onCompleteDay: (record: WorkoutHistoryRecord) => void;
+  onSaveNewPlan?: (plan: WorkoutPlan) => void;
+  onStartActiveWorkout?: () => void;
+  voiceEnabled?: boolean;
+  onVoiceEnabledChange?: (enabled: boolean) => void;
   userProfile?: UserProfile;
 }
 
@@ -95,12 +103,19 @@ export function WorkoutDashboard({
   onSelectHistory,
   onNew,
   onCompleteDay,
+  onSaveNewPlan,
+  onStartActiveWorkout,
+  voiceEnabled: controlledVoiceEnabled,
+  onVoiceEnabledChange,
   userProfile,
 }: Props) {
   const [showHistory, setShowHistory] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [restSeconds, setRestSeconds] = useState(90);
-  const [timerKey, setTimerKey] = useState(0);
+  const [timerKey, setTimerKey] = useState<number | undefined>(undefined);
+  const [localVoiceEnabled, setLocalVoiceEnabled] = useState(false);
+  const [showLibrary, setShowLibrary] = useState(false);
+  const [quickWorkoutLoading, setQuickWorkoutLoading] = useState(false);
   const [streak, setStreak] = useState<WorkoutStreak>(() =>
     getJSON<WorkoutStreak>(STORAGE_KEYS.streak, { count: 0, lastDate: null })
   );
@@ -112,6 +127,12 @@ export function WorkoutDashboard({
   const [loadingRecoveryAdvice, setLoadingRecoveryAdvice] = useState(false);
   const [aiPanel, setAiPanel] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
+  const voiceEnabled = controlledVoiceEnabled ?? localVoiceEnabled;
+  const toggleVoiceEnabled = () => {
+    const next = !voiceEnabled;
+    setLocalVoiceEnabled(next);
+    onVoiceEnabledChange?.(next);
+  };
 
   useEffect(() => {
     if (savedRecoveryCheckin) {
@@ -151,6 +172,28 @@ export function WorkoutDashboard({
         };
       }
     }
+    return null;
+  };
+
+  const getPreviousExerciseData = (exerciseName: string): Exercise | null => {
+    for (let i = workoutHistory.length - 1; i >= 0; i--) {
+      const found = workoutHistory[i].exercises.find(ex =>
+        ex.name.toLowerCase() === exerciseName.toLowerCase() &&
+        (ex.actualWeight || ex.actualReps || ex.rpe || ex.setLogs?.length)
+      );
+      if (found) return found;
+    }
+
+    for (const historicPlan of history.filter(item => item.id !== plan.id)) {
+      const found = historicPlan.days
+        .flatMap(day => day.exercises)
+        .find(ex =>
+          ex.name.toLowerCase() === exerciseName.toLowerCase() &&
+          (ex.actualWeight || ex.actualReps || ex.rpe || ex.setLogs?.length)
+        );
+      if (found) return found;
+    }
+
     return null;
   };
 
@@ -209,6 +252,30 @@ export function WorkoutDashboard({
     }
   };
 
+  const handleQuickWorkout = async (
+    type: 'express' | 'bodyweight' | 'equipment' | 'goal',
+    value?: string
+  ) => {
+    setQuickWorkoutLoading(true);
+    try {
+      const generated = await generateQuickWorkout(
+        type,
+        value || profile?.goal,
+        profile?.equipment || profile?.gymType || profile?.workoutLocation
+      );
+
+      if (onSaveNewPlan) {
+        onSaveNewPlan(generated);
+      } else {
+        onUpdatePlan({ ...generated, id: plan.id });
+      }
+    } catch {
+      setAiPanel('Não consegui gerar o treino rápido agora. Verifique a chave Gemini e tente novamente.');
+    } finally {
+      setQuickWorkoutLoading(false);
+    }
+  };
+
   const buildSessionFromDay = (day: WorkoutDay, durationMinutes = 45): WorkoutSession => ({
     id: crypto.randomUUID(),
     planId: plan.id,
@@ -225,6 +292,7 @@ export function WorkoutDashboard({
         actualWeight: ex.actualWeight,
         actualReps: ex.actualReps,
         rpe: ex.rpe,
+        setLogs: ex.setLogs,
         feedback: ex.feedback,
         performanceNotes: ex.performanceNotes,
       })),
@@ -271,6 +339,10 @@ export function WorkoutDashboard({
       durationMinutes: 45, // roughly
       exercises: JSON.parse(JSON.stringify(day.exercises))
     };
+    const newPRs = extractAndSavePRsFromPlan({
+      ...plan,
+      days: plan.days.map((item, index) => index === dayIndex ? day : item),
+    });
     onCompleteDay(record);
     onSaveSession(buildSessionFromDay(day, record.durationMinutes));
 
@@ -286,7 +358,8 @@ export function WorkoutDashboard({
         actualReps: undefined,
         rpe: undefined,
         feedback: undefined,
-        performanceNotes: undefined
+        performanceNotes: undefined,
+        setLogs: undefined,
       }))
     };
     onUpdatePlan({ ...plan, days: newDays });
@@ -294,7 +367,9 @@ export function WorkoutDashboard({
     
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    alert('TREINO CONCLUÍDO! XP ADICIONADO! 💪💀');
+    alert(newPRs.length
+      ? `TREINO CONCLUÍDO! PR batido em: ${newPRs.join(', ')}`
+      : 'TREINO CONCLUÍDO! XP ADICIONADO!');
   };
 
   const [activeDayIndex, setActiveDayIndex] = useState<number | null>(null);
@@ -316,6 +391,10 @@ export function WorkoutDashboard({
       durationMinutes: 45,
       exercises: completedDay.exercises
     };
+    const newPRs = extractAndSavePRsFromPlan({
+      ...plan,
+      days: plan.days.map((item, index) => index === activeDayIndex ? completedDay : item),
+    });
     onCompleteDay(record);
     onSaveSession(buildSessionFromDay(completedDay, record.durationMinutes));
 
@@ -330,13 +409,16 @@ export function WorkoutDashboard({
         actualReps: undefined,
         rpe: undefined,
         feedback: undefined,
-        performanceNotes: undefined
+        performanceNotes: undefined,
+        setLogs: undefined,
       }))
     };
     onUpdatePlan({ ...plan, days: newDays });
     setStreak(updateWorkoutStreak());
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    alert('TREINO CONCLUÍDO! XP ADICIONADO! 💪💀');
+    alert(newPRs.length
+      ? `TREINO CONCLUÍDO! PR batido em: ${newPRs.join(', ')}`
+      : 'TREINO CONCLUÍDO! XP ADICIONADO!');
   };
 
   if (activeDayIndex !== null) {
@@ -346,6 +428,7 @@ export function WorkoutDashboard({
         workoutHistory={workoutHistory}
         onComplete={handleCompleteActiveWorkout}
         onCancel={() => setActiveDayIndex(null)}
+        voiceEnabled={voiceEnabled}
       />
     );
   }
@@ -405,6 +488,27 @@ export function WorkoutDashboard({
         </div>
         
         <div className="flex flex-col md:flex-row gap-3 mt-6 md:mt-0 relative print:hidden">
+          <button
+            onClick={() => onStartActiveWorkout ? onStartActiveWorkout() : startActiveWorkout(0)}
+            className="w-full md:w-auto px-5 py-2.5 rounded-full bg-brand-neon text-brand-dark text-xs font-black uppercase tracking-widest border border-brand-neon hover:bg-transparent hover:text-brand-neon transition-colors flex items-center justify-center min-w-[180px]"
+          >
+            <Play className="w-4 h-4 mr-2 fill-current" /> Treino ativo
+          </button>
+
+          <button
+            onClick={() => setShowLibrary(true)}
+            className="w-full md:w-auto px-5 py-2.5 rounded-full bg-brand-light/5 border border-brand-light/10 text-xs font-bold uppercase tracking-widest text-brand-light hover:bg-brand-light/10 transition-colors flex items-center justify-center min-w-[150px]"
+          >
+            <BookOpen className="w-4 h-4 mr-2" /> Biblioteca
+          </button>
+
+          <button
+            onClick={toggleVoiceEnabled}
+            className={`w-full md:w-auto px-4 py-2.5 rounded-full border text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center ${voiceEnabled ? 'bg-brand-neon/10 border-brand-neon text-brand-neon' : 'bg-brand-light/5 border-brand-light/10 text-brand-light'}`}
+          >
+            {voiceEnabled ? <Volume2 className="w-4 h-4 mr-2" /> : <VolumeX className="w-4 h-4 mr-2" />}
+            Voz
+          </button>
           
           <div className="relative">
             <button 
@@ -553,6 +657,15 @@ export function WorkoutDashboard({
           {loadingRecoveryAdvice ? 'Gerando ajuste...' : recoveryAdvice}
         </div>
       )}
+
+      <div className="mb-8 print:hidden">
+        <QuickWorkoutCard onSelect={handleQuickWorkout} />
+        {quickWorkoutLoading && (
+          <div className="mt-3 bg-brand-dark border-2 border-brand-neon p-4 font-mono text-sm text-brand-neon uppercase tracking-widest">
+            Gerando treino rápido...
+          </div>
+        )}
+      </div>
 
       <div className="mb-12 print:hidden">
         <div className="grid md:grid-cols-3 gap-3 mb-4">
@@ -716,6 +829,11 @@ export function WorkoutDashboard({
                     {day.dayName}
                   </div>
                   <h2 className="font-display font-black text-5xl uppercase tracking-tighter text-brand-neon text-shadow-neon">{day.focus}</h2>
+                  {day.estimatedDuration && (
+                    <p className="mt-2 font-mono text-xs uppercase tracking-widest text-brand-muted">
+                      Duração estimada: {day.estimatedDuration}
+                    </p>
+                  )}
                 </div>
                 {completed ? (
                   <div className="mt-4 md:mt-0 flex items-center text-brand-neon font-bold uppercase tracking-widest bg-brand-neon/10 px-4 py-2 border-2 border-brand-neon">
@@ -731,10 +849,19 @@ export function WorkoutDashboard({
                 )}
               </div>
 
+              {day.warmup && (
+                <div className="mb-6 p-4 bg-orange-500/10 border-2 border-orange-500/20">
+                  <p className="text-xs uppercase tracking-widest text-orange-400 mb-1 font-black">Aquecimento</p>
+                  <p className="text-sm text-brand-light/80 font-mono">{day.warmup}</p>
+                </div>
+              )}
+
               {/* Exercises Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {day.exercises.map((exc, excIndex) => {
                   const previousStat = getPreviousExerciseStat(exc.name);
+                  const previousData = getPreviousExerciseData(exc.name);
+                  const previousPR = getPRForExercise(exc.name);
 
                   return (
                   <ExerciseCard 
@@ -744,10 +871,19 @@ export function WorkoutDashboard({
                     workoutHistory={workoutHistory}
                     userProfile={userProfile || profile || undefined}
                     previousStat={previousStat}
+                    previousData={previousData}
+                    previousPR={previousPR}
                     onUpdate={(updated) => handleExerciseUpdateWithRest(dayIndex, excIndex, exc, updated)} 
                   />
                 )})}
               </div>
+
+              {day.cooldown && (
+                <div className="mt-6 p-4 bg-blue-500/10 border-2 border-blue-500/20">
+                  <p className="text-xs uppercase tracking-widest text-blue-400 mb-1 font-black">Cooldown</p>
+                  <p className="text-sm text-brand-light/80 font-mono">{day.cooldown}</p>
+                </div>
+              )}
               
               {/* Workout Feedback (Appears when day is complete) */}
               {completed && (
@@ -821,7 +957,8 @@ export function WorkoutDashboard({
           </div>
         )})}
       </div>
-      <RestTimer initialSeconds={restSeconds} autoStartKey={timerKey} />
+      <RestTimer initialSeconds={restSeconds} autoStartKey={timerKey} onVoiceAlert={voiceEnabled} />
+      {showLibrary && <ExerciseLibraryModal onClose={() => setShowLibrary(false)} />}
     </div>
   );
 }
