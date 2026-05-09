@@ -168,6 +168,77 @@ REGRAS OBRIGATÓRIAS (FALHAR NÃO É UMA OPÇÃO):
   }
 }
 
+export async function analyzeBodyImage(base64Image: string, mimeType: string, profile: UserProfile): Promise<string> {
+  const prompt = `ATENÇÃO: Você é um Treinador Cibernético focado em hipertrofia e composição corporal.
+O usuário enviou uma foto de progressão. Analise a imagem em relação ao biotipo atual (Peso: ${profile.weight}kg, Nível: ${profile.experienceLevel}).
+1. Forneça uma avaliação brutalmente honesta da composição corporal projetada.
+2. Identifique pontos fortes (músculos que parecem mais desenvolvidos).
+3. Identifique assimetrias ou grupos musculares que precisam de foco.
+4. Mantenha o formato Markdown, usando emojis e tom hardcore.
+IMPORTANTE: Não dê conselhos médicos, fale estritamente como um bodybuilder avaliando um atleta.`;
+
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-pro",
+    contents: [
+      {
+        inlineData: {
+          data: base64Image,
+          mimeType: mimeType,
+        },
+      },
+      prompt,
+    ]
+  });
+
+  return response.text || "Análise de transformação falhou.";
+}
+
+export async function analyzeFoodImage(base64Image: string, mimeType: string, profile: UserProfile): Promise<string> {
+  const prompt = `Analise esta foto de refeição como um Nutricionista Clínico Esportivo impiedoso e direto.
+Baseado no usuário (Peso: ${profile.weight}kg, Objetivo: ${profile.goal}):
+1. Liste os alimentos identificados.
+2. Estime as calorias totais e os macronutrientes (Proteínas, Carbos, Gorduras).
+3. Diga se essa refeição aproxima ou afasta do objetivo do dia.
+
+Formate em Markdown curto e grosso.`;
+
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-pro",
+    contents: [
+      {
+        inlineData: {
+          data: base64Image,
+          mimeType: mimeType,
+        },
+      },
+      prompt,
+    ]
+  });
+
+  return response.text || "Não foi possível analisar a refeição.";
+}
+
+export async function generateWeeklyReport(workoutHistory: WorkoutHistoryRecord[]): Promise<string> {
+  const prompt = `ATENÇÃO: Você é a I.A. Treinadora Supremo.
+Aqui estão os registros de treino das últimas sessões do usuário. Analise os dados e gere um relatório brutal de avaliação de final de microciclo:
+1. Resumo do volume.
+2. Identifique sinais de PLATÔ (pouca variação de carga).
+3. Identifique sinais de OVERTRAINING (exaustão marcante ou queda de reps).
+4. Recomende se devemos iniciar o próximo microciclo com SOBRECARGA PROGRESSIVA pesada ou deload.
+
+Use emojis, formato Markdown (com listas e bolds) e seja super motivacional porém técnico. Seja breve (máx 3 parágrafos).
+
+Dados do histórico recente (apenas para contexto, não imprima o JSON na resposta):
+${JSON.stringify(workoutHistory.map(r => ({ date: new Date(r.date).toISOString(), focus: r.focus, load: r.volumeLoad })).slice(0, 10))}`;
+
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-pro",
+    contents: prompt,
+  });
+
+  return response.text || "Relatório não disponível.";
+}
+
 export async function extractWorkoutFromFile(base64Data: string, mimeType: string): Promise<WorkoutPlan> {
   const prompt = `ATENÇÃO: Você é a I.A. Mestre da Forja Neural. Extraia este plano de texto/imagem e adapte para nosso ecossistema brutal.
 
