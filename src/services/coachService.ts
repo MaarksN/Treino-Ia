@@ -1,12 +1,8 @@
-import { GoogleGenAI } from '@google/genai';
 import { UserProfile, WorkoutPlan } from '../types';
+import { createGeminiProxyClient } from './geminiProxyClient';
 
 function getCoachClient() {
-  if (!process.env.GEMINI_API_KEY) {
-    throw new Error('GEMINI_API_KEY não configurada.');
-  }
-
-  return new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  return createGeminiProxyClient();
 }
 
 export async function askWorkoutCoach(

@@ -1,37 +1,48 @@
-import React, { ReactNode, useState } from 'react';
-import { Lock, X } from 'lucide-react';
-import { PaywallTrigger, PremiumFeature, SubscriptionPlanId } from '../types';
+import React, { ReactNode, useEffect, useMemo, useState } from 'react';
+import { Loader2, Lock, X } from 'lucide-react';
+import { PaywallTrigger, PremiumFeature } from '../types';
 import {
-  activatePlan,
-  canUseFeature,
-  getExclusiveBadge,
-  PREMIUM_FEATURE_LABELS,
-  trackPremiumEvent,
-} from '../utils/premiumUtils';
+  BillingEntitlementSummary,
+  fetchBillingEntitlement,
+  hasBillingEntitlement,
+} from '../services/billingService';
 import { PricingTable } from './PricingTable';
+
+export const PREMIUM_FEATURE_LABELS: Record<PremiumFeature, string> = {
+  premium_theme: 'Tema premium',
+  export_data: 'Exportação premium',
+  unlimited_ai: 'IA ilimitada',
+  wearable_sync: 'Wearables',
+  pose_detection: 'Análise de postura',
+  premium_community: 'Comunidade premium',
+  exclusive_badge: 'Badge exclusivo',
+  advanced_analytics: 'Analytics avançado',
+  priority_coach: 'Coach prioritário',
+  periodization_lab: 'Periodização avançada',
+};
+
+const ENTITLEMENT_BY_FEATURE: Record<PremiumFeature, string> = {
+  premium_theme: 'export.clean',
+  export_data: 'export.clean',
+  unlimited_ai: 'ai.unlimited',
+  wearable_sync: 'wearables.advanced',
+  pose_detection: 'reports.executive',
+  premium_community: 'coach.students',
+  exclusive_badge: 'export.clean',
+  advanced_analytics: 'reports.executive',
+  priority_coach: 'ai.priority',
+  periodization_lab: 'workouts.unlimited',
+};
 
 interface PremiumPaywallProps {
   trigger: PaywallTrigger;
   onClose: () => void;
-  onUpgrade?: (planId: SubscriptionPlanId) => void;
 }
 
-export function PremiumPaywall({ trigger, onClose, onUpgrade }: PremiumPaywallProps) {
+export function PremiumPaywall({ trigger, onClose }: PremiumPaywallProps) {
   const featureName = trigger.feature
     ? PREMIUM_FEATURE_LABELS[trigger.feature]
     : 'recursos premium';
-
-  const selectPlan = (planId: SubscriptionPlanId) => {
-    activatePlan(planId);
-    trackPremiumEvent('paywall_plan_selected', {
-      planId,
-      source: trigger.source,
-      feature: trigger.feature,
-    });
-
-    onUpgrade?.(planId);
-    onClose();
-  };
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
@@ -48,11 +59,12 @@ export function PremiumPaywall({ trigger, onClose, onUpgrade }: PremiumPaywallPr
 
             <p className="text-brand-muted mt-2">
               {trigger.description ??
-                'Mais IA, mais performance, mais dados, mais evolução e recursos avançados.'}
+                'O checkout é feito pela Stripe e a liberação só acontece após webhook assinado.'}
             </p>
           </div>
 
           <button
+            type="button"
             onClick={onClose}
             className="rounded-xl bg-white/10 text-white p-3 hover:bg-white/20"
           >
@@ -60,22 +72,20 @@ export function PremiumPaywall({ trigger, onClose, onUpgrade }: PremiumPaywallPr
           </button>
         </div>
 
-        <PricingTable onSelectPlan={selectPlan} compact />
+        <PricingTable compact />
 
         <div className="mt-6 rounded-2xl bg-brand-neon/10 border border-brand-neon/20 p-4">
           <p className="text-brand-neon font-black">
-            {getExclusiveBadge() ?? '👑 Badge exclusivo liberado no Premium'}
+            Entitlement validado no servidor
           </p>
           <p className="text-sm text-white/70 mt-1">
-            Use o premium para liberar IA ilimitada, tema premium, exportação,
-            wearables, pose detection e comunidade premium.
+            Alterar localStorage, DOM ou estado React não libera recursos premium.
           </p>
         </div>
       </div>
     </div>
   );
 }
-
 interface PremiumFeatureGateProps {
   feature: PremiumFeature;
   children: ReactNode;
@@ -89,10 +99,48 @@ export function PremiumFeatureGate({
   fallback,
   onBlocked,
 }: PremiumFeatureGateProps) {
-  const permission = canUseFeature(feature);
+  const [entitlement, setEntitlement] = useState<BillingEntitlementSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [showPaywall, setShowPaywall] = useState(false);
+  const requiredEntitlement = ENTITLEMENT_BY_FEATURE[feature];
 
-  if (permission.allowed) {
+  useEffect(() => {
+    let active = true;
+
+    async function load() {
+      try {
+        const next = await fetchBillingEntitlement();
+        if (active) setEntitlement(next);
+      } catch (loadError) {
+        if (active) setError(loadError instanceof Error ? loadError.message : 'Falha ao validar entitlement.');
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    load();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const allowed = useMemo(
+    () => hasBillingEntitlement(entitlement, requiredEntitlement),
+    [entitlement, requiredEntitlement],
+  );
+
+  if (loading) {
+    return (
+      <div className="rounded-3xl border border-white/10 bg-white/5 p-5 text-white flex items-center gap-3">
+        <Loader2 className="animate-spin text-brand-neon" size={18} />
+        Validando entitlement...
+      </div>
+    );
+  }
+
+  if (allowed) {
     return <>{children}</>;
   }
 
@@ -116,10 +164,11 @@ export function PremiumFeatureGate({
               </h3>
 
               <p className="text-sm text-brand-muted mt-1">
-                {permission.reason ?? 'Este recurso faz parte do plano Premium.'}
+                {error || `Requer entitlement ${requiredEntitlement} confirmado pelo servidor.`}
               </p>
 
               <button
+                type="button"
                 onClick={open}
                 className="mt-4 bg-brand-neon text-brand-dark rounded-xl px-4 py-3 font-black"
               >

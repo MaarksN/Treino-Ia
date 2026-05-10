@@ -1,11 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Crown, Flame, Trophy, X } from 'lucide-react';
-import {
-  markPrPaywallShown,
-  markStreakPaywallShown,
-  shouldShowPaywallAfterPr,
-  shouldShowPaywallAfterStreak,
-} from '../utils/premiumUtils';
 import { PremiumPaywall } from './PremiumPaywall';
 
 interface Props {
@@ -19,19 +13,7 @@ export function UpgradeBanner({ trigger, streak = 0, compact = false }: Props) {
   const [paywallOpen, setPaywallOpen] = useState(false);
 
   useEffect(() => {
-    if (trigger === 'after_pr' && shouldShowPaywallAfterPr()) {
-      setVisible(true);
-      markPrPaywallShown();
-    }
-
-    if (trigger === 'after_streak' && shouldShowPaywallAfterStreak(streak)) {
-      setVisible(true);
-      markStreakPaywallShown();
-    }
-
-    if (trigger === 'generic') {
-      setVisible(true);
-    }
+    setVisible(trigger === 'generic' || trigger === 'after_pr' || (trigger === 'after_streak' && streak >= 7));
   }, [trigger, streak]);
 
   if (!visible) return null;

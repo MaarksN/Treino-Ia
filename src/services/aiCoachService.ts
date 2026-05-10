@@ -1,4 +1,4 @@
-import { GoogleGenAI, Schema, Type } from '@google/genai';
+import { Schema, Type } from '@google/genai';
 import {
   AutoAdjustSuggestion,
   CoachMessage,
@@ -7,21 +7,12 @@ import {
   WorkoutHistoryEntry,
   WorkoutPlan,
 } from '../types';
+import { createGeminiProxyClient } from './geminiProxyClient';
 
 const MODEL = 'gemini-2.5-pro';
 
-let aiClient: GoogleGenAI | null = null;
-
 function getAI() {
-  if (!process.env.GEMINI_API_KEY) {
-    throw new Error('GEMINI_API_KEY não configurada.');
-  }
-
-  if (!aiClient) {
-    aiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  }
-
-  return aiClient;
+  return createGeminiProxyClient();
 }
 
 const buildSystemPrompt = (profile: UserProfile, plan: WorkoutPlan | null, streak: number) => `

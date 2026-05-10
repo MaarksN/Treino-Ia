@@ -20,9 +20,17 @@ function secondsToIso(value?: number | null): string | null {
   return typeof value === 'number' ? new Date(value * 1000).toISOString() : null;
 }
 
-function getStripeId(value: string | Stripe.Customer | Stripe.Subscription | null): string | null {
+function getStripeId(value: string | { id: string } | null): string | null {
   if (!value) return null;
   return typeof value === 'string' ? value : value.id;
+}
+
+function getSubscriptionPeriodEnd(subscription: Stripe.Subscription): number | null {
+  const withPeriod = subscription as Stripe.Subscription & {
+    current_period_end?: number | null;
+  };
+
+  return withPeriod.current_period_end ?? null;
 }
 
 function readPlanFromMetadata(metadata?: Stripe.Metadata | null): {
@@ -77,7 +85,7 @@ export async function upsertSubscriptionFromStripeSubscription(subscription: Str
     interval,
     stripe_customer_id: getStripeId(subscription.customer),
     stripe_subscription_id: subscription.id,
-    current_period_end: secondsToIso(subscription.current_period_end),
+    current_period_end: secondsToIso(getSubscriptionPeriodEnd(subscription)),
     trial_ends_at: secondsToIso(subscription.trial_end),
     cancel_at_period_end: Boolean(subscription.cancel_at_period_end),
     updated_at: new Date().toISOString(),
@@ -200,4 +208,3 @@ export async function incrementUsageCounter(
 
   return data;
 }
-

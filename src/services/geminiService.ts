@@ -1,7 +1,6 @@
-import { GoogleGenAI, Type, Schema } from "@google/genai";
+import { Type, Schema } from "@google/genai";
 import { Exercise, UserProfile, WorkoutHistoryRecord, WorkoutPlan } from "../types";
-
-let aiClient: GoogleGenAI | null = null;
+import { createGeminiProxyClient } from './geminiProxyClient';
 
 const LOCAL_EXERCISE_BANK = {
   gym: {
@@ -244,15 +243,7 @@ function generateLocalWorkoutPlan(profile: UserProfile, history?: WorkoutPlan[])
 }
 
 function getAI() {
-  if (!process.env.GEMINI_API_KEY) {
-    throw new Error("GEMINI_API_KEY não configurada.");
-  }
-
-  if (!aiClient) {
-    aiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  }
-
-  return aiClient;
+  return createGeminiProxyClient();
 }
 
 export const workoutPlanSchema: Schema = {
@@ -360,10 +351,6 @@ export const workoutPlanSchema: Schema = {
 };
 
 export async function generateWorkoutPlan(profile: UserProfile, history?: WorkoutPlan[]): Promise<WorkoutPlan> {
-  if (!process.env.GEMINI_API_KEY) {
-    return generateLocalWorkoutPlan(profile, history);
-  }
-
   let feedbackContext = "";
   if (history && history.length > 0) {
     const recentPlan = history[0];
@@ -419,12 +406,7 @@ REGRAS OBRIGATÓRIAS (FALHAR NÃO É UMA OPÇÃO):
       responseMimeType: "application/json",
       responseSchema: workoutPlanSchema,
     },
-  }).catch(error => {
-    console.warn("Gemini indisponível; usando gerador local de treino.", error);
-    return null;
   });
-
-  if (!response) return generateLocalWorkoutPlan(profile, history);
 
   const jsonStr = response.text || "{}";
   try {
@@ -442,7 +424,7 @@ REGRAS OBRIGATÓRIAS (FALHAR NÃO É UMA OPÇÃO):
     return parsed;
   } catch (error) {
     console.error("Failed to parse Gemini response:", error);
-    return generateLocalWorkoutPlan(profile, history);
+    throw new Error("A resposta da IA veio inválida. Tente novamente.");
   }
 }
 

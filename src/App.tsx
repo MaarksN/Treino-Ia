@@ -43,7 +43,7 @@ import { loadHistory, recordWorkoutSession, getTotalVolumeLifted } from './utils
 import { loadStreak, recordWorkoutForStreak } from './utils/streakUtils';
 import { evaluateAndUnlockBadges } from './utils/badgeUtils';
 import { syncChallengeProgress } from './utils/challengeUtils';
-import { addCoins, addXp, dailyCheckin, recordLogin, updateMissionProgress } from './utils/gamificationUtils';
+import { recordGamificationEvent } from './services/gamificationService';
 import { enqueueOfflineAction } from './utils/offlineQueue';
 import { registerBackgroundSync } from './utils/pwaUtils';
 import { saveDashboardSnapshot } from './utils/syncUtils';
@@ -195,7 +195,7 @@ export default function App() {
     if (savedUser) {
       const parsedUser = JSON.parse(savedUser);
       setUser(parsedUser);
-      recordLogin();
+      void recordGamificationEvent('login').catch(error => captureError(error, 'App.recordLogin'));
       if (parsedUser.profile && !savedProfile) {
         setProfile(parsedUser.profile);
       }
@@ -220,7 +220,7 @@ export default function App() {
 
   const handleRegister = (newUser: User) => {
     localStorage.setItem('@TreinoApp:user', JSON.stringify(newUser));
-    recordLogin();
+    void recordGamificationEvent('login').catch(error => captureError(error, 'App.recordLogin'));
     setUser(newUser);
     if (newUser.profile) {
       setProfile(newUser.profile);
@@ -354,7 +354,7 @@ export default function App() {
     setTodayCheckin(checkin);
     setAllCheckins(updatedCheckins);
     refreshEngagement(streakData, analyticsHistory, updatedCheckins);
-    dailyCheckin();
+    void recordGamificationEvent('checkin').catch(error => captureError(error, 'App.dailyCheckin'));
     saveLocalDashboardSnapshot(analyticsHistory, streakData, updatedCheckins);
   };
 
@@ -377,30 +377,7 @@ export default function App() {
     }
   };
 
-  const applyWorkoutGamification = (record: WorkoutHistoryRecord) => {
-    const completedExercises = record.exercises.filter(exercise => exercise.completed).length || record.exercises.length;
-    const completedSets = record.exercises.reduce((sum, exercise) => (
-      sum + (exercise.completed ? exercise.sets : 0)
-    ), 0);
-    const rpeLogged = record.exercises.reduce((sum, exercise) => {
-      const setRpeCount = exercise.setLogs?.filter(set => typeof set.rpe === 'number').length ?? 0;
-      return sum + setRpeCount + (typeof exercise.rpe === 'number' ? 1 : 0);
-    }, 0);
-    const volume = Math.round(record.volumeLoad || 0);
-
-    addXp('workout_completed', 250 + completedExercises * 35, 'Treino concluido');
-    addCoins(50);
-    updateMissionProgress('workouts', 1);
-    updateMissionProgress('exercise_completed', completedExercises);
-    updateMissionProgress('sets', completedSets);
-    updateMissionProgress('volume', volume);
-    updateMissionProgress('group_contribution', volume);
-
-    if (rpeLogged > 0) {
-      updateMissionProgress('rpe_logged', rpeLogged);
-      addXp('rpe_logged', Math.min(120, rpeLogged * 15), 'RPE registrado');
-    }
-
+  const enqueueWorkoutSync = (record: WorkoutHistoryRecord) => {
     if (!navigator.onLine) {
       void enqueueOfflineAction({
         type: 'WORKOUT_SESSION_COMPLETED',
@@ -415,7 +392,7 @@ export default function App() {
     const newHistory = [...workoutHistory, record];
     setWorkoutHistory(newHistory);
     localStorage.setItem('@TreinoApp:history', JSON.stringify(newHistory));
-    applyWorkoutGamification(record);
+    enqueueWorkoutSync(record);
 
     const completedPlan = plans.find(plan => plan.id === record.planId);
     const completedDayIndex = completedPlan?.days.findIndex(day => day.id === record.dayId) ?? -1;
