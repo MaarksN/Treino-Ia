@@ -11,7 +11,11 @@
     "android:open": "cap open android",
     "android:apk": "npm run build && cap sync android && cd android && gradlew.bat assembleDebug",
     "clean": "rm -rf dist",
-    "lint": "tsc --noEmit"
+    "typecheck": "node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc --noEmit",
+    "lint": "npm run typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "validate": "npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",
