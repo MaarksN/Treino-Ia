@@ -23,6 +23,12 @@ import { OnboardingTour } from './components/OnboardingTour';
 import { PlanAutoAdjust } from './components/PlanAutoAdjust';
 import { SettingsPanel } from './components/SettingsPanel';
 import { WorkoutShareCard } from './components/WorkoutShareCard';
+import { BiometricDashboard } from './components/BiometricDashboard';
+import { HormonalCycleTracker } from './components/HormonalCycleTracker';
+import { HydrationTracker } from './components/HydrationTracker';
+import { PoseDetector } from './components/PoseDetector';
+import { SleepTracker } from './components/SleepTracker';
+import { WearableSync } from './components/WearableSync';
 import { generateWorkoutPlan, extractWorkoutFromFile } from './services/geminiService';
 import { AppSettings, Badge, DailyCheckin as DailyCheckinType, RecoveryCheckin, StreakData, User, UserProfile, WorkoutHistoryEntry, WorkoutHistoryRecord, WorkoutPlan, WorkoutSession } from './types';
 import { calculateReadiness, getTodayCheckin, loadCheckins } from './utils/readinessUtils';
@@ -563,6 +569,27 @@ export default function App() {
             checkins={allCheckins}
             profile={activeProfile}
           />
+
+          <div className="space-y-4">
+            <div>
+              <p className="text-brand-neon font-mono text-xs uppercase tracking-widest">Bloco 6</p>
+              <h2 className="font-display text-4xl uppercase tracking-widest text-brand-light text-shadow-neon">Inteligência Corporal</h2>
+            </div>
+
+            <BiometricDashboard profile={activeProfile} />
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <WearableSync profile={activeProfile} />
+              <PoseDetector />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <HydrationTracker weightKg={activeProfile.weight} workoutMinutes={60} />
+              <SleepTracker />
+            </div>
+
+            <HormonalCycleTracker />
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <RecoveryProtocol plan={currentPlan} checkin={todayCheckin} allCheckins={allCheckins} profile={activeProfile} />
