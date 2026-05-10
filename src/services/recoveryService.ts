@@ -1,18 +1,8 @@
-import { GoogleGenAI } from '@google/genai';
 import { DailyCheckin, ReadinessScore, RecoveryCheckin, UserProfile, WorkoutPlan } from '../types';
-
-let aiClient: GoogleGenAI | null = null;
+import { createGeminiProxyClient } from './geminiProxyClient';
 
 function getAI() {
-  if (!process.env.GEMINI_API_KEY) {
-    throw new Error('GEMINI_API_KEY não configurada.');
-  }
-
-  if (!aiClient) {
-    aiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  }
-
-  return aiClient;
+  return createGeminiProxyClient();
 }
 
 export function getRecoveryScore(checkin: RecoveryCheckin) {

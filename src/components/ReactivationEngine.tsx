@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { GoogleGenAI } from '@google/genai';
 import { StreakData } from '../types';
+import { generateGeminiContent } from '../services/geminiProxyClient';
 import { getDaysSinceLastWorkout } from '../utils/streakUtils';
 
 interface Props {
@@ -18,16 +18,6 @@ const MOTIVATIONAL_MESSAGES = [
   { days: 7, message: 'Uma semana parado. Qualquer sessão bem feita hoje já muda a semana.', level: 'danger' },
   { days: 14, message: 'Duas semanas fora. Voltar com inteligência vale mais que voltar pesado.', level: 'comeback' },
 ];
-
-let aiClient: GoogleGenAI | null = null;
-
-function getAI() {
-  if (!process.env.GEMINI_API_KEY) {
-    throw new Error('GEMINI_API_KEY não configurada.');
-  }
-  if (!aiClient) aiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  return aiClient;
-}
 
 export function ReactivationEngine({ streak, userName = 'Atleta', goal = 'hipertrofia' }: Props) {
   const daysSince = getDaysSinceLastWorkout(streak);
@@ -52,13 +42,13 @@ Escreva uma mensagem motivacional personalizada e impactante, com no máximo 3 f
 Contexto: ${safeDays} dias sem treinar. Objetivo: ${goal}. Streak máximo: ${streak.longestStreak} dias.
 Tom: energético, direto, sem clichês vazios. Mencione o objetivo e o histórico de forma específica.
 `;
-      const response = await getAI().models.generateContent({
+      const response = await generateGeminiContent({
         model: 'gemini-2.5-pro',
         contents: prompt,
       });
       setAiMotivation(response.text || '');
     } catch {
-      setAiMotivation('Hoje não precisa ser perfeito. Faça o treino mínimo viável e recupere o ritmo.');
+      setAiMotivation('IA indisponível no momento. Verifique login, limite do plano e configuração do proxy.');
     } finally {
       setLoading(false);
     }

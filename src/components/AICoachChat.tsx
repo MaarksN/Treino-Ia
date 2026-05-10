@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Send, X, Bot, User as UserIcon } from 'lucide-react';
 import { User } from '../types';
-import { GoogleGenAI } from '@google/genai';
+import { generateGeminiContent } from '../services/geminiProxyClient';
 
 interface Props {
   user: User;
@@ -37,9 +37,6 @@ export function AICoachChat({ user, onClose }: Props) {
     setIsLoading(true);
 
     try {
-      if (!process.env.GEMINI_API_KEY) throw new Error("API Key missing");
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      
       const contents = messages.map(m => ({
         role: m.role,
         parts: [{ text: m.text }]
@@ -48,23 +45,13 @@ export function AICoachChat({ user, onClose }: Props) {
 
       const systemInstruction = "Você é o Coach Supremo IA. Você dá respostas curtas, diretas, ríspidas (mas engraçadas e motivacionais) sobre treino. Fale como um treinador old-school cibernético. Não de discursos longos. Aja rápido. Sempre termine com uma dica de ouro brutal e um emoji.";
 
-      const response = await ai.models.generateContentStream({
+      const response = await generateGeminiContent({
         model: "gemini-2.5-pro",
         contents,
         config: { systemInstruction }
       });
 
-      let fullText = '';
-      setMessages(prev => [...prev, { role: 'model', text: '' }]);
-      
-      for await (const chunk of response) {
-        fullText += chunk.text;
-        setMessages(prev => {
-          const newMsg = [...prev];
-          newMsg[newMsg.length - 1].text = fullText;
-          return newMsg;
-        });
-      }
+      setMessages(prev => [...prev, { role: 'model', text: response.text }]);
     } catch (e) {
       setMessages(prev => [...prev, { role: 'model', text: 'Tive uma falha no sistema neural. Tente de novo! 🤖' }]);
     } finally {
