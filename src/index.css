@@ -10,10 +10,24 @@
   --color-brand-magenta: #FF003C;
   --color-brand-dark: #050A1F;
   --color-brand-gray: #0A1230;
+  --color-brand-surface: #101B3D;
   --color-brand-light: #AEE0FF;
   --color-brand-muted: #4B6B99;
+  --gradient-hero: linear-gradient(135deg, #050A1F 0%, #0A1230 100%);
   
   --color-white: #AEE0FF; /* Overwrite white to our light blue */
+}
+
+:root {
+  --color-brand-neon: #a3e635;
+  --color-brand-neon-hover: #84cc16;
+  --color-brand-magenta: #f43f5e;
+  --color-brand-dark: #0a0a0a;
+  --color-brand-gray: #141413;
+  --color-brand-surface: #1a1917;
+  --color-brand-light: #f8fafc;
+  --color-brand-muted: #6b7280;
+  --gradient-hero: linear-gradient(135deg, #0a0a0a 0%, #1a1917 100%);
 }
 
 @layer utilities {
@@ -72,6 +86,7 @@
 [data-theme="light"] {
   --color-brand-dark: #F8FAFC;
   --color-brand-gray: #FFFFFF;
+  --color-brand-surface: #E2E8F0;
   --color-brand-light: #0F172A;
   --color-brand-muted: #64748B;
   
@@ -82,8 +97,8 @@ body {
   background-color: var(--color-brand-dark);
   color: var(--color-brand-light);
   background-image: 
-    linear-gradient(rgba(0, 240, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 240, 255, 0.05) 1px, transparent 1px);
+    linear-gradient(color-mix(in srgb, var(--color-brand-neon) 8%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--color-brand-neon) 8%, transparent) 1px, transparent 1px);
   background-size: 40px 40px;
   background-position: center top;
   position: relative;
@@ -123,3 +138,42 @@ body::after {
 ::-webkit-scrollbar-thumb:hover {
   background: #333; 
 }
+
+/* Variáveis de tema controladas por themeUtils.ts */
+.bg-brand-neon { background-color: var(--color-brand-neon) !important; }
+.text-brand-neon { color: var(--color-brand-neon) !important; }
+.border-brand-neon { border-color: var(--color-brand-neon) !important; }
+.bg-brand-dark { background-color: var(--color-brand-dark) !important; }
+.bg-brand-gray { background-color: var(--color-brand-gray) !important; }
+.bg-brand-surface { background-color: var(--color-brand-surface) !important; }
+.text-brand-dark { color: var(--color-brand-dark) !important; }
+.text-brand-muted { color: var(--color-brand-muted) !important; }
+.text-brand-light { color: var(--color-brand-light) !important; }
+.bg-brand-light { background-color: var(--color-brand-light) !important; }
+.border-brand-light { border-color: var(--color-brand-light) !important; }
+.text-brand-magenta { color: var(--color-brand-magenta) !important; }
+.bg-brand-magenta { background-color: var(--color-brand-magenta) !important; }
+.border-brand-magenta { border-color: var(--color-brand-magenta) !important; }
+
+@keyframes bounceIn {
+  0% { transform: scale(0.5); opacity: 0; }
+  70% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(120%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  50% { transform: translateY(-6px); opacity: 1; }
+}
+
+@keyframes pulse-neon {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-brand-neon) 40%, transparent); }
+  50% { box-shadow: 0 0 0 8px transparent; }
+}
+
+.animate-pulse-neon { animation: pulse-neon 2s infinite; }

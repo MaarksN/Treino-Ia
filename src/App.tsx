@@ -18,14 +18,20 @@ import { BadgeSystem } from './components/BadgeSystem';
 import { ChallengeCenter } from './components/ChallengeCenter';
 import { HabitReminder } from './components/HabitReminder';
 import { ReactivationEngine } from './components/ReactivationEngine';
+import { AICoach } from './components/AICoach';
+import { OnboardingTour } from './components/OnboardingTour';
+import { PlanAutoAdjust } from './components/PlanAutoAdjust';
+import { SettingsPanel } from './components/SettingsPanel';
+import { WorkoutShareCard } from './components/WorkoutShareCard';
 import { generateWorkoutPlan, extractWorkoutFromFile } from './services/geminiService';
-import { Badge, DailyCheckin as DailyCheckinType, RecoveryCheckin, StreakData, User, UserProfile, WorkoutHistoryEntry, WorkoutHistoryRecord, WorkoutPlan, WorkoutSession } from './types';
+import { AppSettings, Badge, DailyCheckin as DailyCheckinType, RecoveryCheckin, StreakData, User, UserProfile, WorkoutHistoryEntry, WorkoutHistoryRecord, WorkoutPlan, WorkoutSession } from './types';
 import { calculateReadiness, getTodayCheckin, loadCheckins } from './utils/readinessUtils';
 import { loadHistory, recordWorkoutSession, getTotalVolumeLifted } from './utils/analyticsUtils';
 import { loadStreak, recordWorkoutForStreak } from './utils/streakUtils';
 import { evaluateAndUnlockBadges } from './utils/badgeUtils';
 import { syncChallengeProgress } from './utils/challengeUtils';
-import { Activity, Dumbbell, Globe2, Moon, Sun } from 'lucide-react';
+import { applyTheme, loadThemeId } from './utils/themeUtils';
+import { Activity, BrainCircuit, Dumbbell, Globe2, Moon, Settings as SettingsIcon, Share2, Sun, X } from 'lucide-react';
 
 type ViewState = 'loading' | 'registration' | 'home' | 'anamnesis' | 'import' | 'dashboard' | 'active-workout' | 'global_feed';
 
@@ -37,6 +43,25 @@ import { CheckInModule } from './components/CheckInModule';
 import { FuturisticHUD } from './components/FuturisticHUD';
 import { AICoachChat } from './components/AICoachChat';
 import { BotMessageSquare } from 'lucide-react';
+
+const ONBOARDING_KEY = '@TreinoApp:onboarded';
+const LIGHT_THEME_VARS = {
+  '--color-brand-dark': '#F8FAFC',
+  '--color-brand-gray': '#FFFFFF',
+  '--color-brand-surface': '#E2E8F0',
+  '--color-brand-light': '#0F172A',
+  '--color-brand-muted': '#64748B',
+  '--color-white': '#0F172A',
+};
+
+function loadInitialVoiceEnabled() {
+  try {
+    const settings = JSON.parse(localStorage.getItem('@TreinoApp:settings') || '{}') as Partial<AppSettings>;
+    return Boolean(settings.voiceEnabled);
+  } catch {
+    return false;
+  }
+}
 
 export default function App() {
   const [view, setView] = useState<ViewState>('loading');
@@ -55,18 +80,33 @@ export default function App() {
   const [allCheckins, setAllCheckins] = useState<DailyCheckinType[]>(() => loadCheckins());
   const [darkMode, setDarkMode] = useState(true);
   const [language, setLanguage] = useState<'PT' | 'EN'>('PT');
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(loadInitialVoiceEnabled);
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCoachChat, setShowCoachChat] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem(ONBOARDING_KEY));
+  const [shareEntry, setShareEntry] = useState<WorkoutHistoryEntry | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showCoach, setShowCoach] = useState(false);
 
   // For tab navigation when a user is logged in
   const [activeTab, setActiveTab] = useState<'my_workouts' | 'global_feed'>('my_workouts');
 
   useEffect(() => {
+    applyTheme(loadThemeId());
+  }, []);
+
+  useEffect(() => {
     document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
     localStorage.setItem('@TreinoApp:theme', darkMode ? 'dark' : 'light');
+    if (darkMode) {
+      applyTheme(loadThemeId());
+    } else {
+      Object.entries(LIGHT_THEME_VARS).forEach(([key, value]) => {
+        document.documentElement.style.setProperty(key, value);
+      });
+    }
   }, [darkMode]);
 
   useEffect(() => {
@@ -211,6 +251,17 @@ export default function App() {
     localStorage.setItem('@TreinoApp:recovery', JSON.stringify(checkin));
   };
 
+  const handleOnboardingComplete = () => {
+    localStorage.setItem(ONBOARDING_KEY, '1');
+    setShowOnboarding(false);
+  };
+
+  const handleSettingsChange = (settings: AppSettings) => {
+    setVoiceEnabled(settings.voiceEnabled);
+    setLanguage('PT');
+    setDarkMode(true);
+  };
+
   const getStoredArrayCount = (key: string) => {
     try {
       const parsed = JSON.parse(localStorage.getItem(key) || '[]');
@@ -257,7 +308,7 @@ export default function App() {
     const completedPlan = plans.find(plan => plan.id === record.planId);
     const completedDayIndex = completedPlan?.days.findIndex(day => day.id === record.dayId) ?? -1;
     if (completedPlan && completedDayIndex >= 0) {
-      recordWorkoutSession(
+      const completedEntry = recordWorkoutSession(
         completedPlan,
         completedDayIndex,
         record.durationMinutes,
@@ -267,6 +318,7 @@ export default function App() {
       const nextStreak = recordWorkoutForStreak();
       setAnalyticsHistory(nextAnalyticsHistory);
       setStreakData(nextStreak);
+      setShareEntry(completedEntry);
       refreshEngagement(nextStreak, nextAnalyticsHistory, allCheckins);
     }
     
@@ -317,6 +369,12 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-brand-dark text-brand-light font-sans antialiased py-8 md:py-12 px-4 selection:bg-brand-neon selection:text-brand-dark transition-colors duration-500">
+      {showOnboarding && (
+        <OnboardingTour
+          onComplete={handleOnboardingComplete}
+          onSkip={handleOnboardingComplete}
+        />
+      )}
       
       {/* Header & Navbar */}
       <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between mb-12 gap-6 relative z-20">
@@ -331,7 +389,7 @@ export default function App() {
         </div>
 
         {user && view !== 'registration' && (
-          <div className="flex items-center gap-4 bg-brand-gray border-2 border-brand-light/20 p-2 rounded-full shadow-[0_0_15px_rgba(0,0,0,0.2)]">
+          <div className="flex flex-wrap items-center justify-center gap-3 bg-brand-gray border-2 border-brand-light/20 p-2 rounded-[2rem] shadow-[0_0_15px_rgba(0,0,0,0.2)]">
             
             <div className="flex items-center gap-2 border-r-2 border-brand-light/20 pr-4">
                <button onClick={() => setDarkMode(!darkMode)} className="p-2 text-brand-muted hover:text-brand-neon transition-colors" title="Toggle Theme">
@@ -340,6 +398,35 @@ export default function App() {
                <button onClick={() => setLanguage(l => l === 'PT' ? 'EN' : 'PT')} className="font-bold font-mono text-sm uppercase text-brand-muted hover:text-brand-neon transition-colors flex items-center">
                  <Globe2 className="w-4 h-4 mr-1" /> {language}
                </button>
+            </div>
+
+            <div className="flex items-center gap-1 border-r-2 border-brand-light/20 pr-3">
+              <button
+                onClick={() => activeProfile && setShowCoach(true)}
+                disabled={!activeProfile}
+                className="p-2 text-brand-muted hover:text-brand-neon transition-colors disabled:opacity-30"
+                title="APEX Coach"
+              >
+                <BrainCircuit className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => {
+                  const latest = analyticsHistory[analyticsHistory.length - 1];
+                  if (latest) setShareEntry(latest);
+                }}
+                disabled={analyticsHistory.length === 0}
+                className="p-2 text-brand-muted hover:text-brand-neon transition-colors disabled:opacity-30"
+                title="Compartilhar último treino"
+              >
+                <Share2 className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setShowSettings(true)}
+                className="p-2 text-brand-muted hover:text-brand-neon transition-colors"
+                title="Configurações"
+              >
+                <SettingsIcon className="w-5 h-5" />
+              </button>
             </div>
 
             <button 
@@ -470,6 +557,13 @@ export default function App() {
             <ReadinessIndex checkin={todayCheckin} allCheckins={allCheckins} />
           </div>
 
+          <PlanAutoAdjust
+            plan={currentPlan}
+            history={analyticsHistory}
+            checkins={allCheckins}
+            profile={activeProfile}
+          />
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <RecoveryProtocol plan={currentPlan} checkin={todayCheckin} allCheckins={allCheckins} profile={activeProfile} />
             <InjuryTracker />
@@ -493,6 +587,58 @@ export default function App() {
 
       {view === 'global_feed' && (
         <GlobalFeed />
+      )}
+
+      {shareEntry && (
+        <WorkoutShareCard
+          entry={shareEntry}
+          streak={streakData}
+          userName={user?.name}
+          onClose={() => setShareEntry(null)}
+        />
+      )}
+
+      {showSettings && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur flex items-center justify-center p-4 print:hidden">
+          <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto relative">
+            <button
+              type="button"
+              onClick={() => setShowSettings(false)}
+              className="absolute right-3 top-3 z-10 p-2 rounded-full bg-white/10 border border-white/10 text-white hover:bg-white/20"
+              aria-label="Fechar configurações"
+              title="Fechar"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <SettingsPanel
+              plans={plans}
+              history={analyticsHistory}
+              streak={streakData}
+              onSettingsChange={handleSettingsChange}
+            />
+          </div>
+        </div>
+      )}
+
+      {showCoach && activeProfile && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur flex items-center justify-center p-4 print:hidden">
+          <div className="w-full max-w-3xl relative">
+            <button
+              type="button"
+              onClick={() => setShowCoach(false)}
+              className="absolute right-3 top-3 z-10 p-2 rounded-full bg-white/10 border border-white/10 text-white hover:bg-white/20"
+              aria-label="Fechar coach"
+              title="Fechar"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <AICoach
+              profile={activeProfile}
+              currentPlan={currentPlan}
+              streak={streakData.currentStreak}
+            />
+          </div>
+        </div>
       )}
 
       <MusicPlayer />
