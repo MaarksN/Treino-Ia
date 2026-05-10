@@ -521,3 +521,81 @@ export interface SleepEntry {
   deepSleepPct?: number;
   remSleepPct?: number;
 }
+
+export type SubscriptionPlanId = 'free' | 'premium_monthly' | 'premium_yearly';
+
+export type BillingStatus =
+  | 'free'
+  | 'trialing'
+  | 'active'
+  | 'past_due'
+  | 'canceled';
+
+export type PremiumFeature =
+  | 'premium_theme'
+  | 'export_data'
+  | 'unlimited_ai'
+  | 'wearable_sync'
+  | 'pose_detection'
+  | 'premium_community'
+  | 'exclusive_badge'
+  | 'advanced_analytics'
+  | 'priority_coach'
+  | 'periodization_lab';
+
+export interface SubscriptionPlan {
+  id: SubscriptionPlanId;
+  name: string;
+  subtitle: string;
+  price: number;
+  billing: 'none' | 'month' | 'year';
+  highlighted?: boolean;
+  badge?: string;
+  features: string[];
+  unlockedFeatures: PremiumFeature[];
+}
+
+export interface EntitlementUsage {
+  aiRequestsThisMonth: number;
+  exportsThisMonth: number;
+  prCount: number;
+  bestStreak: number;
+  lastUsageResetAt: number;
+}
+
+export interface EntitlementState {
+  planId: SubscriptionPlanId;
+  billingStatus: BillingStatus;
+  isPremium: boolean;
+  trialStartedAt?: number;
+  trialEndsAt?: number;
+  currentPeriodEnd?: number;
+  activeCoupon?: string;
+  unlockedFeatures: PremiumFeature[];
+  usage: EntitlementUsage;
+  prPaywallShownAt?: number;
+  streakPaywallShownAt?: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface PremiumCoupon {
+  code: string;
+  label: string;
+  discountPercent: number;
+  durationMonths?: number;
+  validUntil?: number;
+}
+
+export interface PaywallTrigger {
+  source:
+    | 'feature_gate'
+    | 'after_pr'
+    | 'after_streak'
+    | 'upgrade_banner'
+    | 'billing_center'
+    | 'manual';
+  feature?: PremiumFeature;
+  title?: string;
+  description?: string;
+}
