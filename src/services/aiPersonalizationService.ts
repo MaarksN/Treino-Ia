@@ -8,6 +8,7 @@ import {
   WorkoutPlan,
   WorkoutSession,
 } from '../types';
+import { computeDeterministicFlags, validateAvailableMinutes } from '../utils/personalizationRules';
 import { createGeminiProxyClient } from './geminiProxyClient';
 
 const MODEL = 'gemini-2.5-pro';
@@ -282,8 +283,9 @@ Responda com grupos musculares, séries semanais e justificativa breve.
 }
 
 export async function adjustWorkoutForAvailableTime(plan: WorkoutPlan, availableMinutes: number) {
+  const boundedMinutes = validateAvailableMinutes(availableMinutes);
   const prompt = `
-Adapte o treino abaixo para ${availableMinutes} minutos.
+Adapte o treino abaixo para ${boundedMinutes} minutos.
 ${JSON.stringify(plan, null, 2)}
 
 Regras:
@@ -414,9 +416,11 @@ Inclua:
   return response.text || 'Sem insights.';
 }
 
-export async function detectRiskOfAbandonment(sessions: WorkoutSession[]) {
+export async function detectRiskOfAbandonment(profile: UserProfile, sessions: WorkoutSession[]) {
+  const flags = computeDeterministicFlags(profile, sessions);
   const prompt = `
 Analise risco de inconsistência ou abandono.
+Sinal determinístico atual: ${flags.adherenceRisk}.
 Sessões:
 ${JSON.stringify(sessions.slice(-14), null, 2)}
 
