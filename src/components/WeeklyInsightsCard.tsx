@@ -19,7 +19,7 @@ export function WeeklyInsightsCard({ profile, sessions }: Props) {
     try {
       const [weekly, abandonment] = await Promise.all([
         generateWeeklyAiInsights(profile, sessions),
-        detectRiskOfAbandonment(sessions),
+        detectRiskOfAbandonment(profile, sessions),
       ]);
 
       setInsights(weekly);
