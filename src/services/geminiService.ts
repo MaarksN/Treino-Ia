@@ -1,7 +1,247 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
-import { UserProfile, WorkoutHistoryRecord, WorkoutPlan } from "../types";
+import { Exercise, UserProfile, WorkoutHistoryRecord, WorkoutPlan } from "../types";
 
 let aiClient: GoogleGenAI | null = null;
+
+const LOCAL_EXERCISE_BANK = {
+  gym: {
+    push: [
+      ['Supino Reto com Barra', 'Peito', 'Empurrar horizontal'],
+      ['Supino Inclinado com Halteres', 'Peito superior', 'Empurrar inclinado'],
+      ['Desenvolvimento com Halteres', 'Ombros', 'Empurrar vertical'],
+      ['Elevação Lateral com Halteres', 'Ombros', 'Abdução de ombro'],
+      ['Tríceps Testa com Barra EZ', 'Tríceps', 'Extensão de cotovelo'],
+      ['Flexão de Braço', 'Peito', 'Empurrar horizontal'],
+    ],
+    pull: [
+      ['Puxada Frontal na Polia', 'Costas', 'Puxar vertical'],
+      ['Remada Curvada com Barra', 'Costas', 'Puxar horizontal'],
+      ['Remada Unilateral com Halter', 'Costas', 'Puxar horizontal'],
+      ['Face Pull na Polia', 'Ombros posteriores', 'Puxada corretiva'],
+      ['Rosca Direta com Barra', 'Bíceps', 'Flexão de cotovelo'],
+      ['Rosca Concentrada', 'Bíceps', 'Flexão de cotovelo'],
+    ],
+    legs: [
+      ['Agachamento Livre', 'Quadríceps', 'Squat'],
+      ['Leg Press 45°', 'Quadríceps', 'Squat machine'],
+      ['Stiff com Halteres', 'Posterior de coxa', 'Hinge'],
+      ['Mesa Flexora', 'Posterior de coxa', 'Flexão de joelho'],
+      ['Hip Thrust com Barra', 'Glúteos', 'Extensão de quadril'],
+      ['Panturrilha em Pé', 'Panturrilhas', 'Flexão plantar'],
+    ],
+    core: [
+      ['Prancha Frontal', 'Core', 'Anti-extensão'],
+      ['Abdominal Dead Bug', 'Core', 'Estabilidade lombopélvica'],
+      ['Pallof Press na Polia', 'Core', 'Anti-rotação'],
+    ],
+  },
+  bodyweight: {
+    push: [
+      ['Flexão de Braço', 'Peito', 'Empurrar horizontal'],
+      ['Flexão Pike', 'Ombros', 'Empurrar vertical'],
+      ['Mergulho no Banco', 'Tríceps', 'Extensão de cotovelo'],
+      ['Flexão Diamante', 'Tríceps', 'Empurrar horizontal fechado'],
+      ['Prancha com Toque no Ombro', 'Core', 'Anti-rotação'],
+    ],
+    pull: [
+      ['Remada Invertida sob Mesa', 'Costas', 'Puxar horizontal'],
+      ['Superman', 'Lombar', 'Extensão de tronco'],
+      ['Y-T-W deitado', 'Ombros posteriores', 'Controle escapular'],
+      ['Rosca com Mochila', 'Bíceps', 'Flexão de cotovelo'],
+      ['Isometria de Dorsal com Toalha', 'Costas', 'Depressão escapular'],
+    ],
+    legs: [
+      ['Agachamento Livre', 'Quadríceps', 'Squat'],
+      ['Afundo Alternado', 'Quadríceps', 'Lunge'],
+      ['Agachamento Búlgaro', 'Quadríceps', 'Squat unilateral'],
+      ['Ponte de Glúteo', 'Glúteos', 'Extensão de quadril'],
+      ['Mesa Flexora Deslizante com Toalha', 'Posterior de coxa', 'Flexão de joelho'],
+      ['Panturrilha em Pé', 'Panturrilhas', 'Flexão plantar'],
+    ],
+    core: [
+      ['Prancha Frontal', 'Core', 'Anti-extensão'],
+      ['Dead Bug', 'Core', 'Estabilidade lombopélvica'],
+      ['Mountain Climber', 'Core', 'Condicionamento'],
+    ],
+  },
+} as const;
+
+type LocalExerciseTuple = readonly [string, string, string];
+
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function isBodyweightProfile(profile: UserProfile) {
+  const text = `${profile.workoutLocation || ''} ${profile.gymType || ''} ${profile.equipment || ''}`.toLowerCase();
+  return text.includes('peso corporal') || text.includes('calistenia') || text.includes('parque');
+}
+
+function getTrainingParams(profile: UserProfile) {
+  const goal = profile.goal.toLowerCase();
+  const level = profile.experienceLevel.toLowerCase();
+  const time = Number(profile.timePerWorkout || String(profile.sessionDuration || '').match(/\d+/)?.[0] || 60);
+
+  if (goal.includes('força')) {
+    return {
+      sets: level.includes('iniciante') ? 3 : 4,
+      reps: '3-6',
+      rest: '120s',
+      exerciseCount: time <= 35 ? 4 : time <= 60 ? 5 : 6,
+      intensityNote: 'Priorize carga progressiva com técnica limpa e 1-2 repetições em reserva.',
+    };
+  }
+
+  if (goal.includes('emagrecimento') || goal.includes('resistência') || goal.includes('condicionamento')) {
+    return {
+      sets: level.includes('iniciante') ? 2 : 3,
+      reps: '12-20',
+      rest: '45s',
+      exerciseCount: time <= 35 ? 4 : time <= 60 ? 5 : 6,
+      intensityNote: 'Mantenha ritmo alto, descanso curto e execução controlada.',
+    };
+  }
+
+  return {
+    sets: level.includes('iniciante') ? 3 : 4,
+    reps: '8-12',
+    rest: '60-90s',
+    exerciseCount: time <= 35 ? 4 : time <= 60 ? 5 : 6,
+    intensityNote: 'Busque sobrecarga progressiva mantendo controle total da fase excêntrica.',
+  };
+}
+
+function localExerciseFromTuple(
+  tuple: LocalExerciseTuple,
+  params: ReturnType<typeof getTrainingParams>,
+  index: number,
+  profile: UserProfile
+): Exercise {
+  const [name, muscleGroup, movementPattern] = tuple;
+  const isCoreOrConditioning = muscleGroup === 'Core' || movementPattern === 'Condicionamento';
+  const reps = isCoreOrConditioning
+    ? movementPattern === 'Condicionamento' ? '30-45s' : '30-60s'
+    : params.reps;
+
+  return {
+    id: crypto.randomUUID(),
+    name,
+    sets: index === 0 && !profile.experienceLevel.toLowerCase().includes('iniciante')
+      ? params.sets + 1
+      : params.sets,
+    reps,
+    rest: isCoreOrConditioning ? '30-45s' : params.rest,
+    muscleGroup,
+    movementPattern,
+    tags: [muscleGroup.toLowerCase(), movementPattern.toLowerCase(), profile.goal.toLowerCase()],
+    executionDetails: `Execute ${name} com postura firme, amplitude segura e controle do tronco. Pare se houver dor articular e reduza a carga ou a dificuldade.`,
+    concentricPhase: `Na fase de esforço, acelere com controle e contraia ${muscleGroup} sem roubar o movimento.`,
+    eccentricPhase: `Na descida ou retorno, freie por 2-3 segundos para gerar tensão mecânica e proteger as articulações.`,
+    notes: params.intensityNote,
+  };
+}
+
+function pickLocalExercises(
+  profile: UserProfile,
+  groups: Array<'push' | 'pull' | 'legs' | 'core'>,
+  exerciseCount: number
+) {
+  const bank = isBodyweightProfile(profile) ? LOCAL_EXERCISE_BANK.bodyweight : LOCAL_EXERCISE_BANK.gym;
+  const picked: LocalExerciseTuple[] = [];
+  let cursor = 0;
+
+  while (picked.length < exerciseCount) {
+    const group = groups[cursor % groups.length];
+    const options = bank[group];
+    const option = options[Math.floor(cursor / groups.length) % options.length];
+    if (!picked.some(([name]) => name === option[0])) picked.push(option);
+    cursor += 1;
+    if (cursor > 60) break;
+  }
+
+  return picked;
+}
+
+function getSplit(daysPerWeek: number) {
+  const splits: Record<number, Array<{ name: string; focus: string; groups: Array<'push' | 'pull' | 'legs' | 'core'> }>> = {
+    1: [
+      { name: 'Dia 1', focus: 'Full Body Essencial', groups: ['legs', 'push', 'pull', 'core'] },
+    ],
+    2: [
+      { name: 'Dia 1', focus: 'Superiores', groups: ['push', 'pull', 'core'] },
+      { name: 'Dia 2', focus: 'Inferiores', groups: ['legs', 'core'] },
+    ],
+    3: [
+      { name: 'Dia 1', focus: 'Push', groups: ['push', 'core'] },
+      { name: 'Dia 2', focus: 'Pull', groups: ['pull', 'core'] },
+      { name: 'Dia 3', focus: 'Legs', groups: ['legs', 'core'] },
+    ],
+    4: [
+      { name: 'Dia 1', focus: 'Superiores A', groups: ['push', 'pull'] },
+      { name: 'Dia 2', focus: 'Inferiores A', groups: ['legs', 'core'] },
+      { name: 'Dia 3', focus: 'Superiores B', groups: ['pull', 'push'] },
+      { name: 'Dia 4', focus: 'Inferiores B', groups: ['legs', 'core'] },
+    ],
+    5: [
+      { name: 'Dia 1', focus: 'Push Pesado', groups: ['push'] },
+      { name: 'Dia 2', focus: 'Pull Pesado', groups: ['pull'] },
+      { name: 'Dia 3', focus: 'Pernas', groups: ['legs', 'core'] },
+      { name: 'Dia 4', focus: 'Superiores Volume', groups: ['push', 'pull'] },
+      { name: 'Dia 5', focus: 'Inferiores e Core', groups: ['legs', 'core'] },
+    ],
+    6: [
+      { name: 'Dia 1', focus: 'Push A', groups: ['push'] },
+      { name: 'Dia 2', focus: 'Pull A', groups: ['pull'] },
+      { name: 'Dia 3', focus: 'Legs A', groups: ['legs', 'core'] },
+      { name: 'Dia 4', focus: 'Push B', groups: ['push', 'core'] },
+      { name: 'Dia 5', focus: 'Pull B', groups: ['pull', 'core'] },
+      { name: 'Dia 6', focus: 'Legs B', groups: ['legs', 'core'] },
+    ],
+    7: [
+      { name: 'Dia 1', focus: 'Push A', groups: ['push'] },
+      { name: 'Dia 2', focus: 'Pull A', groups: ['pull'] },
+      { name: 'Dia 3', focus: 'Legs A', groups: ['legs', 'core'] },
+      { name: 'Dia 4', focus: 'Full Body Leve', groups: ['push', 'pull', 'legs', 'core'] },
+      { name: 'Dia 5', focus: 'Push B', groups: ['push', 'core'] },
+      { name: 'Dia 6', focus: 'Pull B', groups: ['pull', 'core'] },
+      { name: 'Dia 7', focus: 'Legs B e Mobilidade', groups: ['legs', 'core'] },
+    ],
+  };
+
+  return splits[clamp(Math.round(daysPerWeek || 3), 1, 7)];
+}
+
+function generateLocalWorkoutPlan(profile: UserProfile, history?: WorkoutPlan[]): WorkoutPlan {
+  const params = getTrainingParams(profile);
+  const weakPoint = profile.weakPoints || profile.secondaryGoal || profile.secondaryFocus;
+  const split = getSplit(profile.daysPerWeek);
+  const localMode = isBodyweightProfile(profile) ? 'peso corporal' : 'academia/equipamentos';
+
+  return {
+    id: crypto.randomUUID(),
+    createdAt: Date.now(),
+    planName: `Plano ${profile.goal} - ${profile.experienceLevel}`,
+    goalDescription: `Plano gerado no aparelho para ${profile.goal}, com ${profile.daysPerWeek} dia(s)/semana, foco em ${localMode}${weakPoint ? ` e atenção extra para ${weakPoint}` : ''}. ${history?.length ? 'Também considera que você já possui histórico salvo no app.' : ''}`,
+    days: split.map((day, dayIndex) => {
+      const exercises = pickLocalExercises(profile, day.groups, params.exerciseCount)
+        .map((tuple, index) => localExerciseFromTuple(tuple, params, index, profile));
+
+      return {
+        id: crypto.randomUUID(),
+        dayName: day.name,
+        focus: day.focus,
+        warmup: '5-8 minutos de aquecimento geral, mobilidade da articulação principal do dia e 2 séries leves do primeiro exercício.',
+        cooldown: '3-5 minutos de respiração, alongamento leve dos músculos treinados e anotação de carga/repetições.',
+        estimatedDuration: profile.sessionDuration || `${profile.timePerWorkout || 60} minutos`,
+        exercises: dayIndex === split.length - 1 && weakPoint
+          ? exercises.map((exercise, index) => index === exercises.length - 1
+            ? { ...exercise, notes: `${exercise.notes} Finalize com foco extra no ponto fraco informado: ${weakPoint}.` }
+            : exercise)
+          : exercises,
+      };
+    }),
+  };
+}
 
 function getAI() {
   if (!process.env.GEMINI_API_KEY) {
@@ -120,6 +360,10 @@ export const workoutPlanSchema: Schema = {
 };
 
 export async function generateWorkoutPlan(profile: UserProfile, history?: WorkoutPlan[]): Promise<WorkoutPlan> {
+  if (!process.env.GEMINI_API_KEY) {
+    return generateLocalWorkoutPlan(profile, history);
+  }
+
   let feedbackContext = "";
   if (history && history.length > 0) {
     const recentPlan = history[0];
@@ -175,7 +419,12 @@ REGRAS OBRIGATÓRIAS (FALHAR NÃO É UMA OPÇÃO):
       responseMimeType: "application/json",
       responseSchema: workoutPlanSchema,
     },
+  }).catch(error => {
+    console.warn("Gemini indisponível; usando gerador local de treino.", error);
+    return null;
   });
+
+  if (!response) return generateLocalWorkoutPlan(profile, history);
 
   const jsonStr = response.text || "{}";
   try {
@@ -193,7 +442,7 @@ REGRAS OBRIGATÓRIAS (FALHAR NÃO É UMA OPÇÃO):
     return parsed;
   } catch (error) {
     console.error("Failed to parse Gemini response:", error);
-    throw new Error("Erro ao gerar o plano de treino. Tente novamente.");
+    return generateLocalWorkoutPlan(profile, history);
   }
 }
 
