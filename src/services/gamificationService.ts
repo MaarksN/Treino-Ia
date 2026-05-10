@@ -29,6 +29,8 @@ export interface ServerGamificationState {
   events: ServerGamificationEvent[];
 }
 
+export type ServerGamificationEventType = 'login' | 'checkin' | 'workout_completed';
+
 async function getAccessToken(): Promise<string> {
   const { data, error } = await supabase.auth.getSession();
 
@@ -64,7 +66,10 @@ export async function fetchGamificationState(): Promise<ServerGamificationState>
   return parseApiResponse<ServerGamificationState>(response);
 }
 
-export async function recordGamificationEvent(eventType: 'login' | 'checkin') {
+export async function recordGamificationEvent(
+  eventType: ServerGamificationEventType,
+  sourceId?: string,
+) {
   const token = await getAccessToken();
   const response = await fetch('/api/gamification/event', {
     method: 'POST',
@@ -72,9 +77,8 @@ export async function recordGamificationEvent(eventType: 'login' | 'checkin') {
       authorization: `Bearer ${token}`,
       'content-type': 'application/json',
     },
-    body: JSON.stringify({ eventType }),
+    body: JSON.stringify({ eventType, sourceId }),
   });
 
   return parseApiResponse<{ profile?: ServerGamificationProfile; skipped?: boolean; reason?: string }>(response);
 }
-

@@ -393,6 +393,8 @@ export default function App() {
     setWorkoutHistory(newHistory);
     localStorage.setItem('@TreinoApp:history', JSON.stringify(newHistory));
     enqueueWorkoutSync(record);
+    void recordGamificationEvent('workout_completed', record.id)
+      .catch(error => captureError(error, 'App.workoutCompletedGamification'));
 
     const completedPlan = plans.find(plan => plan.id === record.planId);
     const completedDayIndex = completedPlan?.days.findIndex(day => day.id === record.dayId) ?? -1;
@@ -410,33 +412,6 @@ export default function App() {
       setShareEntry(completedEntry);
       refreshEngagement(nextStreak, nextAnalyticsHistory, allCheckins);
       saveLocalDashboardSnapshot(nextAnalyticsHistory, nextStreak, allCheckins);
-    }
-    
-    if (user) {
-      const g = user.gamification || { xp: 0, level: 1, currentStreak: 0, longestStreak: 0, lastWorkoutDate: null, badges: [] };
-      const newXp = g.xp + 150 + record.exercises.length * 10;
-      const today = new Date().setHours(0,0,0,0);
-      let newStreak = g.currentStreak;
-      
-      if (g.lastWorkoutDate) {
-         const diff = today - new Date(g.lastWorkoutDate).setHours(0,0,0,0);
-         if (diff === 86400000) newStreak += 1; // 1 day
-         else if (diff > 86400000) newStreak = 1; // Reset
-      } else {
-         newStreak = 1;
-      }
-      const updatedUser = { 
-        ...user, 
-        gamification: {
-          ...g,
-          xp: newXp,
-          level: Math.floor(newXp / 1000) + 1,
-          currentStreak: newStreak,
-          longestStreak: Math.max(g.longestStreak, newStreak),
-          lastWorkoutDate: Date.now()
-        } 
-      };
-      handleRegister(updatedUser);
     }
   };
 
