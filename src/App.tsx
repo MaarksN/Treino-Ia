@@ -29,6 +29,7 @@ import { HydrationTracker } from './components/HydrationTracker';
 import { PoseDetector } from './components/PoseDetector';
 import { SleepTracker } from './components/SleepTracker';
 import { WearableSync } from './components/WearableSync';
+import { SocialHub } from './components/SocialHub';
 import { generateWorkoutPlan, extractWorkoutFromFile } from './services/geminiService';
 import { AppSettings, Badge, DailyCheckin as DailyCheckinType, RecoveryCheckin, StreakData, User, UserProfile, WorkoutHistoryEntry, WorkoutHistoryRecord, WorkoutPlan, WorkoutSession } from './types';
 import { calculateReadiness, getTodayCheckin, loadCheckins } from './utils/readinessUtils';
@@ -39,7 +40,7 @@ import { syncChallengeProgress } from './utils/challengeUtils';
 import { applyTheme, loadThemeId } from './utils/themeUtils';
 import { Activity, BrainCircuit, Dumbbell, Globe2, Moon, Settings as SettingsIcon, Share2, Sun, X } from 'lucide-react';
 
-type ViewState = 'loading' | 'registration' | 'home' | 'anamnesis' | 'import' | 'dashboard' | 'active-workout' | 'global_feed';
+type ViewState = 'loading' | 'registration' | 'home' | 'anamnesis' | 'import' | 'dashboard' | 'active-workout' | 'global_feed' | 'social';
 
 import { AssistantPopup } from './components/AssistantPopup';
 
@@ -97,7 +98,7 @@ export default function App() {
   const [showCoach, setShowCoach] = useState(false);
 
   // For tab navigation when a user is logged in
-  const [activeTab, setActiveTab] = useState<'my_workouts' | 'global_feed'>('my_workouts');
+  const [activeTab, setActiveTab] = useState<'my_workouts' | 'global_feed' | 'social'>('my_workouts');
 
   useEffect(() => {
     applyTheme(loadThemeId());
@@ -442,8 +443,8 @@ export default function App() {
               <Dumbbell className="w-4 h-4 mr-2" /> Meus Treinos
             </button>
             <button 
-              onClick={() => { setActiveTab('global_feed'); setView('global_feed'); }}
-              className={`px-5 py-2 font-mono font-bold text-sm uppercase flex items-center transition-colors rounded-full ${view === 'global_feed' ? 'bg-brand-neon text-brand-dark shadow-[0_0_10px_var(--color-brand-neon)]' : 'text-brand-muted hover:text-brand-light hover:bg-brand-light/5'}`}
+              onClick={() => { setActiveTab('social'); setView('social'); }}
+              className={`px-5 py-2 font-mono font-bold text-sm uppercase flex items-center transition-colors rounded-full ${view === 'social' ? 'bg-brand-neon text-brand-dark shadow-[0_0_10px_var(--color-brand-neon)]' : 'text-brand-muted hover:text-brand-light hover:bg-brand-light/5'}`}
             >
               <Globe2 className="w-4 h-4 mr-2" /> Comunidade
             </button>
@@ -614,6 +615,10 @@ export default function App() {
 
       {view === 'global_feed' && (
         <GlobalFeed />
+      )}
+
+      {view === 'social' && (
+        <SocialHub />
       )}
 
       {shareEntry && (
