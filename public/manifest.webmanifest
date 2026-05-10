@@ -1,0 +1,55 @@
+{
+  "name": "Treino App Premium",
+  "short_name": "TreinoApp",
+  "description": "Plataforma premium de treino, IA, biometria, periodizacao e performance.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0d0d0d",
+  "theme_color": "#a3e635",
+  "categories": ["fitness", "health", "sports", "productivity"],
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Treino de hoje",
+      "short_name": "Treino",
+      "description": "Abrir o treino do dia",
+      "url": "/?view=workout",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Check-in",
+      "short_name": "Check-in",
+      "description": "Registrar sono, energia e recuperacao",
+      "url": "/?view=checkin",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}

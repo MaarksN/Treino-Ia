@@ -31,6 +31,11 @@ import { SleepTracker } from './components/SleepTracker';
 import { WearableSync } from './components/WearableSync';
 import { SocialHub } from './components/SocialHub';
 import { PeriodizationLab } from './components/PeriodizationLab';
+import { GamificationHub } from './components/GamificationHub';
+import { InfrastructureHub } from './components/InfrastructureHub';
+import { AdvancedPlatformHub } from './components/platform/AdvancedPlatformHub';
+import { InstallPrompt } from './components/InstallPrompt';
+import { AppUpdateBanner } from './components/AppUpdateBanner';
 import { generateWorkoutPlan, extractWorkoutFromFile } from './services/geminiService';
 import { AppSettings, Badge, DailyCheckin as DailyCheckinType, FatigueSnapshot, RecoveryCheckin, StreakData, TrainingExercisePerformance, User, UserProfile, WorkoutHistoryEntry, WorkoutHistoryRecord, WorkoutPlan, WorkoutSession } from './types';
 import { calculateReadiness, getTodayCheckin, loadCheckins } from './utils/readinessUtils';
@@ -38,10 +43,15 @@ import { loadHistory, recordWorkoutSession, getTotalVolumeLifted } from './utils
 import { loadStreak, recordWorkoutForStreak } from './utils/streakUtils';
 import { evaluateAndUnlockBadges } from './utils/badgeUtils';
 import { syncChallengeProgress } from './utils/challengeUtils';
+import { addCoins, addXp, dailyCheckin, recordLogin, updateMissionProgress } from './utils/gamificationUtils';
+import { enqueueOfflineAction } from './utils/offlineQueue';
+import { registerBackgroundSync } from './utils/pwaUtils';
+import { saveDashboardSnapshot } from './utils/syncUtils';
+import { captureError } from './utils/errorTelemetry';
 import { applyTheme, loadThemeId } from './utils/themeUtils';
-import { Activity, BrainCircuit, Dumbbell, Globe2, Moon, Settings as SettingsIcon, Share2, Sun, X } from 'lucide-react';
+import { Activity, BrainCircuit, Dumbbell, Globe2, Moon, Rocket, Server, Settings as SettingsIcon, Share2, Sun, Trophy, X } from 'lucide-react';
 
-type ViewState = 'loading' | 'registration' | 'home' | 'anamnesis' | 'import' | 'dashboard' | 'active-workout' | 'global_feed' | 'social';
+type ViewState = 'loading' | 'registration' | 'home' | 'anamnesis' | 'import' | 'dashboard' | 'active-workout' | 'global_feed' | 'social' | 'gamification' | 'infrastructure' | 'platform';
 
 import { AssistantPopup } from './components/AssistantPopup';
 
@@ -135,7 +145,7 @@ export default function App() {
   const [showCoach, setShowCoach] = useState(false);
 
   // For tab navigation when a user is logged in
-  const [activeTab, setActiveTab] = useState<'my_workouts' | 'global_feed' | 'social'>('my_workouts');
+  const [activeTab, setActiveTab] = useState<'my_workouts' | 'global_feed' | 'social' | 'gamification' | 'infrastructure' | 'platform'>('my_workouts');
 
   useEffect(() => {
     applyTheme(loadThemeId());
@@ -185,6 +195,7 @@ export default function App() {
     if (savedUser) {
       const parsedUser = JSON.parse(savedUser);
       setUser(parsedUser);
+      recordLogin();
       if (parsedUser.profile && !savedProfile) {
         setProfile(parsedUser.profile);
       }
@@ -209,6 +220,7 @@ export default function App() {
 
   const handleRegister = (newUser: User) => {
     localStorage.setItem('@TreinoApp:user', JSON.stringify(newUser));
+    recordLogin();
     setUser(newUser);
     if (newUser.profile) {
       setProfile(newUser.profile);
@@ -342,12 +354,68 @@ export default function App() {
     setTodayCheckin(checkin);
     setAllCheckins(updatedCheckins);
     refreshEngagement(streakData, analyticsHistory, updatedCheckins);
+    dailyCheckin();
+    saveLocalDashboardSnapshot(analyticsHistory, streakData, updatedCheckins);
+  };
+
+  const saveLocalDashboardSnapshot = (
+    nextHistory = analyticsHistory,
+    nextStreak = streakData,
+    nextCheckins = allCheckins
+  ) => {
+    try {
+      saveDashboardSnapshot(user?.email || user?.name || 'local-user', {
+        plans: plans.length,
+        workoutHistory: nextHistory.length,
+        totalVolume: getTotalVolumeLifted(nextHistory),
+        currentStreak: nextStreak.currentStreak,
+        checkins: nextCheckins.length,
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      captureError(error, 'App.saveLocalDashboardSnapshot');
+    }
+  };
+
+  const applyWorkoutGamification = (record: WorkoutHistoryRecord) => {
+    const completedExercises = record.exercises.filter(exercise => exercise.completed).length || record.exercises.length;
+    const completedSets = record.exercises.reduce((sum, exercise) => (
+      sum + (exercise.completed ? exercise.sets : 0)
+    ), 0);
+    const rpeLogged = record.exercises.reduce((sum, exercise) => {
+      const setRpeCount = exercise.setLogs?.filter(set => typeof set.rpe === 'number').length ?? 0;
+      return sum + setRpeCount + (typeof exercise.rpe === 'number' ? 1 : 0);
+    }, 0);
+    const volume = Math.round(record.volumeLoad || 0);
+
+    addXp('workout_completed', 250 + completedExercises * 35, 'Treino concluido');
+    addCoins(50);
+    updateMissionProgress('workouts', 1);
+    updateMissionProgress('exercise_completed', completedExercises);
+    updateMissionProgress('sets', completedSets);
+    updateMissionProgress('volume', volume);
+    updateMissionProgress('group_contribution', volume);
+
+    if (rpeLogged > 0) {
+      updateMissionProgress('rpe_logged', rpeLogged);
+      addXp('rpe_logged', Math.min(120, rpeLogged * 15), 'RPE registrado');
+    }
+
+    if (!navigator.onLine) {
+      void enqueueOfflineAction({
+        type: 'WORKOUT_SESSION_COMPLETED',
+        payload: record,
+      })
+        .then(() => registerBackgroundSync())
+        .catch(error => captureError(error, 'App.enqueueWorkoutOffline'));
+    }
   };
 
   const handleCompleteDay = (record: WorkoutHistoryRecord) => {
     const newHistory = [...workoutHistory, record];
     setWorkoutHistory(newHistory);
     localStorage.setItem('@TreinoApp:history', JSON.stringify(newHistory));
+    applyWorkoutGamification(record);
 
     const completedPlan = plans.find(plan => plan.id === record.planId);
     const completedDayIndex = completedPlan?.days.findIndex(day => day.id === record.dayId) ?? -1;
@@ -364,6 +432,7 @@ export default function App() {
       setStreakData(nextStreak);
       setShareEntry(completedEntry);
       refreshEngagement(nextStreak, nextAnalyticsHistory, allCheckins);
+      saveLocalDashboardSnapshot(nextAnalyticsHistory, nextStreak, allCheckins);
     }
     
     if (user) {
@@ -505,6 +574,24 @@ export default function App() {
               className={`px-5 py-2 font-mono font-bold text-sm uppercase flex items-center transition-colors rounded-full ${view === 'social' ? 'bg-brand-neon text-brand-dark shadow-[0_0_10px_var(--color-brand-neon)]' : 'text-brand-muted hover:text-brand-light hover:bg-brand-light/5'}`}
             >
               <Globe2 className="w-4 h-4 mr-2" /> Comunidade
+            </button>
+            <button
+              onClick={() => { setActiveTab('gamification'); setView('gamification'); }}
+              className={`px-5 py-2 font-mono font-bold text-sm uppercase flex items-center transition-colors rounded-full ${view === 'gamification' ? 'bg-brand-neon text-brand-dark shadow-[0_0_10px_var(--color-brand-neon)]' : 'text-brand-muted hover:text-brand-light hover:bg-brand-light/5'}`}
+            >
+              <Trophy className="w-4 h-4 mr-2" /> Gamificacao
+            </button>
+            <button
+              onClick={() => { setActiveTab('infrastructure'); setView('infrastructure'); }}
+              className={`px-5 py-2 font-mono font-bold text-sm uppercase flex items-center transition-colors rounded-full ${view === 'infrastructure' ? 'bg-brand-neon text-brand-dark shadow-[0_0_10px_var(--color-brand-neon)]' : 'text-brand-muted hover:text-brand-light hover:bg-brand-light/5'}`}
+            >
+              <Server className="w-4 h-4 mr-2" /> Infra
+            </button>
+            <button
+              onClick={() => { setActiveTab('platform'); setView('platform'); }}
+              className={`px-5 py-2 font-mono font-bold text-sm uppercase flex items-center transition-colors rounded-full ${view === 'platform' ? 'bg-brand-neon text-brand-dark shadow-[0_0_10px_var(--color-brand-neon)]' : 'text-brand-muted hover:text-brand-light hover:bg-brand-light/5'}`}
+            >
+              <Rocket className="w-4 h-4 mr-2" /> Plataforma
             </button>
             <div className="ml-2 pl-2 border-l-2 border-brand-light/20 flex items-center gap-3">
               {user.avatarUrl ? (
@@ -684,6 +771,22 @@ export default function App() {
         <SocialHub />
       )}
 
+      {view === 'gamification' && (
+        <GamificationHub />
+      )}
+
+      {view === 'infrastructure' && (
+        <InfrastructureHub />
+      )}
+
+      {view === 'platform' && (
+        <AdvancedPlatformHub
+          userName={user?.name}
+          profile={activeProfile}
+          currentPlan={currentPlan}
+        />
+      )}
+
       {shareEntry && (
         <WorkoutShareCard
           entry={shareEntry}
@@ -738,6 +841,8 @@ export default function App() {
 
       <MusicPlayer />
       <AssistantPopup />
+      <InstallPrompt />
+      <AppUpdateBanner />
       
       {user && view === 'dashboard' && (
         <>

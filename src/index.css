@@ -93,6 +93,27 @@
   --color-white: #0F172A;
 }
 
+.treino-high-contrast {
+  --color-brand-neon: #FFFF00;
+  --color-brand-magenta: #FF66CC;
+  --color-brand-dark: #000000;
+  --color-brand-gray: #050505;
+  --color-brand-surface: #111111;
+  --color-brand-light: #FFFFFF;
+  --color-brand-muted: #D1D5DB;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 body {
   background-color: var(--color-brand-dark);
   color: var(--color-brand-light);
