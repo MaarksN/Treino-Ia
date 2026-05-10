@@ -521,3 +521,133 @@ export interface SleepEntry {
   deepSleepPct?: number;
   remSleepPct?: number;
 }
+
+// Social real & comunidade
+
+export type SocialPostType = 'workout' | 'pr' | 'badge' | 'challenge' | 'text';
+export type SocialVisibility = 'public' | 'followers' | 'private' | 'group';
+
+export interface SocialProfile {
+  id: string;
+  username: string;
+  display_name: string;
+  bio?: string | null;
+  avatar_url?: string | null;
+  city?: string | null;
+  goal?: string | null;
+  is_coach: boolean;
+  is_public: boolean;
+  total_workouts: number;
+  current_streak: number;
+  best_streak: number;
+  total_volume: number;
+  badges: SocialBadge[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SocialBadge {
+  id: string;
+  name: string;
+  emoji: string;
+  unlocked_at: string;
+}
+
+export interface SocialPost {
+  id: string;
+  author_id: string;
+  type: SocialPostType;
+  title: string;
+  body?: string | null;
+  metric_label?: string | null;
+  metric_value?: string | null;
+  visibility: SocialVisibility;
+  group_id?: string | null;
+  workout_template_id?: string | null;
+  created_at: string;
+  author?: SocialProfile;
+  likes_count?: number;
+  comments_count?: number;
+  liked_by_me?: boolean;
+}
+
+export interface SocialComment {
+  id: string;
+  post_id: string;
+  author_id: string;
+  body: string;
+  created_at: string;
+  author?: SocialProfile;
+}
+
+export interface TrainingGroup {
+  id: string;
+  owner_id: string;
+  name: string;
+  description?: string | null;
+  invite_code: string;
+  is_private: boolean;
+  created_at: string;
+  members_count?: number;
+}
+
+export interface TrainingGroupMessage {
+  id: string;
+  group_id: string;
+  author_id: string;
+  body: string;
+  created_at: string;
+  author?: SocialProfile;
+}
+
+export interface GroupChallenge {
+  id: string;
+  group_id: string;
+  name: string;
+  description?: string | null;
+  target: number;
+  metric: 'workouts' | 'volume' | 'streak';
+  starts_at: string;
+  ends_at: string;
+  badge_reward?: string | null;
+  created_at: string;
+  current?: number;
+  completed?: boolean;
+}
+
+export interface LeaderboardEntry {
+  user_id: string;
+  username: string;
+  display_name: string;
+  avatar_url?: string | null;
+  total_volume: number;
+  current_streak: number;
+  total_workouts: number;
+}
+
+export interface CoachStudent {
+  student: SocialProfile;
+  status: 'pending' | 'active' | 'archived';
+  created_at: string;
+}
+
+export interface CoachPrivateNote {
+  id: string;
+  coach_id: string;
+  student_id: string;
+  note: string;
+  created_at: string;
+}
+
+export interface PublicWorkoutTemplate {
+  id: string;
+  author_id: string;
+  title: string;
+  description?: string | null;
+  goal?: string | null;
+  level?: string | null;
+  workout_json: unknown;
+  likes_count: number;
+  created_at: string;
+  author?: SocialProfile;
+}
