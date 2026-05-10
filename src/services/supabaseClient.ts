@@ -1,27 +1,37 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.');
+function createMissingSupabaseClient(): SupabaseClient {
+  return new Proxy({}, {
+    get() {
+      throw new Error(
+        'Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY antes de usar recursos de rede.',
+      );
+    },
+  }) as SupabaseClient;
 }
 
-export const supabase = createClient(
-  supabaseUrl ?? 'https://placeholder.supabase.co',
-  supabaseAnonKey ?? 'placeholder',
-  {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-    },
-    realtime: {
-      params: {
-        eventsPerSecond: 10,
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
+
+export const supabase = isSupabaseConfigured
+  ? createClient(
+      supabaseUrl as string,
+      supabaseAnonKey as string,
+      {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+        },
+        realtime: {
+          params: {
+            eventsPerSecond: 10,
+          },
+        },
       },
-    },
-  }
-);
+    )
+  : createMissingSupabaseClient();
 
 export async function getCurrentUserId(): Promise<string> {
   const { data, error } = await supabase.auth.getUser();
