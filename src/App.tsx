@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { AnamnesisForm } from './components/AnamnesisForm';
 import { WorkoutDashboard } from './components/WorkoutDashboard';
 import { RegistrationForm } from './components/RegistrationForm';
@@ -30,8 +30,9 @@ import { PoseDetector } from './components/PoseDetector';
 import { SleepTracker } from './components/SleepTracker';
 import { WearableSync } from './components/WearableSync';
 import { SocialHub } from './components/SocialHub';
+import { PeriodizationLab } from './components/PeriodizationLab';
 import { generateWorkoutPlan, extractWorkoutFromFile } from './services/geminiService';
-import { AppSettings, Badge, DailyCheckin as DailyCheckinType, RecoveryCheckin, StreakData, User, UserProfile, WorkoutHistoryEntry, WorkoutHistoryRecord, WorkoutPlan, WorkoutSession } from './types';
+import { AppSettings, Badge, DailyCheckin as DailyCheckinType, FatigueSnapshot, RecoveryCheckin, StreakData, TrainingExercisePerformance, User, UserProfile, WorkoutHistoryEntry, WorkoutHistoryRecord, WorkoutPlan, WorkoutSession } from './types';
 import { calculateReadiness, getTodayCheckin, loadCheckins } from './utils/readinessUtils';
 import { loadHistory, recordWorkoutSession, getTotalVolumeLifted } from './utils/analyticsUtils';
 import { loadStreak, recordWorkoutForStreak } from './utils/streakUtils';
@@ -60,6 +61,42 @@ const LIGHT_THEME_VARS = {
   '--color-brand-muted': '#64748B',
   '--color-white': '#0F172A',
 };
+
+function extractFirstNumber(value?: string | number): number {
+  if (typeof value === 'number') return value;
+  const match = String(value || '').match(/\d+/);
+  return match ? Number(match[0]) : 8;
+}
+
+function getPlanPerformances(plan: WorkoutPlan | null): TrainingExercisePerformance[] {
+  if (!plan) return [];
+
+  return plan.days.flatMap(day =>
+    day.exercises.map(exercise => {
+      const targetReps = extractFirstNumber(exercise.reps);
+      const actualReps = extractFirstNumber(exercise.actualReps || exercise.reps);
+
+      return {
+        exerciseName: exercise.name,
+        sets: exercise.sets,
+        currentLoad: exercise.actualWeight ?? 0,
+        targetReps,
+        actualReps,
+        rpe: exercise.rpe ?? 7,
+        completed: exercise.completed ?? true,
+      };
+    })
+  );
+}
+
+function getAverageSoreness(checkin: DailyCheckinType | null): number {
+  if (!checkin) return 5;
+
+  const values = Object.values(checkin.sorenessMap);
+  if (!values.length) return 0;
+
+  return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
+}
 
 function loadInitialVoiceEnabled() {
   try {
@@ -359,6 +396,27 @@ export default function App() {
 
   const activeProfile = profile || user?.profile || null;
   const currentPlan = currentPlanId ? plans.find(p => p.id === currentPlanId) || null : null;
+  const periodizationPerformances = useMemo(
+    () => getPlanPerformances(currentPlan),
+    [currentPlan]
+  );
+  const periodizationFatigue = useMemo<Partial<FatigueSnapshot>>(() => {
+    const readiness = todayCheckin ? calculateReadiness(todayCheckin).score : 68;
+    const weeklyVolume = periodizationPerformances.reduce((sum, item) => sum + item.sets, 0);
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const recentSessions = sessions.filter(session => session.completedAt >= sevenDaysAgo);
+
+    return {
+      date: new Date().toISOString(),
+      readiness,
+      soreness: getAverageSoreness(todayCheckin),
+      sleep: todayCheckin ? Math.min(10, Math.round(todayCheckin.sleepHours)) : 7,
+      stress: todayCheckin?.stressLevel ?? 4,
+      weeklyVolume,
+      completedSessions: recentSessions.length || undefined,
+      missedSessions: 0,
+    };
+  }, [periodizationPerformances, sessions, todayCheckin]);
 
   if (view === 'loading') {
     return (
@@ -569,6 +627,11 @@ export default function App() {
             history={analyticsHistory}
             checkins={allCheckins}
             profile={activeProfile}
+          />
+
+          <PeriodizationLab
+            performances={periodizationPerformances}
+            fatigue={periodizationFatigue}
           />
 
           <div className="space-y-4">
