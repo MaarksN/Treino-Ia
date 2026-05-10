@@ -89,5 +89,33 @@ describe('gamificationService', () => {
     }));
     expect(result.profile?.xp).toBe(80);
   });
-});
 
+  it('registra treino concluído com sourceId no backend', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      Response.json({
+        profile: {
+          user_id: 'user-1',
+          xp: 250,
+          level: 2,
+          coins: 50,
+          login_streak: 0,
+          last_login_at: null,
+          last_checkin_at: null,
+          active_title: 'Iniciante Consistente',
+          season_xp: 250,
+          season_level: 1,
+          elite_pass_active: false,
+        },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await recordGamificationEvent('workout_completed', 'workout-1');
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/gamification/event', expect.objectContaining({
+      method: 'POST',
+      body: JSON.stringify({ eventType: 'workout_completed', sourceId: 'workout-1' }),
+    }));
+    expect(result.profile?.coins).toBe(50);
+  });
+});

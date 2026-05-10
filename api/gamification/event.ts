@@ -8,6 +8,7 @@ export const config = {
 const EVENT_REWARDS: Record<string, { xp: number; coins: number }> = {
   login: { xp: 25, coins: 5 },
   checkin: { xp: 80, coins: 20 },
+  workout_completed: { xp: 250, coins: 50 },
 };
 
 function isSameUtcDay(value?: string | null) {
@@ -78,6 +79,7 @@ export default async function handler(request: Request) {
       p_coin_delta: reward.coins,
       p_metadata: {
         origin: 'api',
+        eventType,
       },
     });
 
@@ -93,9 +95,15 @@ export default async function handler(request: Request) {
               ? Number(current.login_streak ?? 0) + 1
               : 1,
           }
-        : {
+        : eventType === 'checkin'
+          ? {
             last_checkin_at: new Date().toISOString(),
-          };
+          }
+          : null;
+
+    if (!patch) {
+      return json({ profile });
+    }
 
     const { data: updated, error: updateError } = await supabase
       .from('gamification_profiles')
@@ -113,4 +121,3 @@ export default async function handler(request: Request) {
     return handleApiError(error);
   }
 }
-

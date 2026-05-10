@@ -4,7 +4,6 @@ const config: CapacitorConfig = {
   appId: 'br.com.treinoia.app',
   appName: 'Treino IA',
   webDir: 'dist',
-  bundledWebRuntime: false,
   server: {
     androidScheme: 'https',
   },
