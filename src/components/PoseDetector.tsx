@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Camera, CameraOff, CheckCircle } from 'lucide-react';
-import { BiometricPersistenceMeta, PoseAnalysis } from '../types';
+import { PoseAnalysis } from '../types';
+import { PremiumFeatureGate } from './PremiumPaywall';
 import {
   analyzeAngles,
   EXERCISE_RULES,
@@ -287,6 +288,7 @@ export function PoseDetector() {
         <Camera size={20} className="text-brand-muted" />
       </div>
 
+      <PremiumFeatureGate feature="pose_detection">
       <div className="flex gap-2 mb-4">
         {(['camera', 'history'] as const).map(item => (
           <button
@@ -472,6 +474,7 @@ export function PoseDetector() {
           ))}
         </div>
       )}
+      </PremiumFeatureGate>
     </div>
   );
 }

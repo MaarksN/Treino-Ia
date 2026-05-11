@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Check, Lock } from 'lucide-react';
 import { APP_THEMES, applyTheme, loadThemeId } from '../utils/themeUtils';
+import { PremiumFeatureGate } from './PremiumPaywall';
 
 interface Props {
   isPremium?: boolean;
@@ -25,7 +26,7 @@ export function ThemeSelector({ isPremium = false, onThemeChange }: Props) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {APP_THEMES.map(theme => {
           const locked = theme.isPremium && !isPremium;
-          return (
+          const buttonContent = (
             <button
               key={theme.id}
               type="button"
@@ -53,9 +54,7 @@ export function ThemeSelector({ isPremium = false, onThemeChange }: Props) {
 
               {theme.isPremium && (
                 <div className="absolute top-2 right-2">
-                  {isPremium
-                    ? <span className="text-[10px] text-yellow-400 font-bold">PRO</span>
-                    : <Lock size={12} className="text-brand-muted" />}
+                  <Lock size={12} className="text-brand-muted" />
                 </div>
               )}
 
@@ -66,14 +65,36 @@ export function ThemeSelector({ isPremium = false, onThemeChange }: Props) {
               )}
             </button>
           );
+
+          if (theme.isPremium) {
+            return (
+              <PremiumFeatureGate
+                key={theme.id}
+                feature="premium_theme"
+                fallback={buttonContent}
+              >
+                {React.cloneElement(buttonContent as React.ReactElement<any>, {
+                  className: (buttonContent as React.ReactElement<any>).props.className.replace('opacity-60 cursor-not-allowed', ''),
+                  onClick: () => handleSelect(theme.id, false), // Bypass the internal premium check since gate handles it
+                  children: React.Children.map((buttonContent as React.ReactElement<any>).props.children, child => {
+                    const c = child as React.ReactElement<any>;
+                    if (c?.type === 'div' && c.props.className === 'absolute top-2 right-2') {
+                       return (
+                         <div className="absolute top-2 right-2">
+                           <span className="text-[10px] text-brand-neon font-bold">PRO</span>
+                         </div>
+                       );
+                    }
+                    return child;
+                  })
+                })}
+              </PremiumFeatureGate>
+            );
+          }
+
+          return buttonContent;
         })}
       </div>
-
-      {!isPremium && (
-        <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
-          <p className="text-yellow-400 text-xs">Desbloqueie temas Cyberpunk, Champion e Minimal com o plano Premium.</p>
-        </div>
-      )}
     </div>
   );
 }

@@ -16,7 +16,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { BiometricPersistenceMeta, HeartRateReading, UserProfile, WearableSession } from '../types';
+import { HeartRateReading, UserProfile, WearableSession } from '../types';
+import { PremiumFeatureGate } from './PremiumPaywall';
 import {
   calcHRZones,
   connectHeartRateMonitor,
@@ -202,6 +203,7 @@ export function WearableSync({ profile, onSessionComplete }: Props) {
           : <BluetoothOff size={20} className="text-brand-muted" />}
       </div>
 
+      <PremiumFeatureGate feature="wearable_sync">
       <div className="flex gap-2 mb-4">
         {(['live', 'history'] as const).map(item => (
           <button
@@ -382,6 +384,7 @@ export function WearableSync({ profile, onSessionComplete }: Props) {
           })}
         </div>
       )}
+      </PremiumFeatureGate>
     </div>
   );
 }

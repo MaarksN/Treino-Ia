@@ -13,7 +13,7 @@ import { SocialFeed } from './SocialFeed';
 import { GroupHub } from './GroupHub';
 import { CoachConsole } from './CoachConsole';
 import { PublicProfileCard } from './PublicProfileCard';
-import { SupabaseAuthPanel } from './SupabaseAuthPanel';
+import { PremiumFeatureGate } from './PremiumPaywall';
 
 type Tab = 'feed' | 'groups' | 'library' | 'coach' | 'profile' | 'athletes';
 
@@ -282,24 +282,13 @@ export function SocialHub({ currentPlan = null }: Props) {
       </nav>
 
       <main className="max-w-6xl mx-auto">
-        {loading && <p className="text-brand-muted mb-4">Sincronizando dados sociais...</p>}
-
-        {tab === 'feed' && (
-          <SocialFeed canInteract={canInteract} onAuthRequired={() => setTab('profile')} />
-        )}
-
+        {tab === 'feed' && <SocialFeed />}
         {tab === 'groups' && (
-          <GroupHub currentProfile={profile} canInteract={canInteract} onAuthRequired={() => setTab('profile')} />
+          <PremiumFeatureGate feature="premium_community">
+            <GroupHub currentProfile={profile} />
+          </PremiumFeatureGate>
         )}
-
-        {tab === 'coach' && (
-          <CoachConsole
-            canInteract={canInteract}
-            onAuthRequired={() => setTab('profile')}
-            currentPlan={currentPlan}
-          />
-        )}
-
+        {tab === 'coach' && <CoachConsole />}
         {tab === 'profile' && profile && <PublicProfileCard profile={profile} />}
 
         {tab === 'profile' && !profile && (
