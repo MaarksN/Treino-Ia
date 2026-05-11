@@ -9,7 +9,31 @@ interface Props {
   onUpdateUser: (user: User) => void;
 }
 
-export function HomeMenu({ user, onCreateNew, onImport, onUpdateUser }: Props) {
+import { PremiumPaywall } from './PremiumPaywall';
+
+interface ExtendedProps extends Props {
+  isPremium?: boolean;
+  plansCount?: number;
+}
+
+export function HomeMenu({ user, onCreateNew, onImport, onUpdateUser, isPremium = false, plansCount = 0 }: ExtendedProps) {
+  const [showPaywall, setShowPaywall] = useState(false);
+
+  const handleCreateNew = () => {
+    if (!isPremium && plansCount >= 2) {
+      setShowPaywall(true);
+      return;
+    }
+    onCreateNew();
+  };
+
+  const handleImport = () => {
+    if (!isPremium && plansCount >= 2) {
+      setShowPaywall(true);
+      return;
+    }
+    onImport();
+  };
   const [notiMessage, setNotiMessage] = useState('');
 
   const enableNotifications = async () => {
@@ -68,7 +92,7 @@ export function HomeMenu({ user, onCreateNew, onImport, onUpdateUser }: Props) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
         <button 
-          onClick={onCreateNew}
+          onClick={handleCreateNew}
           className="bg-brand-dark border-4 border-brand-neon hover:bg-brand-neon group transition-all p-10 flex flex-col items-center justify-center shadow-[6px_6px_0px_var(--color-brand-neon)] hover:scale-[1.02]"
         >
           <div className="w-24 h-24 bg-brand-neon text-brand-dark flex items-center justify-center mb-6 border-brutal group-hover:bg-brand-dark group-hover:text-brand-neon transition-colors shadow-brutal-light group-hover:shadow-brutal-neon">
@@ -79,7 +103,7 @@ export function HomeMenu({ user, onCreateNew, onImport, onUpdateUser }: Props) {
         </button>
 
         <button 
-          onClick={onImport}
+          onClick={handleImport}
           className="bg-brand-dark border-4 border-brand-magenta hover:bg-brand-magenta group transition-all p-10 flex flex-col items-center justify-center shadow-[6px_6px_0px_var(--color-brand-magenta)] hover:scale-[1.02]"
         >
           <div className="w-24 h-24 bg-brand-magenta text-brand-light flex items-center justify-center mb-6 border-brutal group-hover:bg-brand-dark group-hover:text-brand-magenta transition-colors shadow-brutal-light group-hover:shadow-brutal-magenta">
@@ -113,6 +137,18 @@ export function HomeMenu({ user, onCreateNew, onImport, onUpdateUser }: Props) {
           </button>
         )}
       </div>
+
+      {showPaywall && (
+        <PremiumPaywall
+          trigger={{
+            source: 'feature_gate',
+            feature: 'periodization_lab',
+            title: 'Limite de planos atingido',
+            description: 'Assinantes Free podem criar no máximo 2 planos de treino ativos. Faça upgrade para planos ilimitados.'
+          }}
+          onClose={() => setShowPaywall(false)}
+        />
+      )}
     </div>
   );
 }

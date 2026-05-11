@@ -36,6 +36,7 @@ import { AssistantPopup } from './components/AssistantPopup';
 
 import { FuturisticHUD } from './components/FuturisticHUD';
 import { BotMessageSquare } from 'lucide-react';
+import { fetchBillingEntitlement } from './services/billingService';
 
 const WorkoutDashboard = lazy(() => import('./components/WorkoutDashboard').then(module => ({ default: module.WorkoutDashboard })));
 const ActiveWorkoutView = lazy(() => import('./components/ActiveWorkoutView').then(module => ({ default: module.ActiveWorkoutView })));
@@ -124,6 +125,7 @@ function loadInitialVoiceEnabled() {
 export default function App() {
   const [view, setView] = useState<ViewState>('loading');
   const [user, setUser] = useState<User | null>(null);
+  const [isPremium, setIsPremium] = useState(false);
   const [plans, setPlans] = useState<WorkoutPlan[]>([]);
   const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
   const [workoutHistory, setWorkoutHistory] = useState<WorkoutHistoryRecord[]>([]);
@@ -212,6 +214,10 @@ export default function App() {
     if (savedTheme) {
       setDarkMode(savedTheme === 'dark');
     }
+
+    fetchBillingEntitlement()
+      .then(entitlement => setIsPremium(entitlement.isPremium))
+      .catch(() => setIsPremium(false));
 
     if (savedHistory) {
       setWorkoutHistory(JSON.parse(savedHistory));
@@ -680,6 +686,8 @@ export default function App() {
             onCreateNew={() => setView('anamnesis')} 
             onImport={() => setView('import')} 
             onUpdateUser={handleRegister}
+            isPremium={isPremium}
+            plansCount={plans.length}
           />
         </div>
       )}
@@ -884,6 +892,7 @@ export default function App() {
               plans={plans}
               history={analyticsHistory}
               streak={streakData}
+              isPremium={isPremium}
               onSettingsChange={handleSettingsChange}
             />
           </div>
