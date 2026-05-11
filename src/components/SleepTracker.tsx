@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import {
   Area,
@@ -9,16 +9,16 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { BiometricPersistenceMeta, SleepEntry } from '../types';
+import { SleepEntry } from '../types';
 import {
   calcSleepDuration,
   getAvgSleepDuration,
   getAvgSleepQuality,
   getSleepQualityColor,
   getSleepQualityLabel,
+  loadSleepEntries,
+  saveSleepEntry,
 } from '../utils/biometricUtils';
-import { loadSleepEntries, saveSleepEntry } from '../services/biometricService';
-import { BiometricDataModeBadge } from './BiometricDataModeBadge';
 
 const QUALITY_LABELS = ['😴 Péssimo', '😪 Ruim', '😐 Regular', '😊 Bom', '🌟 Excelente'];
 
@@ -27,16 +27,12 @@ function clampQuality(value: number): SleepEntry['quality'] {
 }
 
 export function SleepTracker() {
-  const [entries, setEntries] = useState<SleepEntry[]>([]);
+  const [entries, setEntries] = useState<SleepEntry[]>(loadSleepEntries);
   const [bedtime, setBedtime] = useState('23:00');
   const [wakeTime, setWakeTime] = useState('07:00');
   const [quality, setQuality] = useState<SleepEntry['quality']>(4);
   const [notes, setNotes] = useState('');
   const [tab, setTab] = useState<'log' | 'stats'>('log');
-  const [dataMeta, setDataMeta] = useState<BiometricPersistenceMeta | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
 
   const today = new Date().toISOString().slice(0, 10);
   const duration = calcSleepDuration(bedtime, wakeTime);
@@ -51,33 +47,7 @@ export function SleepTracker() {
     qualidade: entry.quality * 20,
   }));
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError('');
-
-    loadSleepEntries()
-      .then(result => {
-        if (cancelled) return;
-        setEntries(result.data);
-        setDataMeta(result.meta);
-      })
-      .catch(err => {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Falha ao carregar sono.');
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const handleSave = async () => {
-    setSaving(true);
-    setError('');
-
+  const handleSave = () => {
     const entry: SleepEntry = {
       id: todayEntry?.id || crypto.randomUUID(),
       date: today,
@@ -87,17 +57,9 @@ export function SleepTracker() {
       quality,
       notes: notes || undefined,
     };
-
-    try {
-      const result = await saveSleepEntry(entry);
-      setEntries(result.data);
-      setDataMeta(result.meta);
-      setNotes('');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível salvar sono.');
-    } finally {
-      setSaving(false);
-    }
+    saveSleepEntry(entry);
+    setEntries(loadSleepEntries());
+    setNotes('');
   };
 
   return (
@@ -106,20 +68,6 @@ export function SleepTracker() {
         <h3 className="text-white font-bold text-lg">Sono</h3>
         <Moon size={20} className="text-purple-400" />
       </div>
-
-      <BiometricDataModeBadge meta={dataMeta} />
-
-      {loading && (
-        <div className="mb-4 p-3 bg-brand-dark rounded-xl border border-white/10 text-brand-muted text-sm">
-          Carregando histórico de sono...
-        </div>
-      )}
-
-      {error && (
-        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
-          {error}
-        </div>
-      )}
 
       <div className="flex gap-2 mb-4">
         {(['log', 'stats'] as const).map(item => (
@@ -217,20 +165,12 @@ export function SleepTracker() {
               className="w-full bg-brand-gray border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none"
             />
 
-            <button
-              type="button"
-              onClick={() => { void handleSave(); }}
-              disabled={saving}
-              className="w-full bg-brand-neon text-brand-dark font-bold py-3 rounded-xl disabled:opacity-50"
-            >
-              {saving ? 'Salvando...' : todayEntry ? 'Atualizar' : 'Salvar sono'}
+            <button type="button" onClick={handleSave} className="w-full bg-brand-neon text-brand-dark font-bold py-3 rounded-xl">
+              {todayEntry ? 'Atualizar' : 'Salvar sono'}
             </button>
           </div>
 
           <div className="space-y-2">
-            {entries.length === 0 && !loading && (
-              <p className="text-brand-muted text-sm text-center py-4">Nenhuma noite registrada ainda.</p>
-            )}
             {[...entries].reverse().slice(0, 5).map(entry => (
               <div key={entry.id} className="flex items-center justify-between p-3 bg-brand-dark rounded-xl border border-white/10">
                 <div>

@@ -3,57 +3,34 @@ import { Heart, MessageCircle, Send, Trophy } from 'lucide-react';
 import { SocialComment, SocialPost } from '../types';
 import {
   addComment,
-  createPersonalRecordPost,
+  createAchievementPost,
   createPost,
+  likePost,
   listComments,
   listFeed,
   subscribeToFeed,
-  toggleLikePost,
 } from '../services/socialService';
-import { isSupabaseConfigured } from '../services/supabaseClient';
 import { timeAgo } from '../utils/socialUtils';
 
-interface Props {
-  canInteract?: boolean;
-  onAuthRequired?: () => void;
-}
-
-export function SocialFeed({ canInteract = true, onAuthRequired }: Props) {
+export function SocialFeed() {
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [prExercise, setPrExercise] = useState('');
-  const [prWeight, setPrWeight] = useState('');
-  const [prReps, setPrReps] = useState('');
   const [comments, setComments] = useState<Record<string, SocialComment[]>>({});
   const [commentText, setCommentText] = useState<Record<string, string>>({});
   const [status, setStatus] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-
-  const requireAuth = () => {
-    if (canInteract) return true;
-    setStatus('Entre com Supabase Auth para publicar, curtir ou comentar.');
-    onAuthRequired?.();
-    return false;
-  };
 
   const load = async () => {
-    setLoading(true);
     try {
       setPosts(await listFeed());
       setStatus('');
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Não foi possível carregar o feed.');
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
     load();
-    if (!isSupabaseConfigured) return undefined;
-
     const channel = subscribeToFeed(load);
     return () => {
       channel.unsubscribe();
@@ -61,45 +38,33 @@ export function SocialFeed({ canInteract = true, onAuthRequired }: Props) {
   }, []);
 
   const publish = async () => {
-    if (!requireAuth()) return;
+    if (!title.trim()) return;
 
-    setSubmitting(true);
     try {
       await createPost({
         type: 'text',
-        title,
-        body,
+        title: title.trim(),
+        body: body.trim(),
       });
       setTitle('');
       setBody('');
       await load();
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Não foi possível publicar.');
-    } finally {
-      setSubmitting(false);
     }
   };
 
   const sharePr = async () => {
-    if (!requireAuth()) return;
-
-    setSubmitting(true);
     try {
-      await createPersonalRecordPost({
-        exerciseName: prExercise,
-        weight: Number(prWeight),
-        reps: Number(prReps),
-        note: body,
+      await createAchievementPost({
+        title: 'Novo PR registrado 🏆',
+        body: 'Bati meu recorde pessoal no treino de hoje.',
+        metricLabel: 'PR',
+        metricValue: '+ carga máxima',
       });
-      setPrExercise('');
-      setPrWeight('');
-      setPrReps('');
-      setBody('');
       await load();
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Não foi possível compartilhar o PR.');
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -114,8 +79,6 @@ export function SocialFeed({ canInteract = true, onAuthRequired }: Props) {
   };
 
   const sendComment = async (postId: string) => {
-    if (!requireAuth()) return;
-
     const text = commentText[postId]?.trim();
     if (!text) return;
 
@@ -123,20 +86,8 @@ export function SocialFeed({ canInteract = true, onAuthRequired }: Props) {
       await addComment(postId, text);
       setCommentText(previous => ({ ...previous, [postId]: '' }));
       await openComments(postId);
-      await load();
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Não foi possível comentar.');
-    }
-  };
-
-  const toggleLike = async (post: SocialPost) => {
-    if (!requireAuth()) return;
-
-    try {
-      await toggleLikePost(post);
-      await load();
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'Não foi possível atualizar curtida.');
     }
   };
 
@@ -151,98 +102,41 @@ export function SocialFeed({ canInteract = true, onAuthRequired }: Props) {
           </div>
         )}
 
-        <div className="grid lg:grid-cols-2 gap-4">
-          <div>
-            <input
-              value={title}
-              onChange={event => setTitle(event.target.value)}
-              placeholder="O que você conquistou hoje?"
-              className="w-full bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white mb-3 outline-none"
-              maxLength={140}
-            />
+        <input
+          value={title}
+          onChange={event => setTitle(event.target.value)}
+          placeholder="O que você conquistou hoje?"
+          className="w-full bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white mb-3 outline-none"
+        />
 
-            <textarea
-              value={body}
-              onChange={event => setBody(event.target.value)}
-              placeholder="Contexto, sensações ou detalhes do treino..."
-              className="w-full bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white min-h-24 outline-none"
-              maxLength={1000}
-            />
+        <textarea
+          value={body}
+          onChange={event => setBody(event.target.value)}
+          placeholder="Conte rapidamente sua evolução..."
+          className="w-full bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white min-h-24 outline-none"
+        />
 
-            <button
-              type="button"
-              onClick={publish}
-              disabled={submitting}
-              className="mt-4 bg-brand-neon text-brand-dark rounded-xl px-4 py-3 font-bold flex items-center gap-2 disabled:opacity-50"
-            >
-              <Send size={16} />
-              Publicar conquista
-            </button>
-          </div>
+        <div className="flex gap-3 mt-4 flex-wrap">
+          <button type="button" onClick={publish} className="bg-brand-neon text-brand-dark rounded-xl px-4 py-3 font-bold flex items-center gap-2">
+            <Send size={16} />
+            Publicar
+          </button>
 
-          <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
-            <h3 className="font-black text-white flex items-center gap-2 mb-3">
-              <Trophy className="text-brand-neon" size={18} />
-              Compartilhar PR no feed
-            </h3>
-
-            <div className="grid sm:grid-cols-[1fr_100px_100px] gap-3">
-              <input
-                value={prExercise}
-                onChange={event => setPrExercise(event.target.value)}
-                placeholder="Exercício"
-                className="bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none"
-                maxLength={80}
-              />
-              <input
-                value={prWeight}
-                onChange={event => setPrWeight(event.target.value)}
-                inputMode="decimal"
-                placeholder="kg"
-                className="bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none"
-              />
-              <input
-                value={prReps}
-                onChange={event => setPrReps(event.target.value)}
-                inputMode="numeric"
-                placeholder="reps"
-                className="bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none"
-              />
-            </div>
-
-            <button
-              type="button"
-              onClick={sharePr}
-              disabled={submitting}
-              className="mt-3 bg-white/10 text-white rounded-xl px-4 py-3 font-bold flex items-center gap-2 disabled:opacity-50"
-            >
-              <Trophy size={16} />
-              Publicar PR
-            </button>
-          </div>
+          <button type="button" onClick={sharePr} className="bg-white/10 text-white rounded-xl px-4 py-3 font-bold flex items-center gap-2">
+            <Trophy size={16} />
+            Compartilhar PR
+          </button>
         </div>
       </div>
-
-      {loading && (
-        <div className="bg-brand-gray rounded-3xl border border-white/10 p-5 text-brand-muted">
-          Carregando feed...
-        </div>
-      )}
-
-      {!loading && posts.length === 0 && (
-        <div className="bg-brand-gray rounded-3xl border border-white/10 p-5 text-brand-muted">
-          Nenhuma conquista publicada ainda.
-        </div>
-      )}
 
       {posts.map(post => (
         <article key={post.id} className="bg-brand-gray rounded-3xl border border-white/10 p-5">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-11 h-11 rounded-xl bg-brand-neon/20 flex items-center justify-center overflow-hidden">
+            <div className="w-11 h-11 rounded-xl bg-brand-neon/20 flex items-center justify-center">
               {post.author?.avatar_url ? (
-                <img src={post.author.avatar_url} alt="" className="w-full h-full object-cover" />
+                <img src={post.author.avatar_url} alt="" className="w-full h-full object-cover rounded-xl" />
               ) : (
-                <span className="text-brand-neon font-black">{post.author?.display_name?.charAt(0) ?? 'A'}</span>
+                '🏋️'
               )}
             </div>
 
@@ -262,19 +156,15 @@ export function SocialFeed({ canInteract = true, onAuthRequired }: Props) {
             </div>
           )}
 
-          <div className="flex gap-4 mt-5">
-            <button
-              type="button"
-              onClick={() => toggleLike(post)}
-              className={`${post.liked_by_me ? 'text-brand-neon' : 'text-white/70'} hover:text-brand-neon flex items-center gap-2`}
-            >
-              <Heart size={18} fill={post.liked_by_me ? 'currentColor' : 'none'} />
-              {post.likes_count ?? 0}
+          <div className="flex gap-3 mt-5">
+            <button type="button" onClick={() => likePost(post.id).then(load).catch(() => setStatus('Não foi possível curtir.'))} className="text-white/70 hover:text-brand-neon flex items-center gap-2">
+              <Heart size={18} />
+              Curtir
             </button>
 
             <button type="button" onClick={() => openComments(post.id)} className="text-white/70 hover:text-brand-neon flex items-center gap-2">
               <MessageCircle size={18} />
-              {post.comments_count ?? 0}
+              Comentar
             </button>
           </div>
 
@@ -293,7 +183,6 @@ export function SocialFeed({ canInteract = true, onAuthRequired }: Props) {
                   onChange={event => setCommentText(previous => ({ ...previous, [post.id]: event.target.value }))}
                   placeholder="Escreva um comentário..."
                   className="flex-1 bg-brand-dark border border-white/10 rounded-xl px-4 py-2 text-white outline-none min-w-0"
-                  maxLength={500}
                 />
                 <button type="button" onClick={() => sendComment(post.id)} className="bg-brand-neon text-brand-dark rounded-xl px-4 font-bold">
                   Enviar

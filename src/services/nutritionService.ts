@@ -1,9 +1,6 @@
 import { Schema, Type } from '@google/genai';
 import { MacroTargets, MealEntry, UserProfile } from '../types';
-import { buildFallbackMealPlan, getWorkoutNutritionTiming } from './nutritionAiService';
 import { createGeminiProxyClient } from './geminiProxyClient';
-import { calculateMacroPlan } from '../utils/macros';
-import { nutritionProfileFromUser } from '../utils/tdee';
 
 function getAI() {
   return createGeminiProxyClient();
@@ -20,18 +17,7 @@ const macroSchema: Schema = {
   required: ['calories', 'protein', 'carbs', 'fat'],
 };
 
-function deterministicMacroTargets(profile: UserProfile): MacroTargets {
-  const plan = calculateMacroPlan(nutritionProfileFromUser(profile));
-  return {
-    calories: plan.calories,
-    protein: plan.proteinG,
-    carbs: plan.carbsG,
-    fat: plan.fatG,
-  };
-}
-
 export async function generateMacroTargets(profile: UserProfile): Promise<MacroTargets> {
-  const fallback = deterministicMacroTargets(profile);
   const prompt = `
 Calcule as metas de macros diários para este perfil:
 ${JSON.stringify(profile, null, 2)}
@@ -39,24 +25,16 @@ ${JSON.stringify(profile, null, 2)}
 Retorne apenas JSON com: calories, protein (g), carbs (g), fat (g).
 `;
 
-  try {
-    const response = await getAI().models.generateContent({
-      model: 'gemini-2.5-pro',
-      contents: prompt,
-      config: { responseMimeType: 'application/json', responseSchema: macroSchema },
-    });
+  const response = await getAI().models.generateContent({
+    model: 'gemini-2.5-pro',
+    contents: prompt,
+    config: { responseMimeType: 'application/json', responseSchema: macroSchema },
+  });
 
-    return { ...fallback, ...JSON.parse(response.text || '{}') } as MacroTargets;
-  } catch {
-    return fallback;
-  }
+  return JSON.parse(response.text || '{}') as MacroTargets;
 }
 
 export async function generateBasicNutritionPlan(profile: UserProfile): Promise<string> {
-  const nutritionProfile = nutritionProfileFromUser(profile);
-  const macros = calculateMacroPlan(nutritionProfile);
-  const fallback = buildFallbackMealPlan(nutritionProfile, macros).join('\n');
-
   const prompt = `
 Crie um plano nutricional básico e prático para:
 ${JSON.stringify(profile, null, 2)}
@@ -64,16 +42,12 @@ ${JSON.stringify(profile, null, 2)}
 Inclua: 5-6 refeições com exemplos de alimentos, distribuição de macros, dicas práticas.
 `;
 
-  try {
-    const response = await getAI().models.generateContent({
-      model: 'gemini-2.5-pro',
-      contents: prompt,
-    });
+  const response = await getAI().models.generateContent({
+    model: 'gemini-2.5-pro',
+    contents: prompt,
+  });
 
-    return response.text || fallback;
-  } catch {
-    return fallback;
-  }
+  return response.text || 'Sem plano disponível.';
 }
 
 export async function analyzePhotoMacros(base64: string, mimeType: string): Promise<Partial<MealEntry>> {
@@ -106,7 +80,6 @@ export async function analyzePhotoMacros(base64: string, mimeType: string): Prom
 }
 
 export async function generatePreWorkoutSuggestion(profile: UserProfile, workoutTime: string): Promise<string> {
-  const timing = getWorkoutNutritionTiming(workoutTime);
   const prompt = `
 Sugira uma refeição pré-treino para:
 Objetivo: ${profile.goal}
@@ -116,20 +89,15 @@ Peso: ${profile.weight}kg
 Dê opções rápidas, práticas e com tempo de consumo antes do treino.
 `;
 
-  try {
-    const response = await getAI().models.generateContent({
-      model: 'gemini-2.5-pro',
-      contents: prompt,
-    });
+  const response = await getAI().models.generateContent({
+    model: 'gemini-2.5-pro',
+    contents: prompt,
+  });
 
-    return response.text || timing.pre;
-  } catch {
-    return timing.pre;
-  }
+  return response.text || 'Sem sugestão.';
 }
 
 export async function generatePostWorkoutSuggestion(profile: UserProfile): Promise<string> {
-  const timing = getWorkoutNutritionTiming(profile.preferredTime || 'após o treino');
   const prompt = `
 Sugira uma refeição pós-treino para:
 Objetivo: ${profile.goal}
@@ -138,16 +106,12 @@ Peso: ${profile.weight}kg
 Inclua opções rápidas e práticas, proporção proteína/carboidrato e hidratação.
 `;
 
-  try {
-    const response = await getAI().models.generateContent({
-      model: 'gemini-2.5-pro',
-      contents: prompt,
-    });
+  const response = await getAI().models.generateContent({
+    model: 'gemini-2.5-pro',
+    contents: prompt,
+  });
 
-    return response.text || timing.post;
-  } catch {
-    return timing.post;
-  }
+  return response.text || 'Sem sugestão.';
 }
 
 export async function generateWeeklyNutritionAnalysis(meals: MealEntry[], targets: MacroTargets): Promise<string> {
@@ -163,20 +127,12 @@ Forneça:
 - recomendações práticas para a próxima semana
 `;
 
-  try {
-    const response = await getAI().models.generateContent({
-      model: 'gemini-2.5-pro',
-      contents: prompt,
-    });
+  const response = await getAI().models.generateContent({
+    model: 'gemini-2.5-pro',
+    contents: prompt,
+  });
 
-    return response.text || 'Sem análise.';
-  } catch {
-    const total = meals.slice(-21).reduce((sum, meal) => sum + (meal.estimatedCalories || 0), 0);
-    const days = Math.max(1, new Set(meals.slice(-21).map(meal => meal.date)).size);
-    const avg = Math.round(total / days);
-    const adherence = targets.calories ? Math.round(Math.min(avg / targets.calories, 1.2) * 100) : 0;
-    return `Aderência calórica média: ${adherence}%. Média registrada: ${avg} kcal/dia. Próxima semana: registre proteína em todas as refeições e ajuste por fome, peso e performance.`;
-  }
+  return response.text || 'Sem análise.';
 }
 
 export async function analyzeBodyPhoto(

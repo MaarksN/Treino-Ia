@@ -1,40 +1,16 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { ClipboardList, Loader2, NotebookPen, Send, UserPlus, Users } from 'lucide-react';
-import { CoachPrivateNote, CoachStudent, CoachWorkoutAssignment, WorkoutPlan } from '../types';
-import {
-  addCoachStudentByUsername,
-  assignWorkoutToStudent,
-  createCoachNote,
-  listCoachAssignments,
-  listCoachNotes,
-  listCoachStudents,
-} from '../services/socialService';
+import React, { useEffect, useState } from 'react';
+import { ClipboardList, NotebookPen, Send, Users } from 'lucide-react';
+import { CoachStudent } from '../types';
+import { assignWorkoutToStudent, createCoachNote, listCoachStudents } from '../services/socialService';
 
-interface Props {
-  canInteract: boolean;
-  onAuthRequired: () => void;
-  currentPlan?: WorkoutPlan | null;
-}
-
-export function CoachConsole({ canInteract, onAuthRequired, currentPlan = null }: Props) {
+export function CoachConsole() {
   const [students, setStudents] = useState<CoachStudent[]>([]);
   const [selectedStudentId, setSelectedStudentId] = useState('');
-  const [notes, setNotes] = useState<CoachPrivateNote[]>([]);
-  const [assignments, setAssignments] = useState<CoachWorkoutAssignment[]>([]);
-  const [studentUsername, setStudentUsername] = useState('');
   const [note, setNote] = useState('');
-  const [assignmentTitle, setAssignmentTitle] = useState(currentPlan?.planName || 'Treino da Semana');
-  const [assignmentJson, setAssignmentJson] = useState('');
+  const [assignmentTitle, setAssignmentTitle] = useState('Treino da Semana');
   const [status, setStatus] = useState('');
-  const [loading, setLoading] = useState(false);
-  const selectedStudent = useMemo(
-    () => students.find(row => row.student.id === selectedStudentId),
-    [students, selectedStudentId],
-  );
 
-  const loadStudents = async () => {
-    if (!canInteract) return;
-    setLoading(true);
+  const load = async () => {
     try {
       const rows = await listCoachStudents();
       setStudents(rows);
@@ -42,96 +18,42 @@ export function CoachConsole({ canInteract, onAuthRequired, currentPlan = null }
       if (!selectedStudentId && rows[0]) setSelectedStudentId(rows[0].student.id);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Não foi possível carregar alunos.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadStudentDetails = async (studentId: string) => {
-    if (!studentId || !canInteract) return;
-    try {
-      const [nextNotes, nextAssignments] = await Promise.all([
-        listCoachNotes(studentId),
-        listCoachAssignments(studentId),
-      ]);
-      setNotes(nextNotes);
-      setAssignments(nextAssignments);
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'Não foi possível carregar histórico do aluno.');
     }
   };
 
   useEffect(() => {
-    if (currentPlan) {
-      setAssignmentTitle(currentPlan.planName);
-    }
-  }, [currentPlan?.id]);
-
-  useEffect(() => {
-    loadStudents();
-  }, [canInteract]);
-
-  useEffect(() => {
-    loadStudentDetails(selectedStudentId);
-  }, [selectedStudentId, canInteract]);
-
-  const requireInteraction = () => {
-    if (canInteract) return true;
-    onAuthRequired();
-    setStatus('Entre e crie um perfil social para operar alunos.');
-    return false;
-  };
-
-  const addStudent = async () => {
-    if (!requireInteraction() || !studentUsername.trim()) return;
-    setLoading(true);
-    try {
-      await addCoachStudentByUsername(studentUsername.trim());
-      setStudentUsername('');
-      setStatus('Aluno vinculado ao painel.');
-      await loadStudents();
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'Não foi possível vincular aluno.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    load();
+  }, []);
 
   const saveNote = async () => {
-    if (!requireInteraction() || !selectedStudentId || !note.trim()) return;
+    if (!selectedStudentId || !note.trim()) return;
+
     try {
       await createCoachNote(selectedStudentId, note.trim());
       setNote('');
       setStatus('Nota privada salva.');
-      await loadStudentDetails(selectedStudentId);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Não foi possível salvar a nota.');
     }
   };
 
-  const getAssignmentPayload = () => {
-    if (currentPlan) return currentPlan;
-    if (!assignmentJson.trim()) throw new Error('Informe um JSON de treino ou selecione um plano atual.');
-
-    try {
-      return JSON.parse(assignmentJson);
-    } catch {
-      throw new Error('JSON do treino inválido.');
-    }
-  };
-
   const assignWorkout = async () => {
-    if (!requireInteraction() || !selectedStudentId) return;
+    if (!selectedStudentId) return;
 
     try {
       await assignWorkoutToStudent({
         studentId: selectedStudentId,
         title: assignmentTitle,
-        workout: getAssignmentPayload(),
+        workout: {
+          source: 'coach_console',
+          assignedAt: new Date().toISOString(),
+          blocks: [
+            { name: 'Aquecimento', exercises: ['mobilidade geral', 'ativação'] },
+            { name: 'Treino principal', exercises: ['supino', 'remada', 'agachamento'] },
+          ],
+        },
       });
       setStatus('Treino atribuído ao aluno.');
-      setAssignmentJson('');
-      await loadStudentDetails(selectedStudentId);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Não foi possível atribuir o treino.');
     }
@@ -145,25 +67,6 @@ export function CoachConsole({ canInteract, onAuthRequired, currentPlan = null }
           Alunos
         </h2>
 
-        <div className="flex gap-2 mb-5">
-          <input
-            value={studentUsername}
-            onChange={event => setStudentUsername(event.target.value)}
-            placeholder="username do aluno"
-            className="min-w-0 flex-1 bg-brand-dark border border-white/10 rounded-xl px-3 py-3 text-white outline-none"
-          />
-          <button
-            type="button"
-            onClick={addStudent}
-            disabled={loading}
-            className="bg-brand-neon text-brand-dark rounded-xl px-3 font-black disabled:opacity-50"
-            aria-label="Adicionar aluno"
-            title="Adicionar aluno"
-          >
-            {loading ? <Loader2 className="animate-spin" size={16} /> : <UserPlus size={16} />}
-          </button>
-        </div>
-
         <div className="space-y-2">
           {students.map(row => (
             <button
@@ -176,7 +79,7 @@ export function CoachConsole({ canInteract, onAuthRequired, currentPlan = null }
             >
               <p className="font-bold text-white">{row.student.display_name}</p>
               <p className="text-xs text-brand-muted">
-                @{row.student.username} · {row.student.current_streak}d · {row.student.total_workouts} treinos
+                {row.student.current_streak}d streak · {row.student.total_workouts} treinos
               </p>
             </button>
           ))}
@@ -185,16 +88,29 @@ export function CoachConsole({ canInteract, onAuthRequired, currentPlan = null }
       </aside>
 
       <main className="bg-brand-gray rounded-3xl border border-white/10 p-5">
-        <h2 className="text-2xl font-black text-white mb-2">Painel do Coach</h2>
+        <h2 className="text-2xl font-black text-white mb-2">Dashboard do Coach</h2>
         <p className="text-brand-muted mb-4">
-          {selectedStudent ? `Aluno selecionado: ${selectedStudent.student.display_name}` : 'Selecione um aluno para operar.'}
+          Acompanhe alunos, registre notas privadas e atribua treinos diretamente.
         </p>
         {status && <p className="mb-4 rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm text-yellow-300">{status}</p>}
 
         <div className="grid md:grid-cols-3 gap-3 mb-6">
-          <Summary label="Alunos ativos" value={students.length} />
-          <Summary label="Notas privadas" value={notes.length} />
-          <Summary label="Treinos atribuídos" value={assignments.length} />
+          <div className="rounded-2xl bg-white/5 p-4">
+            <p className="text-xs text-brand-muted">Alunos ativos</p>
+            <strong className="text-2xl text-white">{students.length}</strong>
+          </div>
+
+          <div className="rounded-2xl bg-white/5 p-4">
+            <p className="text-xs text-brand-muted">Maior streak</p>
+            <strong className="text-2xl text-white">{Math.max(0, ...students.map(item => item.student.current_streak))}d</strong>
+          </div>
+
+          <div className="rounded-2xl bg-white/5 p-4">
+            <p className="text-xs text-brand-muted">Volume total</p>
+            <strong className="text-2xl text-white">
+              {students.reduce((sum, item) => sum + Number(item.student.total_volume), 0)}kg
+            </strong>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-5">
@@ -207,22 +123,13 @@ export function CoachConsole({ canInteract, onAuthRequired, currentPlan = null }
             <textarea
               value={note}
               onChange={event => setNote(event.target.value)}
-              placeholder="Observação clínica, adesão, dor, rotina ou ajuste de treino."
+              placeholder="Ex.: aluno relatou desconforto no joelho; reduzir volume de quadríceps."
               className="w-full bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white min-h-32 outline-none"
             />
 
             <button type="button" onClick={saveNote} className="mt-3 bg-brand-neon text-brand-dark rounded-xl px-4 py-3 font-black">
               Salvar nota
             </button>
-
-            <div className="mt-4 space-y-2 max-h-44 overflow-y-auto">
-              {notes.map(item => (
-                <div key={item.id} className="rounded-xl bg-brand-dark border border-white/10 p-3">
-                  <p className="text-sm text-white">{item.note}</p>
-                  <p className="text-xs text-brand-muted mt-1">{new Date(item.created_at).toLocaleString('pt-BR')}</p>
-                </div>
-              ))}
-            </div>
           </div>
 
           <div className="rounded-3xl bg-white/5 p-5">
@@ -234,49 +141,16 @@ export function CoachConsole({ canInteract, onAuthRequired, currentPlan = null }
             <input
               value={assignmentTitle}
               onChange={event => setAssignmentTitle(event.target.value)}
-              className="w-full bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none mb-3"
+              className="w-full bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none"
             />
 
-            {!currentPlan && (
-              <textarea
-                value={assignmentJson}
-                onChange={event => setAssignmentJson(event.target.value)}
-                placeholder='{"days":[...]}'
-                className="w-full bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white min-h-32 outline-none mb-3 font-mono text-sm"
-              />
-            )}
-
-            {currentPlan && (
-              <p className="mb-3 rounded-xl border border-brand-neon/20 bg-brand-neon/10 p-3 text-sm text-brand-neon">
-                O plano atual será enviado: {currentPlan.planName}
-              </p>
-            )}
-
-            <button type="button" onClick={assignWorkout} className="bg-brand-neon text-brand-dark rounded-xl px-4 py-3 font-black flex items-center gap-2">
+            <button type="button" onClick={assignWorkout} className="mt-3 bg-brand-neon text-brand-dark rounded-xl px-4 py-3 font-black flex items-center gap-2">
               <Send size={16} />
               Enviar treino
             </button>
-
-            <div className="mt-4 space-y-2 max-h-44 overflow-y-auto">
-              {assignments.map(item => (
-                <div key={item.id} className="rounded-xl bg-brand-dark border border-white/10 p-3">
-                  <p className="text-sm text-white font-bold">{item.title}</p>
-                  <p className="text-xs text-brand-muted">{item.status} · {new Date(item.created_at).toLocaleString('pt-BR')}</p>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </main>
     </section>
-  );
-}
-
-function Summary({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-2xl bg-white/5 p-4">
-      <p className="text-xs text-brand-muted">{label}</p>
-      <strong className="text-2xl text-white">{value}</strong>
-    </div>
   );
 }

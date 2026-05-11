@@ -3,7 +3,6 @@ import { UserProfile } from '../types';
 import { Apple, Flame, ChevronRight, Camera, Loader, CheckCircle } from 'lucide-react';
 import { analyzeFoodImage } from '../services/geminiService';
 import Markdown from 'react-markdown';
-import { captureError } from '../utils/errorTelemetry';
 
 interface Props {
   profile: UserProfile;
@@ -37,7 +36,7 @@ export function NutritionModule({ profile }: Props) {
       };
       reader.readAsDataURL(file);
     } catch (err) {
-      captureError(err, 'NutritionModule.handleFileChange');
+      console.error(err);
       setAnalysisText("⚠️ Erro ao processar imagem.");
       setIsAnalyzing(false);
     }

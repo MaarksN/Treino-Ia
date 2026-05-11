@@ -1,37 +1,22 @@
 import React from 'react';
-import { AlertTriangle, Check, Plus } from 'lucide-react';
+import { AlertTriangle, Plus } from 'lucide-react';
 import { Exercise, SetLog } from '../types';
-import { sanitizeSetLog } from '../services/workoutExecutionService';
 
 interface Props {
   exercise: Exercise;
   onUpdate: (updated: Exercise) => void;
-  onSetCompleted?: (setLog: SetLog) => void;
 }
 
-export function SetTracker({ exercise, onUpdate, onSetCompleted }: Props) {
-  const logs: SetLog[] = exercise.setLogs?.length ? exercise.setLogs : Array.from({ length: exercise.sets }, (_, index) => ({
+export function SetTracker({ exercise, onUpdate }: Props) {
+  const logs: SetLog[] = exercise.setLogs || Array.from({ length: exercise.sets }, (_, index) => ({
     setNumber: index + 1,
   }));
 
   const updateLog = (index: number, partial: Partial<SetLog>) => {
-    const previousLog = logs[index];
-    const completedAt = Object.prototype.hasOwnProperty.call(partial, 'completedAt')
-      ? partial.completedAt
-      : previousLog.completedAt;
-    const nextLog = sanitizeSetLog({
-      ...previousLog,
-      ...partial,
-      completedAt,
-    });
     const next = logs.map((log, currentIndex) =>
-      currentIndex === index ? nextLog : log
+      currentIndex === index ? { ...log, ...partial, completedAt: partial.completedAt ?? log.completedAt } : log
     );
     onUpdate({ ...exercise, setLogs: next });
-
-    if (!previousLog.completedAt && nextLog.completedAt) {
-      onSetCompleted?.(nextLog);
-    }
   };
 
   const addSet = () => {
@@ -54,8 +39,6 @@ export function SetTracker({ exercise, onUpdate, onSetCompleted }: Props) {
 
           <input
             type="number"
-            min={0}
-            step={0.5}
             placeholder="kg"
             value={log.weight || ''}
             onChange={event => updateLog(index, { weight: Number(event.target.value) || undefined })}
@@ -64,7 +47,6 @@ export function SetTracker({ exercise, onUpdate, onSetCompleted }: Props) {
 
           <input
             type="number"
-            min={0}
             placeholder="reps"
             value={log.reps || ''}
             onChange={event => updateLog(index, { reps: Number(event.target.value) || undefined })}
@@ -81,17 +63,6 @@ export function SetTracker({ exercise, onUpdate, onSetCompleted }: Props) {
               <option key={value} value={value}>{value}</option>
             ))}
           </select>
-
-          <button
-            type="button"
-            onClick={() => updateLog(index, { completedAt: log.completedAt ? undefined : Date.now() })}
-            title={log.completedAt ? 'Reabrir série' : 'Concluir série'}
-            className={`p-1.5 transition-all border-2 ${
-              log.completedAt ? 'text-brand-dark bg-brand-neon border-brand-neon' : 'text-brand-muted border-brand-light/10 hover:text-brand-neon hover:border-brand-neon/30'
-            }`}
-          >
-            <Check size={15} />
-          </button>
 
           <button
             type="button"
