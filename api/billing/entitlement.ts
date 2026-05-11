@@ -1,4 +1,4 @@
-import { getServerEntitlement } from '../_lib/billing-store';
+import { getServerEntitlement } from '../_lib/billing-entitlements';
 import { handleApiError, json } from '../_lib/http';
 import { requireSupabaseUser } from '../_lib/server-supabase';
 import { getEntitlementsForPlan } from '../_lib/billing';
