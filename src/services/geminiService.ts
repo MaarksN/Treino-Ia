@@ -1,6 +1,7 @@
 import { Type, Schema } from "@google/genai";
 import { Exercise, UserProfile, WorkoutHistoryRecord, WorkoutPlan } from "../types";
 import { createGeminiProxyClient } from './geminiProxyClient';
+import { captureError } from "../utils/errorTelemetry";
 
 const LOCAL_EXERCISE_BANK = {
   gym: {
@@ -423,7 +424,7 @@ REGRAS OBRIGATÓRIAS (FALHAR NÃO É UMA OPÇÃO):
     }));
     return parsed;
   } catch (error) {
-    console.error("Failed to parse Gemini response:", error);
+    captureError(error, 'geminiService.generateWorkoutPlan.parse');
     throw new Error("A resposta da IA veio inválida. Tente novamente.");
   }
 }
@@ -542,7 +543,7 @@ REGRAS OBRIGATÓRIAS (FALHAR NÃO É UMA OPÇÃO):
     }));
     return parsed;
   } catch (error) {
-    console.error("Failed to parse Gemini response:", error);
+    captureError(error, 'geminiService.extractWorkoutFromFile.parse');
     throw new Error("Não foi possível entender o arquivo enviado. Verifique se ele contém um treino legível.");
   }
 }
@@ -588,7 +589,7 @@ ${userProfile ? `Perfil do usuário (para adaptar as sugestões):
   try {
     return JSON.parse(jsonStr);
   } catch (error) {
-    console.error("Failed to parse variations:", error);
+    captureError(error, 'geminiService.suggestExerciseVariations.parse');
     return [];
   }
 }

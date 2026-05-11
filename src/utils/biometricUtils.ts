@@ -1,35 +1,4 @@
-import { HydrationEntry, HydrationGoal, SleepEntry } from '../types';
-
-const HYDRATION_KEY = '@TreinoApp:hydration';
-const HYDRO_GOAL_KEY = '@TreinoApp:hydrationGoal';
-const SLEEP_KEY = '@TreinoApp:sleep';
-
-export function loadHydrationEntries(): HydrationEntry[] {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(HYDRATION_KEY) || '[]');
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-export function saveHydrationEntry(entry: HydrationEntry) {
-  const all = loadHydrationEntries();
-  all.push(entry);
-  localStorage.setItem(HYDRATION_KEY, JSON.stringify(all.slice(-300)));
-}
-
-export function loadHydrationGoal(): HydrationGoal {
-  try {
-    return { dailyMl: 2500, remindEveryMinutes: 60, ...JSON.parse(localStorage.getItem(HYDRO_GOAL_KEY) || '{}') };
-  } catch {
-    return { dailyMl: 2500, remindEveryMinutes: 60 };
-  }
-}
-
-export function saveHydrationGoal(goal: HydrationGoal) {
-  localStorage.setItem(HYDRO_GOAL_KEY, JSON.stringify(goal));
-}
+import { HydrationEntry, SleepEntry } from '../types';
 
 export function getTodayHydration(entries: HydrationEntry[]): number {
   const today = new Date().toISOString().slice(0, 10);
@@ -40,23 +9,6 @@ export function getTodayHydration(entries: HydrationEntry[]): number {
 
 export function calcHydrationGoal(weightKg: number, workoutMinutes = 0): number {
   return Math.round(weightKg * 35 + (workoutMinutes / 60) * 500);
-}
-
-export function loadSleepEntries(): SleepEntry[] {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(SLEEP_KEY) || '[]');
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-export function saveSleepEntry(entry: SleepEntry) {
-  const all = loadSleepEntries();
-  const existing = all.findIndex(item => item.date === entry.date);
-  if (existing >= 0) all[existing] = entry;
-  else all.push(entry);
-  localStorage.setItem(SLEEP_KEY, JSON.stringify(all.slice(-120)));
 }
 
 export function calcSleepDuration(bedtime: string, wakeTime: string): number {

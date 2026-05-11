@@ -12,14 +12,17 @@ export function LeaderboardPanel({ groupId }: Props) {
   const [metric, setMetric] = useState<'volume' | 'streak' | 'workouts'>('volume');
   const [rows, setRows] = useState<LeaderboardEntry[]>([]);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     listGroupLeaderboard(groupId, metric)
       .then(data => {
         setRows(data);
         setError('');
       })
-      .catch(err => setError(err instanceof Error ? err.message : 'Não foi possível carregar o ranking.'));
+      .catch(err => setError(err instanceof Error ? err.message : 'Não foi possível carregar o ranking.'))
+      .finally(() => setLoading(false));
   }, [groupId, metric]);
 
   return (
@@ -72,7 +75,8 @@ export function LeaderboardPanel({ groupId }: Props) {
             </div>
           </div>
         ))}
-        {rows.length === 0 && !error && <p className="text-sm text-brand-muted">Ranking ainda vazio.</p>}
+        {loading && <p className="text-sm text-brand-muted">Carregando ranking...</p>}
+        {!loading && rows.length === 0 && !error && <p className="text-sm text-brand-muted">Ranking ainda vazio.</p>}
       </div>
     </section>
   );

@@ -17,6 +17,7 @@ export interface User {
 }
 
 export interface UserProfile {
+  id?: string;
   age: number;
   gender: string;
   weight: number;
@@ -169,6 +170,9 @@ export interface SupplementEntry {
   name: string;
   dose: string;
   timing: string;
+  date?: string;
+  taken?: boolean;
+  notes?: string;
 }
 
 export interface BodyMetric {
@@ -183,6 +187,35 @@ export interface BodyMetric {
   thigh?: number;
   photoBase64?: string;
   aiAnalysis?: string;
+}
+
+export type BodyPhotoAngle = 'front' | 'side' | 'back' | 'other';
+
+export interface BodyProgressPhoto {
+  id: string;
+  date: string;
+  monthKey: string;
+  angle: BodyPhotoAngle;
+  mimeType: string;
+  storagePath?: string;
+  photoBase64?: string;
+  photoUrl?: string;
+  aiAnalysis?: string;
+}
+
+export interface RecompositionGoal {
+  id: string;
+  title: string;
+  createdAt: string;
+  targetDate: string;
+  status: 'active' | 'completed' | 'paused';
+  startWeight?: number;
+  targetWeight?: number;
+  startBodyFatPercent?: number;
+  targetBodyFatPercent?: number;
+  startWaist?: number;
+  targetWaist?: number;
+  notes?: string;
 }
 
 export interface NutritionWeekSummary {
@@ -433,6 +466,28 @@ export interface AppSettings {
 
 // Wearable & biometrico
 
+export type BiometricDataMode = 'supabase' | 'mock_dev_only';
+
+export interface BiometricPersistenceMeta {
+  dataMode: BiometricDataMode;
+  reason?: string;
+  syncedAt: string;
+}
+
+export interface BiometricQueryResult<T> {
+  data: T;
+  meta: BiometricPersistenceMeta;
+}
+
+export interface BiometricSnapshot {
+  wearableSessions: WearableSession[];
+  hydrationEntries: HydrationEntry[];
+  hydrationGoal: HydrationGoal;
+  sleepEntries: SleepEntry[];
+  cycleEntries: CycleEntry[];
+  poseAnalyses: PoseAnalysis[];
+}
+
 export interface HeartRateReading {
   bpm: number;
   timestamp: number;
@@ -541,6 +596,9 @@ export interface SocialProfile {
   current_streak: number;
   best_streak: number;
   total_volume: number;
+  weekly_volume?: number;
+  followers_count?: number;
+  following_count?: number;
   badges: SocialBadge[];
   created_at: string;
   updated_at: string;
@@ -589,6 +647,7 @@ export interface TrainingGroup {
   is_private: boolean;
   created_at: string;
   members_count?: number;
+  my_role?: 'owner' | 'coach' | 'member';
 }
 
 export interface TrainingGroupMessage {
@@ -639,6 +698,16 @@ export interface CoachPrivateNote {
   created_at: string;
 }
 
+export interface CoachWorkoutAssignment {
+  id: string;
+  coach_id: string;
+  student_id: string;
+  title: string;
+  workout_json: unknown;
+  status: 'assigned' | 'accepted' | 'completed';
+  created_at: string;
+}
+
 export interface PublicWorkoutTemplate {
   id: string;
   author_id: string;
@@ -650,6 +719,13 @@ export interface PublicWorkoutTemplate {
   likes_count: number;
   created_at: string;
   author?: SocialProfile;
+}
+
+export interface GroupOnlinePresence {
+  user_id: string;
+  username: string;
+  display_name: string;
+  online_at: string;
 }
 
 export type MuscleGroup =
@@ -749,6 +825,14 @@ export interface TwelveWeekPlan {
   title: string;
   createdAt: string;
   weeks: PeriodizationWeek[];
+}
+
+export interface UserPeriodizationPlan {
+  id: string;
+  profile_id: string;
+  current_week: number;
+  plan_data: TwelveWeekPlan;
+  created_at: string;
 }
 
 export type SubscriptionPlanId = 'free' | 'premium_monthly' | 'premium_yearly';

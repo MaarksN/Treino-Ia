@@ -1,18 +1,22 @@
-import React, { useMemo, useState } from 'react';
-import { CycleEntry } from '../types';
+import React, { useEffect, useMemo, useState } from 'react';
+import { BiometricPersistenceMeta, CycleEntry } from '../types';
 import {
   getPhaseForDate,
-  loadCycleEntries,
   PHASE_CONFIG,
-  saveCycleEntry,
 } from '../utils/hormonalUtils';
+import { loadCycleEntries, saveCycleEntry } from '../services/biometricService';
+import { BiometricDataModeBadge } from './BiometricDataModeBadge';
 
 export function HormonalCycleTracker() {
-  const [cycles, setCycles] = useState<CycleEntry[]>(loadCycleEntries);
+  const [cycles, setCycles] = useState<CycleEntry[]>([]);
   const [startDate, setStartDate] = useState('');
   const [cycleLen, setCycleLen] = useState(28);
   const [periodLen, setPeriodLen] = useState(5);
   const [showForm, setShowForm] = useState(false);
+  const [dataMeta, setDataMeta] = useState<BiometricPersistenceMeta | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   const today = new Date().toISOString().slice(0, 10);
   const todayPhase = useMemo(() => getPhaseForDate(today, cycles), [today, cycles]);
@@ -29,8 +33,33 @@ export function HormonalCycleTracker() {
     return days;
   }, [cycles]);
 
-  const handleSave = () => {
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError('');
+
+    loadCycleEntries()
+      .then(result => {
+        if (cancelled) return;
+        setCycles(result.data);
+        setDataMeta(result.meta);
+      })
+      .catch(err => {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Falha ao carregar ciclo.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleSave = async () => {
     if (!startDate) return;
+    setSaving(true);
+    setError('');
 
     const entry: CycleEntry = {
       id: crypto.randomUUID(),
@@ -38,10 +67,18 @@ export function HormonalCycleTracker() {
       cycleLengthDays: cycleLen,
       periodLengthDays: periodLen,
     };
-    saveCycleEntry(entry);
-    setCycles(loadCycleEntries());
-    setShowForm(false);
-    setStartDate('');
+
+    try {
+      const result = await saveCycleEntry(entry);
+      setCycles(result.data);
+      setDataMeta(result.meta);
+      setShowForm(false);
+      setStartDate('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível salvar ciclo.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const cfg = todayPhase ? PHASE_CONFIG[todayPhase.phase] : null;
@@ -58,6 +95,20 @@ export function HormonalCycleTracker() {
           + Registrar ciclo
         </button>
       </div>
+
+      <BiometricDataModeBadge meta={dataMeta} />
+
+      {loading && (
+        <div className="mb-4 p-3 bg-brand-dark rounded-xl border border-white/10 text-brand-muted text-sm">
+          Carregando ciclo hormonal...
+        </div>
+      )}
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
+          {error}
+        </div>
+      )}
 
       {showForm && (
         <div className="mb-4 p-4 bg-brand-dark rounded-xl border border-white/10 space-y-3">
@@ -77,7 +128,7 @@ export function HormonalCycleTracker() {
                 type="number"
                 value={cycleLen}
                 min={21}
-                max={40}
+                max={45}
                 onChange={event => setCycleLen(Number(event.target.value))}
                 className="w-full bg-brand-gray border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none"
               />
@@ -88,7 +139,7 @@ export function HormonalCycleTracker() {
                 type="number"
                 value={periodLen}
                 min={2}
-                max={10}
+                max={14}
                 onChange={event => setPeriodLen(Number(event.target.value))}
                 className="w-full bg-brand-gray border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none"
               />
@@ -96,10 +147,11 @@ export function HormonalCycleTracker() {
           </div>
           <button
             type="button"
-            onClick={handleSave}
-            className="w-full bg-brand-neon text-brand-dark font-bold py-2.5 rounded-xl text-sm"
+            onClick={() => { void handleSave(); }}
+            disabled={saving}
+            className="w-full bg-brand-neon text-brand-dark font-bold py-2.5 rounded-xl text-sm disabled:opacity-50"
           >
-            Salvar
+            {saving ? 'Salvando...' : 'Salvar'}
           </button>
         </div>
       )}

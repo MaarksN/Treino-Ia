@@ -3,6 +3,7 @@ import { UserProfile } from '../types';
 import { Image as ImageIcon, Camera, Loader, CheckCircle, Target, ArrowRight } from 'lucide-react';
 import { analyzeBodyImage } from '../services/geminiService';
 import Markdown from 'react-markdown';
+import { captureError } from '../utils/errorTelemetry';
 
 interface Props {
   profile: UserProfile;
@@ -40,7 +41,7 @@ export function ProgressPhotosModule({ profile }: Props) {
       };
       reader.readAsDataURL(file);
     } catch (err) {
-      console.error(err);
+      captureError(err, 'ProgressPhotosModule.handleFileChange');
       setAnalysisText("⚠️ Ocorreu um erro ao processar sua foto.");
       setIsAnalyzing(false);
     }

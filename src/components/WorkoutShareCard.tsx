@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Copy, Download, Share2, X } from 'lucide-react';
 import { StreakData, WorkoutHistoryEntry } from '../types';
+import { createWorkoutSharePost } from '../services/socialService';
 
 interface Props {
   entry: WorkoutHistoryEntry;
@@ -80,6 +81,7 @@ export function WorkoutShareCard({ entry, streak, userName = 'Atleta', onClose }
   const [theme, setTheme] = useState<CardTheme>('dark');
   const [status, setStatus] = useState('');
   const [rendering, setRendering] = useState(false);
+  const [publishing, setPublishing] = useState(false);
 
   const themeConfig = CARD_THEMES[theme];
 
@@ -157,6 +159,20 @@ export function WorkoutShareCard({ entry, streak, userName = 'Atleta', onClose }
       setStatus('Não foi possível salvar a imagem.');
     } finally {
       setRendering(false);
+    }
+  };
+
+  const handlePublishToFeed = async () => {
+    setPublishing(true);
+    setStatus('');
+
+    try {
+      await createWorkoutSharePost(entry, streak);
+      setStatus(entry.prsBroken?.length ? 'PR publicado no feed.' : 'Treino publicado no feed.');
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Não foi possível publicar no feed.');
+    } finally {
+      setPublishing(false);
     }
   };
 
@@ -287,6 +303,14 @@ export function WorkoutShareCard({ entry, streak, userName = 'Atleta', onClose }
             className="flex-1 bg-brand-neon text-brand-dark font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2"
           >
             <Share2 size={16} /> Compartilhar
+          </button>
+          <button
+            type="button"
+            onClick={handlePublishToFeed}
+            disabled={publishing}
+            className="flex-1 bg-white/10 border border-white/10 text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            <Share2 size={16} /> Feed
           </button>
           <button
             type="button"

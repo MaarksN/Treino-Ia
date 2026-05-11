@@ -24,9 +24,9 @@ import {
   disconnectHeartRateMonitor,
   estimateCalories,
   isBluetoothSupported,
-  loadWearableSessions,
-  saveWearableSession,
 } from '../services/bluetoothService';
+import { loadWearableSessions, saveWearableSession } from '../services/biometricService';
+import { BiometricDataModeBadge } from './BiometricDataModeBadge';
 
 interface Props {
   profile: UserProfile;
@@ -75,7 +75,9 @@ export function WearableSync({ profile, onSessionComplete }: Props) {
   const [currentBPM, setCurrentBPM] = useState(0);
   const [sessionStart, setSessionStart] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
-  const [sessions, setSessions] = useState<WearableSession[]>(loadWearableSessions);
+  const [sessions, setSessions] = useState<WearableSession[]>([]);
+  const [dataMeta, setDataMeta] = useState<BiometricPersistenceMeta | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(true);
   const [tab, setTab] = useState<'live' | 'history'>('live');
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState('');
@@ -89,6 +91,28 @@ export function WearableSync({ profile, onSessionComplete }: Props) {
   const zone = getZoneIndex(currentBPM || Math.round(maxHR * 0.5), maxHR);
   const chartData = readings.slice(-60).map((reading, index) => ({ t: index, bpm: reading.bpm }));
   const zoneCounts = getZoneCounts(readings, maxHR);
+
+  useEffect(() => {
+    let cancelled = false;
+    setHistoryLoading(true);
+
+    loadWearableSessions()
+      .then(result => {
+        if (cancelled) return;
+        setSessions(result.data);
+        setDataMeta(result.meta);
+      })
+      .catch(err => {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Falha ao carregar sessões.');
+      })
+      .finally(() => {
+        if (!cancelled) setHistoryLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!sessionStart) return undefined;
@@ -152,9 +176,14 @@ export function WearableSync({ profile, onSessionComplete }: Props) {
         hrZones: calcHRZones(all, maxHR),
       };
 
-      saveWearableSession(session);
-      setSessions(loadWearableSessions());
-      onSessionComplete?.(session);
+      try {
+        const result = await saveWearableSession(session);
+        setSessions(result.data);
+        setDataMeta(result.meta);
+        onSessionComplete?.(session);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Sessão encerrada, mas não foi possível salvar.');
+      }
     }
 
     setConnected(false);
@@ -187,6 +216,14 @@ export function WearableSync({ profile, onSessionComplete }: Props) {
           </button>
         ))}
       </div>
+
+      <BiometricDataModeBadge meta={dataMeta} />
+
+      {historyLoading && (
+        <div className="mb-4 p-3 bg-brand-dark rounded-xl border border-white/10 text-brand-muted text-sm">
+          Carregando histórico de frequência cardíaca...
+        </div>
+      )}
 
       {tab === 'live' && (
         <div className="space-y-4">

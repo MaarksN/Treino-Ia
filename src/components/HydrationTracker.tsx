@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Droplets, Plus } from 'lucide-react';
-import { HydrationEntry } from '../types';
+import { BiometricPersistenceMeta, HydrationEntry, HydrationGoal } from '../types';
 import {
   calcHydrationGoal,
   getTodayHydration,
-  loadHydrationEntries,
-  loadHydrationGoal,
-  saveHydrationEntry,
-  saveHydrationGoal,
 } from '../utils/biometricUtils';
+import { loadHydrationState, saveHydrationEntry, saveHydrationGoal } from '../services/biometricService';
+import { BiometricDataModeBadge } from './BiometricDataModeBadge';
 
 const QUICK_OPTIONS = [
   { label: '200ml', ml: 200, emoji: '🥤' },
@@ -26,18 +24,24 @@ const TYPE_EMOJI: Record<HydrationEntry['type'], string> = {
   outro: '🥤',
 };
 
+const DEFAULT_GOAL: HydrationGoal = { dailyMl: 2500, remindEveryMinutes: 60 };
+
 interface Props {
   weightKg?: number;
   workoutMinutes?: number;
 }
 
 export function HydrationTracker({ weightKg = 75, workoutMinutes = 0 }: Props) {
-  const [entries, setEntries] = useState<HydrationEntry[]>(loadHydrationEntries);
-  const [goal, setGoal] = useState(loadHydrationGoal);
+  const [entries, setEntries] = useState<HydrationEntry[]>([]);
+  const [goal, setGoal] = useState<HydrationGoal>(DEFAULT_GOAL);
   const [customMl, setCustomMl] = useState('');
   const [selectedType, setSelectedType] = useState<HydrationEntry['type']>('água');
   const [showGoalEdit, setShowGoalEdit] = useState(false);
   const [newGoalMl, setNewGoalMl] = useState(goal.dailyMl);
+  const [dataMeta, setDataMeta] = useState<BiometricPersistenceMeta | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   const todayMl = getTodayHydration(entries);
   const pct = Math.min((todayMl / goal.dailyMl) * 100, 100);
@@ -45,6 +49,31 @@ export function HydrationTracker({ weightKg = 75, workoutMinutes = 0 }: Props) {
   const suggested = calcHydrationGoal(weightKg, workoutMinutes);
   const today = new Date().toISOString().slice(0, 10);
   const todayEntries = entries.filter(entry => entry.date === today).reverse();
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError('');
+
+    loadHydrationState()
+      .then(result => {
+        if (cancelled) return;
+        setEntries(result.data.entries);
+        setGoal(result.data.goal);
+        setNewGoalMl(result.data.goal.dailyMl);
+        setDataMeta(result.meta);
+      })
+      .catch(err => {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Falha ao carregar hidratação.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!goal.remindEveryMinutes || !('Notification' in window)) return undefined;
@@ -55,13 +84,17 @@ export function HydrationTracker({ weightKg = 75, workoutMinutes = 0 }: Props) {
     Notification.requestPermission().then(permission => {
       if (cancelled || permission !== 'granted') return;
       intervalId = window.setInterval(() => {
-        const total = getTodayHydration(loadHydrationEntries());
-        if (total < goal.dailyMl) {
-          new Notification('Hora de hidratar', {
-            body: `Você bebeu ${total}ml de ${goal.dailyMl}ml hoje.`,
-            icon: '/favicon.ico',
-          });
-        }
+        loadHydrationState()
+          .then(result => {
+            const total = getTodayHydration(result.data.entries);
+            if (total < result.data.goal.dailyMl) {
+              new Notification('Hora de hidratar', {
+                body: `Você bebeu ${total}ml de ${result.data.goal.dailyMl}ml hoje.`,
+                icon: '/favicon.ico',
+              });
+            }
+          })
+          .catch(() => {});
       }, goal.remindEveryMinutes * 60 * 1000);
     }).catch(() => {});
 
@@ -71,7 +104,10 @@ export function HydrationTracker({ weightKg = 75, workoutMinutes = 0 }: Props) {
     };
   }, [goal]);
 
-  const addEntry = (ml: number) => {
+  const addEntry = async (ml: number) => {
+    setSaving(true);
+    setError('');
+
     const entry: HydrationEntry = {
       id: crypto.randomUUID(),
       date: today,
@@ -79,22 +115,40 @@ export function HydrationTracker({ weightKg = 75, workoutMinutes = 0 }: Props) {
       amountMl: ml,
       type: selectedType,
     };
-    saveHydrationEntry(entry);
-    setEntries(loadHydrationEntries());
+
+    try {
+      const result = await saveHydrationEntry(entry);
+      setEntries(result.data);
+      setDataMeta(result.meta);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível salvar hidratação.');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleCustom = () => {
+  const handleCustom = async () => {
     const ml = Number(customMl);
     if (ml <= 0) return;
-    addEntry(ml);
+    await addEntry(ml);
     setCustomMl('');
   };
 
-  const saveGoal = () => {
+  const saveGoal = async () => {
+    setSaving(true);
+    setError('');
     const updated = { ...goal, dailyMl: Math.max(250, newGoalMl) };
-    setGoal(updated);
-    saveHydrationGoal(updated);
-    setShowGoalEdit(false);
+
+    try {
+      const result = await saveHydrationGoal(updated);
+      setGoal(result.data);
+      setDataMeta(result.meta);
+      setShowGoalEdit(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível salvar meta.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const pctColor = pct >= 100 ? '#a3e635' : pct >= 60 ? '#22d3ee' : pct >= 30 ? '#fbbf24' : '#ef4444';
@@ -106,6 +160,20 @@ export function HydrationTracker({ weightKg = 75, workoutMinutes = 0 }: Props) {
         <h3 className="text-white font-bold text-lg">Hidratação</h3>
         <Droplets size={20} style={{ color: pctColor }} />
       </div>
+
+      <BiometricDataModeBadge meta={dataMeta} />
+
+      {loading && (
+        <div className="mb-4 p-3 bg-brand-dark rounded-xl border border-white/10 text-brand-muted text-sm">
+          Carregando hidratação...
+        </div>
+      )}
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
+          {error}
+        </div>
+      )}
 
       <div className="flex items-center gap-5 mb-5">
         <div className="relative w-28 h-28 flex-shrink-0">
@@ -160,8 +228,13 @@ export function HydrationTracker({ weightKg = 75, workoutMinutes = 0 }: Props) {
             className="flex-1 bg-brand-gray border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none min-w-0"
             placeholder="ml por dia"
           />
-          <button type="button" onClick={saveGoal} className="px-4 bg-brand-neon text-brand-dark font-bold rounded-xl text-sm">
-            OK
+          <button
+            type="button"
+            onClick={() => { void saveGoal(); }}
+            disabled={saving}
+            className="px-4 bg-brand-neon text-brand-dark font-bold rounded-xl text-sm disabled:opacity-50"
+          >
+            {saving ? '...' : 'OK'}
           </button>
         </div>
       )}
@@ -186,8 +259,9 @@ export function HydrationTracker({ weightKg = 75, workoutMinutes = 0 }: Props) {
           <button
             key={option.ml}
             type="button"
-            onClick={() => addEntry(option.ml)}
-            className="flex flex-col items-center py-3 bg-brand-dark rounded-xl border border-white/10 hover:border-brand-neon/40 transition-all"
+            onClick={() => { void addEntry(option.ml); }}
+            disabled={saving}
+            className="flex flex-col items-center py-3 bg-brand-dark rounded-xl border border-white/10 hover:border-brand-neon/40 transition-all disabled:opacity-50"
           >
             <span className="text-xl mb-0.5">{option.emoji}</span>
             <p className="text-white text-xs font-bold">{option.label}</p>
@@ -201,13 +275,25 @@ export function HydrationTracker({ weightKg = 75, workoutMinutes = 0 }: Props) {
           placeholder="ml customizado..."
           value={customMl}
           onChange={event => setCustomMl(event.target.value)}
-          onKeyDown={event => event.key === 'Enter' && handleCustom()}
+          onKeyDown={event => {
+            if (event.key === 'Enter') void handleCustom();
+          }}
           className="flex-1 bg-brand-dark border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none min-w-0"
         />
-        <button type="button" onClick={handleCustom} className="px-4 bg-brand-neon text-brand-dark font-bold rounded-xl" aria-label="Adicionar hidratação">
+        <button
+          type="button"
+          onClick={() => { void handleCustom(); }}
+          disabled={saving}
+          className="px-4 bg-brand-neon text-brand-dark font-bold rounded-xl disabled:opacity-50"
+          aria-label="Adicionar hidratação"
+        >
           <Plus size={16} />
         </button>
       </div>
+
+      {todayEntries.length === 0 && !loading && (
+        <p className="text-brand-muted text-sm text-center py-4">Nenhuma bebida registrada hoje.</p>
+      )}
 
       {todayEntries.length > 0 && (
         <div className="space-y-1.5">
