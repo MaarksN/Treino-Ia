@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Send, X, Bot, User as UserIcon } from 'lucide-react';
 import { User } from '../types';
 import { generateGeminiContent } from '../services/geminiProxyClient';
+import { PremiumFeatureGate } from './PremiumPaywall';
 
 interface Props {
   user: User;
@@ -75,6 +76,7 @@ export function AICoachChat({ user, onClose }: Props) {
           <button onClick={onClose} className="hover:text-brand-light transition-colors"><X className="w-5 h-5" /></button>
         </div>
 
+        <PremiumFeatureGate feature="unlimited_ai">
         <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -115,6 +117,7 @@ export function AICoachChat({ user, onClose }: Props) {
             <Send className="w-5 h-5" />
           </button>
         </div>
+        </PremiumFeatureGate>
       </motion.div>
     </AnimatePresence>
   );

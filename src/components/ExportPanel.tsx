@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Database, Download, FileText, Upload } from 'lucide-react';
 import { StreakData, WorkoutHistoryEntry, WorkoutPlan } from '../types';
+import { PremiumFeatureGate } from './PremiumPaywall';
 import {
   buildAppBackup,
   downloadFile,
@@ -147,6 +148,7 @@ export function ExportPanel({ plans, history, streak }: Props) {
     <div className="bg-brand-gray border border-white/10 rounded-2xl p-5">
       <h3 className="text-white font-bold text-lg mb-5">Exportar & Backup</h3>
 
+      <PremiumFeatureGate feature="export_data">
       <div className="mb-5">
         <p className="text-xs uppercase tracking-widest text-brand-muted mb-3">Planos de treino (PDF)</p>
         <div className="space-y-2">
@@ -219,6 +221,7 @@ export function ExportPanel({ plans, history, streak }: Props) {
           )}
         </div>
       </div>
+      </PremiumFeatureGate>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Badge } from '../types';
 import { loadBadges } from '../utils/badgeUtils';
+import { PremiumFeatureGate } from './PremiumPaywall';
 
 interface Props {
   newlyUnlocked?: Badge[];
@@ -68,16 +69,27 @@ export function BadgeSystem({ newlyUnlocked = [], onDismiss }: Props) {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {filtered.map(badge => (
-            <div key={badge.id} className={`flex flex-col items-center p-3 border-2 text-center transition-all ${badge.unlocked ? 'border-brand-neon/30 bg-brand-neon/5' : 'border-brand-light/5 bg-brand-dark opacity-45 grayscale'}`}>
-              <span className="text-3xl mb-1">{badge.emoji}</span>
-              <p className="text-xs font-bold text-brand-light leading-tight">{badge.name}</p>
-              <p className="text-[10px] text-brand-muted mt-0.5 leading-tight">{badge.description}</p>
-              {badge.unlocked && badge.unlockedAt && (
-                <p className="text-[10px] text-brand-neon mt-1">{new Date(badge.unlockedAt).toLocaleDateString('pt-BR')}</p>
-              )}
-            </div>
-          ))}
+          {filtered.map(badge => {
+            const badgeContent = (
+              <div key={badge.id} className={`flex flex-col items-center p-3 border-2 text-center transition-all ${badge.unlocked ? 'border-brand-neon/30 bg-brand-neon/5' : 'border-brand-light/5 bg-brand-dark opacity-45 grayscale'}`}>
+                <span className="text-3xl mb-1">{badge.emoji}</span>
+                <p className="text-xs font-bold text-brand-light leading-tight">{badge.name}</p>
+                <p className="text-[10px] text-brand-muted mt-0.5 leading-tight">{badge.description}</p>
+                {badge.unlocked && badge.unlockedAt && (
+                  <p className="text-[10px] text-brand-neon mt-1">{new Date(badge.unlockedAt).toLocaleDateString('pt-BR')}</p>
+                )}
+              </div>
+            );
+
+            if (badge.category === 'special') {
+              return (
+                <PremiumFeatureGate key={badge.id} feature="exclusive_badge" fallback={badgeContent}>
+                  {badgeContent}
+                </PremiumFeatureGate>
+              );
+            }
+            return badgeContent;
+          })}
         </div>
       </div>
     </>

@@ -28,9 +28,10 @@ import { captureError } from './utils/errorTelemetry';
 import { applyTheme, loadThemeId } from './utils/themeUtils';
 import { Activity, BrainCircuit, Dumbbell, Globe2, Moon, Rocket, Server, Settings as SettingsIcon, Share2, Sun, Trophy, X } from 'lucide-react';
 
-type ViewState = 'loading' | 'registration' | 'home' | 'anamnesis' | 'import' | 'dashboard' | 'active-workout' | 'global_feed' | 'social' | 'gamification' | 'infrastructure' | 'platform';
+type ViewState = 'loading' | 'registration' | 'home' | 'anamnesis' | 'import' | 'dashboard' | 'active-workout' | 'global_feed' | 'social' | 'gamification' | 'infrastructure' | 'platform' | 'billing';
 
 import { AssistantPopup } from './components/AssistantPopup';
+import { BillingCenter } from './components/BillingCenter';
 
 import { FuturisticHUD } from './components/FuturisticHUD';
 import { BotMessageSquare } from 'lucide-react';
@@ -145,7 +146,7 @@ export default function App() {
   const [showCoach, setShowCoach] = useState(false);
 
   // For tab navigation when a user is logged in
-  const [activeTab, setActiveTab] = useState<'my_workouts' | 'global_feed' | 'social' | 'gamification' | 'infrastructure' | 'platform'>('my_workouts');
+  const [activeTab, setActiveTab] = useState<'my_workouts' | 'global_feed' | 'social' | 'gamification' | 'infrastructure' | 'platform' | 'billing'>('my_workouts');
 
   useEffect(() => {
     applyTheme(loadThemeId());
@@ -545,6 +546,12 @@ export default function App() {
               <Server className="w-4 h-4 mr-2" /> Infra
             </button>
             <button
+              onClick={() => { setActiveTab('billing'); setView('billing'); }}
+              className={`px-5 py-2 font-mono font-bold text-sm uppercase flex items-center transition-colors rounded-full ${view === 'billing' ? 'bg-brand-neon text-brand-dark shadow-[0_0_10px_var(--color-brand-neon)]' : 'text-brand-muted hover:text-brand-light hover:bg-brand-light/5'}`}
+            >
+              <Activity className="w-4 h-4 mr-2" /> Assinatura
+            </button>
+            <button
               onClick={() => { setActiveTab('platform'); setView('platform'); }}
               className={`px-5 py-2 font-mono font-bold text-sm uppercase flex items-center transition-colors rounded-full ${view === 'platform' ? 'bg-brand-neon text-brand-dark shadow-[0_0_10px_var(--color-brand-neon)]' : 'text-brand-muted hover:text-brand-light hover:bg-brand-light/5'}`}
             >
@@ -742,6 +749,10 @@ export default function App() {
           profile={activeProfile}
           currentPlan={currentPlan}
         />
+      )}
+
+      {view === 'billing' && (
+        <BillingCenter />
       )}
 
       {shareEntry && (

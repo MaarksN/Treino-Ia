@@ -11,6 +11,7 @@ import { SocialFeed } from './SocialFeed';
 import { GroupHub } from './GroupHub';
 import { CoachConsole } from './CoachConsole';
 import { PublicProfileCard } from './PublicProfileCard';
+import { PremiumFeatureGate } from './PremiumPaywall';
 
 type Tab = 'feed' | 'groups' | 'library' | 'coach' | 'profile';
 
@@ -138,7 +139,11 @@ export function SocialHub() {
 
       <main className="max-w-6xl mx-auto">
         {tab === 'feed' && <SocialFeed />}
-        {tab === 'groups' && <GroupHub currentProfile={profile} />}
+        {tab === 'groups' && (
+          <PremiumFeatureGate feature="premium_community">
+            <GroupHub currentProfile={profile} />
+          </PremiumFeatureGate>
+        )}
         {tab === 'coach' && <CoachConsole />}
         {tab === 'profile' && profile && <PublicProfileCard profile={profile} />}
         {tab === 'profile' && !profile && (
