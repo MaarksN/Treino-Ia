@@ -187,7 +187,7 @@ export function SettingsPanel({ plans, history, streak, isPremium = false, onSet
       )}
 
       {tab === 'dados' && (
-        <ExportPanel plans={plans} history={history} streak={streak} />
+        <ExportPanel plans={plans} history={history} streak={streak} isPremium={isPremium} />
       )}
 
       {tab === 'perfil' && (

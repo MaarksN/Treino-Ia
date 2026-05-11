@@ -15,6 +15,9 @@ import {
   fetchBillingEntitlement,
 } from '../services/billingService';
 import { PricingTable } from './PricingTable';
+import { CancelRetention } from './billing/CancelRetention';
+import { InvoiceHistory } from './billing/InvoiceHistory';
+import { InvoiceRecord } from '../types/billing';
 
 export function BillingCenter() {
   const [entitlement, setEntitlement] = useState<BillingEntitlementSummary | null>(null);
@@ -22,6 +25,7 @@ export function BillingCenter() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [portalLoading, setPortalLoading] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   const plan = useMemo(
     () => getBillingPlan(entitlement?.planId ?? 'free'),
@@ -70,6 +74,24 @@ export function BillingCenter() {
   const trialEndsAt = entitlement?.subscription?.trial_ends_at
     ? new Date(entitlement.subscription.trial_ends_at)
     : null;
+
+  // dataMode: 'mock_dev_only'
+  const mockInvoices: InvoiceRecord[] = [
+    {
+      id: 'inv_1',
+      date: new Date().toISOString(),
+      amount: plan.monthlyPrice,
+      status: 'paid',
+      downloadUrl: '#',
+    },
+    {
+      id: 'inv_2',
+      date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+      amount: plan.monthlyPrice,
+      status: 'paid',
+      downloadUrl: '#',
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-brand-dark text-white p-6">
@@ -209,21 +231,54 @@ export function BillingCenter() {
             Gestão da assinatura
           </h2>
 
-          <button
-            type="button"
-            disabled={portalLoading || !entitlement?.isPremium}
-            onClick={openPortal}
-            className="bg-white/10 text-white rounded-xl px-4 py-3 font-bold flex items-center gap-2 disabled:opacity-50"
-          >
-            {portalLoading ? <Loader2 className="animate-spin" size={16} /> : <ExternalLink size={16} />}
-            Abrir portal Stripe
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              type="button"
+              disabled={portalLoading || !entitlement?.isPremium}
+              onClick={openPortal}
+              className="bg-white/10 text-white rounded-xl px-4 py-3 font-bold flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-white/20 transition-colors"
+            >
+              {portalLoading ? <Loader2 className="animate-spin" size={16} /> : <ExternalLink size={16} />}
+              Abrir portal Stripe
+            </button>
+
+            {entitlement?.isPremium && (
+              <button
+                type="button"
+                onClick={() => setShowCancelModal(true)}
+                className="bg-transparent border border-white/10 text-white/70 hover:bg-white/5 hover:text-white rounded-xl px-4 py-3 font-bold transition-colors"
+              >
+                Cancelar assinatura
+              </button>
+            )}
+          </div>
 
           {message && (
             <p className="text-brand-neon text-sm mt-4">{message}</p>
           )}
         </section>
+
+        {entitlement?.isPremium && (
+          <section className="mt-8">
+             <InvoiceHistory invoices={mockInvoices} />
+          </section>
+        )}
       </main>
+
+      {showCancelModal && (
+        <CancelRetention
+          onClose={() => setShowCancelModal(false)}
+          onConfirmCancel={() => {
+            setShowCancelModal(false);
+            openPortal();
+          }}
+          onAcceptOffer={() => {
+            setShowCancelModal(false);
+            // dataMode: 'mock_dev_only'
+            setMessage('Cupom de 1 mês grátis aplicado (Simulado).');
+          }}
+        />
+      )}
     </div>
   );
 }
