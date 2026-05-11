@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Activity,
   Bell,
@@ -64,7 +64,7 @@ import { logAuditEvent, loadAuditEvents } from '../../services/auditLogService';
 import { deleteLocalAccountData, exportPrivacyData, loadCookieConsent, saveCookieConsent } from '../../services/privacyService';
 import { getActiveSessions } from '../../services/sessionService';
 import { buildCooldownProtocol, buildExerciseTip, buildWarmupProtocol } from '../../services/educationAiService';
-import { addAiMemory, loadAiMemory } from '../../services/aiMemoryService';
+import { addAiMemoryCloud, loadAiMemory, loadAiMemoryCloud } from '../../services/aiMemoryService';
 import { buildQuarterlyAiReport } from '../../services/aiReportService';
 
 interface Props {
@@ -876,14 +876,34 @@ function AiPersonalizationOpsPanel() {
   const [personaId, setPersonaId] = useState(COACH_PERSONAS[0].id);
   const [memoryInput, setMemoryInput] = useState('Prefere treinar inferiores na segunda.');
   const [memory, setMemory] = useState(loadAiMemory);
+  const [memoryMode, setMemoryMode] = useState<'supabase' | 'mock_dev_only'>('mock_dev_only');
+  const [memoryWarning, setMemoryWarning] = useState('');
   const persona = COACH_PERSONAS.find(item => item.id === personaId) ?? COACH_PERSONAS[0];
   const plateau = detectPlateau('Supino reto', [80, 82.5, 82.5, 82.5, 82.5]);
   const forecast = forecastPr('Supino reto', 82.5, 90);
   const report = buildQuarterlyAiReport(plateau, forecast);
 
-  const saveMemory = () => {
-    addAiMemory(memoryInput);
-    setMemory(loadAiMemory());
+  useEffect(() => {
+    let active = true;
+
+    loadAiMemoryCloud()
+      .then(result => {
+        if (!active) return;
+        setMemory(result.data);
+        setMemoryMode(result.dataMode);
+        setMemoryWarning(result.warning ?? '');
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const saveMemory = async () => {
+    const result = await addAiMemoryCloud(memoryInput);
+    setMemory(result.data);
+    setMemoryMode(result.dataMode);
+    setMemoryWarning(result.warning ?? '');
   };
 
   return (
@@ -916,7 +936,8 @@ function AiPersonalizationOpsPanel() {
           <h4 className="font-black text-white">Memoria</h4>
           <input value={memoryInput} onChange={event => setMemoryInput(event.target.value)} className="w-full mt-3 bg-brand-dark border border-white/10 p-2 text-white" />
           <button type="button" onClick={saveMemory} className="mt-3 bg-brand-neon text-brand-dark px-4 py-2 font-black">Salvar memoria</button>
-          <p className="text-sm text-brand-muted mt-3">{memory.length} nota(s) salvas.</p>
+          <p className="text-sm text-brand-muted mt-3">{memory.length} nota(s) salvas. Modo: {memoryMode}</p>
+          {memoryWarning && <p className="text-xs text-yellow-300 mt-2">{memoryWarning}</p>}
         </div>
       </div>
 

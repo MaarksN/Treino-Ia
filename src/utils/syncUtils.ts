@@ -3,6 +3,7 @@ import {
   listOfflineActions,
   updateOfflineAction,
 } from './offlineQueue';
+import { supabase } from '../services/supabaseClient';
 
 export interface DashboardSnapshot {
   id: string;
@@ -62,6 +63,21 @@ export function resolveConflict(
   return remote.updatedAt > local.updatedAt ? remote : local;
 }
 
+async function getSyncHeaders(actionId: string): Promise<Record<string, string>> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'X-Idempotency-Key': actionId,
+  };
+
+  const { data } = await supabase.auth.getSession();
+
+  if (data.session?.access_token) {
+    headers.Authorization = `Bearer ${data.session.access_token}`;
+  }
+
+  return headers;
+}
+
 export async function syncOfflineQueue(options?: {
   endpoint?: string;
   onSynced?: (count: number) => void;
@@ -81,10 +97,7 @@ export async function syncOfflineQueue(options?: {
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Idempotency-Key': action.id,
-        },
+        headers: await getSyncHeaders(action.id),
         body: JSON.stringify(action),
       });
 

@@ -1,4 +1,4 @@
-import { Type, Schema } from "@google/genai";
+import { Type, Schema } from "../types/geminiSchema";
 import { Exercise, UserProfile, WorkoutHistoryRecord, WorkoutPlan } from "../types";
 import { createGeminiProxyClient } from './geminiProxyClient';
 import { captureError } from "../utils/errorTelemetry";

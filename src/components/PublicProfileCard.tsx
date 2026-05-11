@@ -4,18 +4,27 @@ import { Award, MapPin, QrCode, UserPlus, Zap } from 'lucide-react';
 import { SocialProfile } from '../types';
 import { createPublicProfileUrl, formatSocialNumber } from '../utils/socialUtils';
 import { followUser } from '../services/socialService';
+import { SocialReportButton } from './SocialReportButton';
 
 interface Props {
   profile: SocialProfile;
   showQr?: boolean;
+  canInteract?: boolean;
+  onAuthRequired?: () => void;
 }
 
-export function PublicProfileCard({ profile, showQr = true }: Props) {
+export function PublicProfileCard({ profile, showQr = true, canInteract = true, onAuthRequired }: Props) {
   const [status, setStatus] = useState('');
   const publicUrl = createPublicProfileUrl(profile.username);
 
   const handleFollow = async () => {
     setStatus('');
+    if (!canInteract) {
+      setStatus('Entre com Supabase Auth para seguir atletas.');
+      onAuthRequired?.();
+      return;
+    }
+
     try {
       await followUser(profile.id);
       setStatus('Seguindo atleta.');
@@ -55,6 +64,15 @@ export function PublicProfileCard({ profile, showQr = true }: Props) {
           <UserPlus size={16} />
           Seguir
         </button>
+      </div>
+
+      <div className="mt-3">
+        <SocialReportButton
+          targetType="profile"
+          targetId={profile.id}
+          canInteract={canInteract}
+          onAuthRequired={onAuthRequired}
+        />
       </div>
 
       {status && <p className="mt-3 text-xs text-brand-muted">{status}</p>}
