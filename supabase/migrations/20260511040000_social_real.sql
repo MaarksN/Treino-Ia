@@ -161,6 +161,34 @@ create index if not exists coach_students_student_idx on public.coach_students (
 create index if not exists coach_notes_pair_idx on public.coach_private_notes (coach_id, student_id, created_at desc);
 create index if not exists coach_assignments_pair_idx on public.coach_workout_assignments (coach_id, student_id, created_at desc);
 
+do $$
+declare
+  realtime_table text;
+begin
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    foreach realtime_table in array array[
+      'social_posts',
+      'social_post_likes',
+      'social_post_comments',
+      'training_group_messages'
+    ]
+    loop
+      if not exists (
+        select 1
+        from pg_publication_rel publication_rel
+        join pg_publication publication on publication.oid = publication_rel.prpubid
+        join pg_class class on class.oid = publication_rel.prrelid
+        join pg_namespace namespace on namespace.oid = class.relnamespace
+        where publication.pubname = 'supabase_realtime'
+          and namespace.nspname = 'public'
+          and class.relname = realtime_table
+      ) then
+        execute format('alter publication supabase_realtime add table public.%I', realtime_table);
+      end if;
+    end loop;
+  end if;
+end $$;
+
 alter table public.social_profiles enable row level security;
 alter table public.social_follows enable row level security;
 alter table public.social_posts enable row level security;
