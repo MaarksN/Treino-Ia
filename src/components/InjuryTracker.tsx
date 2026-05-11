@@ -1,72 +1,104 @@
-import React, { useState } from 'react';
-import { AlertTriangle, Check, Plus } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { AlertTriangle, Check, Loader2, Plus } from 'lucide-react';
 import { InjuryRecord, SymptomRecord } from '../types';
+import { DataMode } from '../types/trainingExecution';
+import {
+  createInjuryRecord,
+  createSymptomRecord,
+  dataModeLabel,
+  loadInjuryRecords,
+  loadSymptomRecords,
+  resolveInjuryRecord,
+} from '../services/healthService';
 
-const INJURY_KEY = '@TreinoApp:injuries';
-const SYMPTOM_KEY = '@TreinoApp:symptoms';
 const REGIONS = ['Ombro', 'Cotovelo', 'Punho', 'Lombar', 'Joelho', 'Tornozelo', 'Quadril', 'Pescoço', 'Outros'];
 
-function loadJSON<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function saveJSON<T>(key: string, value: T) {
-  localStorage.setItem(key, JSON.stringify(value));
-}
-
 export function InjuryTracker() {
-  const [injuries, setInjuries] = useState<InjuryRecord[]>(() => loadJSON<InjuryRecord[]>(INJURY_KEY, []));
-  const [symptoms, setSymptoms] = useState<SymptomRecord[]>(() => loadJSON<SymptomRecord[]>(SYMPTOM_KEY, []));
+  const [injuries, setInjuries] = useState<InjuryRecord[]>([]);
+  const [symptoms, setSymptoms] = useState<SymptomRecord[]>([]);
   const [tab, setTab] = useState<'lesoes' | 'sintomas'>('lesoes');
   const [newInjury, setNewInjury] = useState<Partial<InjuryRecord>>({ severity: 'leve' });
   const [newSymptom, setNewSymptom] = useState<Partial<SymptomRecord>>({ intensity: 5 });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [dataMode, setDataMode] = useState<DataMode | null>(null);
+  const [warning, setWarning] = useState('');
 
-  const addInjury = () => {
-    if (!newInjury.region || !newInjury.description) return;
-
-    const injury: InjuryRecord = {
-      id: crypto.randomUUID(),
-      region: newInjury.region,
-      description: newInjury.description,
-      severity: newInjury.severity || 'leve',
-      startDate: new Date().toISOString().slice(0, 10),
-      notes: newInjury.notes,
-    };
-    const updated = [...injuries, injury];
-    setInjuries(updated);
-    saveJSON(INJURY_KEY, updated);
-    setNewInjury({ severity: 'leve' });
+  const loadData = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const [injuryResult, symptomResult] = await Promise.all([
+        loadInjuryRecords(),
+        loadSymptomRecords(),
+      ]);
+      setInjuries(injuryResult.data);
+      setSymptoms(symptomResult.data);
+      setDataMode(injuryResult.dataMode);
+      setWarning(injuryResult.warning || symptomResult.warning || '');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao carregar saúde e restrições.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const resolveInjury = (id: string) => {
-    const updated = injuries.map(injury =>
-      injury.id === id
-        ? { ...injury, resolved: true, resolvedDate: new Date().toISOString().slice(0, 10) }
-        : injury
-    );
-    setInjuries(updated);
-    saveJSON(INJURY_KEY, updated);
+  useEffect(() => {
+    void loadData();
+  }, []);
+
+  const addInjury = async () => {
+    setSaving(true);
+    setError('');
+    try {
+      const result = await createInjuryRecord({
+        ...newInjury,
+        startDate: new Date().toISOString().slice(0, 10),
+      });
+      setInjuries(current => [result.data, ...current]);
+      setDataMode(result.dataMode);
+      setWarning(result.warning || '');
+      setNewInjury({ severity: 'leve' });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao registrar lesão.');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const addSymptom = () => {
-    if (!newSymptom.region || !newSymptom.symptom) return;
+  const resolveInjury = async (id: string) => {
+    setSaving(true);
+    setError('');
+    try {
+      const result = await resolveInjuryRecord(id);
+      setInjuries(result.data);
+      setDataMode(result.dataMode);
+      setWarning(result.warning || '');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao resolver lesão.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
-    const symptom: SymptomRecord = {
-      id: crypto.randomUUID(),
-      date: new Date().toISOString().slice(0, 10),
-      region: newSymptom.region,
-      symptom: newSymptom.symptom,
-      intensity: newSymptom.intensity || 5,
-    };
-    const updated = [...symptoms, symptom];
-    setSymptoms(updated);
-    saveJSON(SYMPTOM_KEY, updated);
-    setNewSymptom({ intensity: 5 });
+  const addSymptom = async () => {
+    setSaving(true);
+    setError('');
+    try {
+      const result = await createSymptomRecord({
+        ...newSymptom,
+        date: new Date().toISOString().slice(0, 10),
+      });
+      setSymptoms(current => [result.data, ...current]);
+      setDataMode(result.dataMode);
+      setWarning(result.warning || '');
+      setNewSymptom({ intensity: 5 });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao registrar sintoma.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const severityColor = {
@@ -84,6 +116,15 @@ export function InjuryTracker() {
           <AlertTriangle className="w-5 h-5 text-brand-magenta" />
           <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">Saúde e restrições</h3>
         </div>
+        {dataMode && (
+          <span className={`border-2 px-3 py-1 text-[10px] font-black uppercase tracking-widest ${
+            dataMode === 'supabase'
+              ? 'border-brand-neon/40 bg-brand-neon/10 text-brand-neon'
+              : 'border-yellow-500/40 bg-yellow-500/10 text-yellow-300'
+          }`}>
+            dataMode: {dataModeLabel(dataMode)}
+          </span>
+        )}
         <div className="flex gap-2">
           {(['lesoes', 'sintomas'] as const).map(item => (
             <button
@@ -102,7 +143,16 @@ export function InjuryTracker() {
         </div>
       </div>
 
-      {tab === 'lesoes' && (
+      {warning && <p className="mb-4 text-xs text-yellow-300 bg-yellow-500/10 border-2 border-yellow-500/30 p-3">{warning}</p>}
+      {error && <p className="mb-4 text-xs text-red-300 bg-red-500/10 border-2 border-red-500/30 p-3">{error}</p>}
+      {loading && (
+        <div className="flex items-center gap-2 text-brand-muted text-sm">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          Carregando registros de saúde...
+        </div>
+      )}
+
+      {!loading && tab === 'lesoes' && (
         <>
           <div className="space-y-3 mb-5 p-4 bg-brand-dark border-2 border-brand-light/10">
             <p className="text-sm font-bold text-brand-light uppercase">Registrar lesão</p>
@@ -129,8 +179,8 @@ export function InjuryTracker() {
               <option value="moderada">Moderada</option>
               <option value="grave">Grave</option>
             </select>
-            <button onClick={addInjury} type="button" className="inline-flex items-center gap-2 bg-brand-neon text-brand-dark px-4 py-2 border-brutal text-sm font-bold uppercase">
-              <Plus size={14} /> Registrar
+            <button onClick={addInjury} disabled={saving} type="button" className="inline-flex items-center gap-2 bg-brand-neon text-brand-dark px-4 py-2 border-brutal text-sm font-bold uppercase disabled:opacity-60">
+              {saving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Registrar
             </button>
           </div>
 
@@ -143,8 +193,8 @@ export function InjuryTracker() {
                   <span className={`text-xs font-bold ${severityColor[injury.severity]}`}>{injury.severity}</span>
                   <span className="text-brand-light/30 text-xs ml-2">desde {injury.startDate}</span>
                 </div>
-                <button onClick={() => resolveInjury(injury.id)} type="button" title="Marcar como resolvida" className="p-2 bg-green-500/10 text-green-400 hover:bg-green-500/20 transition-colors">
-                  <Check size={14} />
+                <button onClick={() => resolveInjury(injury.id)} disabled={saving} type="button" title="Marcar como resolvida" className="p-2 bg-green-500/10 text-green-400 hover:bg-green-500/20 transition-colors disabled:opacity-60">
+                  {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
                 </button>
               </div>
             ))}
@@ -153,7 +203,7 @@ export function InjuryTracker() {
         </>
       )}
 
-      {tab === 'sintomas' && (
+      {!loading && tab === 'sintomas' && (
         <>
           <div className="space-y-3 mb-5 p-4 bg-brand-dark border-2 border-brand-light/10">
             <p className="text-sm font-bold text-brand-light uppercase">Registrar sintoma</p>
@@ -182,8 +232,8 @@ export function InjuryTracker() {
                 className="mt-2 w-full accent-red-500"
               />
             </label>
-            <button onClick={addSymptom} type="button" className="inline-flex items-center gap-2 bg-brand-neon text-brand-dark px-4 py-2 border-brutal text-sm font-bold uppercase">
-              <Plus size={14} /> Registrar
+            <button onClick={addSymptom} disabled={saving} type="button" className="inline-flex items-center gap-2 bg-brand-neon text-brand-dark px-4 py-2 border-brutal text-sm font-bold uppercase disabled:opacity-60">
+              {saving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Registrar
             </button>
           </div>
 

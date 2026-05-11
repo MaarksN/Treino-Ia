@@ -15,7 +15,9 @@ import { InstallPrompt } from './components/InstallPrompt';
 import { AppUpdateBanner } from './components/AppUpdateBanner';
 import { generateWorkoutPlan, extractWorkoutFromFile } from './services/geminiService';
 import { AppSettings, Badge, DailyCheckin as DailyCheckinType, FatigueSnapshot, RecoveryCheckin, StreakData, TrainingExercisePerformance, User, UserProfile, WorkoutHistoryEntry, WorkoutHistoryRecord, WorkoutPlan, WorkoutSession } from './types';
-import { calculateReadiness, getTodayCheckin, loadCheckins } from './utils/readinessUtils';
+import { DataMode } from './types/trainingExecution';
+import { getTodayCheckinFromList, loadDailyCheckins, saveDailyCheckin } from './services/healthService';
+import { calculateReadiness } from './utils/readinessUtils';
 import { loadHistory, recordWorkoutSession, getTotalVolumeLifted } from './utils/analyticsUtils';
 import { loadStreak, recordWorkoutForStreak } from './utils/streakUtils';
 import { evaluateAndUnlockBadges } from './utils/badgeUtils';
@@ -26,9 +28,9 @@ import { registerBackgroundSync } from './utils/pwaUtils';
 import { saveDashboardSnapshot } from './utils/syncUtils';
 import { captureError } from './utils/errorTelemetry';
 import { applyTheme, loadThemeId } from './utils/themeUtils';
-import { Activity, BrainCircuit, Dumbbell, Globe2, Moon, Rocket, Server, Settings as SettingsIcon, Share2, Sun, Trophy, X } from 'lucide-react';
+import { Activity, BellRing, BrainCircuit, Dumbbell, Globe2, Moon, Rocket, Server, Settings as SettingsIcon, Share2, Sun, Trophy, X } from 'lucide-react';
 
-type ViewState = 'loading' | 'registration' | 'home' | 'anamnesis' | 'import' | 'dashboard' | 'active-workout' | 'global_feed' | 'social' | 'gamification' | 'infrastructure' | 'platform';
+type ViewState = 'loading' | 'registration' | 'home' | 'anamnesis' | 'import' | 'dashboard' | 'active-workout' | 'global_feed' | 'social' | 'public_profile' | 'gamification' | 'retention' | 'infrastructure' | 'platform';
 
 import { AssistantPopup } from './components/AssistantPopup';
 
@@ -54,6 +56,7 @@ const PoseDetector = lazy(() => import('./components/PoseDetector').then(module 
 const SleepTracker = lazy(() => import('./components/SleepTracker').then(module => ({ default: module.SleepTracker })));
 const WearableSync = lazy(() => import('./components/WearableSync').then(module => ({ default: module.WearableSync })));
 const SocialHub = lazy(() => import('./components/SocialHub').then(module => ({ default: module.SocialHub })));
+const RetentionOperationsHub = lazy(() => import('./components/RetentionOperationsHub').then(module => ({ default: module.RetentionOperationsHub })));
 const PeriodizationLab = lazy(() => import('./components/PeriodizationLab').then(module => ({ default: module.PeriodizationLab })));
 const GamificationHub = lazy(() => import('./components/GamificationHub').then(module => ({ default: module.GamificationHub })));
 const InfrastructureHub = lazy(() => import('./components/InfrastructureHub').then(module => ({ default: module.InfrastructureHub })));
@@ -61,6 +64,7 @@ const AdvancedPlatformHub = lazy(() => import('./components/platform/AdvancedPla
 const GlobalFeed = lazy(() => import('./components/GlobalFeed').then(module => ({ default: module.GlobalFeed })));
 const MusicPlayer = lazy(() => import('./components/MusicPlayer').then(module => ({ default: module.MusicPlayer })));
 const AICoachChat = lazy(() => import('./components/AICoachChat').then(module => ({ default: module.AICoachChat })));
+const PublicAthleteProfilePage = lazy(() => import('./components/PublicAthleteProfilePage').then(module => ({ default: module.PublicAthleteProfilePage })));
 
 const ONBOARDING_KEY = '@TreinoApp:onboarded';
 const LIGHT_THEME_VARS = {
@@ -130,8 +134,12 @@ export default function App() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [recoveryCheckin, setRecoveryCheckin] = useState<RecoveryCheckin | null>(null);
-  const [todayCheckin, setTodayCheckin] = useState<DailyCheckinType | null>(() => getTodayCheckin());
-  const [allCheckins, setAllCheckins] = useState<DailyCheckinType[]>(() => loadCheckins());
+  const [todayCheckin, setTodayCheckin] = useState<DailyCheckinType | null>(null);
+  const [allCheckins, setAllCheckins] = useState<DailyCheckinType[]>([]);
+  const [healthDataMode, setHealthDataMode] = useState<DataMode | undefined>();
+  const [healthWarning, setHealthWarning] = useState<string | null>(null);
+  const [checkinSaving, setCheckinSaving] = useState(false);
+  const [checkinError, setCheckinError] = useState<string | null>(null);
   const [darkMode, setDarkMode] = useState(true);
   const [language, setLanguage] = useState<'PT' | 'EN'>('PT');
   const [voiceEnabled, setVoiceEnabled] = useState(loadInitialVoiceEnabled);
@@ -145,7 +153,24 @@ export default function App() {
   const [showCoach, setShowCoach] = useState(false);
 
   // For tab navigation when a user is logged in
-  const [activeTab, setActiveTab] = useState<'my_workouts' | 'global_feed' | 'social' | 'gamification' | 'infrastructure' | 'platform'>('my_workouts');
+  const [activeTab, setActiveTab] = useState<'my_workouts' | 'global_feed' | 'social' | 'gamification' | 'retention' | 'infrastructure' | 'platform'>('my_workouts');
+
+  const refreshDailyCheckins = async () => {
+    try {
+      const result = await loadDailyCheckins();
+      setAllCheckins(result.data);
+      setTodayCheckin(getTodayCheckinFromList(result.data));
+      setHealthDataMode(result.dataMode);
+      setHealthWarning(result.warning ?? null);
+      setCheckinError(null);
+      return result.data;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Falha ao carregar check-ins.';
+      setCheckinError(message);
+      captureError(error, 'App.loadDailyCheckins');
+      return allCheckins;
+    }
+  };
 
   useEffect(() => {
     applyTheme(loadThemeId());
@@ -164,6 +189,18 @@ export default function App() {
   }, [darkMode]);
 
   useEffect(() => {
+    void refreshDailyCheckins();
+
+    const currentPath = window.location.pathname;
+    if (currentPath.startsWith('/u/')) {
+      setView('public_profile');
+      return;
+    }
+    if (currentPath.startsWith('/groups/join/')) {
+      setView('social');
+      return;
+    }
+
     const savedUser = localStorage.getItem('@TreinoApp:user');
     const savedPlans = localStorage.getItem('@TreinoApp:plans');
     const savedHistory = localStorage.getItem('@TreinoApp:history');
@@ -304,7 +341,35 @@ export default function App() {
 
   const handleSaveRecoveryCheckin = (checkin: RecoveryCheckin) => {
     setRecoveryCheckin(checkin);
-    localStorage.setItem('@TreinoApp:recovery', JSON.stringify(checkin));
+
+    const today = new Date().toISOString().slice(0, 10);
+    const dailyFromRecovery: DailyCheckinType = {
+      id: todayCheckin?.id || crypto.randomUUID(),
+      date: today,
+      sleepHours: checkin.sleepHours,
+      sleepQuality: todayCheckin?.sleepQuality || 3,
+      stressLevel: checkin.stressLevel,
+      sorenessMap: {
+        ...(todayCheckin?.sorenessMap || {}),
+        Geral: checkin.sorenessLevel,
+      },
+      energyLevel: checkin.energyLevel,
+      hydrationGlasses: todayCheckin?.hydrationGlasses || 0,
+      sleepGoalHours: todayCheckin?.sleepGoalHours || 8,
+      notes: todayCheckin?.notes,
+      timestamp: Date.now(),
+    };
+
+    void saveDailyCheckin(dailyFromRecovery)
+      .then(async result => {
+        setHealthDataMode(result.dataMode);
+        setHealthWarning(result.warning ?? null);
+        await refreshDailyCheckins();
+      })
+      .catch(error => {
+        setCheckinError(error instanceof Error ? error.message : 'Falha ao salvar prontidão pré-treino.');
+        captureError(error, 'App.saveRecoveryAsDailyCheckin');
+      });
   };
 
   const handleOnboardingComplete = () => {
@@ -327,6 +392,11 @@ export default function App() {
     }
   };
 
+  const getNutritionMealCount = () => Math.max(
+    getStoredArrayCount('@TreinoApp:meals:mock_dev_only'),
+    getStoredArrayCount('@TreinoApp:meals')
+  );
+
   const refreshEngagement = (
     nextStreak = streakData,
     nextHistory = analyticsHistory,
@@ -344,18 +414,32 @@ export default function App() {
       nextHistory,
       nextCheckins.length,
       getStoredArrayCount('@TreinoApp:prs'),
-      getStoredArrayCount('@TreinoApp:meals')
+      getNutritionMealCount()
     );
     if (newly.length) setNewBadges(newly);
   };
 
-  const handleSaveCheckin = (checkin: DailyCheckinType) => {
-    const updatedCheckins = loadCheckins();
-    setTodayCheckin(checkin);
-    setAllCheckins(updatedCheckins);
-    refreshEngagement(streakData, analyticsHistory, updatedCheckins);
-    void recordGamificationEvent('checkin').catch(error => captureError(error, 'App.dailyCheckin'));
-    saveLocalDashboardSnapshot(analyticsHistory, streakData, updatedCheckins);
+  const handleSaveCheckin = async (checkin: DailyCheckinType) => {
+    setCheckinSaving(true);
+    setCheckinError(null);
+
+    try {
+      const saved = await saveDailyCheckin(checkin);
+      setHealthDataMode(saved.dataMode);
+      setHealthWarning(saved.warning ?? null);
+      const updatedCheckins = await refreshDailyCheckins();
+      setTodayCheckin(saved.data);
+      refreshEngagement(streakData, analyticsHistory, updatedCheckins);
+      void recordGamificationEvent('checkin').catch(error => captureError(error, 'App.dailyCheckin'));
+      saveLocalDashboardSnapshot(analyticsHistory, streakData, updatedCheckins);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Falha ao salvar check-in.';
+      setCheckinError(message);
+      captureError(error, 'App.saveDailyCheckin');
+      throw new Error(message);
+    } finally {
+      setCheckinSaving(false);
+    }
   };
 
   const saveLocalDashboardSnapshot = (
@@ -539,6 +623,12 @@ export default function App() {
               <Trophy className="w-4 h-4 mr-2" /> Gamificacao
             </button>
             <button
+              onClick={() => { setActiveTab('retention'); setView('retention'); }}
+              className={`px-5 py-2 font-mono font-bold text-sm uppercase flex items-center transition-colors rounded-full ${view === 'retention' ? 'bg-brand-neon text-brand-dark shadow-[0_0_10px_var(--color-brand-neon)]' : 'text-brand-muted hover:text-brand-light hover:bg-brand-light/5'}`}
+            >
+              <BellRing className="w-4 h-4 mr-2" /> Retencao
+            </button>
+            <button
               onClick={() => { setActiveTab('infrastructure'); setView('infrastructure'); }}
               className={`px-5 py-2 font-mono font-bold text-sm uppercase flex items-center transition-colors rounded-full ${view === 'infrastructure' ? 'bg-brand-neon text-brand-dark shadow-[0_0_10px_var(--color-brand-neon)]' : 'text-brand-muted hover:text-brand-light hover:bg-brand-light/5'}`}
             >
@@ -649,7 +739,12 @@ export default function App() {
             <HabitReminder />
           </div>
 
-          <AnalyticsDashboard history={analyticsHistory} plans={plans} />
+          <AnalyticsDashboard
+            history={analyticsHistory}
+            plans={plans}
+            workoutHistory={workoutHistory}
+            profile={activeProfile}
+          />
           <ConsistencyHeatmap history={analyticsHistory} checkins={allCheckins} />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -662,7 +757,14 @@ export default function App() {
       {view === 'dashboard' && currentPlan && activeProfile && (
         <div className="max-w-5xl mx-auto mt-8 space-y-6 print:hidden">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <DailyCheckinForm existing={todayCheckin} onSave={handleSaveCheckin} />
+            <DailyCheckinForm
+              existing={todayCheckin}
+              onSave={handleSaveCheckin}
+              saving={checkinSaving}
+              error={checkinError}
+              dataMode={healthDataMode}
+              warning={healthWarning}
+            />
             <ReadinessIndex checkin={todayCheckin} allCheckins={allCheckins} />
           </div>
 
@@ -725,11 +827,24 @@ export default function App() {
       )}
 
       {view === 'social' && (
-        <SocialHub />
+        <SocialHub currentPlan={currentPlan} />
+      )}
+
+      {view === 'public_profile' && (
+        <PublicAthleteProfilePage />
       )}
 
       {view === 'gamification' && (
         <GamificationHub />
+      )}
+
+      {view === 'retention' && (
+        <RetentionOperationsHub
+          userName={user?.name}
+          profile={activeProfile}
+          currentPlan={currentPlan}
+          history={analyticsHistory}
+        />
       )}
 
       {view === 'infrastructure' && (

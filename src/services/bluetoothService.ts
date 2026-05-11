@@ -1,6 +1,4 @@
-import { HeartRateReading, HRZones, WearableSession } from '../types';
-
-const SESSION_KEY = '@TreinoApp:wearableSessions';
+import { HeartRateReading, HRZones } from '../types';
 
 type BluetoothCharacteristicValueEvent = Event & {
   target: BluetoothRemoteGATTCharacteristicLike;
@@ -36,21 +34,6 @@ type BluetoothNavigator = Navigator & {
     }) => Promise<BluetoothDeviceLike>;
   };
 };
-
-export function loadWearableSessions(): WearableSession[] {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(SESSION_KEY) || '[]');
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-export function saveWearableSession(session: WearableSession) {
-  const sessions = loadWearableSessions();
-  sessions.push(session);
-  localStorage.setItem(SESSION_KEY, JSON.stringify(sessions.slice(-50)));
-}
 
 export function calcHRZones(readings: HeartRateReading[], maxHRAge: number): HRZones {
   const zones: HRZones = { zone1: 0, zone2: 0, zone3: 0, zone4: 0, zone5: 0 };
