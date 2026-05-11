@@ -50,6 +50,8 @@ import {
   safeParseAiJson,
   TypeGuard,
 } from '../utils/aiResponseValidation';
+import { summarizeAiDecisionQuality } from '../utils/aiDecisionObservability';
+import { aiDecisionAuditRepository } from './aiDecisionAuditRepository';
 import { createGeminiProxyClient } from './geminiProxyClient';
 
 const MODEL = 'gemini-2.5-pro';
@@ -63,10 +65,19 @@ function getAI() {
 function recordAudit(audit: AiDecisionAudit) {
   decisionAudits.push(audit);
   if (decisionAudits.length > 250) decisionAudits.shift();
+  void aiDecisionAuditRepository.persist(audit);
 }
 
 export function getAiPersonalizationDecisionAudits(): AiDecisionAudit[] {
   return [...decisionAudits];
+}
+
+export function getAiPersonalizationFallbackMetrics() {
+  return summarizeAiDecisionQuality(decisionAudits);
+}
+
+export async function flushAiPersonalizationDecisionAudits(): Promise<void> {
+  await aiDecisionAuditRepository.flush();
 }
 
 function createAudit(
