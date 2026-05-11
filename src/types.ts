@@ -433,6 +433,28 @@ export interface AppSettings {
 
 // Wearable & biometrico
 
+export type BiometricDataMode = 'supabase' | 'mock_dev_only';
+
+export interface BiometricPersistenceMeta {
+  dataMode: BiometricDataMode;
+  reason?: string;
+  syncedAt: string;
+}
+
+export interface BiometricQueryResult<T> {
+  data: T;
+  meta: BiometricPersistenceMeta;
+}
+
+export interface BiometricSnapshot {
+  wearableSessions: WearableSession[];
+  hydrationEntries: HydrationEntry[];
+  hydrationGoal: HydrationGoal;
+  sleepEntries: SleepEntry[];
+  cycleEntries: CycleEntry[];
+  poseAnalyses: PoseAnalysis[];
+}
+
 export interface HeartRateReading {
   bpm: number;
   timestamp: number;
