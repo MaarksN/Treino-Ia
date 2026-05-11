@@ -9,7 +9,7 @@ interface Props {
 
 export function ChallengeParty({ groupId }: Props) {
   const [challenges, setChallenges] = useState<GroupChallenge[]>([]);
-  const [name, setName] = useState('20 treinos no mês');
+  const [name, setName] = useState('20 treinos no mes');
   const [target, setTarget] = useState(20);
   const [error, setError] = useState('');
 
@@ -18,12 +18,12 @@ export function ChallengeParty({ groupId }: Props) {
       setChallenges(await listGroupChallenges(groupId));
       setError('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível carregar desafios.');
+      setError(err instanceof Error ? err.message : 'Nao foi possivel carregar desafios.');
     }
   };
 
   useEffect(() => {
-    load();
+    void load();
   }, [groupId]);
 
   const create = async () => {
@@ -39,11 +39,11 @@ export function ChallengeParty({ groupId }: Props) {
         metric: 'workouts',
         startsAt: now.toISOString().slice(0, 10),
         endsAt: end.toISOString().slice(0, 10),
-        badgeReward: 'Badge Grupo Imparável',
+        badgeReward: 'Badge Grupo Imparavel',
       });
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível criar desafio.');
+      setError(err instanceof Error ? err.message : 'Nao foi possivel criar desafio.');
     }
   };
 
@@ -70,7 +70,7 @@ export function ChallengeParty({ groupId }: Props) {
           className="bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none"
         />
 
-        <button type="button" onClick={create} className="bg-brand-neon text-brand-dark rounded-xl px-4 py-3 font-black flex items-center gap-2">
+        <button type="button" onClick={() => { void create(); }} className="bg-brand-neon text-brand-dark rounded-xl px-4 py-3 font-black flex items-center gap-2">
           <Plus size={16} />
           Criar
         </button>
@@ -92,7 +92,7 @@ export function ChallengeParty({ groupId }: Props) {
             </div>
 
             <p className="text-xs text-white/50 mt-3">
-              {challenge.starts_at} até {challenge.ends_at} · recompensa: {challenge.badge_reward ?? 'sem badge'}
+              {challenge.starts_at} ate {challenge.ends_at} · recompensa: {challenge.badge_reward ?? 'sem badge'}
             </p>
           </div>
         ))}

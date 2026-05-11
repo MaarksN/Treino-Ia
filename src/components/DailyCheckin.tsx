@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Brain, Droplets, Moon, Save, Zap } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Brain, Droplets, Loader2, Moon, Save, Zap } from 'lucide-react';
 import { DailyCheckin } from '../types';
-import { saveCheckin } from '../utils/readinessUtils';
+import { DataMode } from '../types/trainingExecution';
 
 const MUSCLE_REGIONS = [
   'Peito',
@@ -17,8 +17,12 @@ const MUSCLE_REGIONS = [
 ];
 
 interface Props {
-  onSave: (checkin: DailyCheckin) => void;
+  onSave: (checkin: DailyCheckin) => void | Promise<void>;
   existing?: DailyCheckin | null;
+  saving?: boolean;
+  error?: string | null;
+  dataMode?: DataMode;
+  warning?: string | null;
 }
 
 interface SliderProps {
@@ -55,9 +59,10 @@ function Slider({ label, value, onChange, max = 10, min = 1, step = 1, suffix = 
   );
 }
 
-export function DailyCheckinForm({ onSave, existing }: Props) {
+function createDefaultCheckin(): DailyCheckin {
   const today = new Date().toISOString().slice(0, 10);
-  const [form, setForm] = useState<DailyCheckin>(existing || {
+
+  return {
     id: crypto.randomUUID(),
     date: today,
     sleepHours: 7,
@@ -68,7 +73,17 @@ export function DailyCheckinForm({ onSave, existing }: Props) {
     hydrationGlasses: 0,
     sleepGoalHours: 8,
     timestamp: Date.now(),
-  });
+  };
+}
+
+export function DailyCheckinForm({ onSave, existing, saving = false, error, dataMode, warning }: Props) {
+  const [form, setForm] = useState<DailyCheckin>(existing || createDefaultCheckin());
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (existing) setForm(existing);
+  }, [existing]);
 
   const setField = <K extends keyof DailyCheckin>(key: K, value: DailyCheckin[K]) => {
     setForm(current => ({ ...current, [key]: value }));
@@ -81,10 +96,15 @@ export function DailyCheckinForm({ onSave, existing }: Props) {
     }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const checkin = { ...form, timestamp: Date.now() };
-    saveCheckin(checkin);
-    onSave(checkin);
+    setLocalError(null);
+    try {
+      await onSave(checkin);
+      setSavedAt(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
+    } catch (err) {
+      setLocalError(err instanceof Error ? err.message : 'Falha ao salvar check-in.');
+    }
   };
 
   return (
@@ -94,8 +114,20 @@ export function DailyCheckinForm({ onSave, existing }: Props) {
           <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">Check-in do dia</h3>
           <p className="font-mono text-xs text-brand-muted mt-1">{form.date}</p>
         </div>
-        <Save className="w-5 h-5 text-brand-neon" />
-      </div>
+          {saving ? <Loader2 className="w-5 h-5 text-brand-neon animate-spin" /> : <Save className="w-5 h-5 text-brand-neon" />}
+        </div>
+        {dataMode && (
+          <div className={`mb-4 inline-flex border-2 px-3 py-1 text-[10px] font-black uppercase tracking-widest ${
+            dataMode === 'supabase'
+              ? 'border-brand-neon/40 bg-brand-neon/10 text-brand-neon'
+              : 'border-yellow-500/40 bg-yellow-500/10 text-yellow-300'
+          }`}>
+            dataMode: {dataMode}
+          </div>
+        )}
+        {warning && <p className="mb-4 text-xs text-yellow-300 bg-yellow-500/10 border-2 border-yellow-500/30 p-3">{warning}</p>}
+        {(error || localError) && <p className="mb-4 text-xs text-red-300 bg-red-500/10 border-2 border-red-500/30 p-3">{error || localError}</p>}
+        {savedAt && !error && !localError && <p className="mb-4 text-xs text-brand-neon bg-brand-neon/10 border-2 border-brand-neon/30 p-3">Check-in salvo às {savedAt}.</p>}
 
       <div className="space-y-5">
         <Slider
@@ -208,9 +240,10 @@ export function DailyCheckinForm({ onSave, existing }: Props) {
         <button
           type="button"
           onClick={handleSave}
+          disabled={saving}
           className="w-full bg-brand-neon text-brand-dark font-black py-3 border-brutal uppercase tracking-widest hover:bg-brand-neon-hover transition-colors"
         >
-          Salvar check-in
+          {saving ? 'Salvando...' : 'Salvar check-in'}
         </button>
       </div>
     </div>

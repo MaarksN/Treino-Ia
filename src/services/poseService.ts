@@ -1,22 +1,3 @@
-import { PoseAnalysis } from '../types';
-
-const POSE_KEY = '@TreinoApp:poseAnalyses';
-
-export function loadPoseAnalyses(): PoseAnalysis[] {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(POSE_KEY) || '[]');
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-export function savePoseAnalysis(analysis: PoseAnalysis) {
-  const all = loadPoseAnalyses();
-  all.push(analysis);
-  localStorage.setItem(POSE_KEY, JSON.stringify(all.slice(-50)));
-}
-
 export function calcAngle(
   a: { x: number; y: number },
   b: { x: number; y: number },

@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Camera, CameraOff, CheckCircle } from 'lucide-react';
-import { PoseAnalysis } from '../types';
+import { BiometricPersistenceMeta, PoseAnalysis } from '../types';
 import {
   analyzeAngles,
   EXERCISE_RULES,
   ExerciseRule,
-  loadPoseAnalyses,
-  savePoseAnalysis,
 } from '../services/poseService';
+import { loadPoseAnalyses, savePoseAnalysis } from '../services/biometricService';
+import { BiometricDataModeBadge } from './BiometricDataModeBadge';
 
 type PoseLandmark = { x: number; y: number; z?: number; visibility?: number };
 type PoseResults = { image: CanvasImageSource; poseLandmarks?: PoseLandmark[] };
@@ -74,7 +74,10 @@ export function PoseDetector() {
   const [tips, setTips] = useState<string[]>([]);
   const [keyAngles, setKeyAngles] = useState<Record<string, number>>({});
   const [repCount, setRepCount] = useState(0);
-  const [analyses, setAnalyses] = useState<PoseAnalysis[]>(loadPoseAnalyses);
+  const [analyses, setAnalyses] = useState<PoseAnalysis[]>([]);
+  const [dataMeta, setDataMeta] = useState<BiometricPersistenceMeta | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState<'camera' | 'history'>('camera');
   const [scriptsLoaded, setScriptsLoaded] = useState(false);
   const [error, setError] = useState('');
@@ -105,6 +108,28 @@ export function PoseDetector() {
       script.onerror = () => setError('Não foi possível carregar o MediaPipe.');
       if (!existing) document.head.appendChild(script);
     });
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setHistoryLoading(true);
+
+    loadPoseAnalyses()
+      .then(result => {
+        if (cancelled) return;
+        setAnalyses(result.data);
+        setDataMeta(result.meta);
+      })
+      .catch(err => {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Falha ao carregar análises.');
+      })
+      .finally(() => {
+        if (!cancelled) setHistoryLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const stopCamera = useCallback(() => {
@@ -226,7 +251,10 @@ export function PoseDetector() {
     }
   };
 
-  const saveAnalysis = () => {
+  const saveAnalysis = async () => {
+    setSaving(true);
+    setError('');
+
     const analysis: PoseAnalysis = {
       id: crypto.randomUUID(),
       exerciseName: selectedRule.name,
@@ -238,8 +266,16 @@ export function PoseDetector() {
       keyAngles,
       thumbnail: canvasRef.current?.toDataURL('image/jpeg', 0.7),
     };
-    savePoseAnalysis(analysis);
-    setAnalyses(loadPoseAnalyses());
+
+    try {
+      const result = await savePoseAnalysis(analysis);
+      setAnalyses(result.data);
+      setDataMeta(result.meta);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível salvar análise.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const scoreColor = getScoreColor(formScore);
@@ -263,6 +299,14 @@ export function PoseDetector() {
           </button>
         ))}
       </div>
+
+      <BiometricDataModeBadge meta={dataMeta} />
+
+      {historyLoading && (
+        <div className="mb-4 p-3 bg-brand-dark rounded-xl border border-white/10 text-brand-muted text-sm">
+          Carregando histórico de postura...
+        </div>
+      )}
 
       {tab === 'camera' && (
         <div className="space-y-4">
@@ -345,10 +389,11 @@ export function PoseDetector() {
                 </button>
                 <button
                   type="button"
-                  onClick={saveAnalysis}
-                  className="flex-1 py-3 bg-brand-neon/10 border border-brand-neon/30 text-brand-neon font-bold rounded-xl text-sm"
+                  onClick={() => { void saveAnalysis(); }}
+                  disabled={saving}
+                  className="flex-1 py-3 bg-brand-neon/10 border border-brand-neon/30 text-brand-neon font-bold rounded-xl text-sm disabled:opacity-50"
                 >
-                  Salvar análise
+                  {saving ? 'Salvando...' : 'Salvar análise'}
                 </button>
               </>
             )}
@@ -399,7 +444,7 @@ export function PoseDetector() {
 
       {tab === 'history' && (
         <div className="space-y-3">
-          {analyses.length === 0 && (
+          {analyses.length === 0 && !historyLoading && (
             <p className="text-brand-muted text-sm text-center py-6">Nenhuma análise salva ainda.</p>
           )}
           {[...analyses].reverse().slice(0, 15).map(analysis => (
