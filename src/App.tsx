@@ -1,39 +1,16 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { lazy, Suspense, useState, useEffect, useMemo } from 'react';
 import { AnamnesisForm } from './components/AnamnesisForm';
-import { WorkoutDashboard } from './components/WorkoutDashboard';
 import { RegistrationForm } from './components/RegistrationForm';
 import { HomeMenu } from './components/HomeMenu';
 import { ImportWorkoutView } from './components/ImportWorkoutView';
-import { ActiveWorkoutView } from './components/ActiveWorkoutView';
 import { DailyCheckinForm } from './components/DailyCheckin';
 import { ReadinessIndex } from './components/ReadinessIndex';
 import { RecoveryProtocol } from './components/RecoveryProtocol';
 import { InjuryTracker } from './components/InjuryTracker';
 import { NutritionPanel } from './components/NutritionPanel';
 import { BodyCompositionTracker } from './components/BodyCompositionTracker';
-import { AnalyticsDashboard } from './components/AnalyticsDashboard';
-import { ConsistencyHeatmap } from './components/ConsistencyHeatmap';
-import { StreakTracker } from './components/StreakTracker';
-import { BadgeSystem } from './components/BadgeSystem';
-import { ChallengeCenter } from './components/ChallengeCenter';
-import { HabitReminder } from './components/HabitReminder';
-import { ReactivationEngine } from './components/ReactivationEngine';
-import { AICoach } from './components/AICoach';
 import { OnboardingTour } from './components/OnboardingTour';
-import { PlanAutoAdjust } from './components/PlanAutoAdjust';
 import { SettingsPanel } from './components/SettingsPanel';
-import { WorkoutShareCard } from './components/WorkoutShareCard';
-import { BiometricDashboard } from './components/BiometricDashboard';
-import { HormonalCycleTracker } from './components/HormonalCycleTracker';
-import { HydrationTracker } from './components/HydrationTracker';
-import { PoseDetector } from './components/PoseDetector';
-import { SleepTracker } from './components/SleepTracker';
-import { WearableSync } from './components/WearableSync';
-import { SocialHub } from './components/SocialHub';
-import { PeriodizationLab } from './components/PeriodizationLab';
-import { GamificationHub } from './components/GamificationHub';
-import { InfrastructureHub } from './components/InfrastructureHub';
-import { AdvancedPlatformHub } from './components/platform/AdvancedPlatformHub';
 import { InstallPrompt } from './components/InstallPrompt';
 import { AppUpdateBanner } from './components/AppUpdateBanner';
 import { generateWorkoutPlan, extractWorkoutFromFile } from './services/geminiService';
@@ -55,12 +32,35 @@ type ViewState = 'loading' | 'registration' | 'home' | 'anamnesis' | 'import' | 
 
 import { AssistantPopup } from './components/AssistantPopup';
 
-import { GlobalFeed } from './components/GlobalFeed';
-import { MusicPlayer } from './components/MusicPlayer';
-import { CheckInModule } from './components/CheckInModule';
 import { FuturisticHUD } from './components/FuturisticHUD';
-import { AICoachChat } from './components/AICoachChat';
 import { BotMessageSquare } from 'lucide-react';
+
+const WorkoutDashboard = lazy(() => import('./components/WorkoutDashboard').then(module => ({ default: module.WorkoutDashboard })));
+const ActiveWorkoutView = lazy(() => import('./components/ActiveWorkoutView').then(module => ({ default: module.ActiveWorkoutView })));
+const AnalyticsDashboard = lazy(() => import('./components/AnalyticsDashboard').then(module => ({ default: module.AnalyticsDashboard })));
+const ConsistencyHeatmap = lazy(() => import('./components/ConsistencyHeatmap').then(module => ({ default: module.ConsistencyHeatmap })));
+const StreakTracker = lazy(() => import('./components/StreakTracker').then(module => ({ default: module.StreakTracker })));
+const BadgeSystem = lazy(() => import('./components/BadgeSystem').then(module => ({ default: module.BadgeSystem })));
+const ChallengeCenter = lazy(() => import('./components/ChallengeCenter').then(module => ({ default: module.ChallengeCenter })));
+const HabitReminder = lazy(() => import('./components/HabitReminder').then(module => ({ default: module.HabitReminder })));
+const ReactivationEngine = lazy(() => import('./components/ReactivationEngine').then(module => ({ default: module.ReactivationEngine })));
+const AICoach = lazy(() => import('./components/AICoach').then(module => ({ default: module.AICoach })));
+const PlanAutoAdjust = lazy(() => import('./components/PlanAutoAdjust').then(module => ({ default: module.PlanAutoAdjust })));
+const WorkoutShareCard = lazy(() => import('./components/WorkoutShareCard').then(module => ({ default: module.WorkoutShareCard })));
+const BiometricDashboard = lazy(() => import('./components/BiometricDashboard').then(module => ({ default: module.BiometricDashboard })));
+const HormonalCycleTracker = lazy(() => import('./components/HormonalCycleTracker').then(module => ({ default: module.HormonalCycleTracker })));
+const HydrationTracker = lazy(() => import('./components/HydrationTracker').then(module => ({ default: module.HydrationTracker })));
+const PoseDetector = lazy(() => import('./components/PoseDetector').then(module => ({ default: module.PoseDetector })));
+const SleepTracker = lazy(() => import('./components/SleepTracker').then(module => ({ default: module.SleepTracker })));
+const WearableSync = lazy(() => import('./components/WearableSync').then(module => ({ default: module.WearableSync })));
+const SocialHub = lazy(() => import('./components/SocialHub').then(module => ({ default: module.SocialHub })));
+const PeriodizationLab = lazy(() => import('./components/PeriodizationLab').then(module => ({ default: module.PeriodizationLab })));
+const GamificationHub = lazy(() => import('./components/GamificationHub').then(module => ({ default: module.GamificationHub })));
+const InfrastructureHub = lazy(() => import('./components/InfrastructureHub').then(module => ({ default: module.InfrastructureHub })));
+const AdvancedPlatformHub = lazy(() => import('./components/platform/AdvancedPlatformHub').then(module => ({ default: module.AdvancedPlatformHub })));
+const GlobalFeed = lazy(() => import('./components/GlobalFeed').then(module => ({ default: module.GlobalFeed })));
+const MusicPlayer = lazy(() => import('./components/MusicPlayer').then(module => ({ default: module.MusicPlayer })));
+const AICoachChat = lazy(() => import('./components/AICoachChat').then(module => ({ default: module.AICoachChat })));
 
 const ONBOARDING_KEY = '@TreinoApp:onboarded';
 const LIGHT_THEME_VARS = {
@@ -455,6 +455,11 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-brand-dark text-brand-light font-sans antialiased py-8 md:py-12 px-4 selection:bg-brand-neon selection:text-brand-dark transition-colors duration-500">
+      <Suspense fallback={
+        <div className="max-w-5xl mx-auto bg-brand-gray border-2 border-brand-light/10 p-5 font-mono text-sm text-brand-neon uppercase tracking-widest">
+          Carregando módulo...
+        </div>
+      }>
       {showOnboarding && (
         <OnboardingTour
           onComplete={handleOnboardingComplete}
@@ -811,6 +816,7 @@ export default function App() {
            )}
         </>
       )}
+      </Suspense>
     </div>
   );
 }
