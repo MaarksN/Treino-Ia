@@ -35,6 +35,7 @@ import {
   saveWhiteLabelTenant,
   scheduleAutomatedCheckin,
   sendStudentMessage,
+  startHealthOAuth,
   startConsistencyChallenge,
   updateHealthIntegration,
 } from '../services/retentionService';
@@ -348,14 +349,26 @@ export function RetentionOperationsHub({ userName = 'Atleta', profile, currentPl
 
   const markIntegrationPending = (integration: RetentionHubState['integrations'][number]) => runAction(
     `integration-${integration.provider}`,
-    () => updateHealthIntegration({
-      provider: integration.provider,
-      status: 'needs_config',
-      dataMode: integration.data_mode,
-      scopes: integration.scopes,
-      errorMessage: 'Aguardando configuração OAuth/nativa segura fora do frontend.',
-    }),
-    'Integração registrada como pendente de configuração segura.',
+    async () => {
+      if (integration.data_mode === 'oauth' && ['google_fit', 'fitbit', 'strava'].includes(integration.provider)) {
+        const result = await startHealthOAuth(integration.provider as 'google_fit' | 'fitbit' | 'strava');
+        window.location.assign(result.authUrl);
+        return;
+      }
+
+      await updateHealthIntegration({
+        provider: integration.provider,
+        status: 'needs_config',
+        dataMode: integration.data_mode,
+        scopes: integration.scopes,
+        errorMessage: integration.data_mode === 'native'
+          ? 'Requer bridge nativa Apple Health/Health Connect no app mobile.'
+          : 'Aguardando configuração segura fora do frontend.',
+      });
+    },
+    integration.data_mode === 'oauth'
+      ? 'Redirecionando para autorização OAuth.'
+      : 'Integração registrada como pendente de configuração segura.',
   );
 
   const metrics = state?.metrics;
@@ -700,7 +713,7 @@ export function RetentionOperationsHub({ userName = 'Atleta', profile, currentPl
                         disabled={saving === `integration-${integration.provider}`}
                         className="bg-white/10 text-white rounded-xl px-3 py-2 text-xs font-bold disabled:opacity-50"
                       >
-                        Revalidar
+                        {integration.data_mode === 'oauth' ? 'Conectar' : 'Configurar'}
                       </button>
                     </div>
                   ))}

@@ -12,6 +12,7 @@ import {
 } from '../services/socialService';
 import { isSupabaseConfigured } from '../services/supabaseClient';
 import { timeAgo } from '../utils/socialUtils';
+import { SocialReportButton } from './SocialReportButton';
 
 interface Props {
   canInteract?: boolean;
@@ -276,6 +277,12 @@ export function SocialFeed({ canInteract = true, onAuthRequired }: Props) {
               <MessageCircle size={18} />
               {post.comments_count ?? 0}
             </button>
+            <SocialReportButton
+              targetType="post"
+              targetId={post.id}
+              canInteract={canInteract}
+              onAuthRequired={onAuthRequired}
+            />
           </div>
 
           {comments[post.id] && (
@@ -284,6 +291,14 @@ export function SocialFeed({ canInteract = true, onAuthRequired }: Props) {
                 <div key={comment.id} className="rounded-2xl bg-white/5 p-3">
                   <p className="text-xs text-brand-muted">@{comment.author?.username ?? 'usuario'}</p>
                   <p className="text-sm text-white">{comment.body}</p>
+                  <div className="mt-2">
+                    <SocialReportButton
+                      targetType="comment"
+                      targetId={comment.id}
+                      canInteract={canInteract}
+                      onAuthRequired={onAuthRequired}
+                    />
+                  </div>
                 </div>
               ))}
 

@@ -14,6 +14,7 @@ import { GroupHub } from './GroupHub';
 import { CoachConsole } from './CoachConsole';
 import { PublicProfileCard } from './PublicProfileCard';
 import { SupabaseAuthPanel } from './SupabaseAuthPanel';
+import { SocialReportButton } from './SocialReportButton';
 
 type Tab = 'feed' | 'groups' | 'library' | 'coach' | 'profile' | 'athletes';
 
@@ -300,7 +301,9 @@ export function SocialHub({ currentPlan = null }: Props) {
           />
         )}
 
-        {tab === 'profile' && profile && <PublicProfileCard profile={profile} />}
+        {tab === 'profile' && profile && (
+          <PublicProfileCard profile={profile} canInteract={canInteract} onAuthRequired={() => setTab('profile')} />
+        )}
 
         {tab === 'profile' && !profile && (
           <div className="bg-brand-gray rounded-3xl border border-white/10 p-6">
@@ -377,7 +380,13 @@ export function SocialHub({ currentPlan = null }: Props) {
 
             <div className="grid lg:grid-cols-2 gap-4">
               {athletes.map(athlete => (
-                <PublicProfileCard key={athlete.id} profile={athlete} showQr={false} />
+                <PublicProfileCard
+                  key={athlete.id}
+                  profile={athlete}
+                  showQr={false}
+                  canInteract={canInteract}
+                  onAuthRequired={() => setTab('profile')}
+                />
               ))}
               {athletes.length === 0 && <p className="text-brand-muted">Nenhum atleta público encontrado.</p>}
             </div>
@@ -452,6 +461,14 @@ export function SocialHub({ currentPlan = null }: Props) {
                   <p className="text-xs text-white/50 mt-4">
                     Por @{template.author?.username ?? 'coach'}
                   </p>
+                  <div className="mt-3">
+                    <SocialReportButton
+                      targetType="workout_template"
+                      targetId={template.id}
+                      canInteract={canInteract}
+                      onAuthRequired={() => setTab('profile')}
+                    />
+                  </div>
                 </article>
               ))}
               {templates.length === 0 && <p className="text-brand-muted">Nenhum template público carregado.</p>}

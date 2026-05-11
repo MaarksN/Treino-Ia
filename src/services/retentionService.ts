@@ -152,6 +152,31 @@ function assertNoError(error: SupabaseErrorLike): void {
   }
 }
 
+async function getAccessToken(): Promise<string> {
+  assertSupabaseConfigured();
+  const { data, error } = await supabase.auth.getSession();
+
+  if (error || !data.session?.access_token) {
+    throw new Error('Faça login no Supabase para executar esta ação.');
+  }
+
+  return data.session.access_token;
+}
+
+async function parseApiResponse<T>(response: Response): Promise<T> {
+  const body = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const message =
+      body && typeof body === 'object' && 'error' in body && typeof body.error === 'string'
+        ? body.error
+        : 'Falha na API de retenção.';
+    throw new Error(message);
+  }
+
+  return body as T;
+}
+
 function sanitizeShortText(value: string, max = 160): string {
   return value.trim().replace(/\s+/g, ' ').slice(0, max);
 }
@@ -661,6 +686,46 @@ export async function updateHealthIntegration(input: {
 
   assertNoError(error);
   return data as HealthIntegration;
+}
+
+export async function startHealthOAuth(provider: Extract<IntegrationProvider, 'google_fit' | 'fitbit' | 'strava'>): Promise<{
+  provider: string;
+  dataMode: 'oauth';
+  authUrl: string;
+  expiresInSeconds: number;
+}> {
+  const token = await getAccessToken();
+  const response = await fetch('/api/health/oauth/start', {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${token}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      provider,
+      redirectTo: window.location.href,
+    }),
+  });
+
+  return parseApiResponse(response);
+}
+
+export async function syncNativeHealthProvider(input: {
+  provider: IntegrationProvider;
+  summary?: Record<string, unknown>;
+  scopes?: string[];
+}): Promise<{ ok: boolean; dataMode: string; job: unknown }> {
+  const token = await getAccessToken();
+  const response = await fetch('/api/health/sync', {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${token}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+
+  return parseApiResponse(response);
 }
 
 export async function saveWhiteLabelTenant(input: {

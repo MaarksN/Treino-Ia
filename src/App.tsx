@@ -17,6 +17,14 @@ import { generateWorkoutPlan, extractWorkoutFromFile } from './services/geminiSe
 import { AppSettings, Badge, DailyCheckin as DailyCheckinType, FatigueSnapshot, RecoveryCheckin, StreakData, TrainingExercisePerformance, User, UserProfile, WorkoutHistoryEntry, WorkoutHistoryRecord, WorkoutPlan, WorkoutSession } from './types';
 import { DataMode } from './types/trainingExecution';
 import { getTodayCheckinFromList, loadDailyCheckins, saveDailyCheckin } from './services/healthService';
+import { onAuthStateChange } from './services/authService';
+import {
+  loadTrainingStateFromBackend,
+  migrateLegacyTrainingStateToBackend,
+  persistUserProfileToBackend,
+  persistWorkoutHistoryToBackend,
+  persistWorkoutPlansToBackend,
+} from './services/legacyTrainingSyncService';
 import { calculateReadiness } from './utils/readinessUtils';
 import { loadHistory, recordWorkoutSession, getTotalVolumeLifted } from './utils/analyticsUtils';
 import { loadStreak, recordWorkoutForStreak } from './utils/streakUtils';
@@ -172,6 +180,40 @@ export default function App() {
     }
   };
 
+  const hydrateTrainingStateFromBackend = async () => {
+    try {
+      const result = await loadTrainingStateFromBackend();
+      if (result.dataMode !== 'supabase') return;
+
+      if (result.profile) {
+        setProfile(result.profile);
+      }
+
+      if (result.history.length) {
+        setWorkoutHistory(result.history);
+      }
+
+      if (result.plans.length) {
+        setPlans(result.plans);
+        setCurrentPlanId(result.currentPlanId || result.plans[0].id);
+        setView('dashboard');
+      }
+    } catch (error) {
+      captureError(error, 'App.hydrateTrainingStateFromBackend');
+    }
+  };
+
+  const migrateLegacyTrainingState = async () => {
+    try {
+      const result = await migrateLegacyTrainingStateToBackend();
+      if (result.dataMode === 'supabase') {
+        await hydrateTrainingStateFromBackend();
+      }
+    } catch (error) {
+      captureError(error, 'App.migrateLegacyTrainingState');
+    }
+  };
+
   useEffect(() => {
     applyTheme(loadThemeId());
   }, []);
@@ -200,6 +242,8 @@ export default function App() {
       setView('social');
       return;
     }
+
+    void migrateLegacyTrainingState();
 
     const savedUser = localStorage.getItem('@TreinoApp:user');
     const savedPlans = localStorage.getItem('@TreinoApp:plans');
@@ -246,13 +290,21 @@ export default function App() {
             return;
           }
         } catch (e) {
-          console.error("Failed to restore plans");
+          captureError(e, 'App.restorePlans');
         }
       }
       setView('home');
     } else {
       setView('registration');
     }
+  }, []);
+
+  useEffect(() => {
+    return onAuthStateChange(event => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        void migrateLegacyTrainingState();
+      }
+    });
   }, []);
 
   const handleRegister = (newUser: User) => {
@@ -281,6 +333,8 @@ export default function App() {
     setPlans(newPlans);
     setCurrentPlanId(generatedPlan.id);
     localStorage.setItem('@TreinoApp:plans', JSON.stringify(newPlans));
+    void persistWorkoutPlansToBackend(newPlans, generatedPlan.id)
+      .catch(error => captureError(error, 'App.persistWorkoutPlans'));
     setView('dashboard');
   };
 
@@ -290,6 +344,8 @@ export default function App() {
     try {
       localStorage.setItem('@TreinoApp:profile', JSON.stringify(profile));
       setProfile(profile);
+      void persistUserProfileToBackend(profile)
+        .catch(error => captureError(error, 'App.persistUserProfile'));
       const generatedPlan = await generateWorkoutPlan(profile, plans);
       saveNewPlan(generatedPlan);
       
@@ -331,6 +387,8 @@ export default function App() {
     const newPlans = plans.map(p => p.id === updatedPlan.id ? updatedPlan : p);
     setPlans(newPlans);
     localStorage.setItem('@TreinoApp:plans', JSON.stringify(newPlans));
+    void persistWorkoutPlansToBackend(newPlans, currentPlanId)
+      .catch(error => captureError(error, 'App.persistUpdatedWorkoutPlans'));
   };
 
   const handleSaveSession = (session: WorkoutSession) => {
@@ -476,6 +534,8 @@ export default function App() {
     const newHistory = [...workoutHistory, record];
     setWorkoutHistory(newHistory);
     localStorage.setItem('@TreinoApp:history', JSON.stringify(newHistory));
+    void persistWorkoutHistoryToBackend(newHistory)
+      .catch(error => captureError(error, 'App.persistWorkoutHistory'));
     enqueueWorkoutSync(record);
     void recordGamificationEvent('workout_completed', record.id)
       .catch(error => captureError(error, 'App.workoutCompletedGamification'));

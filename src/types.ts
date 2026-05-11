@@ -599,6 +599,10 @@ export interface SocialProfile {
   weekly_volume?: number;
   followers_count?: number;
   following_count?: number;
+  moderation_status?: SocialModerationStatus;
+  moderation_reason?: string | null;
+  moderated_at?: string | null;
+  moderated_by?: string | null;
   badges: SocialBadge[];
   created_at: string;
   updated_at: string;
@@ -622,6 +626,10 @@ export interface SocialPost {
   visibility: SocialVisibility;
   group_id?: string | null;
   workout_template_id?: string | null;
+  moderation_status?: SocialModerationStatus;
+  moderation_reason?: string | null;
+  moderated_at?: string | null;
+  moderated_by?: string | null;
   created_at: string;
   author?: SocialProfile;
   likes_count?: number;
@@ -634,6 +642,10 @@ export interface SocialComment {
   post_id: string;
   author_id: string;
   body: string;
+  moderation_status?: SocialModerationStatus;
+  moderation_reason?: string | null;
+  moderated_at?: string | null;
+  moderated_by?: string | null;
   created_at: string;
   author?: SocialProfile;
 }
@@ -717,6 +729,10 @@ export interface PublicWorkoutTemplate {
   level?: string | null;
   workout_json: unknown;
   likes_count: number;
+  moderation_status?: SocialModerationStatus;
+  moderation_reason?: string | null;
+  moderated_at?: string | null;
+  moderated_by?: string | null;
   created_at: string;
   author?: SocialProfile;
 }
@@ -726,6 +742,37 @@ export interface GroupOnlinePresence {
   username: string;
   display_name: string;
   online_at: string;
+}
+
+export type SocialReportTargetType = 'post' | 'comment' | 'profile' | 'workout_template';
+export type SocialReportReason =
+  | 'spam'
+  | 'harassment'
+  | 'hate'
+  | 'sexual_content'
+  | 'violence'
+  | 'self_harm'
+  | 'illegal_activity'
+  | 'privacy'
+  | 'misinformation'
+  | 'other';
+export type SocialReportStatus = 'open' | 'reviewing' | 'actioned' | 'dismissed';
+export type SocialModerationStatus = 'visible' | 'under_review' | 'hidden' | 'removed';
+export type SocialModerationAction = 'none' | 'hidden' | 'removed' | 'user_warned' | 'user_suspended';
+
+export interface SocialContentReport {
+  id: string;
+  reporter_id: string;
+  target_type: SocialReportTargetType;
+  target_id: string;
+  reason: SocialReportReason;
+  details?: string | null;
+  status: SocialReportStatus;
+  moderation_action: SocialModerationAction;
+  reviewer_id?: string | null;
+  reviewed_at?: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export type MuscleGroup =

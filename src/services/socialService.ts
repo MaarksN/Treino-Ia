@@ -9,6 +9,9 @@ import {
   LeaderboardEntry,
   PublicWorkoutTemplate,
   SocialComment,
+  SocialContentReport,
+  SocialReportReason,
+  SocialReportTargetType,
   SocialPost,
   SocialPostType,
   SocialProfile,
@@ -115,6 +118,7 @@ export async function getProfileByUsername(username: string): Promise<SocialProf
     .select('*')
     .eq('username', slug)
     .eq('is_public', true)
+    .in('moderation_status', ['visible', 'under_review'])
     .maybeSingle();
 
   assertNoError(error);
@@ -144,6 +148,7 @@ export async function listPublicProfiles(search = ''): Promise<SocialProfile[]> 
     .from('social_profiles')
     .select('*')
     .eq('is_public', true)
+    .in('moderation_status', ['visible', 'under_review'])
     .order('total_volume', { ascending: false })
     .limit(24);
 
@@ -306,6 +311,7 @@ export async function listFeed(): Promise<SocialPost[]> {
       author:social_profiles(*)
     `)
     .eq('visibility', 'public')
+    .in('moderation_status', ['visible', 'under_review'])
     .order('created_at', { ascending: false })
     .limit(50);
 
@@ -324,6 +330,7 @@ export async function listPostsByAuthor(authorId: string): Promise<SocialPost[]>
     `)
     .eq('author_id', authorId)
     .eq('visibility', 'public')
+    .in('moderation_status', ['visible', 'under_review'])
     .order('created_at', { ascending: false })
     .limit(20);
 
@@ -396,6 +403,7 @@ export async function listComments(postId: string): Promise<SocialComment[]> {
       author:social_profiles(*)
     `)
     .eq('post_id', postId)
+    .in('moderation_status', ['visible', 'under_review'])
     .order('created_at', { ascending: true });
 
   assertNoError(error);
@@ -731,10 +739,38 @@ export async function listPublicWorkoutTemplates(): Promise<PublicWorkoutTemplat
       author:social_profiles(*)
     `)
     .order('created_at', { ascending: false })
+    .in('moderation_status', ['visible', 'under_review'])
     .limit(50);
 
   assertNoError(error);
   return (data ?? []) as PublicWorkoutTemplate[];
+}
+
+export async function reportContent(input: {
+  targetType: SocialReportTargetType;
+  targetId: string;
+  reason: SocialReportReason;
+  details?: string;
+}): Promise<SocialContentReport> {
+  assertConfigured();
+
+  const userId = await getCurrentUserId();
+  const details = input.details ? sanitizeSocialText(input.details, 1000) : null;
+
+  const { data, error } = await supabase
+    .from('social_content_reports')
+    .insert({
+      reporter_id: userId,
+      target_type: input.targetType,
+      target_id: input.targetId,
+      reason: input.reason,
+      details,
+    })
+    .select()
+    .single();
+
+  assertNoError(error);
+  return data as SocialContentReport;
 }
 
 export function subscribeToFeed(onChange: () => void): RealtimeChannel {
