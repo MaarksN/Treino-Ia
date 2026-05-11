@@ -776,6 +776,7 @@ export default function App() {
           />
 
           <PeriodizationLab
+            profileId={activeProfile?.id}
             performances={periodizationPerformances}
             fatigue={periodizationFatigue}
           />

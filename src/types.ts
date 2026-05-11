@@ -17,6 +17,7 @@ export interface User {
 }
 
 export interface UserProfile {
+  id?: string;
   age: number;
   gender: string;
   weight: number;
@@ -824,6 +825,14 @@ export interface TwelveWeekPlan {
   title: string;
   createdAt: string;
   weeks: PeriodizationWeek[];
+}
+
+export interface UserPeriodizationPlan {
+  id: string;
+  profile_id: string;
+  current_week: number;
+  plan_data: TwelveWeekPlan;
+  created_at: string;
 }
 
 export type SubscriptionPlanId = 'free' | 'premium_monthly' | 'premium_yearly';
