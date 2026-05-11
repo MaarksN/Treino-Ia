@@ -44,10 +44,18 @@ import {
 } from '../services/aiPersonalizationService';
 import { getRecoveryScore } from '../services/recoveryService';
 import { getTrackedExerciseNames } from '../services/analyticsService';
-import { detectPlateau, parseFirstNumber, shouldSuggestDeload } from '../utils/workoutMetrics';
+import { detectPlateau, shouldSuggestDeload } from '../utils/workoutMetrics';
 import { getJSON, STORAGE_KEYS, updateWorkoutStreak, WorkoutStreak } from '../utils/storage';
 import { extractAndSavePRsFromPlan, getPRForExercise } from '../utils/prUtils';
 import { calculateReadiness as calculateDailyReadiness, getOvertrainingRisk } from '../utils/readinessUtils';
+import {
+  buildWorkoutRecord,
+  buildWorkoutSession,
+  dataModeLabel,
+  extractPersonalRecords,
+  persistWorkoutExecution,
+  resetCompletedDay,
+} from '../services/workoutExecutionService';
 
 interface Props {
   plan: WorkoutPlan;
@@ -110,6 +118,31 @@ function formatAiPanelResult(result: unknown): string {
   return `${JSON.stringify(maybeStructured.data, null, 2)}${flags}`;
 }
 
+function getAutomaticWarmup(day: WorkoutDay): string {
+  const focus = `${day.focus} ${day.exercises.map(exercise => exercise.muscleGroup || exercise.name).join(' ')}`.toLowerCase();
+  if (focus.includes('perna') || focus.includes('quadr') || focus.includes('glúte') || focus.includes('posterior')) {
+    return '5 min de cardio leve, mobilidade de quadril/tornozelo e 2 séries progressivas do primeiro exercício.';
+  }
+  if (focus.includes('costas') || focus.includes('pux')) {
+    return '3-5 min de cardio leve, ativações escapulares e 2 séries leves de puxada/remada.';
+  }
+  if (focus.includes('peito') || focus.includes('ombro') || focus.includes('empurr')) {
+    return 'Mobilidade torácica, rotação externa com elástico e 2 séries progressivas do primeiro empurrar.';
+  }
+  return '5 min leve, mobilidade das articulações principais e 1-2 séries progressivas do primeiro exercício.';
+}
+
+function getRecommendedCooldown(day: WorkoutDay): string {
+  const focus = `${day.focus} ${day.exercises.map(exercise => exercise.muscleGroup || exercise.name).join(' ')}`.toLowerCase();
+  if (focus.includes('perna') || focus.includes('quadr') || focus.includes('glúte')) {
+    return 'Respiração nasal 2 min, alongamento de flexores do quadril, glúteos, posteriores e panturrilhas.';
+  }
+  if (focus.includes('costas')) {
+    return 'Respiração 2 min, mobilidade torácica, lat stretch e liberação leve de trapézio.';
+  }
+  return 'Respiração 2 min, mobilidade leve da cadeia treinada e alongamentos confortáveis de 20-30s.';
+}
+
 export function WorkoutDashboard({
   plan,
   history,
@@ -124,7 +157,7 @@ export function WorkoutDashboard({
   onNew,
   onCompleteDay,
   onSaveNewPlan,
-  onStartActiveWorkout,
+  onStartActiveWorkout: _onStartActiveWorkout,
   voiceEnabled: controlledVoiceEnabled,
   onVoiceEnabledChange,
   dailyCheckin,
@@ -149,6 +182,8 @@ export function WorkoutDashboard({
   const [loadingRecoveryAdvice, setLoadingRecoveryAdvice] = useState(false);
   const [aiPanel, setAiPanel] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
+  const [saveStatus, setSaveStatus] = useState('');
+  const [saveError, setSaveError] = useState('');
   const voiceEnabled = controlledVoiceEnabled ?? localVoiceEnabled;
   const toggleVoiceEnabled = () => {
     const next = !voiceEnabled;
@@ -300,27 +335,8 @@ export function WorkoutDashboard({
     }
   };
 
-  const buildSessionFromDay = (day: WorkoutDay, durationMinutes = 45): WorkoutSession => ({
-    id: crypto.randomUUID(),
-    planId: plan.id,
-    dayId: day.id,
-    completedAt: Date.now(),
-    durationMinutes,
-    readiness: dailyReadiness,
-    logs: day.exercises
-      .filter(ex => ex.completed || ex.actualWeight || ex.actualReps || ex.rpe || ex.feedback)
-      .map(ex => ({
-        exerciseId: ex.id,
-        exerciseName: ex.name,
-        date: Date.now(),
-        actualWeight: ex.actualWeight,
-        actualReps: ex.actualReps,
-        rpe: ex.rpe,
-        setLogs: ex.setLogs,
-        feedback: ex.feedback,
-        performanceNotes: ex.performanceNotes,
-      })),
-  });
+  const buildSessionFromDay = (day: WorkoutDay, durationMinutes = 45): WorkoutSession =>
+    buildWorkoutSession(plan, day, durationMinutes, dailyReadiness);
 
   const saveCurrentSession = (dayIndex = 0) => {
     const day = plan.days[dayIndex];
@@ -343,57 +359,39 @@ export function WorkoutDashboard({
     onUpdatePlan({ ...plan, days: newDays });
   };
 
-  const handleFinishWorkout = (dayIndex: number) => {
+  const handleFinishWorkout = async (dayIndex: number) => {
     const day = plan.days[dayIndex];
-    let volumeLoad = 0;
-    day.exercises.forEach(exc => {
-      const weight = exc.actualWeight || 0;
-      const reps = parseFirstNumber(exc.actualReps || exc.reps);
-      volumeLoad += (weight * reps * exc.sets);
-    });
-
-    const record: WorkoutHistoryRecord = {
-      id: Math.random().toString(36).substring(7),
-      date: Date.now(),
-      planId: plan.id,
-      dayId: day.id,
-      dayName: day.dayName,
-      focus: day.focus,
-      volumeLoad,
-      durationMinutes: 45, // roughly
-      exercises: JSON.parse(JSON.stringify(day.exercises))
-    };
+    const record = buildWorkoutRecord(plan, day, 45);
+    const session = buildSessionFromDay(day, record.durationMinutes);
     const newPRs = extractAndSavePRsFromPlan({
       ...plan,
       days: plan.days.map((item, index) => index === dayIndex ? day : item),
     });
-    onCompleteDay(record);
-    onSaveSession(buildSessionFromDay(day, record.durationMinutes));
+    const personalRecords = extractPersonalRecords(plan, day);
 
-    // Reset day for next week
+    setSaveError('');
+    setSaveStatus('Salvando execução...');
+    try {
+      const result = await persistWorkoutExecution({ record, session, personalRecords });
+      setSaveStatus(
+        newPRs.length
+          ? `Treino salvo em ${dataModeLabel(result.dataMode)}. PR batido em: ${newPRs.join(', ')}.`
+          : `Treino salvo em ${dataModeLabel(result.dataMode)}.`
+      );
+      if (result.warning) setSaveError(result.warning);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Não foi possível persistir no backend.');
+      setSaveStatus('Treino salvo no estado local da tela, com pendência de sincronização.');
+    }
+
+    onCompleteDay(record);
+    onSaveSession(session);
+
     const newDays = [...plan.days];
-    newDays[dayIndex] = {
-      ...newDays[dayIndex],
-      workoutFeedback: undefined,
-      exercises: newDays[dayIndex].exercises.map(e => ({
-        ...e,
-        completed: false,
-        actualWeight: undefined,
-        actualReps: undefined,
-        rpe: undefined,
-        feedback: undefined,
-        performanceNotes: undefined,
-        setLogs: undefined,
-      }))
-    };
+    newDays[dayIndex] = resetCompletedDay(newDays[dayIndex]);
     onUpdatePlan({ ...plan, days: newDays });
     setStreak(updateWorkoutStreak());
-    
-    // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    alert(newPRs.length
-      ? `TREINO CONCLUÍDO! PR batido em: ${newPRs.join(', ')}`
-      : 'TREINO CONCLUÍDO! XP ADICIONADO!');
   };
 
   const [activeDayIndex, setActiveDayIndex] = useState<number | null>(null);
@@ -402,47 +400,39 @@ export function WorkoutDashboard({
     setActiveDayIndex(dayIndex);
   };
 
-  const handleCompleteActiveWorkout = (completedDay: WorkoutDay) => {
+  const handleCompleteActiveWorkout = async (completedDay: WorkoutDay) => {
     setActiveDayIndex(null);
-    const record: WorkoutHistoryRecord = {
-      id: Math.random().toString(36).substring(7),
-      date: Date.now(),
-      planId: plan.id,
-      dayId: completedDay.id,
-      dayName: completedDay.dayName,
-      focus: completedDay.focus,
-      volumeLoad: completedDay.exercises.reduce((acc, exc) => acc + ((exc.actualWeight || 0) * parseFirstNumber(exc.actualReps || exc.reps) * exc.sets), 0),
-      durationMinutes: 45,
-      exercises: completedDay.exercises
-    };
+    const record = buildWorkoutRecord(plan, completedDay, 45);
+    const session = buildSessionFromDay(completedDay, record.durationMinutes);
     const newPRs = extractAndSavePRsFromPlan({
       ...plan,
       days: plan.days.map((item, index) => index === activeDayIndex ? completedDay : item),
     });
+    const personalRecords = extractPersonalRecords(plan, completedDay);
+
+    setSaveError('');
+    setSaveStatus('Salvando execução...');
+    try {
+      const result = await persistWorkoutExecution({ record, session, personalRecords });
+      setSaveStatus(
+        newPRs.length
+          ? `Treino ativo salvo em ${dataModeLabel(result.dataMode)}. PR batido em: ${newPRs.join(', ')}.`
+          : `Treino ativo salvo em ${dataModeLabel(result.dataMode)}.`
+      );
+      if (result.warning) setSaveError(result.warning);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Não foi possível persistir no backend.');
+      setSaveStatus('Treino ativo salvo no estado local da tela, com pendência de sincronização.');
+    }
+
     onCompleteDay(record);
-    onSaveSession(buildSessionFromDay(completedDay, record.durationMinutes));
+    onSaveSession(session);
 
     const newDays = [...plan.days];
-    newDays[activeDayIndex!] = {
-      ...completedDay,
-      workoutFeedback: undefined,
-      exercises: completedDay.exercises.map(e => ({
-        ...e,
-        completed: false,
-        actualWeight: undefined,
-        actualReps: undefined,
-        rpe: undefined,
-        feedback: undefined,
-        performanceNotes: undefined,
-        setLogs: undefined,
-      }))
-    };
+    newDays[activeDayIndex!] = resetCompletedDay(completedDay);
     onUpdatePlan({ ...plan, days: newDays });
     setStreak(updateWorkoutStreak());
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    alert(newPRs.length
-      ? `TREINO CONCLUÍDO! PR batido em: ${newPRs.join(', ')}`
-      : 'TREINO CONCLUÍDO! XP ADICIONADO!');
   };
 
   if (activeDayIndex !== null) {
@@ -513,7 +503,7 @@ export function WorkoutDashboard({
         
         <div className="flex flex-col md:flex-row gap-3 mt-6 md:mt-0 relative print:hidden">
           <button
-            onClick={() => onStartActiveWorkout ? onStartActiveWorkout() : startActiveWorkout(0)}
+            onClick={() => startActiveWorkout(0)}
             className="w-full md:w-auto px-5 py-2.5 rounded-full bg-brand-neon text-brand-dark text-xs font-black uppercase tracking-widest border border-brand-neon hover:bg-transparent hover:text-brand-neon transition-colors flex items-center justify-center min-w-[180px]"
           >
             <Play className="w-4 h-4 mr-2 fill-current" /> Treino ativo
@@ -684,6 +674,13 @@ export function WorkoutDashboard({
       {(loadingRecoveryAdvice || recoveryAdvice) && (
         <div className="mb-8 bg-brand-dark border-2 border-brand-neon p-5 shadow-brutal-neon whitespace-pre-wrap font-mono text-sm text-brand-light print:hidden">
           {loadingRecoveryAdvice ? 'Gerando ajuste...' : recoveryAdvice}
+        </div>
+      )}
+
+      {(saveStatus || saveError) && (
+        <div className="mb-8 bg-brand-dark border-2 border-brand-neon p-5 shadow-brutal-neon font-mono text-sm print:hidden">
+          {saveStatus && <p className="text-brand-neon uppercase tracking-widest">{saveStatus}</p>}
+          {saveError && <p className="text-yellow-400 mt-2">{saveError}</p>}
         </div>
       )}
 
@@ -878,10 +875,12 @@ export function WorkoutDashboard({
                 )}
               </div>
 
-              {day.warmup && (
+              {(day.warmup || day.exercises.length > 0) && (
                 <div className="mb-6 p-4 bg-orange-500/10 border-2 border-orange-500/20">
-                  <p className="text-xs uppercase tracking-widest text-orange-400 mb-1 font-black">Aquecimento</p>
-                  <p className="text-sm text-brand-light/80 font-mono">{day.warmup}</p>
+                  <p className="text-xs uppercase tracking-widest text-orange-400 mb-1 font-black">
+                    {day.warmup ? 'Aquecimento' : 'Aquecimento automático'}
+                  </p>
+                  <p className="text-sm text-brand-light/80 font-mono">{day.warmup || getAutomaticWarmup(day)}</p>
                 </div>
               )}
 
@@ -907,10 +906,12 @@ export function WorkoutDashboard({
                 )})}
               </div>
 
-              {day.cooldown && (
+              {(day.cooldown || day.exercises.length > 0) && (
                 <div className="mt-6 p-4 bg-blue-500/10 border-2 border-blue-500/20">
-                  <p className="text-xs uppercase tracking-widest text-blue-400 mb-1 font-black">Cooldown</p>
-                  <p className="text-sm text-brand-light/80 font-mono">{day.cooldown}</p>
+                  <p className="text-xs uppercase tracking-widest text-blue-400 mb-1 font-black">
+                    {day.cooldown ? 'Cooldown' : 'Cooldown e mobilidade recomendados'}
+                  </p>
+                  <p className="text-sm text-brand-light/80 font-mono">{day.cooldown || getRecommendedCooldown(day)}</p>
                 </div>
               )}
               
@@ -966,8 +967,9 @@ export function WorkoutDashboard({
                     <button
                       type="button"
                       onClick={() => {
-                        saveCurrentSession(dayIndex);
-                        alert('Sessão salva para a IA.');
+                        const session = saveCurrentSession(dayIndex);
+                        setSaveStatus(session ? 'Sessão salva para a IA.' : 'Nenhuma sessão disponível para salvar.');
+                        setSaveError('');
                       }}
                       className="px-6 py-4 bg-brand-light/10 text-brand-light font-black font-display uppercase tracking-widest text-lg border-2 border-brand-light/20 hover:border-brand-neon hover:text-brand-neon transition-colors"
                     >

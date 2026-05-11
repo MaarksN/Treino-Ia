@@ -7,6 +7,7 @@ import { suggestExerciseAlternatives, suggestExerciseVariations } from '../servi
 import { findExerciseLibraryEntry } from '../data/exerciseLibrary';
 import { getPRForExercise } from '../utils/prUtils';
 import { SetTracker } from './SetTracker';
+import { getExerciseCompletedSets } from '../services/workoutExecutionService';
 
 interface Props {
   exercise: Exercise;
@@ -33,6 +34,7 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
   const [showVariations, setShowVariations] = useState(false);
   const [variations, setVariations] = useState<any[]>([]);
   const [loadingVariations, setLoadingVariations] = useState(false);
+  const [variationError, setVariationError] = useState('');
   
   // Timer State
   const [timerMode, setTimerMode] = useState<'idle' | 'work' | 'rest'>('idle');
@@ -120,11 +122,12 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
     if (variations.length > 0) return;
     
     setLoadingVariations(true);
+    setVariationError('');
     try {
       const res = await suggestExerciseVariations(exercise.name, userProfile);
       setVariations(res);
-    } catch (error) {
-      console.error(error);
+    } catch {
+      setVariationError('Não foi possível carregar variações agora.');
     } finally {
       setLoadingVariations(false);
     }
@@ -133,6 +136,7 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
   const fetchAlternatives = async () => {
     setShowVariations(true);
     setLoadingVariations(true);
+    setVariationError('');
     try {
       const res = await suggestExerciseAlternatives(
         exercise.name,
@@ -144,8 +148,8 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
         description: `Substituição adaptada para ${exercise.name}.`,
         difficulty: 'Different Focus',
       })));
-    } catch (error) {
-      console.error(error);
+    } catch {
+      setVariationError('Não foi possível carregar substituições agora.');
       setVariations([]);
     } finally {
       setLoadingVariations(false);
@@ -418,9 +422,12 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
                 className="ml-3 text-brand-neon font-bold uppercase hover:text-brand-light transition-colors"
                 onClick={() => onUpdate({
                   ...exercise,
-                  actualWeight: previousData.actualWeight,
-                  actualReps: previousData.actualReps,
-                  setLogs: previousData.setLogs,
+                  actualWeight: exercise.actualWeight || previousData.actualWeight,
+                  actualReps: exercise.actualReps || previousData.actualReps,
+                  rpe: exercise.rpe || previousData.rpe,
+                  setLogs: exercise.setLogs?.length
+                    ? exercise.setLogs
+                    : previousData.setLogs?.map(log => ({ ...log, completedAt: undefined })),
                 })}
               >
                 Usar como base
@@ -480,7 +487,22 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
           </div>
 
           <div className="mb-4 bg-brand-gray/40 border-2 border-brand-light/10 p-3">
-            <SetTracker exercise={exercise} onUpdate={onUpdate} />
+            <SetTracker
+              exercise={exercise}
+              onUpdate={(updated) => {
+                const completedSets = getExerciseCompletedSets(updated);
+                onUpdate({
+                  ...updated,
+                  actualWeight: updated.actualWeight || completedSets.at(-1)?.weight,
+                  actualReps: updated.actualReps || completedSets.map(log => log.reps).filter(Boolean).join(','),
+                  rpe: updated.rpe || completedSets.at(-1)?.rpe,
+                });
+              }}
+              onSetCompleted={() => {
+                setTimerMode('rest');
+                setTime(parseInt(exercise.rest) || 60);
+              }}
+            />
           </div>
 
           <div className="mb-4">
@@ -539,6 +561,8 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
                         <Zap className="w-8 h-8 text-brand-neon mb-2" />
                         <p className="text-xs uppercase font-mono text-brand-muted">Conectando à Forja Neural...</p>
                       </div>
+                    ) : variationError ? (
+                      <p className="text-xs text-brand-magenta text-center py-4">{variationError}</p>
                     ) : variations.length > 0 ? (
                       variations.map((v, i) => (
                         <div key={i} className="bg-brand-dark border-l-4 border-brand-neon p-3 flex flex-col group">

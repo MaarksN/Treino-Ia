@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, CheckCircle, Navigation, Map, Activity, Bluetooth } from 'lucide-react';
+import { captureError } from '../utils/errorTelemetry';
 
 export function CheckInModule() {
   const [isCheckedIn, setIsCheckedIn] = useState(false);
@@ -70,7 +71,7 @@ export function CheckInModule() {
       });
       setStatusMsg('');
     } catch (err) {
-      console.error(err);
+      captureError(err, 'CheckInModule.connectDevice');
       setStatusMsg('Erro Bluetooth. Dispositivo não suportado ou negado.');
       setTimeout(() => setStatusMsg(''), 4000);
     }
@@ -87,7 +88,7 @@ export function CheckInModule() {
           setStatusMsg('');
         },
         (err) => {
-          console.error("Location error:", err);
+          captureError(err, 'CheckInModule.location');
           // Still check in even without location
           setCheckInTime(new Date());
           setIsCheckedIn(true);
