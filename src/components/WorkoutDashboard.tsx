@@ -94,6 +94,22 @@ function createDefaultReadiness(profile: UserProfile | null): RecoveryCheckin {
   };
 }
 
+function formatAiPanelResult(result: unknown): string {
+  if (typeof result === 'string') return result;
+  if (!result || typeof result !== 'object') return 'Sem resposta estruturada.';
+
+  const maybeStructured = result as { data?: unknown; audit?: { reason?: string; deterministicFlags?: string[] } };
+  if (!('data' in maybeStructured)) return JSON.stringify(result, null, 2);
+
+  const flags = maybeStructured.audit?.deterministicFlags?.length
+    ? `\n\nAuditoria: ${maybeStructured.audit.deterministicFlags.join(', ')}`
+    : maybeStructured.audit?.reason
+      ? `\n\nAuditoria: ${maybeStructured.audit.reason}`
+      : '';
+
+  return `${JSON.stringify(maybeStructured.data, null, 2)}${flags}`;
+}
+
 export function WorkoutDashboard({
   plan,
   history,
@@ -249,10 +265,10 @@ export function WorkoutDashboard({
     }
   };
 
-  const runAiAction = async (action: () => Promise<string>) => {
+  const runAiAction = async (action: () => Promise<unknown>) => {
     setAiLoading(true);
     try {
-      setAiPanel(await action());
+      setAiPanel(formatAiPanelResult(await action()));
     } catch {
       setAiPanel('Não consegui executar esta ação agora. Verifique a chave Gemini e tente novamente.');
     } finally {

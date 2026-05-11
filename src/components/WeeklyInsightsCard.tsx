@@ -8,6 +8,28 @@ interface Props {
   sessions: WorkoutSession[];
 }
 
+function formatStructuredText(value: unknown, fallback: string): string {
+  if (typeof value === 'string') return value;
+  if (!value || typeof value !== 'object') return fallback;
+
+  const structured = value as { data?: Record<string, unknown>; audit?: { usedDeterministicFallback?: boolean } };
+  if (!structured.data) return fallback;
+
+  const data = structured.data;
+  const lines = [
+    data.summary,
+    data.consistency && `Consistência: ${data.consistency}`,
+    data.fatigue && `Fadiga: ${data.fatigue}`,
+    data.progress && `Progresso: ${data.progress}`,
+    data.nextWeekRecommendation && `Próxima semana: ${data.nextWeekRecommendation}`,
+    data.alert && `${data.alert}`,
+    data.recommendedAction && `Ação: ${data.recommendedAction}`,
+    structured.audit?.usedDeterministicFallback ? 'Fallback determinístico aplicado.' : '',
+  ].filter(Boolean);
+
+  return lines.join('\n') || fallback;
+}
+
 export function WeeklyInsightsCard({ profile, sessions }: Props) {
   const [insights, setInsights] = useState('');
   const [risk, setRisk] = useState('');
@@ -22,8 +44,8 @@ export function WeeklyInsightsCard({ profile, sessions }: Props) {
         detectRiskOfAbandonment(profile, sessions),
       ]);
 
-      setInsights(weekly);
-      setRisk(abandonment);
+      setInsights(formatStructuredText(weekly, 'Sem relatório IA ainda.'));
+      setRisk(formatStructuredText(abandonment, 'Sem risco IA calculado.'));
     } catch {
       setInsights('Não consegui gerar os insights agora. Verifique a chave Gemini e tente novamente.');
       setRisk('');
