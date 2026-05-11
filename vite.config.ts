@@ -19,5 +19,17 @@ export default defineConfig(() => {
       // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            charts: ['recharts'],
+            motion: ['motion'],
+            supabase: ['@supabase/supabase-js'],
+            genai: ['@google/genai'],
+          },
+        },
+      },
+    },
   };
 });
