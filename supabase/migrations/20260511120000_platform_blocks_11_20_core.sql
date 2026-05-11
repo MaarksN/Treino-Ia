@@ -161,6 +161,18 @@ create table if not exists public.telemetry_error_events (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.background_jobs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  job_type text not null check (job_type in ('pdf_export', 'quarterly_ai_report', 'nutrition_report')),
+  status text not null default 'queued' check (status in ('queued', 'processing', 'completed', 'failed')),
+  payload jsonb not null default '{}'::jsonb,
+  result_url text,
+  error_message text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create index if not exists billing_invoice_receipts_user_issued_idx
   on public.billing_invoice_receipts (user_id, issued_at desc);
 
@@ -181,6 +193,9 @@ create index if not exists offline_sync_actions_user_received_idx
 
 create index if not exists telemetry_error_events_created_idx
   on public.telemetry_error_events (created_at desc);
+
+create index if not exists background_jobs_user_created_idx
+  on public.background_jobs (user_id, created_at desc);
 
 create or replace function public.increment_billing_usage(
   p_user_id uuid,
@@ -235,6 +250,7 @@ alter table public.education_progress enable row level security;
 alter table public.outbound_webhook_deliveries enable row level security;
 alter table public.offline_sync_actions enable row level security;
 alter table public.telemetry_error_events enable row level security;
+alter table public.background_jobs enable row level security;
 
 drop policy if exists billing_subscriptions_own_select on public.billing_subscriptions;
 create policy billing_subscriptions_own_select
@@ -302,5 +318,11 @@ create policy outbound_webhook_deliveries_own_all
 drop policy if exists offline_sync_actions_own_all on public.offline_sync_actions;
 create policy offline_sync_actions_own_all
   on public.offline_sync_actions for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+drop policy if exists background_jobs_own_all on public.background_jobs;
+create policy background_jobs_own_all
+  on public.background_jobs for all
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);

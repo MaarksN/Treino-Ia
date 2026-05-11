@@ -127,6 +127,25 @@ paths:
       responses:
         "200":
           description: Events stored.
+  /api/jobs/create:
+    post:
+      summary: Queue a heavier background job such as PDF export or AI report generation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [jobType]
+              properties:
+                jobType:
+                  type: string
+                  enum: [pdf_export, quarterly_ai_report, nutrition_report]
+                payload:
+                  type: object
+      responses:
+        "202":
+          description: Job queued.
   /api/health/oauth/start:
     get:
       summary: Start OAuth for supported health providers.

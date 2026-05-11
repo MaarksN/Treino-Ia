@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Camera, CameraOff, CheckCircle } from 'lucide-react';
-import { PoseAnalysis } from '../types';
+import { BiometricPersistenceMeta, PoseAnalysis } from '../types';
 import { PremiumFeatureGate } from './PremiumPaywall';
 import {
   analyzeAngles,

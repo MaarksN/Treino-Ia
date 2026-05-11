@@ -14,6 +14,7 @@ import { GroupHub } from './GroupHub';
 import { CoachConsole } from './CoachConsole';
 import { PublicProfileCard } from './PublicProfileCard';
 import { PremiumFeatureGate } from './PremiumPaywall';
+import { SupabaseAuthPanel } from './SupabaseAuthPanel';
 
 type Tab = 'feed' | 'groups' | 'library' | 'coach' | 'profile' | 'athletes';
 
@@ -65,6 +66,10 @@ export function SocialHub({ currentPlan = null }: Props) {
   const [loading, setLoading] = useState(true);
 
   const canInteract = useMemo(() => Boolean(authUser && profile), [authUser, profile]);
+  const requestSocialAuth = () => {
+    setStatus('Entre com Supabase Auth e crie seu perfil social para continuar.');
+    setTab('profile');
+  };
 
   const loadProfile = async () => {
     if (!authUser) {
@@ -282,13 +287,19 @@ export function SocialHub({ currentPlan = null }: Props) {
       </nav>
 
       <main className="max-w-6xl mx-auto">
-        {tab === 'feed' && <SocialFeed />}
+        {tab === 'feed' && <SocialFeed canInteract={canInteract} onAuthRequired={requestSocialAuth} />}
         {tab === 'groups' && (
           <PremiumFeatureGate feature="premium_community">
             <GroupHub currentProfile={profile} />
           </PremiumFeatureGate>
         )}
-        {tab === 'coach' && <CoachConsole />}
+        {tab === 'coach' && (
+          <CoachConsole
+            canInteract={canInteract}
+            onAuthRequired={requestSocialAuth}
+            currentPlan={currentPlan}
+          />
+        )}
         {tab === 'profile' && profile && <PublicProfileCard profile={profile} />}
 
         {tab === 'profile' && !profile && (

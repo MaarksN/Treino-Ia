@@ -38,7 +38,7 @@ import { captureError } from './utils/errorTelemetry';
 import { applyTheme, loadThemeId } from './utils/themeUtils';
 import { Activity, BellRing, BrainCircuit, Dumbbell, Globe2, Moon, Rocket, Server, Settings as SettingsIcon, Share2, Sun, Trophy, X } from 'lucide-react';
 
-type ViewState = 'loading' | 'registration' | 'home' | 'anamnesis' | 'import' | 'dashboard' | 'active-workout' | 'global_feed' | 'social' | 'gamification' | 'infrastructure' | 'platform' | 'billing';
+type ViewState = 'loading' | 'registration' | 'home' | 'anamnesis' | 'import' | 'dashboard' | 'active-workout' | 'global_feed' | 'social' | 'public_profile' | 'gamification' | 'retention' | 'infrastructure' | 'platform' | 'billing';
 
 import { AssistantPopup } from './components/AssistantPopup';
 import { BillingCenter } from './components/BillingCenter';
@@ -164,7 +164,24 @@ export default function App() {
   const [showCoach, setShowCoach] = useState(false);
 
   // For tab navigation when a user is logged in
-  const [activeTab, setActiveTab] = useState<'my_workouts' | 'global_feed' | 'social' | 'gamification' | 'infrastructure' | 'platform' | 'billing'>('my_workouts');
+  const [activeTab, setActiveTab] = useState<'my_workouts' | 'global_feed' | 'social' | 'gamification' | 'retention' | 'infrastructure' | 'platform' | 'billing'>('my_workouts');
+
+  const refreshDailyCheckins = async () => {
+    try {
+      const result = await loadDailyCheckins();
+      setAllCheckins(result.data);
+      setTodayCheckin(getTodayCheckinFromList(result.data));
+      setHealthDataMode(result.dataMode);
+      setHealthWarning(result.warning ?? null);
+      setCheckinError(null);
+      return result.data;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Falha ao carregar check-ins.';
+      setCheckinError(message);
+      captureError(error, 'App.loadDailyCheckins');
+      return allCheckins;
+    }
+  };
 
   const hydrateTrainingStateFromBackend = async () => {
     try {
