@@ -75,5 +75,18 @@ describe('billingService', () => {
     }));
     expect(session.checkoutUrl).toContain('checkout.stripe.com');
   });
+
+  it('propaga BILLING_PROVIDER_NOT_CONFIGURED quando Stripe nao esta configurado', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({
+        error: 'BILLING_PROVIDER_NOT_CONFIGURED',
+        dataMode: 'not_configured',
+      }), { status: 503, headers: { 'content-type': 'application/json' } }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(createCheckoutSession('pro', 'month')).rejects.toThrow('BILLING_PROVIDER_NOT_CONFIGURED');
+  });
+
 });
 
