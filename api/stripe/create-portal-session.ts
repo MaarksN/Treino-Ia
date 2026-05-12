@@ -1,6 +1,6 @@
-import { handleApiError, json, requireEnv } from '../_lib/http';
+import { handleApiError, json } from '../_lib/http';
 import { requireSupabaseUser, getSupabaseAdmin } from '../_lib/server-supabase';
-import { getStripeClient } from '../_lib/stripe-client';
+import { BILLING_PROVIDER_NOT_CONFIGURED, getStripeClient } from '../_lib/stripe-client';
 
 export const config = {
   runtime: 'nodejs',
@@ -12,7 +12,7 @@ export default async function handler(request: Request) {
 
   try {
     if (!process.env.STRIPE_SECRET_KEY) {
-      return json({ error: 'Billing provider not configured', dataMode: 'not_configured' }, 400);
+      return json({ error: BILLING_PROVIDER_NOT_CONFIGURED, dataMode: 'not_configured' }, 503);
     }
 
     const user = await requireSupabaseUser(request);
@@ -38,8 +38,8 @@ export default async function handler(request: Request) {
 
     return json({ portalUrl: session.url });
   } catch (error) {
-    if ((error as any).status === 500 && (error as any).message?.includes('not configured')) {
-        return json({ error: 'Billing provider not configured', dataMode: 'not_configured' }, 400);
+    if ((error as any)?.message === BILLING_PROVIDER_NOT_CONFIGURED) {
+      return json({ error: BILLING_PROVIDER_NOT_CONFIGURED, dataMode: 'not_configured' }, 503);
     }
     return handleApiError(error);
   }
