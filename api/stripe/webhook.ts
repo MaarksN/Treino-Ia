@@ -1,5 +1,5 @@
 import { handleApiError, json, HttpError } from '../_lib/http';
-import { getStripeClient } from '../_lib/stripe-client';
+import { BILLING_PROVIDER_NOT_CONFIGURED, getStripeClient } from '../_lib/stripe-client';
 import { recordStripeWebhookEvent, upsertSubscriptionFromCheckoutSession, upsertSubscriptionFromStripeSubscription } from '../_lib/billing-store';
 
 export const config = {
@@ -14,8 +14,12 @@ export default async function handler(request: Request) {
     const signature = request.headers.get('stripe-signature');
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new HttpError(503, BILLING_PROVIDER_NOT_CONFIGURED);
+    }
+
     if (!webhookSecret || !signature) {
-      throw new HttpError(400, 'Webhook secret not configured or signature missing');
+      throw new HttpError(400, 'STRIPE webhook signature missing or secret not configured');
     }
 
     const stripe = getStripeClient();
