@@ -29,7 +29,17 @@ export interface ServerGamificationState {
   events: ServerGamificationEvent[];
 }
 
-export type ServerGamificationEventType = 'login' | 'checkin' | 'workout_completed';
+export type ServerGamificationEventType =
+  | 'login'
+  | 'checkin'
+  | 'workout_completed'
+  | 'daily_checkin'
+  | 'mission_claimed'
+  | 'cosmetic_purchased'
+  | 'loot_box_opened'
+  | 'season_reward_claimed'
+  | 'clan_joined'
+  | 'clan_contribution';
 
 async function getAccessToken(): Promise<string> {
   const { data, error } = await supabase.auth.getSession();

@@ -12,6 +12,7 @@ const RATE_WINDOW_MS = 60_000;
 const FREE_RATE_LIMIT = 20;
 const PREMIUM_RATE_LIMIT = 60;
 const CACHE_TTL_MS = 10 * 60 * 1000;
+const MAX_REQUEST_BYTES = 120_000;
 
 interface RateBucket {
   count: number;
@@ -69,6 +70,34 @@ function isCacheableGeminiBody(bodyText: string) {
   return !bodyText.includes('"inlineData"') && !bodyText.includes('"fileData"');
 }
 
+function ensureValidGeminiPayload(rawBody: string) {
+  if (!rawBody || rawBody.trim().length === 0) {
+    throw new HttpError(400, 'Payload vazio para Gemini proxy.');
+  }
+
+  if (rawBody.length > MAX_REQUEST_BYTES) {
+    throw new HttpError(413, 'Payload acima do limite permitido para Gemini proxy.');
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(rawBody);
+  } catch {
+    throw new HttpError(400, 'Payload JSON inválido para Gemini proxy.');
+  }
+
+  if (!parsed || typeof parsed !== 'object') {
+    throw new HttpError(400, 'Payload Gemini deve ser um objeto JSON.');
+  }
+
+  const candidate = parsed as { contents?: unknown };
+  if (!Array.isArray(candidate.contents) || candidate.contents.length === 0) {
+    throw new HttpError(400, 'Payload Gemini deve conter "contents" com ao menos um item.');
+  }
+
+  return JSON.stringify(parsed);
+}
+
 async function sha256(value: string) {
   const bytes = new TextEncoder().encode(value);
   const hash = await crypto.subtle.digest('SHA-256', bytes);
@@ -91,8 +120,8 @@ export default async function handler(request: Request) {
       throw new HttpError(402, 'Limite mensal de IA atingido para o plano Free.');
     }
 
-    const body = await request.json();
-    const bodyText = JSON.stringify(body);
+    const rawBody = await request.text();
+    const bodyText = ensureValidGeminiPayload(rawBody);
     const cacheable = isCacheableGeminiBody(bodyText);
     const cacheKey = cacheable ? await sha256(`${user.id}:${bodyText}`) : '';
     const cached = cacheable ? responseCache.get(cacheKey) : undefined;
