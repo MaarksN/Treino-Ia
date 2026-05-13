@@ -315,12 +315,10 @@ export default function App() {
   }, []);
 
   const handleRegister = (newUser: User) => {
-    localStorage.setItem('@TreinoApp:user', JSON.stringify(newUser));
     void recordGamificationEvent('login').catch(error => captureError(error, 'App.recordLogin'));
     setUser(newUser);
     if (newUser.profile) {
       setProfile(newUser.profile);
-      localStorage.setItem('@TreinoApp:profile', JSON.stringify(newUser.profile));
     }
     
     // Attempt to request notification permission
@@ -339,7 +337,6 @@ export default function App() {
     const newPlans = [generatedPlan, ...plans];
     setPlans(newPlans);
     setCurrentPlanId(generatedPlan.id);
-    localStorage.setItem('@TreinoApp:plans', JSON.stringify(newPlans));
     void persistWorkoutPlansToBackend(newPlans, generatedPlan.id)
       .catch(error => captureError(error, 'App.persistWorkoutPlans'));
     setView('dashboard');
@@ -349,7 +346,6 @@ export default function App() {
     setIsLoading(true);
     setError(null);
     try {
-      localStorage.setItem('@TreinoApp:profile', JSON.stringify(profile));
       setProfile(profile);
       void persistUserProfileToBackend(profile)
         .catch(error => captureError(error, 'App.persistUserProfile'));
@@ -359,7 +355,6 @@ export default function App() {
       if (user) {
          const updatedUser = { ...user, profile };
          setUser(updatedUser);
-         localStorage.setItem('@TreinoApp:user', JSON.stringify(updatedUser));
          
          if ('Notification' in window && Notification.permission === 'default') {
            Notification.requestPermission().catch(() => {});
@@ -393,7 +388,6 @@ export default function App() {
   const handleUpdatePlan = (updatedPlan: WorkoutPlan) => {
     const newPlans = plans.map(p => p.id === updatedPlan.id ? updatedPlan : p);
     setPlans(newPlans);
-    localStorage.setItem('@TreinoApp:plans', JSON.stringify(newPlans));
     void persistWorkoutPlansToBackend(newPlans, currentPlanId)
       .catch(error => captureError(error, 'App.persistUpdatedWorkoutPlans'));
   };
@@ -401,7 +395,6 @@ export default function App() {
   const handleSaveSession = (session: WorkoutSession) => {
     const updated = [...sessions, session];
     setSessions(updated);
-    localStorage.setItem('@TreinoApp:sessions', JSON.stringify(updated));
   };
 
   const handleSaveRecoveryCheckin = (checkin: RecoveryCheckin) => {
@@ -540,7 +533,6 @@ export default function App() {
   const handleCompleteDay = (record: WorkoutHistoryRecord) => {
     const newHistory = [...workoutHistory, record];
     setWorkoutHistory(newHistory);
-    localStorage.setItem('@TreinoApp:history', JSON.stringify(newHistory));
     void persistWorkoutHistoryToBackend(newHistory)
       .catch(error => captureError(error, 'App.persistWorkoutHistory'));
     enqueueWorkoutSync(record);
@@ -557,7 +549,7 @@ export default function App() {
         todayCheckin ? calculateReadiness(todayCheckin).score : undefined
       );
       const nextAnalyticsHistory = loadHistory();
-      const nextStreak = recordWorkoutForStreak();
+      const nextStreak = recordWorkoutForStreak(streakData, new Date(record.date).toISOString().slice(0, 10));
       setAnalyticsHistory(nextAnalyticsHistory);
       setStreakData(nextStreak);
       setShareEntry(completedEntry);
