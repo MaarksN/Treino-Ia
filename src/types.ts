@@ -17,6 +17,7 @@ export interface User {
 }
 
 export interface UserProfile {
+  id?: string;
   age: number;
   gender: string;
   weight: number;
@@ -169,6 +170,9 @@ export interface SupplementEntry {
   name: string;
   dose: string;
   timing: string;
+  date?: string;
+  taken?: boolean;
+  notes?: string;
 }
 
 export interface BodyMetric {
@@ -183,6 +187,35 @@ export interface BodyMetric {
   thigh?: number;
   photoBase64?: string;
   aiAnalysis?: string;
+}
+
+export type BodyPhotoAngle = 'front' | 'side' | 'back' | 'other';
+
+export interface BodyProgressPhoto {
+  id: string;
+  date: string;
+  monthKey: string;
+  angle: BodyPhotoAngle;
+  mimeType: string;
+  storagePath?: string;
+  photoBase64?: string;
+  photoUrl?: string;
+  aiAnalysis?: string;
+}
+
+export interface RecompositionGoal {
+  id: string;
+  title: string;
+  createdAt: string;
+  targetDate: string;
+  status: 'active' | 'completed' | 'paused';
+  startWeight?: number;
+  targetWeight?: number;
+  startBodyFatPercent?: number;
+  targetBodyFatPercent?: number;
+  startWaist?: number;
+  targetWaist?: number;
+  notes?: string;
 }
 
 export interface NutritionWeekSummary {
@@ -433,6 +466,28 @@ export interface AppSettings {
 
 // Wearable & biometrico
 
+export type BiometricDataMode = 'supabase' | 'mock_dev_only';
+
+export interface BiometricPersistenceMeta {
+  dataMode: BiometricDataMode;
+  reason?: string;
+  syncedAt: string;
+}
+
+export interface BiometricQueryResult<T> {
+  data: T;
+  meta: BiometricPersistenceMeta;
+}
+
+export interface BiometricSnapshot {
+  wearableSessions: WearableSession[];
+  hydrationEntries: HydrationEntry[];
+  hydrationGoal: HydrationGoal;
+  sleepEntries: SleepEntry[];
+  cycleEntries: CycleEntry[];
+  poseAnalyses: PoseAnalysis[];
+}
+
 export interface HeartRateReading {
   bpm: number;
   timestamp: number;
@@ -541,6 +596,13 @@ export interface SocialProfile {
   current_streak: number;
   best_streak: number;
   total_volume: number;
+  weekly_volume?: number;
+  followers_count?: number;
+  following_count?: number;
+  moderation_status?: SocialModerationStatus;
+  moderation_reason?: string | null;
+  moderated_at?: string | null;
+  moderated_by?: string | null;
   badges: SocialBadge[];
   created_at: string;
   updated_at: string;
@@ -564,6 +626,10 @@ export interface SocialPost {
   visibility: SocialVisibility;
   group_id?: string | null;
   workout_template_id?: string | null;
+  moderation_status?: SocialModerationStatus;
+  moderation_reason?: string | null;
+  moderated_at?: string | null;
+  moderated_by?: string | null;
   created_at: string;
   author?: SocialProfile;
   likes_count?: number;
@@ -576,6 +642,10 @@ export interface SocialComment {
   post_id: string;
   author_id: string;
   body: string;
+  moderation_status?: SocialModerationStatus;
+  moderation_reason?: string | null;
+  moderated_at?: string | null;
+  moderated_by?: string | null;
   created_at: string;
   author?: SocialProfile;
 }
@@ -589,6 +659,7 @@ export interface TrainingGroup {
   is_private: boolean;
   created_at: string;
   members_count?: number;
+  my_role?: 'owner' | 'coach' | 'member';
 }
 
 export interface TrainingGroupMessage {
@@ -639,6 +710,16 @@ export interface CoachPrivateNote {
   created_at: string;
 }
 
+export interface CoachWorkoutAssignment {
+  id: string;
+  coach_id: string;
+  student_id: string;
+  title: string;
+  workout_json: unknown;
+  status: 'assigned' | 'accepted' | 'completed';
+  created_at: string;
+}
+
 export interface PublicWorkoutTemplate {
   id: string;
   author_id: string;
@@ -648,8 +729,50 @@ export interface PublicWorkoutTemplate {
   level?: string | null;
   workout_json: unknown;
   likes_count: number;
+  moderation_status?: SocialModerationStatus;
+  moderation_reason?: string | null;
+  moderated_at?: string | null;
+  moderated_by?: string | null;
   created_at: string;
   author?: SocialProfile;
+}
+
+export interface GroupOnlinePresence {
+  user_id: string;
+  username: string;
+  display_name: string;
+  online_at: string;
+}
+
+export type SocialReportTargetType = 'post' | 'comment' | 'profile' | 'workout_template';
+export type SocialReportReason =
+  | 'spam'
+  | 'harassment'
+  | 'hate'
+  | 'sexual_content'
+  | 'violence'
+  | 'self_harm'
+  | 'illegal_activity'
+  | 'privacy'
+  | 'misinformation'
+  | 'other';
+export type SocialReportStatus = 'open' | 'reviewing' | 'actioned' | 'dismissed';
+export type SocialModerationStatus = 'visible' | 'under_review' | 'hidden' | 'removed';
+export type SocialModerationAction = 'none' | 'hidden' | 'removed' | 'user_warned' | 'user_suspended';
+
+export interface SocialContentReport {
+  id: string;
+  reporter_id: string;
+  target_type: SocialReportTargetType;
+  target_id: string;
+  reason: SocialReportReason;
+  details?: string | null;
+  status: SocialReportStatus;
+  moderation_action: SocialModerationAction;
+  reviewer_id?: string | null;
+  reviewed_at?: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export type MuscleGroup =
@@ -749,6 +872,14 @@ export interface TwelveWeekPlan {
   title: string;
   createdAt: string;
   weeks: PeriodizationWeek[];
+}
+
+export interface UserPeriodizationPlan {
+  id: string;
+  profile_id: string;
+  current_week: number;
+  plan_data: TwelveWeekPlan;
+  created_at: string;
 }
 
 export type SubscriptionPlanId = 'free' | 'premium_monthly' | 'premium_yearly';

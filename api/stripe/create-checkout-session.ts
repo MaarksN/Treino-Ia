@@ -1,16 +1,10 @@
 import { handleApiError, json, readJsonObject, HttpError } from '../_lib/http';
 import { requireSupabaseUser } from '../_lib/server-supabase';
-import { getStripeClient } from '../_lib/stripe-client';
+import { BILLING_PROVIDER_NOT_CONFIGURED, getStripeClient } from '../_lib/stripe-client';
+import { resolveCheckoutPlan } from '../_lib/billing';
 
 export const config = {
   runtime: 'nodejs',
-};
-
-// Hardcoded map for example purposes. In production this would be mapped to Stripe price IDs from env or DB
-const STRIPE_PRICE_MAP: Record<string, { month: number; year: number }> = {
-  pro: { month: 2990, year: 21528 },
-  coach: { month: 7990, year: 57528 },
-  elite: { month: 14990, year: 107928 },
 };
 
 export default async function handler(request: Request) {
@@ -19,15 +13,14 @@ export default async function handler(request: Request) {
 
   try {
     if (!process.env.STRIPE_SECRET_KEY) {
-      return json({ error: 'Billing provider not configured', dataMode: 'not_configured' }, 400);
+      return json({ error: BILLING_PROVIDER_NOT_CONFIGURED, dataMode: 'not_configured' }, 503);
     }
 
     const user = await requireSupabaseUser(request);
     const body = await readJsonObject(request);
-    const planId = body.planId as string;
-    const interval = body.interval as string;
+    const checkoutPlan = resolveCheckoutPlan(body.planId, body.interval);
 
-    if (!planId || !interval || !STRIPE_PRICE_MAP[planId]) {
+    if (!checkoutPlan.planId || !checkoutPlan.interval) {
        throw new HttpError(400, 'planId invalid or missing, and interval required');
     }
 
@@ -35,36 +28,39 @@ export default async function handler(request: Request) {
 
     const origin = request.headers.get('origin') || 'http://localhost:3000';
 
-    const amount = interval === 'year' ? STRIPE_PRICE_MAP[planId].year : STRIPE_PRICE_MAP[planId].month;
-
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'subscription',
+      allow_promotion_codes: true,
       line_items: [
          {
-           price_data: {
-              currency: 'BRL',
-              product_data: { name: `Plano ${planId.toUpperCase()} (${interval === 'year' ? 'Anual' : 'Mensal'})` },
-              unit_amount: amount,
-              recurring: { interval: interval === 'year' ? 'year' : 'month' }
-           },
+           price: checkoutPlan.priceId,
            quantity: 1,
          }
       ],
+      customer_email: user.email,
       success_url: `${origin}/?checkout=success`,
       cancel_url: `${origin}/?checkout=cancel`,
       client_reference_id: user.id,
       metadata: {
         user_id: user.id,
-        plan_id: planId,
-        interval: interval
-      }
+        plan_id: checkoutPlan.planId,
+        interval: checkoutPlan.interval,
+      },
+      subscription_data: {
+        trial_period_days: 7,
+        metadata: {
+          user_id: user.id,
+          plan_id: checkoutPlan.planId,
+          interval: checkoutPlan.interval,
+        },
+      },
     });
 
     return json({ checkoutUrl: session.url, sessionId: session.id });
   } catch (error) {
-    if ((error as any).status === 500 && (error as any).message?.includes('not configured')) {
-        return json({ error: 'Billing provider not configured', dataMode: 'not_configured' }, 400);
+    if ((error as any)?.message === BILLING_PROVIDER_NOT_CONFIGURED) {
+      return json({ error: BILLING_PROVIDER_NOT_CONFIGURED, dataMode: 'not_configured' }, 503);
     }
     return handleApiError(error);
   }

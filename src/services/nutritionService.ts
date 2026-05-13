@@ -1,4 +1,4 @@
-import { Schema, Type } from '@google/genai';
+import { Schema, Type } from '../types/geminiSchema';
 import { MacroTargets, MealEntry, UserProfile } from '../types';
 import { createGeminiProxyClient } from './geminiProxyClient';
 

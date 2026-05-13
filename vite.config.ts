@@ -26,7 +26,6 @@ export default defineConfig(() => {
             charts: ['recharts'],
             motion: ['motion'],
             supabase: ['@supabase/supabase-js'],
-            genai: ['@google/genai'],
           },
         },
       },

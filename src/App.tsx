@@ -15,7 +15,17 @@ import { InstallPrompt } from './components/InstallPrompt';
 import { AppUpdateBanner } from './components/AppUpdateBanner';
 import { generateWorkoutPlan, extractWorkoutFromFile } from './services/geminiService';
 import { AppSettings, Badge, DailyCheckin as DailyCheckinType, FatigueSnapshot, RecoveryCheckin, StreakData, TrainingExercisePerformance, User, UserProfile, WorkoutHistoryEntry, WorkoutHistoryRecord, WorkoutPlan, WorkoutSession } from './types';
-import { calculateReadiness, getTodayCheckin, loadCheckins } from './utils/readinessUtils';
+import { DataMode } from './types/trainingExecution';
+import { getTodayCheckinFromList, loadDailyCheckins, saveDailyCheckin } from './services/healthService';
+import { onAuthStateChange } from './services/authService';
+import {
+  loadTrainingStateFromBackend,
+  migrateLegacyTrainingStateToBackend,
+  persistUserProfileToBackend,
+  persistWorkoutHistoryToBackend,
+  persistWorkoutPlansToBackend,
+} from './services/legacyTrainingSyncService';
+import { calculateReadiness } from './utils/readinessUtils';
 import { loadHistory, recordWorkoutSession, getTotalVolumeLifted } from './utils/analyticsUtils';
 import { loadStreak, recordWorkoutForStreak } from './utils/streakUtils';
 import { evaluateAndUnlockBadges } from './utils/badgeUtils';
@@ -26,15 +36,16 @@ import { registerBackgroundSync } from './utils/pwaUtils';
 import { saveDashboardSnapshot } from './utils/syncUtils';
 import { captureError } from './utils/errorTelemetry';
 import { applyTheme, loadThemeId } from './utils/themeUtils';
-import { Activity, BrainCircuit, Dumbbell, Globe2, Moon, Rocket, Server, Settings as SettingsIcon, Share2, Sun, Trophy, X } from 'lucide-react';
+import { Activity, BellRing, BrainCircuit, Dumbbell, Globe2, Moon, Rocket, Server, Settings as SettingsIcon, Share2, Sun, Trophy, X } from 'lucide-react';
 
-type ViewState = 'loading' | 'registration' | 'home' | 'anamnesis' | 'import' | 'dashboard' | 'active-workout' | 'global_feed' | 'social' | 'gamification' | 'infrastructure' | 'platform' | 'billing';
+type ViewState = 'loading' | 'registration' | 'home' | 'anamnesis' | 'import' | 'dashboard' | 'active-workout' | 'global_feed' | 'social' | 'public_profile' | 'gamification' | 'retention' | 'infrastructure' | 'platform' | 'billing';
 
 import { AssistantPopup } from './components/AssistantPopup';
 import { BillingCenter } from './components/BillingCenter';
 
 import { FuturisticHUD } from './components/FuturisticHUD';
 import { BotMessageSquare } from 'lucide-react';
+import { fetchBillingEntitlement } from './services/billingService';
 
 const WorkoutDashboard = lazy(() => import('./components/WorkoutDashboard').then(module => ({ default: module.WorkoutDashboard })));
 const ActiveWorkoutView = lazy(() => import('./components/ActiveWorkoutView').then(module => ({ default: module.ActiveWorkoutView })));
@@ -55,6 +66,7 @@ const PoseDetector = lazy(() => import('./components/PoseDetector').then(module 
 const SleepTracker = lazy(() => import('./components/SleepTracker').then(module => ({ default: module.SleepTracker })));
 const WearableSync = lazy(() => import('./components/WearableSync').then(module => ({ default: module.WearableSync })));
 const SocialHub = lazy(() => import('./components/SocialHub').then(module => ({ default: module.SocialHub })));
+const RetentionOperationsHub = lazy(() => import('./components/RetentionOperationsHub').then(module => ({ default: module.RetentionOperationsHub })));
 const PeriodizationLab = lazy(() => import('./components/PeriodizationLab').then(module => ({ default: module.PeriodizationLab })));
 const GamificationHub = lazy(() => import('./components/GamificationHub').then(module => ({ default: module.GamificationHub })));
 const InfrastructureHub = lazy(() => import('./components/InfrastructureHub').then(module => ({ default: module.InfrastructureHub })));
@@ -62,6 +74,7 @@ const AdvancedPlatformHub = lazy(() => import('./components/platform/AdvancedPla
 const GlobalFeed = lazy(() => import('./components/GlobalFeed').then(module => ({ default: module.GlobalFeed })));
 const MusicPlayer = lazy(() => import('./components/MusicPlayer').then(module => ({ default: module.MusicPlayer })));
 const AICoachChat = lazy(() => import('./components/AICoachChat').then(module => ({ default: module.AICoachChat })));
+const PublicAthleteProfilePage = lazy(() => import('./components/PublicAthleteProfilePage').then(module => ({ default: module.PublicAthleteProfilePage })));
 
 const ONBOARDING_KEY = '@TreinoApp:onboarded';
 const LIGHT_THEME_VARS = {
@@ -121,6 +134,7 @@ function loadInitialVoiceEnabled() {
 export default function App() {
   const [view, setView] = useState<ViewState>('loading');
   const [user, setUser] = useState<User | null>(null);
+  const [isPremium, setIsPremium] = useState(false);
   const [plans, setPlans] = useState<WorkoutPlan[]>([]);
   const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
   const [workoutHistory, setWorkoutHistory] = useState<WorkoutHistoryRecord[]>([]);
@@ -131,8 +145,12 @@ export default function App() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [recoveryCheckin, setRecoveryCheckin] = useState<RecoveryCheckin | null>(null);
-  const [todayCheckin, setTodayCheckin] = useState<DailyCheckinType | null>(() => getTodayCheckin());
-  const [allCheckins, setAllCheckins] = useState<DailyCheckinType[]>(() => loadCheckins());
+  const [todayCheckin, setTodayCheckin] = useState<DailyCheckinType | null>(null);
+  const [allCheckins, setAllCheckins] = useState<DailyCheckinType[]>([]);
+  const [healthDataMode, setHealthDataMode] = useState<DataMode | undefined>();
+  const [healthWarning, setHealthWarning] = useState<string | null>(null);
+  const [checkinSaving, setCheckinSaving] = useState(false);
+  const [checkinError, setCheckinError] = useState<string | null>(null);
   const [darkMode, setDarkMode] = useState(true);
   const [language, setLanguage] = useState<'PT' | 'EN'>('PT');
   const [voiceEnabled, setVoiceEnabled] = useState(loadInitialVoiceEnabled);
@@ -146,7 +164,58 @@ export default function App() {
   const [showCoach, setShowCoach] = useState(false);
 
   // For tab navigation when a user is logged in
-  const [activeTab, setActiveTab] = useState<'my_workouts' | 'global_feed' | 'social' | 'gamification' | 'infrastructure' | 'platform' | 'billing'>('my_workouts');
+  const [activeTab, setActiveTab] = useState<'my_workouts' | 'global_feed' | 'social' | 'gamification' | 'retention' | 'infrastructure' | 'platform' | 'billing'>('my_workouts');
+
+  const refreshDailyCheckins = async () => {
+    try {
+      const result = await loadDailyCheckins();
+      setAllCheckins(result.data);
+      setTodayCheckin(getTodayCheckinFromList(result.data));
+      setHealthDataMode(result.dataMode);
+      setHealthWarning(result.warning ?? null);
+      setCheckinError(null);
+      return result.data;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Falha ao carregar check-ins.';
+      setCheckinError(message);
+      captureError(error, 'App.loadDailyCheckins');
+      return allCheckins;
+    }
+  };
+
+  const hydrateTrainingStateFromBackend = async () => {
+    try {
+      const result = await loadTrainingStateFromBackend();
+      if (result.dataMode !== 'supabase') return;
+
+      if (result.profile) {
+        setProfile(result.profile);
+      }
+
+      if (result.history.length) {
+        setWorkoutHistory(result.history);
+      }
+
+      if (result.plans.length) {
+        setPlans(result.plans);
+        setCurrentPlanId(result.currentPlanId || result.plans[0].id);
+        setView('dashboard');
+      }
+    } catch (error) {
+      captureError(error, 'App.hydrateTrainingStateFromBackend');
+    }
+  };
+
+  const migrateLegacyTrainingState = async () => {
+    try {
+      const result = await migrateLegacyTrainingStateToBackend();
+      if (result.dataMode === 'supabase') {
+        await hydrateTrainingStateFromBackend();
+      }
+    } catch (error) {
+      captureError(error, 'App.migrateLegacyTrainingState');
+    }
+  };
 
   useEffect(() => {
     applyTheme(loadThemeId());
@@ -165,67 +234,45 @@ export default function App() {
   }, [darkMode]);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('@TreinoApp:user');
-    const savedPlans = localStorage.getItem('@TreinoApp:plans');
-    const savedHistory = localStorage.getItem('@TreinoApp:history');
-    const savedProfile = localStorage.getItem('@TreinoApp:profile');
-    const savedSessions = localStorage.getItem('@TreinoApp:sessions');
-    const savedRecovery = localStorage.getItem('@TreinoApp:recovery');
-    const savedTheme = localStorage.getItem('@TreinoApp:theme');
+    void refreshDailyCheckins();
 
+    const currentPath = window.location.pathname;
+    if (currentPath.startsWith('/u/')) {
+      setView('public_profile');
+      return;
+    }
+    if (currentPath.startsWith('/groups/join/')) {
+      setView('social');
+      return;
+    }
+
+    void migrateLegacyTrainingState();
+
+    const savedTheme = localStorage.getItem('@TreinoApp:theme');
     if (savedTheme) {
       setDarkMode(savedTheme === 'dark');
     }
 
-    if (savedHistory) {
-      setWorkoutHistory(JSON.parse(savedHistory));
-    }
+    fetchBillingEntitlement()
+      .then(entitlement => setIsPremium(entitlement.isPremium))
+      .catch(() => setIsPremium(false));
 
-    if (savedProfile) {
-      setProfile(JSON.parse(savedProfile));
-    }
+    setView('registration');
+  }, []);
 
-    if (savedSessions) {
-      setSessions(JSON.parse(savedSessions));
-    }
-
-    if (savedRecovery) {
-      setRecoveryCheckin(JSON.parse(savedRecovery));
-    }
-
-    if (savedUser) {
-      const parsedUser = JSON.parse(savedUser);
-      setUser(parsedUser);
-      void recordGamificationEvent('login').catch(error => captureError(error, 'App.recordLogin'));
-      if (parsedUser.profile && !savedProfile) {
-        setProfile(parsedUser.profile);
+  useEffect(() => {
+    return onAuthStateChange(event => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        void migrateLegacyTrainingState();
       }
-      if (savedPlans) {
-        try {
-          const parsed = JSON.parse(savedPlans);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setPlans(parsed);
-            setCurrentPlanId(parsed[0].id);
-            setView('dashboard');
-            return;
-          }
-        } catch (e) {
-          console.error("Failed to restore plans");
-        }
-      }
-      setView('home');
-    } else {
-      setView('registration');
-    }
+    });
   }, []);
 
   const handleRegister = (newUser: User) => {
-    localStorage.setItem('@TreinoApp:user', JSON.stringify(newUser));
     void recordGamificationEvent('login').catch(error => captureError(error, 'App.recordLogin'));
     setUser(newUser);
     if (newUser.profile) {
       setProfile(newUser.profile);
-      localStorage.setItem('@TreinoApp:profile', JSON.stringify(newUser.profile));
     }
     
     // Attempt to request notification permission
@@ -244,7 +291,8 @@ export default function App() {
     const newPlans = [generatedPlan, ...plans];
     setPlans(newPlans);
     setCurrentPlanId(generatedPlan.id);
-    localStorage.setItem('@TreinoApp:plans', JSON.stringify(newPlans));
+    void persistWorkoutPlansToBackend(newPlans, generatedPlan.id)
+      .catch(error => captureError(error, 'App.persistWorkoutPlans'));
     setView('dashboard');
   };
 
@@ -252,15 +300,15 @@ export default function App() {
     setIsLoading(true);
     setError(null);
     try {
-      localStorage.setItem('@TreinoApp:profile', JSON.stringify(profile));
       setProfile(profile);
+      void persistUserProfileToBackend(profile)
+        .catch(error => captureError(error, 'App.persistUserProfile'));
       const generatedPlan = await generateWorkoutPlan(profile, plans);
       saveNewPlan(generatedPlan);
       
       if (user) {
          const updatedUser = { ...user, profile };
          setUser(updatedUser);
-         localStorage.setItem('@TreinoApp:user', JSON.stringify(updatedUser));
          
          if ('Notification' in window && Notification.permission === 'default') {
            Notification.requestPermission().catch(() => {});
@@ -294,18 +342,46 @@ export default function App() {
   const handleUpdatePlan = (updatedPlan: WorkoutPlan) => {
     const newPlans = plans.map(p => p.id === updatedPlan.id ? updatedPlan : p);
     setPlans(newPlans);
-    localStorage.setItem('@TreinoApp:plans', JSON.stringify(newPlans));
+    void persistWorkoutPlansToBackend(newPlans, currentPlanId)
+      .catch(error => captureError(error, 'App.persistUpdatedWorkoutPlans'));
   };
 
   const handleSaveSession = (session: WorkoutSession) => {
     const updated = [...sessions, session];
     setSessions(updated);
-    localStorage.setItem('@TreinoApp:sessions', JSON.stringify(updated));
   };
 
   const handleSaveRecoveryCheckin = (checkin: RecoveryCheckin) => {
     setRecoveryCheckin(checkin);
-    localStorage.setItem('@TreinoApp:recovery', JSON.stringify(checkin));
+
+    const today = new Date().toISOString().slice(0, 10);
+    const dailyFromRecovery: DailyCheckinType = {
+      id: todayCheckin?.id || crypto.randomUUID(),
+      date: today,
+      sleepHours: checkin.sleepHours,
+      sleepQuality: todayCheckin?.sleepQuality || 3,
+      stressLevel: checkin.stressLevel,
+      sorenessMap: {
+        ...(todayCheckin?.sorenessMap || {}),
+        Geral: checkin.sorenessLevel,
+      },
+      energyLevel: checkin.energyLevel,
+      hydrationGlasses: todayCheckin?.hydrationGlasses || 0,
+      sleepGoalHours: todayCheckin?.sleepGoalHours || 8,
+      notes: todayCheckin?.notes,
+      timestamp: Date.now(),
+    };
+
+    void saveDailyCheckin(dailyFromRecovery)
+      .then(async result => {
+        setHealthDataMode(result.dataMode);
+        setHealthWarning(result.warning ?? null);
+        await refreshDailyCheckins();
+      })
+      .catch(error => {
+        setCheckinError(error instanceof Error ? error.message : 'Falha ao salvar prontidão pré-treino.');
+        captureError(error, 'App.saveRecoveryAsDailyCheckin');
+      });
   };
 
   const handleOnboardingComplete = () => {
@@ -328,6 +404,11 @@ export default function App() {
     }
   };
 
+  const getNutritionMealCount = () => Math.max(
+    getStoredArrayCount('@TreinoApp:meals:mock_dev_only'),
+    getStoredArrayCount('@TreinoApp:meals')
+  );
+
   const refreshEngagement = (
     nextStreak = streakData,
     nextHistory = analyticsHistory,
@@ -345,18 +426,32 @@ export default function App() {
       nextHistory,
       nextCheckins.length,
       getStoredArrayCount('@TreinoApp:prs'),
-      getStoredArrayCount('@TreinoApp:meals')
+      getNutritionMealCount()
     );
     if (newly.length) setNewBadges(newly);
   };
 
-  const handleSaveCheckin = (checkin: DailyCheckinType) => {
-    const updatedCheckins = loadCheckins();
-    setTodayCheckin(checkin);
-    setAllCheckins(updatedCheckins);
-    refreshEngagement(streakData, analyticsHistory, updatedCheckins);
-    void recordGamificationEvent('checkin').catch(error => captureError(error, 'App.dailyCheckin'));
-    saveLocalDashboardSnapshot(analyticsHistory, streakData, updatedCheckins);
+  const handleSaveCheckin = async (checkin: DailyCheckinType) => {
+    setCheckinSaving(true);
+    setCheckinError(null);
+
+    try {
+      const saved = await saveDailyCheckin(checkin);
+      setHealthDataMode(saved.dataMode);
+      setHealthWarning(saved.warning ?? null);
+      const updatedCheckins = await refreshDailyCheckins();
+      setTodayCheckin(saved.data);
+      refreshEngagement(streakData, analyticsHistory, updatedCheckins);
+      void recordGamificationEvent('checkin').catch(error => captureError(error, 'App.dailyCheckin'));
+      saveLocalDashboardSnapshot(analyticsHistory, streakData, updatedCheckins);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Falha ao salvar check-in.';
+      setCheckinError(message);
+      captureError(error, 'App.saveDailyCheckin');
+      throw new Error(message);
+    } finally {
+      setCheckinSaving(false);
+    }
   };
 
   const saveLocalDashboardSnapshot = (
@@ -392,7 +487,8 @@ export default function App() {
   const handleCompleteDay = (record: WorkoutHistoryRecord) => {
     const newHistory = [...workoutHistory, record];
     setWorkoutHistory(newHistory);
-    localStorage.setItem('@TreinoApp:history', JSON.stringify(newHistory));
+    void persistWorkoutHistoryToBackend(newHistory)
+      .catch(error => captureError(error, 'App.persistWorkoutHistory'));
     enqueueWorkoutSync(record);
     void recordGamificationEvent('workout_completed', record.id)
       .catch(error => captureError(error, 'App.workoutCompletedGamification'));
@@ -407,7 +503,7 @@ export default function App() {
         todayCheckin ? calculateReadiness(todayCheckin).score : undefined
       );
       const nextAnalyticsHistory = loadHistory();
-      const nextStreak = recordWorkoutForStreak();
+      const nextStreak = recordWorkoutForStreak(streakData, new Date(record.date).toISOString().slice(0, 10));
       setAnalyticsHistory(nextAnalyticsHistory);
       setStreakData(nextStreak);
       setShareEntry(completedEntry);
@@ -540,6 +636,12 @@ export default function App() {
               <Trophy className="w-4 h-4 mr-2" /> Gamificacao
             </button>
             <button
+              onClick={() => { setActiveTab('retention'); setView('retention'); }}
+              className={`px-5 py-2 font-mono font-bold text-sm uppercase flex items-center transition-colors rounded-full ${view === 'retention' ? 'bg-brand-neon text-brand-dark shadow-[0_0_10px_var(--color-brand-neon)]' : 'text-brand-muted hover:text-brand-light hover:bg-brand-light/5'}`}
+            >
+              <BellRing className="w-4 h-4 mr-2" /> Retencao
+            </button>
+            <button
               onClick={() => { setActiveTab('infrastructure'); setView('infrastructure'); }}
               className={`px-5 py-2 font-mono font-bold text-sm uppercase flex items-center transition-colors rounded-full ${view === 'infrastructure' ? 'bg-brand-neon text-brand-dark shadow-[0_0_10px_var(--color-brand-neon)]' : 'text-brand-muted hover:text-brand-light hover:bg-brand-light/5'}`}
             >
@@ -597,6 +699,8 @@ export default function App() {
             onCreateNew={() => setView('anamnesis')} 
             onImport={() => setView('import')} 
             onUpdateUser={handleRegister}
+            isPremium={isPremium}
+            plansCount={plans.length}
           />
         </div>
       )}
@@ -656,7 +760,12 @@ export default function App() {
             <HabitReminder />
           </div>
 
-          <AnalyticsDashboard history={analyticsHistory} plans={plans} />
+          <AnalyticsDashboard
+            history={analyticsHistory}
+            plans={plans}
+            workoutHistory={workoutHistory}
+            profile={activeProfile}
+          />
           <ConsistencyHeatmap history={analyticsHistory} checkins={allCheckins} />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -669,7 +778,14 @@ export default function App() {
       {view === 'dashboard' && currentPlan && activeProfile && (
         <div className="max-w-5xl mx-auto mt-8 space-y-6 print:hidden">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <DailyCheckinForm existing={todayCheckin} onSave={handleSaveCheckin} />
+            <DailyCheckinForm
+              existing={todayCheckin}
+              onSave={handleSaveCheckin}
+              saving={checkinSaving}
+              error={checkinError}
+              dataMode={healthDataMode}
+              warning={healthWarning}
+            />
             <ReadinessIndex checkin={todayCheckin} allCheckins={allCheckins} />
           </div>
 
@@ -681,6 +797,7 @@ export default function App() {
           />
 
           <PeriodizationLab
+            profileId={activeProfile?.id}
             performances={periodizationPerformances}
             fatigue={periodizationFatigue}
           />
@@ -732,11 +849,24 @@ export default function App() {
       )}
 
       {view === 'social' && (
-        <SocialHub />
+        <SocialHub currentPlan={currentPlan} />
+      )}
+
+      {view === 'public_profile' && (
+        <PublicAthleteProfilePage />
       )}
 
       {view === 'gamification' && (
         <GamificationHub />
+      )}
+
+      {view === 'retention' && (
+        <RetentionOperationsHub
+          userName={user?.name}
+          profile={activeProfile}
+          currentPlan={currentPlan}
+          history={analyticsHistory}
+        />
       )}
 
       {view === 'infrastructure' && (
@@ -780,6 +910,7 @@ export default function App() {
               plans={plans}
               history={analyticsHistory}
               streak={streakData}
+              isPremium={isPremium}
               onSettingsChange={handleSettingsChange}
             />
           </div>

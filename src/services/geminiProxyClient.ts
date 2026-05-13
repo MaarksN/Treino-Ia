@@ -1,4 +1,4 @@
-import { Schema } from '@google/genai';
+import { Schema } from '../types/geminiSchema';
 import { supabase } from './supabaseClient';
 
 interface GeminiGenerateContentRequest {

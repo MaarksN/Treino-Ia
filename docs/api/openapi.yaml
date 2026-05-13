@@ -1,0 +1,178 @@
+openapi: 3.1.0
+info:
+  title: Treino IA Public API
+  version: 0.1.0
+  description: API contracts for billing, AI proxy, offline sync, health integrations, telemetry, and webhooks.
+servers:
+  - url: https://example.vercel.app
+    description: Production
+  - url: http://localhost:3000
+    description: Local Vite/Vercel dev
+security:
+  - bearerAuth: []
+paths:
+  /api/billing/entitlement:
+    get:
+      summary: Load server-side plan, subscription status, and entitlements.
+      responses:
+        "200":
+          description: Entitlement summary.
+        "401":
+          description: Missing or invalid Supabase session.
+  /api/stripe/create-checkout-session:
+    post:
+      summary: Create a Stripe Checkout session for Pro, Coach, or Elite.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [planId, interval]
+              properties:
+                planId:
+                  type: string
+                  enum: [pro, coach, elite]
+                interval:
+                  type: string
+                  enum: [month, year]
+      responses:
+        "200":
+          description: Checkout URL and Stripe session id.
+  /api/stripe/create-portal-session:
+    post:
+      summary: Create a Stripe customer portal session.
+      responses:
+        "200":
+          description: Portal URL.
+  /api/stripe/webhook:
+    post:
+      summary: Signed Stripe webhook endpoint.
+      security: []
+      parameters:
+        - in: header
+          name: stripe-signature
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Event accepted.
+        "400":
+          description: Invalid signature.
+  /api/gemini-proxy:
+    post:
+      summary: Authenticated Gemini proxy with billing limits, rate limiting, and private cache.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Gemini API response.
+        "402":
+          description: Free plan monthly AI limit reached.
+        "429":
+          description: Per-minute rate limit reached.
+  /api/sync/offline-actions:
+    post:
+      summary: Sync one queued offline action with idempotency.
+      parameters:
+        - in: header
+          name: X-Idempotency-Key
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, type, payload]
+              properties:
+                id:
+                  type: string
+                type:
+                  type: string
+                payload:
+                  type: object
+                createdAt:
+                  type: number
+      responses:
+        "200":
+          description: Action stored.
+  /api/telemetry/errors:
+    post:
+      summary: Flush client error telemetry to Supabase.
+      security:
+        - bearerAuth: []
+        - {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [events]
+              properties:
+                events:
+                  type: array
+                  maxItems: 50
+                  items:
+                    type: object
+                    required: [message, source]
+      responses:
+        "200":
+          description: Events stored.
+  /api/jobs/create:
+    post:
+      summary: Queue a heavier background job such as PDF export or AI report generation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [jobType]
+              properties:
+                jobType:
+                  type: string
+                  enum: [pdf_export, quarterly_ai_report, nutrition_report]
+                payload:
+                  type: object
+      responses:
+        "202":
+          description: Job queued.
+  /api/health/oauth/start:
+    get:
+      summary: Start OAuth for supported health providers.
+      parameters:
+        - in: query
+          name: provider
+          schema:
+            type: string
+            enum: [google_fit, fitbit, strava]
+      responses:
+        "302":
+          description: Redirect to provider authorization.
+  /api/health/oauth/callback:
+    get:
+      summary: Health provider OAuth callback.
+      responses:
+        "302":
+          description: Redirect back to the application.
+  /api/health/sync:
+    post:
+      summary: Trigger health data sync for connected providers.
+      responses:
+        "200":
+          description: Sync job created.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Supabase JWT

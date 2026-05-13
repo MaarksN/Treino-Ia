@@ -16,6 +16,7 @@ interface Props {
   plans: WorkoutPlan[];
   history: WorkoutHistoryEntry[];
   streak: StreakData;
+  isPremium?: boolean;
 }
 
 function escapeHtml(value: string): string {
@@ -78,11 +79,16 @@ function markdownToHtml(markdown: string): string {
   return html.join('\n');
 }
 
-export function ExportPanel({ plans, history, streak }: Props) {
+export function ExportPanel({ plans, history, streak, isPremium = false }: Props) {
   const [restoreStatus, setRestoreStatus] = useState('');
 
   const handleExportPDF = (plan: WorkoutPlan) => {
     const markdown = generateWorkoutMarkdown(plan);
+    const watermarkHtml = !isPremium ? `
+      <div style="position: fixed; bottom: 20px; right: 20px; color: #a3e635; font-weight: bold; font-family: monospace; font-size: 12px; opacity: 0.8; z-index: 1000; padding: 4px 8px; border: 1px solid #a3e635;">
+        GERADO POR TREINOAPP FREE
+      </div>
+    ` : '';
     const html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -101,6 +107,7 @@ export function ExportPanel({ plans, history, streak }: Props) {
 </head>
 <body>
   ${markdownToHtml(markdown)}
+  ${watermarkHtml}
 </body>
 </html>`;
 

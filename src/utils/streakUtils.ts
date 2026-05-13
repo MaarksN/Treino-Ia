@@ -1,81 +1,46 @@
 import { StreakData } from '../types';
 
-const STREAK_KEY = '@TreinoApp:streak';
+export function loadStreakFromWorkoutDates(workoutDates: string[], nowIso = new Date().toISOString().slice(0, 10)): StreakData {
+  const uniqueDates = Array.from(new Set(workoutDates)).sort();
+  if (!uniqueDates.length) {
+    return { currentStreak: 0, longestStreak: 0, lastWorkoutDate: null, totalWorkouts: 0, workoutDates: [] };
+  }
 
-type StoredStreak = Partial<StreakData> & {
-  count?: number;
-  lastDate?: string | null;
-};
+  const best = uniqueDates.reduce((acc, date, index) => {
+    if (index === 0) return { best: 1, run: 1, prev: date };
+    const prev = new Date(`${acc.prev}T00:00:00`);
+    const current = new Date(`${date}T00:00:00`);
+    const gap = Math.round((current.getTime() - prev.getTime()) / 86400000);
+    const run = gap === 1 ? acc.run + 1 : 1;
+    return { best: Math.max(acc.best, run), run, prev: date };
+  }, { best: 1, run: 1, prev: uniqueDates[0] });
 
-function normalizeDate(value: string | null | undefined): string | null {
-  if (!value) return null;
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return null;
-  return parsed.toISOString().slice(0, 10);
-}
+  const currentStreak = (() => {
+    let streak = 0;
+    let cursor = new Date(`${nowIso}T00:00:00`);
+    const dateSet = new Set(uniqueDates);
+    while (dateSet.has(cursor.toISOString().slice(0, 10))) {
+      streak += 1;
+      cursor.setUTCDate(cursor.getUTCDate() - 1);
+    }
+    return streak;
+  })();
 
-function persistStreak(data: StreakData) {
-  localStorage.setItem(STREAK_KEY, JSON.stringify({
-    ...data,
-    count: data.currentStreak,
-    lastDate: data.lastWorkoutDate ? new Date(`${data.lastWorkoutDate}T00:00:00`).toDateString() : null,
-  }));
+  return {
+    currentStreak,
+    longestStreak: best.best,
+    lastWorkoutDate: uniqueDates[uniqueDates.length - 1],
+    totalWorkouts: uniqueDates.length,
+    workoutDates: uniqueDates,
+  };
 }
 
 export function loadStreak(): StreakData {
-  const fallback: StreakData = {
-    currentStreak: 0,
-    longestStreak: 0,
-    lastWorkoutDate: null,
-    totalWorkouts: 0,
-    workoutDates: [],
-  };
-
-  try {
-    const raw = localStorage.getItem(STREAK_KEY);
-    if (!raw) return fallback;
-
-    const parsed = JSON.parse(raw) as StoredStreak;
-    const workoutDates = Array.isArray(parsed.workoutDates)
-      ? parsed.workoutDates
-      : normalizeDate(parsed.lastDate)
-        ? [normalizeDate(parsed.lastDate)!]
-        : [];
-
-    return {
-      currentStreak: parsed.currentStreak ?? parsed.count ?? 0,
-      longestStreak: parsed.longestStreak ?? parsed.count ?? 0,
-      lastWorkoutDate: parsed.lastWorkoutDate ?? normalizeDate(parsed.lastDate),
-      totalWorkouts: parsed.totalWorkouts ?? workoutDates.length,
-      workoutDates,
-    };
-  } catch {
-    return fallback;
-  }
+  return { currentStreak: 0, longestStreak: 0, lastWorkoutDate: null, totalWorkouts: 0, workoutDates: [] };
 }
 
-export function recordWorkoutForStreak(): StreakData {
-  const data = loadStreak();
-  const today = new Date().toISOString().slice(0, 10);
-
-  if (data.workoutDates.includes(today)) return data;
-
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().slice(0, 10);
-  const isConsecutive = data.lastWorkoutDate === yesterdayStr || data.lastWorkoutDate === today;
-  const currentStreak = isConsecutive ? data.currentStreak + 1 : 1;
-
-  const updated: StreakData = {
-    currentStreak,
-    longestStreak: Math.max(data.longestStreak, currentStreak),
-    lastWorkoutDate: today,
-    totalWorkouts: data.totalWorkouts + 1,
-    workoutDates: [...data.workoutDates, today],
-  };
-
-  persistStreak(updated);
-  return updated;
+export function recordWorkoutForStreak(existing: StreakData, workoutDateIso: string): StreakData {
+  return loadStreakFromWorkoutDates([...existing.workoutDates, workoutDateIso], workoutDateIso);
 }
 
 export function getDaysSinceLastWorkout(streak: StreakData): number {

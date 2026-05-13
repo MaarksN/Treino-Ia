@@ -16,7 +16,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { HeartRateReading, UserProfile, WearableSession } from '../types';
+import { BiometricPersistenceMeta, HeartRateReading, UserProfile, WearableSession } from '../types';
 import { PremiumFeatureGate } from './PremiumPaywall';
 import {
   calcHRZones,

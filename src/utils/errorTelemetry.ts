@@ -68,11 +68,27 @@ export async function flushErrorTelemetry(endpoint = '/api/telemetry/errors'): P
 
   if (!events.length) return;
 
+  let headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  try {
+    const { supabase } = await import('../services/supabaseClient');
+    const { data } = await supabase.auth.getSession();
+
+    if (data.session?.access_token) {
+      headers = {
+        ...headers,
+        Authorization: `Bearer ${data.session.access_token}`,
+      };
+    }
+  } catch {
+    // Telemetry can still be flushed anonymously.
+  }
+
   const response = await fetch(endpoint, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify({ events }),
   });
 

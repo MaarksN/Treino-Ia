@@ -1,20 +1,62 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Treino IA
 
-# Run and deploy your AI Studio app
+Aplicativo React/Vite para treino, IA, nutrição, recuperação, billing premium, PWA, integrações e operação em Vercel/Supabase.
 
-This contains everything you need to run your app locally.
+## Stack
 
-View your app in AI Studio: https://ai.studio/apps/fec58c7d-2eb3-41db-8cfc-9b8866f0b199
+- React 19 + Vite
+- TypeScript
+- Supabase Auth/DB/Storage
+- Vercel Functions
+- Stripe Billing
+- Gemini via `/api/gemini-proxy`
+- Vitest
 
-## Run Locally
+## Rodar localmente
 
-**Prerequisites:**  Node.js
+```bash
+npm install
+npm run dev
+```
 
+Abra `http://localhost:3000`.
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Validação
+
+```bash
+npm run typecheck
+npm test
+npm run build
+npm run validate
+```
+
+## Ambiente
+
+Copie `.env.example` para seu ambiente local e configure:
+
+- `GEMINI_API_KEY`
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_PRICE_*`
+
+Segredos de CI/CD ficam no GitHub Actions: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`.
+
+## Produção
+
+- `vercel.json` define headers de segurança, CSP e cron de retenção.
+- `.github/workflows/ci.yml` roda typecheck, testes e build.
+- `.github/workflows/vercel-deploy.yml` publica via Vercel CLI quando os secrets estiverem configurados.
+- `.github/workflows/lighthouse.yml` executa Lighthouse CI.
+
+## Documentação
+
+- API: `docs/api/openapi.yaml`
+- Segurança: `docs/security/responsible-disclosure.md`
+- Privacidade: `docs/legal/privacy-policy.md`
+- Acessibilidade: `docs/accessibility-wcag-vpat.md`
+- Disaster recovery: `docs/disaster-recovery.md`
+- Blocos 11-20: `docs/bloco-*.md`
