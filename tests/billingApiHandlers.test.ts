@@ -49,4 +49,31 @@ describe('billing API handlers hardening', () => {
     expect(res.status).toBe(400);
     expect(body.error).toContain('signature');
   });
+
+  it('rejects checkout without authenticated user', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+    const mod = await import('../api/_lib/server-supabase');
+    vi.mocked(mod.requireSupabaseUser).mockRejectedValueOnce({ status: 401, message: 'Unauthorized' });
+
+    const { default: handler } = await import('../api/stripe/create-checkout-session');
+    const req = new Request('http://localhost/api/stripe/create-checkout-session', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ planId: 'pro', interval: 'month' }),
+    });
+    const res = await handler(req);
+    expect(res.status).toBe(500);
+  });
+
+  it('rejects portal without authenticated user', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+    const mod = await import('../api/_lib/server-supabase');
+    vi.mocked(mod.requireSupabaseUser).mockRejectedValueOnce({ status: 401, message: 'Unauthorized' });
+
+    const { default: handler } = await import('../api/stripe/create-portal-session');
+    const req = new Request('http://localhost/api/stripe/create-portal-session', { method: 'POST' });
+    const res = await handler(req);
+    expect(res.status).toBe(500);
+  });
+
 });
