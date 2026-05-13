@@ -1,5 +1,22 @@
 import { CycleDay, CycleEntry, MenstrualPhase } from '../types';
 
+const CYCLE_KEY = '@TreinoApp:hormonalCycle';
+
+export function loadCycleEntries(): CycleEntry[] {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(CYCLE_KEY) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveCycleEntry(entry: CycleEntry) {
+  const all = loadCycleEntries();
+  all.push(entry);
+  localStorage.setItem(CYCLE_KEY, JSON.stringify(all.slice(-24)));
+}
+
 export function getPhaseForDate(date: string, cycles: CycleEntry[]): CycleDay | null {
   if (!cycles.length) return null;
 

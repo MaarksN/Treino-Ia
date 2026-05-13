@@ -1,0 +1,22 @@
+﻿# Checklist — Bloco 08 — Periodização Científica Avançada
+
+- [ ] 1. Item 01
+- [ ] 2. Item 02
+- [ ] 3. Item 03
+- [ ] 4. Item 04
+- [ ] 5. Item 05
+- [ ] 6. Item 06
+- [ ] 7. Item 07
+- [ ] 8. Item 08
+- [ ] 9. Item 09
+- [ ] 10. Item 10
+- [ ] 11. Item 11
+- [ ] 12. Item 12
+- [ ] 13. Item 13
+- [ ] 14. Item 14
+- [ ] 15. Item 15
+- [ ] 16. Item 16
+- [ ] 17. Item 17
+- [ ] 18. Item 18
+- [ ] 19. Item 19
+- [ ] 20. Item 20

@@ -5,42 +5,46 @@
   --font-display: "Bebas Neue", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Share Tech Mono", ui-monospace, SFMono-Regular, monospace;
   
-  --color-brand-neon: #00F0FF;
-  --color-brand-neon-hover: #00C3CF;
-  --color-brand-magenta: #FF003C;
-  --color-brand-dark: #050A1F;
-  --color-brand-gray: #0A1230;
-  --color-brand-surface: #101B3D;
-  --color-brand-light: #AEE0FF;
-  --color-brand-muted: #4B6B99;
-  --gradient-hero: linear-gradient(135deg, #050A1F 0%, #0A1230 100%);
+  --color-brand-neon: #19A7FF;
+  --color-brand-neon-hover: #0B7DFF;
+  --color-brand-magenta: #8B5CF6;
+  --color-brand-dark: #030817;
+  --color-brand-gray: #120E2F;
+  --color-brand-surface: #1B1550;
+  --color-brand-light: #F8D77A;
+  --color-brand-muted: #9FB0D9;
+  --color-brand-gold: #F8D77A;
+  --color-brand-purple: #8B5CF6;
+  --gradient-hero: linear-gradient(135deg, #030817 0%, #101C46 48%, #261457 100%);
   
-  --color-white: #AEE0FF; /* Overwrite white to our light blue */
+  --color-white: #F8D77A; /* Overwrite white to our gold accent */
 }
 
 :root {
-  --color-brand-neon: #a3e635;
-  --color-brand-neon-hover: #84cc16;
-  --color-brand-magenta: #f43f5e;
-  --color-brand-dark: #0a0a0a;
-  --color-brand-gray: #141413;
-  --color-brand-surface: #1a1917;
-  --color-brand-light: #f8fafc;
-  --color-brand-muted: #6b7280;
-  --gradient-hero: linear-gradient(135deg, #0a0a0a 0%, #1a1917 100%);
+  --color-brand-neon: #19A7FF;
+  --color-brand-neon-hover: #0B7DFF;
+  --color-brand-magenta: #8B5CF6;
+  --color-brand-dark: #030817;
+  --color-brand-gray: #120E2F;
+  --color-brand-surface: #1B1550;
+  --color-brand-light: #F8D77A;
+  --color-brand-muted: #9FB0D9;
+  --color-brand-gold: #F8D77A;
+  --color-brand-purple: #8B5CF6;
+  --gradient-hero: linear-gradient(135deg, #030817 0%, #101C46 48%, #261457 100%);
 }
 
 @layer utilities {
   .shadow-brutal-neon {
-    box-shadow: 0 0 25px 0px rgba(0, 240, 255, 0.4), inset 0 0 15px 0px rgba(0, 240, 255, 0.2);
+    box-shadow: 0 0 25px 0px rgba(25, 167, 255, 0.42), inset 0 0 15px 0px rgba(25, 167, 255, 0.22);
     border-radius: 28px;
   }
   .shadow-brutal-magenta {
-    box-shadow: 0 0 25px 0px rgba(255, 0, 60, 0.4), inset 0 0 15px 0px rgba(255, 0, 60, 0.2);
+    box-shadow: 0 0 25px 0px rgba(139, 92, 246, 0.42), inset 0 0 15px 0px rgba(139, 92, 246, 0.22);
     border-radius: 28px;
   }
   .shadow-brutal-light {
-    box-shadow: 0 0 25px 0px rgba(174, 224, 255, 0.3);
+    box-shadow: 0 0 25px 0px rgba(248, 215, 122, 0.3);
     border-radius: 28px;
   }
   .border-brutal {
@@ -56,6 +60,10 @@
   }
   .text-shadow-magenta {
     text-shadow: 0 0 10px var(--color-brand-magenta);
+  }
+  .text-stroke-black {
+    -webkit-text-stroke: 2px #02030a;
+    paint-order: stroke fill;
   }
   .clip-path-cyber {
     border-radius: 28px;
@@ -118,8 +126,9 @@ body {
   background-color: var(--color-brand-dark);
   color: var(--color-brand-light);
   background-image: 
-    linear-gradient(color-mix(in srgb, var(--color-brand-neon) 8%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--color-brand-neon) 8%, transparent) 1px, transparent 1px);
+    linear-gradient(135deg, color-mix(in srgb, var(--color-brand-purple) 18%, transparent) 0%, transparent 38%, color-mix(in srgb, var(--color-brand-gold) 9%, transparent) 72%, transparent 100%),
+    linear-gradient(color-mix(in srgb, var(--color-brand-neon) 10%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--color-brand-purple) 10%, transparent) 1px, transparent 1px);
   background-size: 40px 40px;
   background-position: center top;
   position: relative;
@@ -157,7 +166,7 @@ body::after {
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #333; 
+  background: var(--color-brand-purple); 
 }
 
 /* Variáveis de tema controladas por themeUtils.ts */
@@ -175,6 +184,12 @@ body::after {
 .text-brand-magenta { color: var(--color-brand-magenta) !important; }
 .bg-brand-magenta { background-color: var(--color-brand-magenta) !important; }
 .border-brand-magenta { border-color: var(--color-brand-magenta) !important; }
+.text-brand-gold { color: var(--color-brand-gold) !important; }
+.bg-brand-gold { background-color: var(--color-brand-gold) !important; }
+.border-brand-gold { border-color: var(--color-brand-gold) !important; }
+.text-brand-purple { color: var(--color-brand-purple) !important; }
+.bg-brand-purple { background-color: var(--color-brand-purple) !important; }
+.border-brand-purple { border-color: var(--color-brand-purple) !important; }
 
 @keyframes bounceIn {
   0% { transform: scale(0.5); opacity: 0; }

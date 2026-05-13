@@ -20,11 +20,7 @@ function saveMetrics(metrics: BodyMetric[]) {
 
 type BodyTab = 'registro' | 'grafico' | 'fotos' | 'comparador' | 'ia';
 
-interface Props {
-  profile?: unknown;
-}
-
-export function BodyCompositionTracker(_props: Props = {}) {
+export function BodyCompositionTracker() {
   const [metrics, setMetrics] = useState<BodyMetric[]>(() => loadMetrics());
   const [tab, setTab] = useState<BodyTab>('registro');
   const [newMetric, setNewMetric] = useState<Partial<BodyMetric>>({});
@@ -80,7 +76,7 @@ export function BodyCompositionTracker(_props: Props = {}) {
 
         setAiText(analysis);
       } catch {
-        setAiText('Nao consegui analisar a foto agora.');
+        setAiText('Não consegui analisar a foto agora.');
       } finally {
         setLoading(false);
       }
@@ -90,7 +86,7 @@ export function BodyCompositionTracker(_props: Props = {}) {
 
   const tabs: Array<{ id: BodyTab; label: string; Icon: React.ComponentType<{ className?: string }> }> = [
     { id: 'registro', label: 'Medidas', Icon: Plus },
-    { id: 'grafico', label: 'Grafico', Icon: LineChartIcon },
+    { id: 'grafico', label: 'Gráfico', Icon: LineChartIcon },
     { id: 'fotos', label: 'Fotos', Icon: Camera },
     { id: 'comparador', label: 'Comparar', Icon: ScanLine },
     { id: 'ia', label: 'IA', Icon: ScanLine },
@@ -115,7 +111,7 @@ export function BodyCompositionTracker(_props: Props = {}) {
 
   return (
     <div className="bg-brand-gray border-2 border-brand-light/10 p-5 shadow-brutal-light">
-      <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light mb-4">Composicao corporal</h3>
+      <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light mb-4">Composição corporal</h3>
 
       <div className="flex gap-2 flex-wrap mb-5">
         {tabs.map(({ id, label, Icon }) => (
@@ -145,7 +141,7 @@ export function BodyCompositionTracker(_props: Props = {}) {
             <Field label="Peito (cm)" field="chest" />
             <Field label="Cintura (cm)" field="waist" />
             <Field label="Quadril (cm)" field="hip" />
-            <Field label="Braco (cm)" field="arm" />
+            <Field label="Braço (cm)" field="arm" />
             <Field label="Coxa (cm)" field="thigh" />
           </div>
           <button onClick={handleAddMetric} type="button" className="inline-flex items-center gap-2 bg-brand-neon text-brand-dark font-bold px-5 py-3 border-brutal uppercase">
@@ -154,7 +150,7 @@ export function BodyCompositionTracker(_props: Props = {}) {
 
           {latest && (
             <div className="p-3 bg-brand-dark border-2 border-brand-light/10">
-              <p className="text-xs text-brand-muted mb-2">Ultima medicao - {latest.date}</p>
+              <p className="text-xs text-brand-muted mb-2">Última medição - {latest.date}</p>
               <div className="grid grid-cols-3 gap-2 text-sm">
                 {latest.weight && <span className="text-brand-light">{latest.weight}kg</span>}
                 {latest.bodyFatPercent && <span className="text-orange-400">{latest.bodyFatPercent}% gordura</span>}
@@ -169,7 +165,7 @@ export function BodyCompositionTracker(_props: Props = {}) {
         <div>
           {weightChartData.length >= 2 ? (
             <div className="h-64">
-              <p className="text-xs text-brand-muted mb-2">Evolucao do peso</p>
+              <p className="text-xs text-brand-muted mb-2">Evolução do peso</p>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={weightChartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -181,7 +177,7 @@ export function BodyCompositionTracker(_props: Props = {}) {
               </ResponsiveContainer>
             </div>
           ) : (
-            <p className="text-brand-muted text-sm">Registre pelo menos 2 medicoes para ver o grafico.</p>
+            <p className="text-brand-muted text-sm">Registre pelo menos 2 medições para ver o gráfico.</p>
           )}
         </div>
       )}
@@ -219,7 +215,7 @@ export function BodyCompositionTracker(_props: Props = {}) {
 
       {tab === 'ia' && (
         <div className="space-y-4">
-          <p className="text-brand-muted text-sm">Acompanhe analises visuais e metas de recomposicao a partir das fotos registradas.</p>
+          <p className="text-brand-muted text-sm">Acompanhe análises visuais e metas de recomposição a partir das fotos registradas.</p>
           {metrics.some(metric => metric.aiAnalysis) ? (
             <div className="space-y-3">
               {metrics.filter(metric => metric.aiAnalysis).map(metric => (
@@ -230,7 +226,7 @@ export function BodyCompositionTracker(_props: Props = {}) {
               ))}
             </div>
           ) : (
-            <p className="text-brand-muted text-sm">Adicione fotos de progresso para gerar analises de IA.</p>
+            <p className="text-brand-muted text-sm">Adicione fotos de progresso para gerar análises de IA.</p>
           )}
         </div>
       )}

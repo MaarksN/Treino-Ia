@@ -3,7 +3,6 @@ import { ChevronLeft, ChevronRight, CheckCircle2, Video, X } from 'lucide-react'
 import { Exercise, WorkoutDay, WorkoutHistoryRecord, WorkoutPlan } from '../types';
 import { RestTimer } from './RestTimer';
 import { SetTracker } from './SetTracker';
-import { getExerciseCompletedSets } from '../services/workoutExecutionService';
 
 type DayModeProps = {
   day: WorkoutDay;
@@ -133,14 +132,7 @@ export function ActiveWorkoutView(props: Props) {
   const completeAndNext = () => {
     if (!current) return;
 
-    const completedSets = getExerciseCompletedSets(current.ex);
-    const updated = {
-      ...current.ex,
-      completed: true,
-      actualWeight: current.ex.actualWeight || completedSets.at(-1)?.weight,
-      actualReps: current.ex.actualReps || completedSets.map(log => log.reps).filter(Boolean).join(','),
-      rpe: current.ex.rpe || completedSets.at(-1)?.rpe,
-    };
+    const updated = { ...current.ex, completed: true };
     const updatedDay = persistExercise(updated);
     setRestSecs(parseRest(current.ex.rest));
     setRestKey(Date.now());
@@ -205,23 +197,8 @@ export function ActiveWorkoutView(props: Props) {
         </div>
 
         {previousData && (
-          <div className="mb-6 p-3 bg-brand-neon/10 border-2 border-brand-neon/30 text-xs font-mono text-brand-light/80 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <span>
-              Última sessão: {previousData.actualWeight ? `${previousData.actualWeight}kg` : '-'} x {previousData.actualReps || '-'}
-            </span>
-            <button
-              type="button"
-              onClick={() => persistExercise({
-                ...current.ex,
-                actualWeight: previousData.actualWeight,
-                actualReps: previousData.actualReps,
-                rpe: previousData.rpe,
-                setLogs: previousData.setLogs?.map(log => ({ ...log, completedAt: undefined })),
-              })}
-              className="text-brand-neon font-black uppercase tracking-widest hover:text-brand-light text-left md:text-right"
-            >
-              Auto-preencher
-            </button>
+          <div className="mb-6 p-3 bg-brand-neon/10 border-2 border-brand-neon/30 text-xs font-mono text-brand-light/80">
+            Ultima vez: {previousData.actualWeight ? `${previousData.actualWeight}kg` : '-'} x {previousData.actualReps || '-'}
           </div>
         )}
 
@@ -240,14 +217,7 @@ export function ActiveWorkoutView(props: Props) {
         )}
 
         <div className="bg-brand-gray border-2 border-brand-light/10 p-4 mb-6">
-          <SetTracker
-            exercise={current.ex}
-            onUpdate={(updated) => persistExercise(updated)}
-            onSetCompleted={() => {
-              setRestSecs(parseRest(current.ex.rest));
-              setRestKey(Date.now());
-            }}
-          />
+          <SetTracker exercise={current.ex} onUpdate={(updated) => persistExercise(updated)} />
         </div>
 
         <textarea

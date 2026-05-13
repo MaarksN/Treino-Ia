@@ -1,11 +1,7 @@
 import React, { useState } from 'react';
 import { StreakData } from '../types';
 import { generateGeminiContent } from '../services/geminiProxyClient';
-import { getDaysSinceLastWorkout } from '../utils/streakUtils';
-import {
-  createAlternativeWorkoutSuggestion,
-  createWorkoutCalendarItem,
-} from '../services/retentionService';
+
 
 interface Props {
   streak: StreakData;
@@ -24,12 +20,10 @@ const MOTIVATIONAL_MESSAGES = [
 ];
 
 export function ReactivationEngine({ streak, userName = 'Atleta', goal = 'hipertrofia' }: Props) {
-  const daysSince = getDaysSinceLastWorkout(streak);
+  const daysSince = streak.lastWorkoutDate ? Math.floor((new Date().setHours(0,0,0,0) - new Date(streak.lastWorkoutDate).getTime()) / 86400000) : Infinity;
   const safeDays = Number.isFinite(daysSince) ? daysSince : 14;
   const [aiMotivation, setAiMotivation] = useState('');
   const [loading, setLoading] = useState(false);
-  const [savingAlternative, setSavingAlternative] = useState('');
-  const [actionStatus, setActionStatus] = useState('');
   const message = MOTIVATIONAL_MESSAGES.reduce((previous, current) => safeDays >= current.days ? current : previous);
   const colorMap: Record<string, string> = {
     fire: 'border-brand-neon/40 bg-brand-neon/5',
@@ -60,37 +54,6 @@ Tom: energético, direto, sem clichês vazios. Mencione o objetivo e o históric
     }
   };
 
-  const scheduleAlternativeWorkout = async (label: string, durationMinutes: number) => {
-    setSavingAlternative(label);
-    setActionStatus('');
-
-    try {
-      const suggestion = await createAlternativeWorkoutSuggestion({
-        durationMinutes,
-        goal,
-        reason: 'reativacao_automatica',
-      });
-
-      await createWorkoutCalendarItem({
-        eventType: 'workout',
-        title: suggestion.title,
-        scheduledFor: new Date().toISOString().slice(0, 10),
-        source: 'reactivation_engine',
-        metadata: {
-          alternativeWorkoutId: suggestion.id,
-          exercises: suggestion.exercises,
-          label,
-        },
-      });
-
-      setActionStatus('Treino alternativo salvo na agenda.');
-    } catch (error) {
-      setActionStatus(error instanceof Error ? error.message : 'Não foi possível salvar o treino alternativo.');
-    } finally {
-      setSavingAlternative('');
-    }
-  };
-
   if (safeDays === 0 && streak.currentStreak < 3) return null;
 
   return (
@@ -110,23 +73,12 @@ Tom: energético, direto, sem clichês vazios. Mencione o objetivo e o históric
         <div className="mt-4 p-3 bg-brand-dark/70 border-2 border-brand-light/10">
           <p className="text-xs text-brand-muted mb-2">Treino expresso para retornar agora</p>
           <div className="flex gap-2 flex-wrap">
-            {[
-              { label: 'Full body 20min', duration: 20 },
-              { label: 'Upper body 15min', duration: 15 },
-              { label: 'Core + mobilidade 12min', duration: 12 },
-            ].map(item => (
-              <button
-                key={item.label}
-                type="button"
-                onClick={() => scheduleAlternativeWorkout(item.label, item.duration)}
-                disabled={savingAlternative === item.label}
-                className="px-3 py-2 text-xs bg-brand-neon/10 border-2 border-brand-neon/30 text-brand-neon hover:bg-brand-neon/20 transition-colors disabled:opacity-50"
-              >
-                {savingAlternative === item.label ? 'Salvando...' : item.label}
+            {['Full body 20min', 'Upper body', 'Core + mobilidade'].map(item => (
+              <button key={item} type="button" className="px-3 py-2 text-xs bg-brand-neon/10 border-2 border-brand-neon/30 text-brand-neon hover:bg-brand-neon/20 transition-colors">
+                {item}
               </button>
             ))}
           </div>
-          {actionStatus && <p className="text-xs text-brand-light/70 mt-2">{actionStatus}</p>}
         </div>
       )}
     </div>
