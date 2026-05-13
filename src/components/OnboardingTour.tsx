@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { saveOnboardingProgress } from '../services/retentionService';
 
 const STEPS = [
   {
@@ -47,56 +46,15 @@ interface Props {
 
 export function OnboardingTour({ onComplete, onSkip }: Props) {
   const [step, setStep] = useState(0);
-  const [syncStatus, setSyncStatus] = useState('');
   const current = STEPS[step];
   const isLast = step === STEPS.length - 1;
   const progress = ((step + 1) / STEPS.length) * 100;
-
-  useEffect(() => {
-    let cancelled = false;
-
-    saveOnboardingProgress({
-      currentStep: step + 1,
-      totalSteps: STEPS.length,
-      payload: {
-        title: current.title,
-        source: 'onboarding_tour',
-      },
-    })
-      .then(() => {
-        if (!cancelled) setSyncStatus('Progresso salvo em nuvem.');
-      })
-      .catch(error => {
-        if (!cancelled) {
-          setSyncStatus(error instanceof Error ? error.message : 'Auto-save indisponível.');
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [step, current.title]);
-
-  const complete = async (callback: () => void) => {
-    try {
-      await saveOnboardingProgress({
-        currentStep: STEPS.length,
-        totalSteps: STEPS.length,
-        payload: { source: 'onboarding_tour' },
-        completed: true,
-      });
-    } catch {
-      // O fechamento local continua; o hub de retenção mostra o status de sincronização.
-    } finally {
-      callback();
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-50 bg-brand-dark flex items-center justify-center p-6 print:hidden">
       <div className="w-full max-w-sm">
         <div className="flex justify-end mb-6">
-          <button type="button" onClick={() => complete(onSkip)} className="flex items-center gap-1 text-brand-muted text-sm hover:text-white transition-colors">
+          <button type="button" onClick={onSkip} className="flex items-center gap-1 text-brand-muted text-sm hover:text-white transition-colors">
             <X size={16} /> Pular
           </button>
         </div>
@@ -138,18 +96,12 @@ export function OnboardingTour({ onComplete, onSkip }: Props) {
           )}
           <button
             type="button"
-            onClick={() => (isLast ? complete(onComplete) : setStep(value => value + 1))}
+            onClick={() => (isLast ? onComplete() : setStep(value => value + 1))}
             className="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl bg-brand-neon text-brand-dark font-black text-base"
           >
             {isLast ? 'Começar' : <>Próximo <ChevronRight size={18} /></>}
           </button>
         </div>
-
-        {syncStatus && (
-          <p className="mt-3 text-center text-[11px] text-brand-muted">
-            {syncStatus}
-          </p>
-        )}
 
         <div className="mt-4 h-1 bg-white/10 rounded-full overflow-hidden">
           <div

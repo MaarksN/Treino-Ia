@@ -1,28 +1,22 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Activity, Camera, Droplets, Heart, Moon, RefreshCw } from 'lucide-react';
-import { BiometricPersistenceMeta, BiometricSnapshot, UserProfile } from '../types';
+import { UserProfile } from '../types';
+import { loadWearableSessions } from '../services/bluetoothService';
+import { loadPoseAnalyses } from '../services/poseService';
 import {
   getAvgSleepDuration,
   getAvgSleepQuality,
   getSleepQualityColor,
   getTodayHydration,
+  loadHydrationEntries,
+  loadHydrationGoal,
+  loadSleepEntries,
 } from '../utils/biometricUtils';
-import { getPhaseForDate, PHASE_CONFIG } from '../utils/hormonalUtils';
-import { loadBiometricSnapshot } from '../services/biometricService';
-import { BiometricDataModeBadge } from './BiometricDataModeBadge';
+import { getPhaseForDate, loadCycleEntries, PHASE_CONFIG } from '../utils/hormonalUtils';
 
 interface Props {
   profile: UserProfile;
 }
-
-const EMPTY_SNAPSHOT: BiometricSnapshot = {
-  wearableSessions: [],
-  hydrationEntries: [],
-  hydrationGoal: { dailyMl: 2500, remindEveryMinutes: 60 },
-  sleepEntries: [],
-  cycleEntries: [],
-  poseAnalyses: [],
-};
 
 function truncate(text: string, maxLength: number) {
   return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
@@ -30,38 +24,28 @@ function truncate(text: string, maxLength: number) {
 
 export function BiometricDashboard({ profile }: Props) {
   const [refreshKey, setRefreshKey] = useState(0);
-  const [data, setData] = useState<BiometricSnapshot>(EMPTY_SNAPSHOT);
-  const [meta, setMeta] = useState<BiometricPersistenceMeta | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const today = new Date().toISOString().slice(0, 10);
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError('');
+  const data = useMemo(() => {
+    const wearableSessions = loadWearableSessions();
+    const hydrationEntries = loadHydrationEntries();
+    const sleepEntries = loadSleepEntries();
+    const cycleEntries = loadCycleEntries();
+    const poseAnalyses = loadPoseAnalyses();
+    const hydrationGoal = loadHydrationGoal();
 
-    loadBiometricSnapshot()
-      .then(result => {
-        if (cancelled) return;
-        setData(result.data);
-        setMeta(result.meta);
-      })
-      .catch(err => {
-        if (cancelled) return;
-        setError(err instanceof Error ? err.message : 'Falha ao carregar biometria.');
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
+    return {
+      wearableSessions,
+      hydrationEntries,
+      sleepEntries,
+      cycleEntries,
+      poseAnalyses,
+      hydrationGoal,
     };
   }, [refreshKey]);
 
   const todayHydration = getTodayHydration(data.hydrationEntries);
-  const hydrationPct = Math.min((todayHydration / Math.max(data.hydrationGoal.dailyMl, 1)) * 100, 100);
+  const hydrationPct = Math.min((todayHydration / data.hydrationGoal.dailyMl) * 100, 100);
   const avgSleepQuality = getAvgSleepQuality(data.sleepEntries);
   const avgSleepDuration = getAvgSleepDuration(data.sleepEntries);
   const todayPhase = getPhaseForDate(today, data.cycleEntries);
@@ -149,20 +133,6 @@ export function BiometricDashboard({ profile }: Props) {
           <RefreshCw size={17} />
         </button>
       </div>
-
-      <BiometricDataModeBadge meta={meta} />
-
-      {loading && (
-        <div className="mb-4 p-3 bg-brand-dark rounded-xl border border-white/10 text-brand-muted text-sm">
-          Carregando dados biométricos...
-        </div>
-      )}
-
-      {error && (
-        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
-          {error}
-        </div>
-      )}
 
       <div className="flex items-center gap-4 mb-5 p-4 bg-brand-dark rounded-xl border border-white/10">
         <div className="relative w-20 h-20 flex-shrink-0">
