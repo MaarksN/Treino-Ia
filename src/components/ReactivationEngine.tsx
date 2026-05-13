@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { StreakData } from '../types';
 import { generateGeminiContent } from '../services/geminiProxyClient';
-import { getDaysSinceLastWorkout } from '../utils/streakUtils';
+
 
 interface Props {
   streak: StreakData;
@@ -20,7 +20,7 @@ const MOTIVATIONAL_MESSAGES = [
 ];
 
 export function ReactivationEngine({ streak, userName = 'Atleta', goal = 'hipertrofia' }: Props) {
-  const daysSince = getDaysSinceLastWorkout(streak);
+  const daysSince = streak.lastWorkoutDate ? Math.floor((new Date().setHours(0,0,0,0) - new Date(streak.lastWorkoutDate).getTime()) / 86400000) : Infinity;
   const safeDays = Number.isFinite(daysSince) ? daysSince : 14;
   const [aiMotivation, setAiMotivation] = useState('');
   const [loading, setLoading] = useState(false);

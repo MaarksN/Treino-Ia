@@ -1,97 +1,64 @@
-import React, { useState } from 'react';
-import { Plus, Target, X } from 'lucide-react';
-import { Challenge } from '../types';
-import { getOrCreateMonthlyChallenges, getOrCreateWeeklyChallenges, loadChallenges, saveChallenges } from '../utils/challengeUtils';
 
-export function ChallengeCenter() {
-  const [showCustom, setShowCustom] = useState(false);
-  const [newChallenge, setNewChallenge] = useState<Partial<Challenge>>({ type: 'weekly' });
-  const [version, setVersion] = useState(0);
-  const storedChallenges = loadChallenges();
-  const generated = [...getOrCreateWeeklyChallenges(), ...getOrCreateMonthlyChallenges()];
-  const activeChallenges = [...new Map([...generated, ...storedChallenges].map(challenge => [challenge.id, challenge])).values()];
-  const today = new Date().toISOString().slice(0, 10);
+import React from 'react';
+import { Target } from 'lucide-react';
+import { GamificationMission } from '../services/gamificationService';
 
-  const addCustomChallenge = () => {
-    if (!newChallenge.name || !newChallenge.target) return;
+interface Props {
+  missions: GamificationMission[];
+}
 
-    const now = new Date();
-    const days = newChallenge.type === 'monthly' ? 30 : 7;
-    const challenge: Challenge = {
-      id: crypto.randomUUID(),
-      name: newChallenge.name,
-      description: newChallenge.description || '',
-      emoji: newChallenge.emoji || '🎯',
-      type: newChallenge.type || 'custom',
-      target: newChallenge.target,
-      current: 0,
-      unit: newChallenge.unit || 'unidades',
-      startDate: now.toISOString().slice(0, 10),
-      endDate: new Date(now.getTime() + days * 86400000).toISOString().slice(0, 10),
-      completed: false,
-      reward: newChallenge.reward,
-    };
-
-    saveChallenges([...storedChallenges, challenge]);
-    setShowCustom(false);
-    setNewChallenge({ type: 'weekly' });
-    setVersion(value => value + 1);
-  };
-
-  void version;
+export function ChallengeCenter({ missions = [] }: Props) {
+  const activeMissions = missions.filter(m => m.status === 'active' || m.status === 'completed');
 
   return (
     <div className="bg-brand-gray border-2 border-brand-light/10 p-5 shadow-brutal-light">
       <div className="flex items-center justify-between mb-4 gap-3">
         <div className="flex items-center gap-2">
           <Target className="w-5 h-5 text-brand-neon" />
-          <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">Desafios</h3>
+          <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">Missões</h3>
         </div>
-        <button onClick={() => setShowCustom(value => !value)} type="button" className="inline-flex items-center gap-1 text-xs text-brand-neon border-2 border-brand-neon/30 px-3 py-2 hover:bg-brand-neon/10 transition-colors uppercase font-bold">
-          <Plus size={12} /> Criar
-        </button>
       </div>
 
-      {showCustom && (
-        <div className="mb-4 p-4 bg-brand-dark border-2 border-brand-light/10 space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-bold text-brand-light uppercase">Novo desafio</p>
-            <button onClick={() => setShowCustom(false)} type="button"><X size={16} className="text-brand-muted" /></button>
-          </div>
-          <input placeholder="Nome" value={newChallenge.name || ''} onChange={event => setNewChallenge(value => ({ ...value, name: event.target.value }))} className="w-full bg-brand-gray border-2 border-brand-light/10 px-3 py-2 text-sm text-brand-light outline-none focus:border-brand-neon" />
-          <input placeholder="Descrição" value={newChallenge.description || ''} onChange={event => setNewChallenge(value => ({ ...value, description: event.target.value }))} className="w-full bg-brand-gray border-2 border-brand-light/10 px-3 py-2 text-sm text-brand-light outline-none focus:border-brand-neon" />
-          <div className="grid grid-cols-2 gap-2">
-            <input placeholder="Emoji" value={newChallenge.emoji || ''} onChange={event => setNewChallenge(value => ({ ...value, emoji: event.target.value }))} className="bg-brand-gray border-2 border-brand-light/10 px-3 py-2 text-sm text-brand-light outline-none focus:border-brand-neon" />
-            <input type="number" placeholder="Meta" value={newChallenge.target || ''} onChange={event => setNewChallenge(value => ({ ...value, target: Number(event.target.value) }))} className="bg-brand-gray border-2 border-brand-light/10 px-3 py-2 text-sm text-brand-light outline-none focus:border-brand-neon" />
-          </div>
-          <input placeholder="Unidade" value={newChallenge.unit || ''} onChange={event => setNewChallenge(value => ({ ...value, unit: event.target.value }))} className="w-full bg-brand-gray border-2 border-brand-light/10 px-3 py-2 text-sm text-brand-light outline-none focus:border-brand-neon" />
-          <button onClick={addCustomChallenge} type="button" className="w-full bg-brand-neon text-brand-dark font-black py-3 border-brutal uppercase tracking-widest">Criar desafio</button>
-        </div>
-      )}
-
       <div className="space-y-3">
-        {activeChallenges.filter(challenge => challenge.endDate >= today).map(challenge => {
-          const pct = Math.min((challenge.current / challenge.target) * 100, 100);
+        {activeMissions.length === 0 && (
+          <p className="text-sm text-brand-muted">Nenhuma missão disponível no momento.</p>
+        )}
+
+        {activeMissions.map(mission => {
+          const pct = Math.min((mission.progress / mission.target) * 100, 100);
+          const isCompleted = mission.progress >= mission.target;
+
           return (
-            <div key={challenge.id} className={`p-4 border-2 transition-colors ${challenge.completed ? 'border-brand-neon/50 bg-brand-neon/5' : 'border-brand-light/10 bg-brand-dark'}`}>
+            <div key={mission.id} className={`p-4 border-2 transition-colors ${isCompleted ? 'border-brand-neon/50 bg-brand-neon/5' : 'border-brand-light/10 bg-brand-dark'}`}>
               <div className="flex items-start justify-between mb-2 gap-3">
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-2xl">{challenge.emoji}</span>
+                  <span className="text-2xl">{mission.type === 'boss' ? '👹' : '🎯'}</span>
                   <div className="min-w-0">
-                    <p className="text-brand-light font-semibold text-sm">{challenge.name}</p>
-                    <p className="text-brand-muted text-xs">{challenge.description}</p>
+                    <p className="text-brand-light font-semibold text-sm">{mission.title}</p>
+                    <p className="text-brand-muted text-xs">{mission.description}</p>
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-brand-neon font-bold text-sm tabular-nums">{challenge.current}/{challenge.target}</p>
-                  <p className="text-brand-muted text-xs">{challenge.unit}</p>
+                  <p className="text-brand-neon font-bold text-sm tabular-nums">{mission.progress}/{mission.target}</p>
+                  <p className="text-brand-muted text-[10px] uppercase">{mission.metric}</p>
                 </div>
               </div>
-              <div className="h-2 bg-white/10 overflow-hidden">
-                <div className="h-full transition-all duration-500" style={{ width: `${pct}%`, background: challenge.completed ? '#a3e635' : '#60a5fa' }} />
+
+              <div className="h-2 bg-white/10 overflow-hidden mb-2">
+                <div className="h-full transition-all duration-500" style={{ width: `${pct}%`, background: isCompleted ? '#a3e635' : '#60a5fa' }} />
               </div>
-              {challenge.completed && <p className="text-brand-neon text-xs font-bold mt-2">Concluído! {challenge.reward}</p>}
-              <p className="text-brand-light/30 text-[10px] mt-1">até {challenge.endDate}</p>
+
+              <div className="flex items-center justify-between mt-2">
+                <div className="flex gap-2">
+                  <span className="px-2 py-0.5 bg-brand-neon/10 text-brand-neon border border-brand-neon/20 text-[10px] font-bold uppercase rounded-sm">+{mission.xpReward} XP</span>
+                  <span className="px-2 py-0.5 bg-yellow-400/10 text-yellow-400 border border-yellow-400/20 text-[10px] font-bold uppercase rounded-sm">+{mission.coinReward} Coins</span>
+                </div>
+                {isCompleted && <p className="text-brand-neon text-xs font-bold">Concluído!</p>}
+              </div>
+
+              {mission.expiresAt && (
+                <p className="text-brand-light/30 text-[10px] mt-2">Expira em: {new Date(mission.expiresAt).toLocaleDateString('pt-BR')}</p>
+              )}
             </div>
           );
         })}
