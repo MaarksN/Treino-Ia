@@ -9,6 +9,9 @@ on:
       - "index.html"
       - "vite.config.ts"
 
+permissions:
+  contents: read
+
 jobs:
   lhci:
     runs-on: ubuntu-latest
