@@ -152,3 +152,17 @@ drop policy if exists legacy_training_migration_audits_own_insert on public.lega
 create policy legacy_training_migration_audits_own_insert
   on public.legacy_training_migration_audits for insert
   with check (auth.uid() = user_id);
+
+grant usage on schema public to anon, authenticated;
+
+grant select on public.training_user_profiles to anon;
+grant select on public.training_workout_plans to anon;
+grant select on public.training_workout_history_records to anon;
+grant select on public.legacy_training_migration_audits to anon;
+
+grant select, insert, update, delete on public.training_user_profiles to authenticated;
+grant select, insert, update, delete on public.training_workout_plans to authenticated;
+grant select, insert, update, delete on public.training_workout_history_records to authenticated;
+grant select, insert on public.legacy_training_migration_audits to authenticated;
+
+notify pgrst, 'reload schema';
