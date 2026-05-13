@@ -248,14 +248,7 @@ export default function App() {
 
     void migrateLegacyTrainingState();
 
-    const savedUser = localStorage.getItem('@TreinoApp:user');
-    const savedPlans = localStorage.getItem('@TreinoApp:plans');
-    const savedHistory = localStorage.getItem('@TreinoApp:history');
-    const savedProfile = localStorage.getItem('@TreinoApp:profile');
-    const savedSessions = localStorage.getItem('@TreinoApp:sessions');
-    const savedRecovery = localStorage.getItem('@TreinoApp:recovery');
     const savedTheme = localStorage.getItem('@TreinoApp:theme');
-
     if (savedTheme) {
       setDarkMode(savedTheme === 'dark');
     }
@@ -264,46 +257,7 @@ export default function App() {
       .then(entitlement => setIsPremium(entitlement.isPremium))
       .catch(() => setIsPremium(false));
 
-    if (savedHistory) {
-      setWorkoutHistory(JSON.parse(savedHistory));
-    }
-
-    if (savedProfile) {
-      setProfile(JSON.parse(savedProfile));
-    }
-
-    if (savedSessions) {
-      setSessions(JSON.parse(savedSessions));
-    }
-
-    if (savedRecovery) {
-      setRecoveryCheckin(JSON.parse(savedRecovery));
-    }
-
-    if (savedUser) {
-      const parsedUser = JSON.parse(savedUser);
-      setUser(parsedUser);
-      void recordGamificationEvent('login').catch(error => captureError(error, 'App.recordLogin'));
-      if (parsedUser.profile && !savedProfile) {
-        setProfile(parsedUser.profile);
-      }
-      if (savedPlans) {
-        try {
-          const parsed = JSON.parse(savedPlans);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setPlans(parsed);
-            setCurrentPlanId(parsed[0].id);
-            setView('dashboard');
-            return;
-          }
-        } catch (e) {
-          captureError(e, 'App.restorePlans');
-        }
-      }
-      setView('home');
-    } else {
-      setView('registration');
-    }
+    setView('registration');
   }, []);
 
   useEffect(() => {
