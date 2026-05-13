@@ -19,15 +19,15 @@
 }
 
 :root {
-  --color-brand-neon: #a3e635;
-  --color-brand-neon-hover: #84cc16;
-  --color-brand-magenta: #f43f5e;
-  --color-brand-dark: #0a0a0a;
-  --color-brand-gray: #141413;
-  --color-brand-surface: #1a1917;
-  --color-brand-light: #f8fafc;
-  --color-brand-muted: #6b7280;
-  --gradient-hero: linear-gradient(135deg, #0a0a0a 0%, #1a1917 100%);
+  --color-brand-neon: #00F0FF;
+  --color-brand-neon-hover: #00C3CF;
+  --color-brand-magenta: #FF003C;
+  --color-brand-dark: #050A1F;
+  --color-brand-gray: #0A1230;
+  --color-brand-surface: #101B3D;
+  --color-brand-light: #AEE0FF;
+  --color-brand-muted: #4B6B99;
+  --gradient-hero: linear-gradient(135deg, #050A1F 0%, #0A1230 100%);
 }
 
 @layer utilities {

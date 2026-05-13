@@ -54,6 +54,7 @@ Segredos de CI/CD ficam no GitHub Actions: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VER
 
 ## Documentação
 
+- Roadmap Fase 2 + 3: `docs/roadmap-fase-2-3-treino-ia.md`
 - API: `docs/api/openapi.yaml`
 - Segurança: `docs/security/responsible-disclosure.md`
 - Privacidade: `docs/legal/privacy-policy.md`
