@@ -61,3 +61,8 @@ Segredos de CI/CD ficam no GitHub Actions: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VER
 - Acessibilidade: `docs/accessibility-wcag-vpat.md`
 - Disaster recovery: `docs/disaster-recovery.md`
 - Blocos 11-20: `docs/bloco-*.md`
+
+
+## Status de execução por fases
+- ✅ Parte 1 (fundação/arquitetura) documentada em `docs/architecture.md`, `docs/database.md`, `docs/deployment.md`, `docs/runbook.md` e `docs/privacy.md`.
+- 🔜 Partes 2–6 serão entregues incrementalmente preservando source-of-truth server-side, RLS e testes críticos.
