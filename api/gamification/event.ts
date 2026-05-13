@@ -9,6 +9,9 @@ const EVENT_REWARDS: Record<string, { xp: number; coins: number }> = {
   login: { xp: 25, coins: 5 },
   checkin: { xp: 80, coins: 20 },
   workout_completed: { xp: 250, coins: 50 },
+  mission_completed: { xp: 50, coins: 10 },
+  item_purchased: { xp: 0, coins: -50 },
+  loot_box_opened: { xp: 0, coins: -10 },
 };
 
 function isSameUtcDay(value?: string | null) {
@@ -53,6 +56,30 @@ export default async function handler(request: Request) {
     }
 
     const supabase = getSupabaseAdmin();
+
+    // Fast path atomic operations via specific RPCs
+    if (eventType === 'item_purchased') {
+      const cost = Math.abs(reward.coins);
+      const { data: profile, error } = await supabase.rpc('purchase_gamification_item', {
+        p_user_id: user.id,
+        p_item_id: body.sourceId || 'c2',
+        p_cost: cost
+      });
+      if (error) throw new HttpError(400, error.message);
+      return json({ profile });
+    }
+
+    if (eventType === 'loot_box_opened') {
+      const cost = Math.abs(reward.coins);
+      const { data: profile, error } = await supabase.rpc('open_loot_box', {
+        p_user_id: user.id,
+        p_cost: cost
+      });
+      if (error) throw new HttpError(400, error.message);
+      return json({ profile });
+    }
+
+    // Standard path for normal XP/Coin events
     const { data: current, error: currentError } = await supabase
       .from('gamification_profiles')
       .upsert({ user_id: user.id }, { onConflict: 'user_id' })

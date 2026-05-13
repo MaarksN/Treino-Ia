@@ -24,9 +24,81 @@ export interface ServerGamificationEvent {
   created_at: string;
 }
 
+
+export interface GamificationMission {
+  id: string;
+  type: 'daily' | 'weekly' | 'flash' | 'boss' | 'weekend';
+  title: string;
+  description: string;
+  metric: string;
+  target: number;
+  progress: number;
+  xpReward: number;
+  coinReward: number;
+  status: 'active' | 'completed' | 'claimed' | 'expired';
+  expiresAt: number;
+  createdAt: number;
+}
+
+export interface CosmeticItem {
+  id: string;
+  type: 'avatar_skin' | 'frame' | 'badge' | 'title' | 'effect';
+  name: string;
+  description: string;
+  emoji: string;
+  rarity: 'common' | 'rare' | 'epic' | 'legendary' | 'mythic';
+  price: number;
+  unlocked: boolean;
+  equipped?: boolean;
+}
+
+export interface SeasonReward {
+  level: number;
+  freeReward?: { label: string; xp?: number; coins?: number; cosmeticId?: string; };
+  eliteReward?: { label: string; xp?: number; coins?: number; cosmeticId?: string; };
+  claimedFree?: boolean;
+  claimedElite?: boolean;
+}
+
+export interface SeasonPassState {
+  id: string;
+  name: string;
+  theme: string;
+  startsAt: number;
+  endsAt: number;
+  seasonXp: number;
+  seasonLevel: number;
+  eliteActive: boolean;
+  rewards: SeasonReward[];
+}
+
+export interface AvatarState {
+  archetype: string;
+  equippedTitle?: string;
+  equippedSkin?: string;
+  equippedFrame?: string;
+  equippedBadge?: string;
+  equippedEffect?: string;
+}
+
+export interface ClanState {
+  id: string;
+  name: string;
+  tag: string;
+  memberCount: number;
+  weeklyXp: number;
+  bossDamage: number;
+}
+
 export interface ServerGamificationState {
   profile: ServerGamificationProfile;
   events: ServerGamificationEvent[];
+  missions: GamificationMission[];
+  cosmetics: CosmeticItem[];
+  season: SeasonPassState;
+  clan: ClanState;
+  avatar: AvatarState;
+  dataMode?: 'mock_dev_only';
 }
 
 export type ServerGamificationEventType = 'login' | 'checkin' | 'workout_completed';

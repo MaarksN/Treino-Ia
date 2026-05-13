@@ -17,9 +17,6 @@ import { generateWorkoutPlan, extractWorkoutFromFile } from './services/geminiSe
 import { AppSettings, Badge, DailyCheckin as DailyCheckinType, FatigueSnapshot, RecoveryCheckin, StreakData, TrainingExercisePerformance, User, UserProfile, WorkoutHistoryEntry, WorkoutHistoryRecord, WorkoutPlan, WorkoutSession } from './types';
 import { calculateReadiness, getTodayCheckin, loadCheckins } from './utils/readinessUtils';
 import { loadHistory, recordWorkoutSession, getTotalVolumeLifted } from './utils/analyticsUtils';
-import { loadStreak, recordWorkoutForStreak } from './utils/streakUtils';
-import { evaluateAndUnlockBadges } from './utils/badgeUtils';
-import { syncChallengeProgress } from './utils/challengeUtils';
 import { recordGamificationEvent } from './services/gamificationService';
 import { enqueueOfflineAction } from './utils/offlineQueue';
 import { registerBackgroundSync } from './utils/pwaUtils';
@@ -124,7 +121,8 @@ export default function App() {
   const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
   const [workoutHistory, setWorkoutHistory] = useState<WorkoutHistoryRecord[]>([]);
   const [analyticsHistory, setAnalyticsHistory] = useState<WorkoutHistoryEntry[]>(() => loadHistory());
-  const [streakData, setStreakData] = useState<StreakData>(() => loadStreak());
+  const [streakData] = useState<StreakData>({ currentStreak: 0, longestStreak: 0, lastWorkoutDate: null, totalWorkouts: 0, workoutDates: [] });
+  const [gamificationState, setGamificationState] = useState<any>(null);
   const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const [challengeVersion, setChallengeVersion] = useState(0);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -328,25 +326,14 @@ export default function App() {
   };
 
   const refreshEngagement = (
-    nextStreak = streakData,
+    streakArg = streakData,
     nextHistory = analyticsHistory,
     nextCheckins = allCheckins
   ) => {
-    syncChallengeProgress(
-      nextHistory.length,
-      getTotalVolumeLifted(nextHistory),
-      nextCheckins.length
-    );
+    // Challenge progress is now synchronized on the server
     setChallengeVersion(value => value + 1);
 
-    const newly = evaluateAndUnlockBadges(
-      nextStreak,
-      nextHistory,
-      nextCheckins.length,
-      getStoredArrayCount('@TreinoApp:prs'),
-      getStoredArrayCount('@TreinoApp:meals')
-    );
-    if (newly.length) setNewBadges(newly);
+    // evaluateAndUnlockBadges removed, badges managed by server
   };
 
   const handleSaveCheckin = (checkin: DailyCheckinType) => {
@@ -360,7 +347,7 @@ export default function App() {
 
   const saveLocalDashboardSnapshot = (
     nextHistory = analyticsHistory,
-    nextStreak = streakData,
+    streakArg = streakData,
     nextCheckins = allCheckins
   ) => {
     try {
@@ -368,7 +355,7 @@ export default function App() {
         plans: plans.length,
         workoutHistory: nextHistory.length,
         totalVolume: getTotalVolumeLifted(nextHistory),
-        currentStreak: nextStreak.currentStreak,
+        currentStreak: streakData.currentStreak,
         checkins: nextCheckins.length,
         updatedAt: new Date().toISOString(),
       });
@@ -406,12 +393,10 @@ export default function App() {
         todayCheckin ? calculateReadiness(todayCheckin).score : undefined
       );
       const nextAnalyticsHistory = loadHistory();
-      const nextStreak = recordWorkoutForStreak();
-      setAnalyticsHistory(nextAnalyticsHistory);
-      setStreakData(nextStreak);
-      setShareEntry(completedEntry);
-      refreshEngagement(nextStreak, nextAnalyticsHistory, allCheckins);
-      saveLocalDashboardSnapshot(nextAnalyticsHistory, nextStreak, allCheckins);
+            setAnalyticsHistory(nextAnalyticsHistory);
+            setShareEntry(completedEntry);
+      refreshEngagement(streakData, nextAnalyticsHistory, allCheckins);
+      saveLocalDashboardSnapshot(nextAnalyticsHistory, streakData, allCheckins);
     }
   };
 
@@ -645,7 +630,7 @@ export default function App() {
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <StreakTracker streak={streakData} />
+            <StreakTracker streak={streakData} profile={gamificationState?.profile} />
             <HabitReminder />
           </div>
 
@@ -653,8 +638,8 @@ export default function App() {
           <ConsistencyHeatmap history={analyticsHistory} checkins={allCheckins} />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <BadgeSystem newlyUnlocked={newBadges} onDismiss={() => setNewBadges([])} />
-            <ChallengeCenter key={challengeVersion} />
+            <BadgeSystem cosmetics={gamificationState?.cosmetics || []} newlyUnlocked={newBadges} onDismiss={() => setNewBadges([])} />
+            <ChallengeCenter missions={gamificationState?.missions || []} />
           </div>
         </div>
       )}
