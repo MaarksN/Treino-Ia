@@ -30,6 +30,8 @@ import {
   WorkoutSession,
 } from '../services/database';
 import { calculateTrainingPlan } from '../rules/iaEngine';
+import { RegistrationForm } from '../components/RegistrationForm';
+import { User as StarterUser } from '../types';
 
 type ActiveExerciseDraft = Omit<WorkoutExerciseLog, 'actualWeight' | 'actualReps' | 'rpe'> & {
   actualWeight: string;
@@ -52,6 +54,8 @@ const equipmentOptions = [
   'Elásticos',
   'Academia do prédio',
 ];
+
+const STARTER_USER_KEY = '@TreinoIA:starterUser';
 
 const fieldClass = 'mt-2 w-full rounded-[22px] border-2 border-brand-light/15 bg-brand-gray px-4 py-3 font-mono text-sm text-brand-light outline-none transition-colors placeholder:text-brand-muted focus:border-brand-neon';
 const labelClass = 'block font-mono text-[11px] uppercase tracking-[0.25em] text-brand-muted';
@@ -96,6 +100,15 @@ function createActiveDraft(day: TrainingPlan['days'][number]): ActiveExerciseDra
   }));
 }
 
+function readStarterUser(): StarterUser | null {
+  try {
+    const raw = localStorage.getItem(STARTER_USER_KEY);
+    return raw ? JSON.parse(raw) as StarterUser : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function Dashboard() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [formProfile, setFormProfile] = useState<UserProfile>(() => createDefaultProfile());
@@ -103,6 +116,7 @@ export default function Dashboard() {
   const [history, setHistory] = useState<WorkoutSession[]>([]);
   const [persistence, setPersistence] = useState<PersistenceStatus | null>(null);
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+  const [showStarterRegistration, setShowStarterRegistration] = useState(false);
   const [showAnamnesis, setShowAnamnesis] = useState(false);
   const [activeDayIndex, setActiveDayIndex] = useState<number | null>(null);
   const [activeDraft, setActiveDraft] = useState<ActiveExerciseDraft[]>([]);
@@ -140,8 +154,14 @@ export default function Dashboard() {
       setHistory(storedHistory);
 
       if (!storedProfile) {
-        setFormProfile(createDefaultProfile());
-        setShowAnamnesis(true);
+        const starterUser = readStarterUser();
+        setFormProfile({
+          ...createDefaultProfile(),
+          name: starterUser?.name?.trim() || 'Atleta',
+        });
+        setAuthEmail(starterUser?.email?.trim() || '');
+        setShowStarterRegistration(!starterUser);
+        setShowAnamnesis(Boolean(starterUser));
         setProfile(null);
         setPlan(null);
         return;
@@ -160,6 +180,7 @@ export default function Dashboard() {
       setFormProfile(storedProfile);
       setPlan(currentPlan);
       setSelectedDayIndex(0);
+      setShowStarterRegistration(false);
       setShowAnamnesis(false);
     } catch {
       setError('Não consegui carregar os dados. Verifique a configuração local ou Supabase.');
@@ -202,6 +223,27 @@ export default function Dashboard() {
     } finally {
       setSaving(false);
     }
+  }
+
+  function handleStarterRegister(starterUser: StarterUser) {
+    const nextProfile = {
+      ...createDefaultProfile(),
+      name: starterUser.name.trim() || 'Atleta',
+    };
+
+    setFormProfile(nextProfile);
+    setAuthEmail(starterUser.email.trim());
+    localStorage.setItem(STARTER_USER_KEY, JSON.stringify({
+      name: starterUser.name.trim(),
+      email: starterUser.email.trim(),
+      avatarUrl: starterUser.avatarUrl,
+      createdAt: Date.now(),
+    }));
+    setShowStarterRegistration(false);
+    setShowAnamnesis(true);
+    setNotice('');
+    setError('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   async function regeneratePlan() {
@@ -452,22 +494,24 @@ export default function Dashboard() {
                 Plataforma inteligente
               </p>
               <h1 className="font-display text-6xl uppercase leading-none tracking-widest text-brand-light text-shadow-neon md:text-7xl">
-                Treino <span className="text-brand-neon">Brutal</span>
+                Treino <span className="block text-brand-neon">Inteligente</span>
               </h1>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                setShowAnamnesis(value => !value);
-                if (profile) setFormProfile(profile);
-              }}
-              className="rounded-full border-2 border-brand-neon bg-brand-neon px-5 py-3 font-mono text-xs uppercase tracking-widest text-brand-dark shadow-brutal-neon"
-            >
-              {profile ? 'Editar anamnese' : 'Criar anamnese'}
-            </button>
+            {!showStarterRegistration && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAnamnesis(value => !value);
+                  if (profile) setFormProfile(profile);
+                }}
+                className="rounded-full border-2 border-brand-neon bg-brand-neon px-5 py-3 font-mono text-xs uppercase tracking-widest text-brand-dark shadow-brutal-neon"
+              >
+                {profile ? 'Editar anamnese' : 'Criar anamnese'}
+              </button>
+            )}
             {profile && (
               <button
                 type="button"
@@ -490,19 +534,23 @@ export default function Dashboard() {
           </div>
         )}
 
-        <CloudPanel
-          persistence={persistence}
-          email={authEmail}
-          password={authPassword}
-          loading={authLoading}
-          onEmailChange={setAuthEmail}
-          onPasswordChange={setAuthPassword}
-          onSignIn={() => handleAuth('signin')}
-          onSignUp={() => handleAuth('signup')}
-          onSignOut={handleSignOut}
-        />
+        {showStarterRegistration && !profile ? (
+          <RegistrationForm onRegister={handleStarterRegister} />
+        ) : (
+          <CloudPanel
+            persistence={persistence}
+            email={authEmail}
+            password={authPassword}
+            loading={authLoading}
+            onEmailChange={setAuthEmail}
+            onPasswordChange={setAuthPassword}
+            onSignIn={() => handleAuth('signin')}
+            onSignUp={() => handleAuth('signup')}
+            onSignOut={handleSignOut}
+          />
+        )}
 
-        {showAnamnesis && (
+        {!showStarterRegistration && showAnamnesis && (
           <AnamnesisForm
             profile={formProfile}
             saving={saving}
@@ -580,7 +628,7 @@ export default function Dashboard() {
 
             <HistoryPanel history={history} />
           </>
-        ) : (
+        ) : !showStarterRegistration ? (
           <section className="rounded-[28px] border-4 border-brand-neon bg-brand-gray p-8 text-center shadow-brutal-neon">
             <UserRound className="mx-auto mb-4 h-10 w-10 text-brand-neon" />
             <h2 className="font-display text-5xl uppercase text-brand-light">Crie sua anamnese</h2>
@@ -588,7 +636,7 @@ export default function Dashboard() {
               O plano semanal, o modo treino ativo e o histórico dependem do perfil inicial.
             </p>
           </section>
-        )}
+        ) : null}
       </div>
     </main>
   );

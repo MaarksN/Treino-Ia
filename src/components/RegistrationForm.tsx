@@ -25,7 +25,12 @@ export function RegistrationForm({ onRegister }: Props) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim()) {
-      onRegister({ name: name.trim(), email: email.trim(), avatarUrl: avatar || undefined });
+      const registeredUser = { name: name.trim(), email: email.trim(), avatarUrl: avatar || undefined };
+      localStorage.setItem('@TreinoIA:starterUser', JSON.stringify({
+        ...registeredUser,
+        createdAt: Date.now(),
+      }));
+      onRegister(registeredUser);
     }
   };
 
@@ -43,7 +48,7 @@ export function RegistrationForm({ onRegister }: Props) {
           )}
           <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
         </label>
-        <h1 className="font-display font-black text-7xl tracking-tighter uppercase text-brand-light mb-2 text-shadow-neon">INICIAR</h1>
+        <h1 className="font-display font-black text-6xl sm:text-7xl tracking-normal uppercase text-brand-light mb-2 text-shadow-neon text-stroke-black leading-none">INICIAR</h1>
         <p className="text-brand-magenta font-mono font-bold text-sm">Crie seu perfil para gerar treinos brutais com IA.</p>
       </div>
 
@@ -75,7 +80,7 @@ export function RegistrationForm({ onRegister }: Props) {
           type="submit" 
           className="w-full bg-brand-neon hover:bg-brand-light text-brand-dark font-display font-black text-3xl uppercase tracking-tighter py-4 border-brutal transition-colors flex justify-center items-center group mt-4"
         >
-          Destruir Fibras
+          Cadastrar e continuar
           <ArrowRight className="w-8 h-8 ml-3 group-hover:translate-x-2 transition-transform" />
         </button>
       </form>
