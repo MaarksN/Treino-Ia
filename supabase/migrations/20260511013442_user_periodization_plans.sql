@@ -1,34 +1,42 @@
--- Migration to support user_periodization_plans
-
-CREATE TABLE IF NOT EXISTS public.user_periodization_plans (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    profile_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    current_week INTEGER DEFAULT 1,
-    plan_data JSONB NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-    CONSTRAINT user_periodization_plans_profile_id_key UNIQUE (profile_id)
+create table if not exists public.user_periodization_plans (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  profile_id uuid null,
+  mesocycle_label text not null,
+  week_start date not null,
+  week_end date not null,
+  workload jsonb not null default '{}'::jsonb,
+  fatigue_score integer not null default 0,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
 );
 
--- Enable Row Level Security
-ALTER TABLE public.user_periodization_plans ENABLE ROW LEVEL SECURITY;
+create unique index if not exists user_periodization_plans_user_week_key
+  on public.user_periodization_plans(user_id, week_start, week_end);
 
--- Create Policies
-CREATE POLICY "Users can view their own periodization plans"
-    ON public.user_periodization_plans FOR SELECT
-    USING (auth.uid() = profile_id);
+alter table public.user_periodization_plans enable row level security;
 
-CREATE POLICY "Users can insert their own periodization plans"
-    ON public.user_periodization_plans FOR INSERT
-    WITH CHECK (auth.uid() = profile_id);
+drop policy if exists user_periodization_plans_select_own on public.user_periodization_plans;
+create policy user_periodization_plans_select_own
+  on public.user_periodization_plans
+  for select
+  using (auth.uid() = user_id);
 
-CREATE POLICY "Users can update their own periodization plans"
-    ON public.user_periodization_plans FOR UPDATE
-    USING (auth.uid() = profile_id);
+drop policy if exists user_periodization_plans_insert_own on public.user_periodization_plans;
+create policy user_periodization_plans_insert_own
+  on public.user_periodization_plans
+  for insert
+  with check (auth.uid() = user_id);
 
-CREATE POLICY "Users can delete their own periodization plans"
-    ON public.user_periodization_plans FOR DELETE
-    USING (auth.uid() = profile_id);
+drop policy if exists user_periodization_plans_update_own on public.user_periodization_plans;
+create policy user_periodization_plans_update_own
+  on public.user_periodization_plans
+  for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
 
--- Create index for faster lookups
-CREATE INDEX IF NOT EXISTS idx_user_periodization_plans_profile_id ON public.user_periodization_plans(profile_id);
+drop policy if exists user_periodization_plans_delete_own on public.user_periodization_plans;
+create policy user_periodization_plans_delete_own
+  on public.user_periodization_plans
+  for delete
+  using (auth.uid() = user_id);

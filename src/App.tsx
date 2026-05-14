@@ -1,10 +1,12 @@
 import React, { Suspense, useEffect, useState, lazy } from 'react';
 import './index.css';
 
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const OnboardingTour = lazy(() => import('./components/OnboardingTour').then(m => ({ default: m.OnboardingTour })));
+const ONBOARDING_KEY = '@TreinoApp:onboarding';
 
-const ONBOARDING_KEY = '@TreinoApp:onboarding_completed_v2';
+if (typeof window !== 'undefined') {
+  localStorage.getItem('@TreinoApp:theme');
+  localStorage.getItem(ONBOARDING_KEY);
+}
 
 export default function App() {
   const [view, setView] = useState<ViewState>('loading');
