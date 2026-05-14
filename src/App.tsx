@@ -1,5 +1,9 @@
 import React, { Suspense, useEffect, useState, lazy } from 'react';
 import './index.css';
+import { useAppViewStore } from './stores/appViewStore';
+import { useDailyCheckinsQuery } from './queries/useDailyCheckinsQuery';
+import { useSaveDailyCheckinMutation } from './queries/useSaveDailyCheckinMutation';
+import { getErrorMessage, toSafeUserMessage } from './utils/errors';
 
 const ONBOARDING_KEY = '@TreinoApp:onboarding';
 
@@ -28,14 +32,15 @@ export default function App() {
   const [healthWarning, setHealthWarning] = useState<string | null>(null);
   const [checkinSaving, setCheckinSaving] = useState(false);
   const [checkinError, setCheckinError] = useState<string | null>(null);
-  const [darkMode, setDarkMode] = useState(true);
-  const [language, setLanguage] = useState<'PT' | 'EN'>('PT');
+  const { darkMode, setDarkMode, language, setLanguage, showOnboarding, setShowOnboarding } = useAppViewStore();
+
+  const { data: checkinsData, error: checkinsQueryError, isError: isCheckinsError, refetch: refetchCheckins } = useDailyCheckinsQuery(user?.email || 'anon');
+  const { mutateAsync: saveCheckinMutation } = useSaveDailyCheckinMutation();
   const [voiceEnabled, setVoiceEnabled] = useState(loadInitialVoiceEnabled);
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCoachChat, setShowCoachChat] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem(ONBOARDING_KEY));
   const [shareEntry, setShareEntry] = useState<WorkoutHistoryEntry | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showCoach, setShowCoach] = useState(false);
@@ -43,21 +48,27 @@ export default function App() {
   // For tab navigation when a user is logged in
   const [activeTab, setActiveTab] = useState<'my_workouts' | 'global_feed' | 'social' | 'gamification' | 'retention' | 'infrastructure' | 'platform' | 'billing'>('my_workouts');
 
-  const refreshDailyCheckins = async () => {
-    try {
-      const result = await loadDailyCheckins();
-      setAllCheckins(result.data);
-      setTodayCheckin(getTodayCheckinFromList(result.data));
-      setHealthDataMode(result.dataMode);
-      setHealthWarning(result.warning ?? null);
+  useEffect(() => {
+    if (checkinsData) {
+      setAllCheckins(checkinsData.data);
+      setTodayCheckin(getTodayCheckinFromList(checkinsData.data));
+      setHealthDataMode(checkinsData.dataMode);
+      setHealthWarning(checkinsData.warning ?? null);
       setCheckinError(null);
-      return result.data;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Falha ao carregar check-ins.';
-      setCheckinError(message);
-      captureError(error, 'App.loadDailyCheckins');
-      return allCheckins;
     }
+  }, [checkinsData]);
+
+  useEffect(() => {
+    if (isCheckinsError && checkinsQueryError) {
+      const message = getErrorMessage(checkinsQueryError);
+      setCheckinError(toSafeUserMessage(checkinsQueryError));
+      captureError(new Error(message), 'App.loadDailyCheckinsQuery');
+    }
+  }, [isCheckinsError, checkinsQueryError]);
+
+  const refreshDailyCheckins = async () => {
+    const res = await refetchCheckins();
+    return res.data?.data || allCheckins;
   };
 
   const hydrateTrainingStateFromBackend = async () => {
@@ -249,7 +260,7 @@ export default function App() {
       timestamp: Date.now(),
     };
 
-    void saveDailyCheckin(dailyFromRecovery)
+    void saveCheckinMutation(dailyFromRecovery)
       .then(async result => {
         setHealthDataMode(result.dataMode);
         setHealthWarning(result.warning ?? null);
@@ -313,7 +324,7 @@ export default function App() {
     setCheckinError(null);
 
     try {
-      const saved = await saveDailyCheckin(checkin);
+      const saved = await saveCheckinMutation(checkin);
       setHealthDataMode(saved.dataMode);
       setHealthWarning(saved.warning ?? null);
       const updatedCheckins = await refreshDailyCheckins();
@@ -322,9 +333,9 @@ export default function App() {
       void recordGamificationEvent('checkin').catch(error => captureError(error, 'App.dailyCheckin'));
       saveLocalDashboardSnapshot(analyticsHistory, streakData, updatedCheckins);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Falha ao salvar check-in.';
-      setCheckinError(message);
-      captureError(error, 'App.saveDailyCheckin');
+      const message = getErrorMessage(error);
+      setCheckinError(toSafeUserMessage(error));
+      captureError(new Error(message), 'App.saveDailyCheckinMutation');
       throw new Error(message);
     } finally {
       setCheckinSaving(false);
