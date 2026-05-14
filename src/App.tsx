@@ -1,4 +1,6 @@
 import React, { Suspense, useEffect, useMemo, useState, lazy } from 'react';
+import { useAppNavigation } from './hooks/useAppNavigation';
+import { useAuthState } from './hooks/useAuthState';
 import { Dumbbell } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import { OnboardingTour } from './components/OnboardingTour';
@@ -29,7 +31,6 @@ import { loadStreak, recordWorkoutForStreak } from './utils/streakUtils';
 import { saveDashboardSnapshot } from './utils/syncUtils';
 import { applyTheme, loadThemeId } from './utils/themeUtils';
 import { fetchBillingEntitlement } from './services/billingService';
-import { onAuthStateChange } from './services/authService';
 import { extractWorkoutFromFile, generateWorkoutPlan } from './services/geminiService';
 import { recordGamificationEvent } from './services/gamificationService';
 import { loadDailyCheckins, getTodayCheckinFromList, saveDailyCheckin } from './services/healthService';
@@ -63,7 +64,15 @@ if (typeof window !== 'undefined') {
 }
 
 export default function App() {
-  const [view, setView] = useState<AppView>(VIEWS.LOADING);
+  const {
+    view,
+    setView,
+    goToDashboard,
+    goToHome,
+    goToPublicProfile,
+    goToRegistration,
+    goToSocial,
+  } = useAppNavigation(VIEWS.LOADING);
   const [user, setUser] = useState<User | null>(null);
   const [isPremium, setIsPremium] = useState(false);
   const [plans, setPlans] = useState<WorkoutPlan[]>([]);
@@ -150,7 +159,7 @@ export default function App() {
       if (result.plans.length) {
         setPlans(result.plans);
         setCurrentPlanId(result.currentPlanId || result.plans[0].id);
-        setView('dashboard');
+        goToDashboard();
       }
     } catch (error) {
       captureError(error, 'App.hydrateTrainingStateFromBackend');
@@ -189,11 +198,11 @@ export default function App() {
 
     const currentPath = window.location.pathname;
     if (currentPath.startsWith('/u/')) {
-      setView('public_profile');
+      goToPublicProfile();
       return;
     }
     if (currentPath.startsWith('/groups/join/')) {
-      setView('social');
+      goToSocial();
       return;
     }
 
@@ -208,16 +217,10 @@ export default function App() {
       .then(entitlement => setIsPremium(entitlement.isPremium))
       .catch(() => setIsPremium(false));
 
-    setView('registration');
+    goToRegistration();
   }, []);
 
-  useEffect(() => {
-    return onAuthStateChange(event => {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        void migrateLegacyTrainingState();
-      }
-    });
-  }, []);
+  useAuthState({ onSessionRefresh: migrateLegacyTrainingState });
 
   const handleRegister = (newUser: User) => {
     void recordGamificationEvent('login').catch(error => captureError(error, 'App.recordLogin'));
@@ -232,7 +235,7 @@ export default function App() {
     }
 
     if (newUser.profile && plans.length > 0) {
-      setView('dashboard');
+      goToDashboard();
     } else {
       setView('home');
     }
@@ -244,7 +247,7 @@ export default function App() {
     setCurrentPlanId(generatedPlan.id);
     void persistWorkoutPlansToBackend(newPlans, generatedPlan.id)
       .catch(error => captureError(error, 'App.persistWorkoutPlans'));
-    setView('dashboard');
+    goToDashboard();
   };
 
   const handleAnamnesisSubmit = async (profile: UserProfile) => {
