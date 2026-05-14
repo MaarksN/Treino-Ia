@@ -104,6 +104,9 @@ create index if not exists social_content_reports_reviewer_idx on public.social_
 
 alter table public.social_moderators enable row level security;
 alter table public.social_content_reports enable row level security;
+alter table public.social_profiles enable row level security;
+alter table public.social_posts enable row level security;
+alter table public.social_post_comments enable row level security;
 alter table public.public_workout_templates enable row level security;
 
 create or replace function public.is_social_moderator(target_user_id uuid)
