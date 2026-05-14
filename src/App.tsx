@@ -3,10 +3,6 @@ import './index.css';
 
 const ONBOARDING_KEY = '@TreinoApp:onboarding';
 
-if (typeof window !== 'undefined') {
-  localStorage.getItem('@TreinoApp:theme');
-  localStorage.getItem(ONBOARDING_KEY);
-}
 
 export default function App() {
   const [view, setView] = useState<ViewState>('loading');

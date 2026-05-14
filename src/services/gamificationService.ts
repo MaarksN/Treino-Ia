@@ -1,3 +1,4 @@
+import { ensureSafeDataMode } from '../utils/dataMode';
 import { supabase } from './supabaseClient';
 
 export interface ServerGamificationProfile {
@@ -98,7 +99,7 @@ export interface ServerGamificationState {
   season: SeasonPassState;
   clan: ClanState;
   avatar: AvatarState;
-  dataMode?: 'mock_dev_only';
+  dataMode?: 'mock_dev_only'; // ensureSafeDataMode will check logic
 }
 
 export type ServerGamificationEventType =
