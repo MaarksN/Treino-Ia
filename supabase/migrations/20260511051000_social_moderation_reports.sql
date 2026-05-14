@@ -1,3 +1,38 @@
+create table if not exists public.social_profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  is_public boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.social_posts (
+  id uuid primary key default gen_random_uuid(),
+  author_id uuid not null references public.social_profiles(id) on delete cascade,
+  visibility text not null default 'public' check (visibility in ('public', 'group', 'private')),
+  group_id uuid,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.social_post_comments (
+  id uuid primary key default gen_random_uuid(),
+  author_id uuid not null references public.social_profiles(id) on delete cascade,
+  post_id uuid references public.social_posts(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.public_workout_templates (
+  id uuid primary key default gen_random_uuid(),
+  author_id uuid not null references public.social_profiles(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+create or replace function public.is_training_group_member(p_group_id uuid, p_user_id uuid)
+returns boolean
+language sql
+stable
+as $$
+  select false;
+$$;
+
 create table if not exists public.social_moderators (
   user_id uuid primary key references public.social_profiles(id) on delete cascade,
   role text not null default 'moderator' check (role in ('moderator', 'admin')),
@@ -69,6 +104,10 @@ create index if not exists social_content_reports_reviewer_idx on public.social_
 
 alter table public.social_moderators enable row level security;
 alter table public.social_content_reports enable row level security;
+alter table public.social_profiles enable row level security;
+alter table public.social_posts enable row level security;
+alter table public.social_post_comments enable row level security;
+alter table public.public_workout_templates enable row level security;
 
 create or replace function public.is_social_moderator(target_user_id uuid)
 returns boolean
