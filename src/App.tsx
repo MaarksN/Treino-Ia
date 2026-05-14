@@ -1,7 +1,8 @@
-import React, { Suspense, useEffect, useState } from 'react';
-import Dashboard from './pages/Dashboard';
-import { OnboardingTour } from './components/OnboardingTour';
+import React, { Suspense, useEffect, useState, lazy } from 'react';
 import './index.css';
+
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const OnboardingTour = lazy(() => import('./components/OnboardingTour').then(m => ({ default: m.OnboardingTour })));
 
 const ONBOARDING_KEY = '@TreinoApp:onboarding_completed_v2';
 
@@ -25,7 +26,7 @@ export default function App() {
   };
 
   return (
-    <Suspense fallback={<div>Carregando Aplicação...</div>}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Carregando Aplicação...</div>}>
       {showOnboarding && (
         <OnboardingTour
           onComplete={handleCompleteOnboarding}
