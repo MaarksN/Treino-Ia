@@ -64,3 +64,9 @@ A PR só deve ser marcada como pronta quando estes itens estiverem confirmados n
 ### Resultado local do LHCI
 - Não foi possível executar o LHCI localmente neste ambiente devido a bloqueio de instalação do pacote (`npm E403` ao buscar `@lhci/cli`).
 - A configuração do Lighthouse **não** foi desabilitada nem thresholds alterados para mascarar erro.
+
+
+### Status de execução complementar (normalizado)
+- `npm run format:check`: **SKIP** — script não existe no `package.json`.
+- LHCI local (`npm exec --yes @lhci/cli@0.15.x -- autorun --config=./lighthouserc.json`): **SKIP/BLOCKED** — `npm E403` ao baixar `@lhci/cli` neste ambiente.
+- GitHub Actions LHCI: **pending verification in GitHub UI**.
