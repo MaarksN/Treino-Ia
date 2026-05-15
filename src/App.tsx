@@ -94,6 +94,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCoachChat, setShowCoachChat] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem(ONBOARDING_KEY));
   const [shareEntry, setShareEntry] = useState<WorkoutHistoryEntry | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showCoach, setShowCoach] = useState(false);
@@ -129,20 +130,13 @@ export default function App() {
       setHealthDataMode(result.dataMode);
       setHealthWarning(result.warning ?? null);
       setCheckinError(null);
+      return result.data;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Falha ao carregar check-ins.';
+      setCheckinError(message);
+      captureError(error, 'App.loadDailyCheckins');
+      return allCheckins;
     }
-  }, [checkinsData]);
-
-  useEffect(() => {
-    if (isCheckinsError && checkinsQueryError) {
-      const message = getErrorMessage(checkinsQueryError);
-      setCheckinError(toSafeUserMessage(checkinsQueryError));
-      captureError(new Error(message), 'App.loadDailyCheckinsQuery');
-    }
-  }, [isCheckinsError, checkinsQueryError]);
-
-  const refreshDailyCheckins = async () => {
-    const res = await refetchCheckins();
-    return res.data?.data || allCheckins;
   };
 
   const hydrateTrainingStateFromBackend = async () => {
@@ -168,7 +162,7 @@ export default function App() {
     }
   };
 
-  const migrateLegacyTrainingState = React.useCallback(async () => {
+  const migrateLegacyTrainingState = async () => {
     try {
       const result = await migrateLegacyTrainingStateToBackend();
       if (result.dataMode === 'supabase') {
@@ -177,7 +171,7 @@ export default function App() {
     } catch (error) {
       captureError(error, 'App.migrateLegacyTrainingState');
     }
-  }, []);
+  };
 
   useEffect(() => {
     applyTheme(loadThemeId());
