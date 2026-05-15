@@ -2,6 +2,7 @@ import React, { Suspense, useCallback, useEffect, useMemo, useState, lazy } from
 import { useAppNavigation } from './hooks/useAppNavigation';
 import { useAuthState } from './hooks/useAuthState';
 import { type DailyCheckinsQueryResult, useDailyCheckinsQuery } from './hooks/useDailyCheckinsQuery';
+import { useSaveDailyCheckinMutation } from './hooks/useSaveDailyCheckinMutation';
 import { Dumbbell } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import { OnboardingTour } from './components/OnboardingTour';
@@ -35,7 +36,7 @@ import { applyTheme, loadThemeId } from './utils/themeUtils';
 import { fetchBillingEntitlement } from './services/billingService';
 import { extractWorkoutFromFile, generateWorkoutPlan } from './services/geminiService';
 import { recordGamificationEvent } from './services/gamificationService';
-import { getTodayCheckinFromList, saveDailyCheckin } from './services/healthService';
+import { getTodayCheckinFromList } from './services/healthService';
 import {
   loadTrainingStateFromBackend,
   migrateLegacyTrainingStateToBackend,
@@ -101,6 +102,7 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showCoach, setShowCoach] = useState(false);
   const dailyCheckinsQuery = useDailyCheckinsQuery();
+  const saveDailyCheckinMutation = useSaveDailyCheckinMutation();
 
   // For tab navigation when a user is logged in
   const [activeTab, setActiveTab] = useState<'my_workouts' | 'global_feed' | 'social' | 'gamification' | 'retention' | 'infrastructure' | 'platform' | 'billing'>('my_workouts');
@@ -343,7 +345,7 @@ export default function App() {
       timestamp: Date.now(),
     };
 
-    void saveDailyCheckin(dailyFromRecovery)
+    saveDailyCheckinMutation.mutateAsync(dailyFromRecovery)
       .then(async result => {
         setHealthDataMode(result.dataMode);
         setHealthWarning(result.warning ?? null);
@@ -407,7 +409,7 @@ export default function App() {
     setCheckinError(null);
 
     try {
-      const saved = await saveDailyCheckin(checkin);
+      const saved = await saveDailyCheckinMutation.mutateAsync(checkin);
       setHealthDataMode(saved.dataMode);
       setHealthWarning(saved.warning ?? null);
       const updatedCheckins = await refreshDailyCheckins();
