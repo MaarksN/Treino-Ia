@@ -30,7 +30,15 @@ jobs:
         run: npm ci
 
       - name: Build
+        env:
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+          VITE_ENV: production
         run: npm run build
 
       - name: Lighthouse CI
+        env:
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+          VITE_ENV: production
         run: npm exec --yes @lhci/cli@0.15.x -- autorun --config=./lighthouserc.json

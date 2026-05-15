@@ -4,6 +4,7 @@ import App from './App.tsx';
 import './index.css';
 import { installGlobalErrorTelemetry } from './utils/errorTelemetry';
 import { registerSW } from './utils/pwaUtils';
+import { AppQueryProvider } from './providers/QueryProvider';
 
 installGlobalErrorTelemetry();
 
@@ -13,6 +14,8 @@ registerSW().catch(error => {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <AppQueryProvider>
+      <App />
+    </AppQueryProvider>
   </StrictMode>,
 );
