@@ -1,6 +1,12 @@
 alter table if exists public.user_periodization_plans
   add column if not exists user_id uuid;
 
+alter table if exists public.user_periodization_plans
+  add column if not exists week_start date;
+
+alter table if exists public.user_periodization_plans
+  add column if not exists week_end date;
+
 do $$
 begin
   if to_regclass('public.profiles') is not null then
