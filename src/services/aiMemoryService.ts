@@ -1,3 +1,4 @@
+import { ensureSafeDataMode } from '../utils/dataMode';
 import { supabase } from './supabaseClient';
 
 const MEMORY_KEY = '@TreinoApp:ai-memory';
@@ -40,8 +41,8 @@ export async function loadAiMemoryCloud(): Promise<AiMemoryLoadResult> {
 
   if (!sessionData.session?.user) {
     return {
-      data: loadAiMemory().map(note => ({ ...note, dataMode: 'mock_dev_only' })),
-      dataMode: 'mock_dev_only',
+      data: loadAiMemory().map(note => ({ ...note, dataMode: ensureSafeDataMode('mock_dev_only') })),
+      dataMode: ensureSafeDataMode('mock_dev_only'),
       warning: 'Memoria local apenas para desenvolvimento. Faca login para memoria real de 6 meses.',
     };
   }
@@ -56,8 +57,8 @@ export async function loadAiMemoryCloud(): Promise<AiMemoryLoadResult> {
 
   if (error) {
     return {
-      data: loadAiMemory().map(note => ({ ...note, dataMode: 'mock_dev_only' })),
-      dataMode: 'mock_dev_only',
+      data: loadAiMemory().map(note => ({ ...note, dataMode: ensureSafeDataMode('mock_dev_only') })),
+      dataMode: ensureSafeDataMode('mock_dev_only'),
       warning: `Supabase indisponivel para memoria de IA: ${error.message}`,
     };
   }
@@ -94,8 +95,8 @@ export async function addAiMemoryCloud(note: string): Promise<AiMemoryLoadResult
   if (error) {
     addAiMemory(note);
     return {
-      data: loadAiMemory().map(item => ({ ...item, dataMode: 'mock_dev_only' })),
-      dataMode: 'mock_dev_only',
+      data: loadAiMemory().map(item => ({ ...item, dataMode: ensureSafeDataMode('mock_dev_only') })),
+      dataMode: ensureSafeDataMode('mock_dev_only'),
       warning: `Memoria salva localmente porque Supabase falhou: ${error.message}`,
     };
   }

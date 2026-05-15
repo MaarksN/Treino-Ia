@@ -34,9 +34,6 @@ import { fetchBillingEntitlement } from './services/billingService';
 import { extractWorkoutFromFile, generateWorkoutPlan } from './services/geminiService';
 import { recordGamificationEvent } from './services/gamificationService';
 import { loadDailyCheckins, getTodayCheckinFromList, saveDailyCheckin } from './services/healthService';
-import { useAppViewStore } from './stores/appViewStore';
-import { useDailyCheckinsQuery } from './queries/useDailyCheckinsQuery';
-import { getErrorMessage, toSafeUserMessage } from './utils/errors';
 import {
   loadTrainingStateFromBackend,
   migrateLegacyTrainingStateToBackend,
@@ -61,10 +58,6 @@ const LIGHT_THEME_VARS: Record<string, string> = {
 
 const ONBOARDING_KEY = '@TreinoApp:onboarding';
 
-if (typeof window !== 'undefined') {
-  localStorage.getItem('@TreinoApp:theme');
-  localStorage.getItem(ONBOARDING_KEY);
-}
 
 export default function App() {
   const {
@@ -94,15 +87,14 @@ export default function App() {
   const [healthWarning, setHealthWarning] = useState<string | null>(null);
   const [checkinSaving, setCheckinSaving] = useState(false);
   const [checkinError, setCheckinError] = useState<string | null>(null);
-
-  const { data: checkinsData, error: checkinsQueryError, isError: isCheckinsError, refetch: refetchCheckins } = useDailyCheckinsQuery(user?.email || 'anon');
-
-  const { darkMode, setDarkMode, language, setLanguage, showOnboarding, setShowOnboarding } = useAppViewStore();
+  const [darkMode, setDarkMode] = useState(true);
+  const [language, setLanguage] = useState<'PT' | 'EN'>('PT');
   const [voiceEnabled, setVoiceEnabled] = useState(() => localStorage.getItem('@TreinoApp:voiceEnabled') === 'true');
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCoachChat, setShowCoachChat] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem(ONBOARDING_KEY));
   const [shareEntry, setShareEntry] = useState<WorkoutHistoryEntry | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showCoach, setShowCoach] = useState(false);
@@ -130,27 +122,21 @@ export default function App() {
     return values.reduce((sum, value) => sum + value, 0) / values.length;
   };
 
-  useEffect(() => {
-    if (checkinsData) {
-      setAllCheckins(checkinsData.data);
-      setTodayCheckin(getTodayCheckinFromList(checkinsData.data));
-      setHealthDataMode(checkinsData.dataMode);
-      setHealthWarning(checkinsData.warning ?? null);
-      setCheckinError(null);
-    }
-  }, [checkinsData]);
-
-  useEffect(() => {
-    if (isCheckinsError && checkinsQueryError) {
-      const message = getErrorMessage(checkinsQueryError);
-      setCheckinError(toSafeUserMessage(checkinsQueryError));
-      captureError(new Error(message), 'App.loadDailyCheckinsQuery');
-    }
-  }, [isCheckinsError, checkinsQueryError]);
-
   const refreshDailyCheckins = async () => {
-    const res = await refetchCheckins();
-    return res.data?.data || allCheckins;
+    try {
+      const result = await loadDailyCheckins();
+      setAllCheckins(result.data);
+      setTodayCheckin(getTodayCheckinFromList(result.data));
+      setHealthDataMode(result.dataMode);
+      setHealthWarning(result.warning ?? null);
+      setCheckinError(null);
+      return result.data;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Falha ao carregar check-ins.';
+      setCheckinError(message);
+      captureError(error, 'App.loadDailyCheckins');
+      return allCheckins;
+    }
   };
 
   const hydrateTrainingStateFromBackend = async () => {
@@ -176,7 +162,7 @@ export default function App() {
     }
   };
 
-  const migrateLegacyTrainingState = React.useCallback(async () => {
+  const migrateLegacyTrainingState = async () => {
     try {
       const result = await migrateLegacyTrainingStateToBackend();
       if (result.dataMode === 'supabase') {
@@ -185,7 +171,7 @@ export default function App() {
     } catch (error) {
       captureError(error, 'App.migrateLegacyTrainingState');
     }
-  }, []);
+  };
 
   useEffect(() => {
     applyTheme(loadThemeId());
