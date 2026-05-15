@@ -1,15 +1,22 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { VIEWS, type AppView } from '../navigation/views';
+import { useViewStore } from '../stores/viewStore';
 
 export function useAppNavigation(initialView: AppView = VIEWS.LOADING) {
-  const [view, setView] = useState<AppView>(initialView);
+  const view = useViewStore(state => state.view);
+  const setView = useViewStore(state => state.setView);
+  const initializeView = useViewStore(state => state.initializeView);
 
-  const goToLoading = useCallback(() => setView(VIEWS.LOADING), []);
-  const goToRegistration = useCallback(() => setView(VIEWS.REGISTRATION), []);
-  const goToHome = useCallback(() => setView(VIEWS.HOME), []);
-  const goToDashboard = useCallback(() => setView(VIEWS.DASHBOARD), []);
-  const goToSocial = useCallback(() => setView(VIEWS.SOCIAL), []);
-  const goToPublicProfile = useCallback(() => setView(VIEWS.PUBLIC_PROFILE), []);
+  useEffect(() => {
+    initializeView(initialView);
+  }, [initialView, initializeView]);
+
+  const goToLoading = useCallback(() => setView(VIEWS.LOADING), [setView]);
+  const goToRegistration = useCallback(() => setView(VIEWS.REGISTRATION), [setView]);
+  const goToHome = useCallback(() => setView(VIEWS.HOME), [setView]);
+  const goToDashboard = useCallback(() => setView(VIEWS.DASHBOARD), [setView]);
+  const goToSocial = useCallback(() => setView(VIEWS.SOCIAL), [setView]);
+  const goToPublicProfile = useCallback(() => setView(VIEWS.PUBLIC_PROFILE), [setView]);
 
   return {
     view,

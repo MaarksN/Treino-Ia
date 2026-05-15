@@ -1,3 +1,5 @@
+import { getErrorMessage, toError } from './errors';
+
 export interface ErrorTelemetryEvent {
   id: string;
   message: string;
@@ -29,10 +31,11 @@ export function captureError(
   source = 'app',
   metadata?: Record<string, unknown>,
 ): ErrorTelemetryEvent {
+  const normalizedError = toError(error);
   const event: ErrorTelemetryEvent = {
     id: crypto.randomUUID(),
-    message: error instanceof Error ? error.message : String(error),
-    stack: error instanceof Error ? error.stack : undefined,
+    message: getErrorMessage(normalizedError),
+    stack: normalizedError.stack,
     source,
     userAgent: navigator.userAgent,
     url: window.location.href,

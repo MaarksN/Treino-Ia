@@ -1,6 +1,7 @@
-import React, { Suspense, useEffect, useMemo, useState, lazy } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useState, lazy } from 'react';
 import { useAppNavigation } from './hooks/useAppNavigation';
 import { useAuthState } from './hooks/useAuthState';
+import { type DailyCheckinsQueryResult, useDailyCheckinsQuery } from './hooks/useDailyCheckinsQuery';
 import { Dumbbell } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import { OnboardingTour } from './components/OnboardingTour';
@@ -24,6 +25,7 @@ import { loadHistory, getTotalVolumeLifted, recordWorkoutSession } from './utils
 import { evaluateAndUnlockBadges } from './utils/badgeUtils';
 import { syncChallengeProgress } from './utils/challengeUtils';
 import { captureError } from './utils/errorTelemetry';
+import { getErrorMessage, toError } from './utils/errors';
 import { enqueueOfflineAction } from './utils/offlineQueue';
 import { registerBackgroundSync } from './utils/pwaUtils';
 import { calculateReadiness } from './utils/readinessUtils';
@@ -33,7 +35,7 @@ import { applyTheme, loadThemeId } from './utils/themeUtils';
 import { fetchBillingEntitlement } from './services/billingService';
 import { extractWorkoutFromFile, generateWorkoutPlan } from './services/geminiService';
 import { recordGamificationEvent } from './services/gamificationService';
-import { loadDailyCheckins, getTodayCheckinFromList, saveDailyCheckin } from './services/healthService';
+import { getTodayCheckinFromList, saveDailyCheckin } from './services/healthService';
 import {
   loadTrainingStateFromBackend,
   migrateLegacyTrainingStateToBackend,
@@ -98,6 +100,7 @@ export default function App() {
   const [shareEntry, setShareEntry] = useState<WorkoutHistoryEntry | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showCoach, setShowCoach] = useState(false);
+  const dailyCheckinsQuery = useDailyCheckinsQuery();
 
   // For tab navigation when a user is logged in
   const [activeTab, setActiveTab] = useState<'my_workouts' | 'global_feed' | 'social' | 'gamification' | 'retention' | 'infrastructure' | 'platform' | 'billing'>('my_workouts');
@@ -122,17 +125,23 @@ export default function App() {
     return values.reduce((sum, value) => sum + value, 0) / values.length;
   };
 
+  const applyDailyCheckinsResult = useCallback((result: DailyCheckinsQueryResult) => {
+    setAllCheckins(result.data);
+    setTodayCheckin(getTodayCheckinFromList(result.data));
+    setHealthDataMode(result.dataMode);
+    setHealthWarning(result.warning ?? null);
+    setCheckinError(null);
+    return result.data;
+  }, []);
+
   const refreshDailyCheckins = async () => {
     try {
-      const result = await loadDailyCheckins();
-      setAllCheckins(result.data);
-      setTodayCheckin(getTodayCheckinFromList(result.data));
-      setHealthDataMode(result.dataMode);
-      setHealthWarning(result.warning ?? null);
-      setCheckinError(null);
-      return result.data;
+      const result = await dailyCheckinsQuery.refetch();
+      if (result.error) throw result.error;
+      if (!result.data) throw new Error('Falha ao carregar check-ins.');
+      return applyDailyCheckinsResult(result.data);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Falha ao carregar check-ins.';
+      const message = getErrorMessage(error, 'Falha ao carregar check-ins.');
       setCheckinError(message);
       captureError(error, 'App.loadDailyCheckins');
       return allCheckins;
@@ -190,8 +199,6 @@ export default function App() {
   }, [darkMode]);
 
   useEffect(() => {
-    void refreshDailyCheckins();
-
     const currentPath = window.location.pathname;
     if (currentPath.startsWith('/u/')) {
       goToPublicProfile();
@@ -215,6 +222,20 @@ export default function App() {
 
     goToRegistration();
   }, []);
+
+  useEffect(() => {
+    if (dailyCheckinsQuery.data) {
+      applyDailyCheckinsResult(dailyCheckinsQuery.data);
+    }
+  }, [applyDailyCheckinsResult, dailyCheckinsQuery.data]);
+
+  useEffect(() => {
+    if (!dailyCheckinsQuery.error) return;
+
+    const message = getErrorMessage(dailyCheckinsQuery.error, 'Falha ao carregar check-ins.');
+    setCheckinError(message);
+    captureError(dailyCheckinsQuery.error, 'App.useDailyCheckinsQuery');
+  }, [dailyCheckinsQuery.error]);
 
   useAuthState({ onSessionRefresh: migrateLegacyTrainingState });
 
@@ -269,8 +290,8 @@ export default function App() {
            });
          }
       }
-    } catch (err: any) {
-      setError(err.message || 'Erro inesperado. Tente novamente.');
+    } catch (error) {
+      setError(getErrorMessage(error, 'Erro inesperado. Tente novamente.'));
     } finally {
       setIsLoading(false);
     }
@@ -282,8 +303,8 @@ export default function App() {
     try {
       const importedPlan = await extractWorkoutFromFile(base64, mimeType);
       saveNewPlan(importedPlan);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao importar. A imagem ou PDF estava legível?');
+    } catch (error) {
+      setError(getErrorMessage(error, 'Erro ao importar. A imagem ou PDF estava legível?'));
     } finally {
       setIsLoading(false);
     }
@@ -329,7 +350,7 @@ export default function App() {
         await refreshDailyCheckins();
       })
       .catch(error => {
-        setCheckinError(error instanceof Error ? error.message : 'Falha ao salvar prontidão pré-treino.');
+        setCheckinError(getErrorMessage(error, 'Falha ao salvar prontidão pré-treino.'));
         captureError(error, 'App.saveRecoveryAsDailyCheckin');
       });
   };
@@ -395,10 +416,10 @@ export default function App() {
       void recordGamificationEvent('checkin').catch(error => captureError(error, 'App.dailyCheckin'));
       saveLocalDashboardSnapshot(analyticsHistory, streakData, updatedCheckins);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Falha ao salvar check-in.';
-      setCheckinError(message);
-      captureError(error, 'App.saveDailyCheckin');
-      throw new Error(message);
+      const normalizedError = toError(error, 'Falha ao salvar check-in.');
+      setCheckinError(normalizedError.message);
+      captureError(normalizedError, 'App.saveDailyCheckin');
+      throw normalizedError;
     } finally {
       setCheckinSaving(false);
     }

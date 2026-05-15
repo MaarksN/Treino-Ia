@@ -1,0 +1,6 @@
+android/
+dist/
+node_modules/
+.lighthouseci/
+coverage/
+package-lock.json
