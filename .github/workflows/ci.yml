@@ -31,6 +31,10 @@ jobs:
         run: npm test
 
       - name: Production build
+        env:
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+          VITE_ENV: production
         run: npm run build
 
       - name: Bundle report
