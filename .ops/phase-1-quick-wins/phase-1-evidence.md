@@ -39,4 +39,4 @@
 Não houve nenhuma quebra em testes existentes, portanto toda a manipulação do `App.tsx` e dos serviços de `mock_dev_only` garantiram que a aplicação continua coesa na fase dev, apenas com blocos garantindo que nunca subam silenciosamente na produção. O express não é usado na build final de produção por design, então devDependencies foi o lugar correto.
 
 ## Final Status
-PASS
+PASS com correções na CI: As falhas da suíte do GitHub (CI/validate e Lighthouse) devido a `NO_FCP` e tela branca se deram pois o branch sofreu um `rebase` desatualizado ou os imports foram limpos paralelamente, quebrando totalmente `src/App.tsx`. Após fazer um `git rebase origin/main` apropriado, e aplicando de forma cirúrgica e limpa a remoção do bloco inútil de `localStorage` no escopo global e `ONBOARDING_KEY` mantendo a infraestrutura de imports e hooks, todas as builds compilaram de novo de forma bem-sucedida, curando também o teste lhci.

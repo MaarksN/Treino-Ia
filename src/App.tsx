@@ -1,11 +1,74 @@
-import React, { Suspense, useEffect, useState, lazy } from 'react';
+import React, { Suspense, useEffect, useMemo, useState, lazy } from 'react';
+import { useAppNavigation } from './hooks/useAppNavigation';
+import { useAuthState } from './hooks/useAuthState';
+import { Dumbbell } from 'lucide-react';
+import Dashboard from './pages/Dashboard';
+import { OnboardingTour } from './components/OnboardingTour';
+import {
+  type AppSettings,
+  type Badge,
+  type DailyCheckin,
+  type FatigueSnapshot,
+  type RecoveryCheckin,
+  type User,
+  type UserProfile,
+  type WorkoutHistoryEntry,
+  type WorkoutHistoryRecord,
+  type WorkoutPlan,
+  type WorkoutSession,
+  type StreakData,
+} from './types';
+import { VIEWS, type AppView } from './navigation/views';
+import type { DataMode } from './types/trainingExecution';
+import { loadHistory, getTotalVolumeLifted, recordWorkoutSession } from './utils/analyticsUtils';
+import { evaluateAndUnlockBadges } from './utils/badgeUtils';
+import { syncChallengeProgress } from './utils/challengeUtils';
+import { captureError } from './utils/errorTelemetry';
+import { enqueueOfflineAction } from './utils/offlineQueue';
+import { registerBackgroundSync } from './utils/pwaUtils';
+import { calculateReadiness } from './utils/readinessUtils';
+import { loadStreak, recordWorkoutForStreak } from './utils/streakUtils';
+import { saveDashboardSnapshot } from './utils/syncUtils';
+import { applyTheme, loadThemeId } from './utils/themeUtils';
+import { fetchBillingEntitlement } from './services/billingService';
+import { extractWorkoutFromFile, generateWorkoutPlan } from './services/geminiService';
+import { recordGamificationEvent } from './services/gamificationService';
+import { loadDailyCheckins, getTodayCheckinFromList, saveDailyCheckin } from './services/healthService';
+import {
+  loadTrainingStateFromBackend,
+  migrateLegacyTrainingStateToBackend,
+  persistUserProfileToBackend,
+  persistWorkoutHistoryToBackend,
+  persistWorkoutPlansToBackend,
+} from './services/legacyTrainingSyncService';
+
 import './index.css';
+
+const LIGHT_THEME_VARS: Record<string, string> = {
+  '--color-brand-neon': '#a3e635',
+  '--color-brand-neon-hover': '#84cc16',
+  '--color-brand-magenta': '#f43f5e',
+  '--color-brand-dark': '#0a0a0a',
+  '--color-brand-gray': '#141413',
+  '--color-brand-surface': '#1a1917',
+  '--color-brand-light': '#f8fafc',
+  '--color-brand-muted': '#6b7280',
+  '--gradient-hero': 'linear-gradient(135deg, #0a0a0a 0%, #1a1917 100%)',
+};
 
 const ONBOARDING_KEY = '@TreinoApp:onboarding';
 
 
 export default function App() {
-  const [view, setView] = useState<ViewState>('loading');
+  const {
+    view,
+    setView,
+    goToDashboard,
+    goToHome,
+    goToPublicProfile,
+    goToRegistration,
+    goToSocial,
+  } = useAppNavigation(VIEWS.LOADING);
   const [user, setUser] = useState<User | null>(null);
   const [isPremium, setIsPremium] = useState(false);
   const [plans, setPlans] = useState<WorkoutPlan[]>([]);
@@ -18,15 +81,15 @@ export default function App() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [recoveryCheckin, setRecoveryCheckin] = useState<RecoveryCheckin | null>(null);
-  const [todayCheckin, setTodayCheckin] = useState<DailyCheckinType | null>(null);
-  const [allCheckins, setAllCheckins] = useState<DailyCheckinType[]>([]);
+  const [todayCheckin, setTodayCheckin] = useState<DailyCheckin | null>(null);
+  const [allCheckins, setAllCheckins] = useState<DailyCheckin[]>([]);
   const [healthDataMode, setHealthDataMode] = useState<DataMode | undefined>();
   const [healthWarning, setHealthWarning] = useState<string | null>(null);
   const [checkinSaving, setCheckinSaving] = useState(false);
   const [checkinError, setCheckinError] = useState<string | null>(null);
   const [darkMode, setDarkMode] = useState(true);
   const [language, setLanguage] = useState<'PT' | 'EN'>('PT');
-  const [voiceEnabled, setVoiceEnabled] = useState(loadInitialVoiceEnabled);
+  const [voiceEnabled, setVoiceEnabled] = useState(() => localStorage.getItem('@TreinoApp:voiceEnabled') === 'true');
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +101,26 @@ export default function App() {
 
   // For tab navigation when a user is logged in
   const [activeTab, setActiveTab] = useState<'my_workouts' | 'global_feed' | 'social' | 'gamification' | 'retention' | 'infrastructure' | 'platform' | 'billing'>('my_workouts');
+
+  const handleCompleteOnboarding = () => {
+    localStorage.setItem(ONBOARDING_KEY, 'true');
+    setShowOnboarding(false);
+  };
+
+  const getPlanPerformances = (plan: WorkoutPlan | null) =>
+    (plan?.days || []).map(day => ({
+      sets: day.exercises.reduce((acc, ex) => acc + (ex.sets || 0), 0),
+      completion: day.exercises.length
+        ? Math.round((day.exercises.filter(ex => ex.completed).length / day.exercises.length) * 100)
+        : 0,
+    }));
+
+  const getAverageSoreness = (checkin: DailyCheckin | null) => {
+    if (!checkin) return 0;
+    const values = Object.values(checkin.sorenessMap || {});
+    if (!values.length) return 0;
+    return values.reduce((sum, value) => sum + value, 0) / values.length;
+  };
 
   const refreshDailyCheckins = async () => {
     try {
@@ -72,7 +155,7 @@ export default function App() {
       if (result.plans.length) {
         setPlans(result.plans);
         setCurrentPlanId(result.currentPlanId || result.plans[0].id);
-        setView('dashboard');
+        goToDashboard();
       }
     } catch (error) {
       captureError(error, 'App.hydrateTrainingStateFromBackend');
@@ -111,11 +194,11 @@ export default function App() {
 
     const currentPath = window.location.pathname;
     if (currentPath.startsWith('/u/')) {
-      setView('public_profile');
+      goToPublicProfile();
       return;
     }
     if (currentPath.startsWith('/groups/join/')) {
-      setView('social');
+      goToSocial();
       return;
     }
 
@@ -130,16 +213,10 @@ export default function App() {
       .then(entitlement => setIsPremium(entitlement.isPremium))
       .catch(() => setIsPremium(false));
 
-    setView('registration');
+    goToRegistration();
   }, []);
 
-  useEffect(() => {
-    return onAuthStateChange(event => {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        void migrateLegacyTrainingState();
-      }
-    });
-  }, []);
+  useAuthState({ onSessionRefresh: migrateLegacyTrainingState });
 
   const handleRegister = (newUser: User) => {
     void recordGamificationEvent('login').catch(error => captureError(error, 'App.recordLogin'));
@@ -154,7 +231,7 @@ export default function App() {
     }
 
     if (newUser.profile && plans.length > 0) {
-      setView('dashboard');
+      goToDashboard();
     } else {
       setView('home');
     }
@@ -166,7 +243,7 @@ export default function App() {
     setCurrentPlanId(generatedPlan.id);
     void persistWorkoutPlansToBackend(newPlans, generatedPlan.id)
       .catch(error => captureError(error, 'App.persistWorkoutPlans'));
-    setView('dashboard');
+    goToDashboard();
   };
 
   const handleAnamnesisSubmit = async (profile: UserProfile) => {
@@ -228,7 +305,7 @@ export default function App() {
     setRecoveryCheckin(checkin);
 
     const today = new Date().toISOString().slice(0, 10);
-    const dailyFromRecovery: DailyCheckinType = {
+    const dailyFromRecovery: DailyCheckin = {
       id: todayCheckin?.id || crypto.randomUUID(),
       date: today,
       sleepHours: checkin.sleepHours,
@@ -304,7 +381,7 @@ export default function App() {
     if (newly.length) setNewBadges(newly);
   };
 
-  const handleSaveCheckin = async (checkin: DailyCheckinType) => {
+  const handleSaveCheckin = async (checkin: DailyCheckin) => {
     setCheckinSaving(true);
     setCheckinError(null);
 
