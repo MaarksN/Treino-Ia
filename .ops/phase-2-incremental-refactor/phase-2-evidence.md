@@ -39,3 +39,34 @@ A PR só deve ser marcada como pronta quando estes itens estiverem confirmados n
 - `npm run build` verde.
 - Evidência da Fase 2 atualizada.
 - Escopo limitado à Fase 2 incremental.
+
+
+## Investigação NO_FCP (Lighthouse)
+- Hipótese principal confirmada para CI: build de produção sem `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` pode quebrar inicialização em runtime no preview/lighthouse, resultando em `NO_FCP`.
+- Correção aplicada: placeholders seguros no GitHub Actions apenas para passos de build/Lighthouse (`https://example.supabase.co`, `ci-placeholder-anon-key`, `VITE_ENV=production`).
+- Segurança mantida: nenhum secret real incluído, sem relaxar validação de produção e sem desabilitar Lighthouse.
+
+### Arquivos alterados nesta correção
+- `.github/workflows/ci.yml`
+- `.github/workflows/lighthouse.yml`
+- `.ops/phase-2-incremental-refactor/phase-2-evidence.md`
+
+### Comandos executados na triagem
+- `npm run typecheck`
+- `npm run build`
+- `npm run preview`
+- `curl -I http://localhost:4173/`
+- `curl -I http://localhost:4173/index.html`
+- `curl http://localhost:4173/index.html | head -80`
+- `VITE_SUPABASE_URL=https://example.supabase.co VITE_SUPABASE_ANON_KEY=ci-placeholder-anon-key VITE_ENV=production npm run build`
+- `npm exec --yes @lhci/cli@0.15.x -- autorun --config=./lighthouserc.json`
+
+### Resultado local do LHCI
+- Não foi possível executar o LHCI localmente neste ambiente devido a bloqueio de instalação do pacote (`npm E403` ao buscar `@lhci/cli`).
+- A configuração do Lighthouse **não** foi desabilitada nem thresholds alterados para mascarar erro.
+
+
+### Status de execução complementar (normalizado)
+- `npm run format:check`: **SKIP** — script não existe no `package.json`.
+- LHCI local (`npm exec --yes @lhci/cli@0.15.x -- autorun --config=./lighthouserc.json`): **SKIP/BLOCKED** — `npm E403` ao baixar `@lhci/cli` neste ambiente.
+- GitHub Actions LHCI: **pending verification in GitHub UI**.
