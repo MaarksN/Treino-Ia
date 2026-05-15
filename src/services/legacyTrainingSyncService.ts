@@ -1,5 +1,6 @@
 import { User, UserProfile, WorkoutHistoryRecord, WorkoutPlan } from '../types';
 import { DataMode, PersistResult } from '../types/trainingExecution';
+import { ensureSafeDataMode } from '../utils/dataMode';
 import { sanitizeText } from '../utils/inputSanitizer';
 import { STORAGE_KEYS } from '../utils/storage';
 import { isSupabaseConfigured, supabase } from './supabaseClient';
@@ -228,7 +229,7 @@ function normalizeLegacyState(state: LegacyTrainingState): NormalizedLegacyTrain
 function mockResult(result: Omit<LegacyTrainingMigrationResult, 'dataMode' | 'warning'>): LegacyTrainingMigrationResult {
   return {
     ...result,
-    dataMode: 'mock_dev_only',
+    dataMode: ensureSafeDataMode('mock_dev_only'),
     warning: DEV_WARNING,
   };
 }
@@ -296,7 +297,7 @@ export async function loadTrainingStateFromBackend(): Promise<LegacyTrainingStat
     const mock = readMockBackendState();
     const local = loadLegacyTrainingStateFromLocalStorage();
     return {
-      dataMode: 'mock_dev_only',
+      dataMode: ensureSafeDataMode('mock_dev_only'),
       warning: DEV_WARNING,
       user: mock.user || local.user,
       profile: mock.profile || local.profile,
@@ -356,7 +357,7 @@ export async function persistUserProfileToBackend(profile: UserProfile): Promise
       skipped: state.skipped,
     });
     persistMockState(state, migration);
-    return { dataMode: 'mock_dev_only', warning: DEV_WARNING, profile: normalized };
+    return { dataMode: ensureSafeDataMode('mock_dev_only'), warning: DEV_WARNING, profile: normalized };
   }
 
   const { error } = await supabase.from('training_user_profiles').upsert({
@@ -393,7 +394,7 @@ export async function persistWorkoutPlansToBackend(
     });
     persistMockState(state, migration);
     return {
-      dataMode: 'mock_dev_only',
+      dataMode: ensureSafeDataMode('mock_dev_only'),
       warning: DEV_WARNING,
       plansMigrated: normalized.plans.length,
       skipped: normalized.skipped,
@@ -445,7 +446,7 @@ export async function persistWorkoutHistoryToBackend(
     });
     persistMockState(state, migration);
     return {
-      dataMode: 'mock_dev_only',
+      dataMode: ensureSafeDataMode('mock_dev_only'),
       warning: DEV_WARNING,
       historyMigrated: normalized.history.length,
       skipped: normalized.skipped,
@@ -527,5 +528,5 @@ export async function migrateLegacyTrainingStateToBackend(
 }
 
 export function getLegacyTrainingSyncDataMode(): DataMode {
-  return isSupabaseConfigured ? 'supabase' : 'mock_dev_only';
+  return isSupabaseConfigured ? 'supabase' : ensureSafeDataMode('mock_dev_only');
 }

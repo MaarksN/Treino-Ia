@@ -1,3 +1,4 @@
+import { ensureSafeDataMode } from '../utils/dataMode';
 import {
   DailyCheckin,
   FavoriteFood,
@@ -98,7 +99,7 @@ function writeJSON<T>(key: string, value: T): void {
 function mockResult<T>(data: T): HealthResult<T> {
   return {
     data,
-    dataMode: 'mock_dev_only',
+    dataMode: ensureSafeDataMode('mock_dev_only'),
     warning: MOCK_WARNING,
   };
 }
@@ -811,5 +812,5 @@ export async function saveSleepEntry(input: SleepEntry): Promise<HealthResult<Sl
 }
 
 export function dataModeLabel(dataMode: DataMode): string {
-  return dataMode === 'supabase' ? 'Supabase' : 'mock_dev_only';
+  return dataMode === 'supabase' ? 'Supabase' : ensureSafeDataMode('mock_dev_only');
 }
