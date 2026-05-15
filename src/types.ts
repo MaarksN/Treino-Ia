@@ -1090,3 +1090,6 @@ export interface GamificationState {
   createdAt: number;
   updatedAt: number;
 }
+
+
+export type DailyCheckinType = DailyCheckin;
