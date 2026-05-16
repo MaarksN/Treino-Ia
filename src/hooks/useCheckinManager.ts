@@ -1,6 +1,6 @@
 import { useCallback, useState, useEffect } from 'react';
 import { useAppStore } from '../stores/useAppStore';
-import { type DailyCheckin, type RecoveryCheckin } from '../types';
+import { type DailyCheckin, type RecoveryCheckin, type StreakData, type WorkoutHistoryEntry } from '../types';
 import { type DailyCheckinsQueryResult, useDailyCheckinsQuery } from './useDailyCheckinsQuery';
 import { useSaveDailyCheckinMutation } from './useSaveDailyCheckinMutation';
 import { getErrorMessage, toError } from '../utils/errors';
@@ -10,17 +10,22 @@ import { recordGamificationEvent } from '../services/gamificationService';
 import type { DataMode } from '../types/trainingExecution';
 
 interface UseCheckinManagerOptions {
-  onEngagementRefresh: (streak?: any, history?: any, checkins?: DailyCheckin[]) => void;
-  onSnapshotSave: (history?: any, streak?: any, checkins?: DailyCheckin[]) => void;
+  allCheckins: DailyCheckin[];
+  setAllCheckins: (checkins: DailyCheckin[]) => void;
+  onEngagementRefresh: (streak?: StreakData, history?: WorkoutHistoryEntry[], checkins?: DailyCheckin[]) => void;
+  onSnapshotSave: (history?: WorkoutHistoryEntry[], streak?: StreakData, checkins?: DailyCheckin[]) => void;
 }
 
-export function useCheckinManager({ onEngagementRefresh, onSnapshotSave }: UseCheckinManagerOptions) {
+export function useCheckinManager({
+  allCheckins,
+  setAllCheckins,
+  onEngagementRefresh,
+  onSnapshotSave,
+}: UseCheckinManagerOptions) {
   const { 
-    setAllCheckins, 
     setTodayCheckin, 
     setRecoveryCheckin,
     todayCheckin,
-    allCheckins,
     streakData,
     analyticsHistory
   } = useAppStore();
