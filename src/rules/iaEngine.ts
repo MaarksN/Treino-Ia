@@ -3,6 +3,7 @@ import type {
   TrainingLevel,
   TrainingPlan,
   UserProfile,
+  WorkoutExerciseLog,
   WorkoutSession,
 } from '../services/database';
 
@@ -241,6 +242,17 @@ function buildWeeklySplit(daysPerWeek: number) {
   return split.map(day => day.label).join(' / ');
 }
 
+function getExerciseRpe(exercise: WorkoutExerciseLog) {
+  if (typeof exercise.rpe === 'number') return exercise.rpe;
+
+  const setRpes = exercise.sets
+    ?.map(set => set.rpe)
+    .filter(rpe => Number.isFinite(rpe)) ?? [];
+
+  if (!setRpes.length) return 0;
+  return setRpes.reduce((sum, rpe) => sum + rpe, 0) / setRpes.length;
+}
+
 function buildAdaptiveRecommendation(profile: UserProfile, history: WorkoutSession[]) {
   const last = history[0];
   if (!last) {
@@ -250,7 +262,7 @@ function buildAdaptiveRecommendation(profile: UserProfile, history: WorkoutSessi
   const completionRate = last.totalExercises > 0 ? last.completedExercises / last.totalExercises : 0;
   const completedLogs = last.exercises.filter(exercise => exercise.completed);
   const avgRpe = completedLogs.length
-    ? completedLogs.reduce((sum, exercise) => sum + exercise.rpe, 0) / completedLogs.length
+    ? completedLogs.reduce((sum, exercise) => sum + getExerciseRpe(exercise), 0) / completedLogs.length
     : 0;
 
   if (completionRate < 0.75) {

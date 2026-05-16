@@ -8,7 +8,8 @@ Executar QA visual/manual/tecnico para confirmar que a limpeza de warnings de ho
 
 - Branch: `main`
 - Commit informado no contexto da fase anterior: `81f3afc Resolve lint hook warnings`
-- HEAD efetivamente analisado no workspace: `bada150 fase 6`
+- HEAD observado durante a rodada de QA: `bada150 fase 6`
+- HEAD observado apos a validacao final: `dac5fe3 1`
 - Data/hora local da rodada: 2026-05-16, America/Sao_Paulo
 
 ## Arquivos impactados pela fase anterior
@@ -41,7 +42,7 @@ Branch inicial:
 main
 ```
 
-Observacao: alteracoes nao rastreadas/externas foram preservadas. Durante a rodada, o status do workspace mudou para outros arquivos em `src/pages/Dashboard*`; essas alteracoes nao foram revertidas nem editadas nesta fase.
+Observacao: alteracoes nao rastreadas/externas foram preservadas. Durante a rodada, o status do workspace mudou para outros arquivos em `src/pages/Dashboard*`. Um erro pequeno de tipo nessa area foi corrigido para permitir a validacao final, sem alterar layout ou comportamento de produto.
 
 ## Comandos executados
 
@@ -117,11 +118,13 @@ Observacao de ferramenta: a primeira abertura da harness temporaria enquanto o V
 
 ## Bugs encontrados
 
-- Nenhum bug de produto confirmado nesta rodada.
+- Nenhum bug visual/funcional de produto confirmado nos fluxos testados.
+- Durante a validacao final, `npm run typecheck` falhou por import relativo incorreto em `src/pages/Dashboard/types.ts`, que degradava o tipo `ActiveExerciseDraft`.
 
 ## Bugs corrigidos nesta fase
 
-- Nenhum. Nao houve alteracao de codigo de produto.
+- Corrigido import de `WorkoutExerciseLog` em `src/pages/Dashboard/types.ts` de `../../../services/database` para `../../services/database`.
+- Impacto: ajuste pequeno e objetivo de tipo/import; sem redesign, sem feature nova e sem alteracao de schema.
 
 ## Pendencias / warnings
 

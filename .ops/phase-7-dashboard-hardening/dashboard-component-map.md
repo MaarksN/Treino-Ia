@@ -1,43 +1,135 @@
 # Mapa de Componentes do Dashboard
 
 ## `Dashboard.tsx`
-**Papel:** *Smart Component / Root Controller*.
-Responsável exclusivo por:
-- Buscar e persistir dados chamando a classe `DatabaseService`.
-- Manter o Root State do fluxo (*profile, plan, history, activeDraft*).
-- Repassar dados cruciais como propriedades (props) para os componentes filhos.
-**Onde NÃO colocar lógica:** Elementos de UI, renderização de ícones SVG, estilização Tailwind (excessão para o esqueleto base de grid/flex).
 
----
+**Papel atual:** Root Controller + compositor de pagina.
 
-## Filhos (Dumb Components)
-Localizados em `src/pages/Dashboard/components/`
+Responsabilidades validadas:
 
-### 1. `CloudPanel.tsx`
-- **Papel:** Tela/bloco de configuração de autenticação do usuário.
-- **Props Recebidas:** `email`, `password`, `loading`, `persistence`.
-- **Callbacks:** `onSignIn`, `onSignUp`, `onSignOut`, e mutadores de texto.
+- Buscar, salvar e migrar dados via `DatabaseService`.
+- Manter o root state do fluxo (`profile`, `plan`, `history`, `activeDraft`, autenticacao, mensagens e loading).
+- Coordenar callbacks de alto nivel como salvar anamnese, recalcular plano, iniciar treino e finalizar treino.
+- Compor a pagina com header, mensagens globais, blocos de resumo, recomendacao, estado vazio e componentes filhos.
 
-### 2. `AnamnesisForm.tsx`
-- **Papel:** Formulário interativo para definir as diretrizes do atleta (lesões, tempo de treino, dias).
-- **Props Recebidas:** Objeto `profile`, booleano `saving`.
-- **Callbacks:** `onChange`, `onSubmit`.
+Limite arquitetural:
 
-### 3. `MetricPanels.tsx`
-- **Papel:** Exibição puramente cosmética das estatísticas vitais do treino (Volume, Foco, Frequência).
-- **Exporta:** `MetricCard` e `MetricPanel`.
+- Componentes filhos nao devem chamar `DatabaseService` diretamente.
+- Novas interacoes de produto devem subir eventos via callbacks para o controller quando envolverem persistencia, plano, historico ou autenticacao.
+- UI complexa nova deve preferencialmente entrar em componente filho dedicado, preservando o `Dashboard.tsx` como orquestrador.
 
-### 4. `HistoryPanel.tsx`
-- **Papel:** Renderizar cronologicamente os últimos 5 treinos salvos na memória, avaliando progresso bruto.
-- **Props Recebidas:** Lista de `WorkoutSession[]`.
+## Tipos Compartilhados
 
-### 5. `WeeklyPlan.tsx`
-- **Papel:** Transformar o objeto mental da Inteligência Artificial em botões de "Iniciar Treino" para o atleta. Renderiza a estrutura diária proposta.
-- **Props Recebidas:** `plan`, `selectedDayIndex`.
-- **Callbacks:** `onSelectDay`, `onStartWorkout`.
+### `src/pages/Dashboard/types.ts`
 
-### 6. `ActiveWorkout.tsx`
-- **Papel:** A sala de controle operacional do treino físico. Interação em tempo-real (caixas de texto, checkboxes) enquanto o atleta treina.
-- **Props Recebidas:** `day` (informação estática), `activeDraft` (estado atual das marcações), `activeFeedback` (texto livre).
-- **Callbacks:** `onUpdateDraft`, `onFinishWorkout`, `onFeedbackChange`.
-- **Proibido:** NUNCA chamar APIs de banco de dados diretamente daqui. Qualquer salvamento deve ser evocado pelos callbacks, forçando o `Dashboard.tsx` a assumir a responsabilidade.
+- Exporta `ActiveExerciseDraft`.
+- Permite que `Dashboard.tsx` e `ActiveWorkout.tsx` compartilhem o contrato do rascunho de treino ativo sem duplicacao.
+
+## Barrel
+
+### `src/pages/Dashboard/components/index.ts`
+
+Exporta:
+
+- `CloudPanel`
+- `AnamnesisForm`
+- `MetricCard`
+- `MetricPanel`
+- `HistoryPanel`
+- `WeeklyPlan`
+- `ActiveWorkout`
+
+## Componentes Filhos
+
+### `CloudPanel.tsx`
+
+**Papel:** bloco de persistencia e autenticacao.
+
+Props principais:
+
+- `persistence`
+- `email`
+- `password`
+- `loading`
+
+Callbacks:
+
+- `onEmailChange`
+- `onPasswordChange`
+- `onSignIn`
+- `onSignUp`
+- `onSignOut`
+
+### `AnamnesisForm.tsx`
+
+**Papel:** formulario de criacao/edicao do perfil do atleta.
+
+Props principais:
+
+- `profile`
+- `saving`
+
+Callbacks:
+
+- `onChange`
+- `onSubmit`
+
+### `MetricPanels.tsx`
+
+**Papel:** componentes visuais puros para metricas.
+
+Exports:
+
+- `MetricCard`
+- `MetricPanel`
+
+### `HistoryPanel.tsx`
+
+**Papel:** renderizar ate os cinco treinos mais recentes.
+
+Props principais:
+
+- `history: WorkoutSession[]`
+
+### `WeeklyPlan.tsx`
+
+**Papel:** renderizar dias e exercicios do plano semanal.
+
+Props principais:
+
+- `plan`
+- `selectedDayIndex`
+- `selectedDay`
+
+Callbacks:
+
+- `onSelectDay`
+- `onStartWorkout`
+
+### `ActiveWorkout.tsx`
+
+**Papel:** interface operacional do treino ativo.
+
+Props principais:
+
+- `day`
+- `activeDraft`
+- `activeFeedback`
+- `saving`
+
+Callbacks:
+
+- `onCancel`
+- `onUpdateDraft`
+- `onUpdateDraftSet`
+- `onFeedbackChange`
+- `onFinishWorkout`
+
+Estado observado no workspace final:
+
+- Renderiza entrada por serie (`sets`) em vez de campos agregados de carga/reps/RPE.
+- Exibe indicador de plato quando `plateauDetected` vem no draft.
+- Inclui cronometro de descanso local e popover de calculo RPE.
+
+Regra: este componente nao persiste dados diretamente; finalizacao e ajustes de plano continuam sob responsabilidade do `Dashboard.tsx`.
+
+Nota de escopo: os itens de `sets`, plato, descanso e calculadora RPE parecem pertencer a Phase 8. Eles foram documentados porque existem no workspace final observado, mas nao devem ser confundidos com o hardening original da Phase 7.

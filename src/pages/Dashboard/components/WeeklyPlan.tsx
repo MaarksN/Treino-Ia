@@ -1,6 +1,5 @@
-import React from 'react';
 import { Play, CheckCircle2 } from 'lucide-react';
-import { TrainingPlan, ExercisePrescription } from '../../../services/database';
+import { type TrainingPlan, type ExercisePrescription } from '../../../services/database';
 
 function ExerciseCard({ exercise }: { exercise: ExercisePrescription }) {
   return (

@@ -45,6 +45,12 @@ export interface TrainingPlan {
   days: WorkoutDayPlan[];
 }
 
+export interface ExerciseSet {
+  weight: number;
+  reps: number;
+  rpe: number;
+}
+
 export interface WorkoutExerciseLog {
   exerciseId: string;
   name: string;
@@ -52,9 +58,11 @@ export interface WorkoutExerciseLog {
   targetReps: string;
   targetRest: string;
   completed: boolean;
-  actualWeight: number;
-  actualReps: number;
-  rpe: number;
+  sets?: ExerciseSet[];
+  // Legacy fields for backward compatibility
+  actualWeight?: number;
+  actualReps?: number;
+  rpe?: number;
 }
 
 export interface WorkoutSession {

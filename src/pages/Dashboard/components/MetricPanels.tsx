@@ -1,6 +1,6 @@
-import React from 'react';
+import { type ReactNode } from 'react';
 
-export function MetricCard({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: string; tone: 'neon' | 'magenta' | 'light' }) {
+export function MetricCard({ icon, label, value, tone }: { icon: ReactNode; label: string; value: string; tone: 'neon' | 'magenta' | 'light' }) {
   const toneClass = tone === 'neon'
     ? 'border-brand-neon shadow-brutal-neon text-brand-neon'
     : tone === 'magenta'
@@ -16,7 +16,7 @@ export function MetricCard({ icon, label, value, tone }: { icon: React.ReactNode
   );
 }
 
-export function MetricPanel({ icon, title, value, tone }: { icon: React.ReactNode; title: string; value: string; tone: 'neon' | 'magenta' | 'light' }) {
+export function MetricPanel({ icon, title, value, tone }: { icon: ReactNode; title: string; value: string; tone: 'neon' | 'magenta' | 'light' }) {
   const toneClass = tone === 'neon'
     ? 'border-brand-neon shadow-brutal-neon text-brand-neon'
     : tone === 'magenta'

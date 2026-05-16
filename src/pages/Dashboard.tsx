@@ -1,28 +1,17 @@
-import React, { FormEvent, useEffect, useMemo, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import {
   Activity,
   Brain,
-  CheckCircle2,
-  Cloud,
-  Database,
   Dumbbell,
-  Flame,
   Gauge,
   History,
-  LogIn,
-  Play,
-  RotateCcw,
-  Save,
-  ShieldAlert,
   Target,
   Timer,
   UserRound,
-  Zap,
 } from 'lucide-react';
 import {
   createDefaultProfile,
   DatabaseService,
-  ExercisePrescription,
   PersistenceStatus,
   TrainingPlan,
   UserProfile,
@@ -43,41 +32,7 @@ import {
   ActiveWorkout,
 } from './Dashboard/components';
 
-const levelOptions: Array<{ value: UserProfile['level']; label: string; detail: string }> = [
-  { value: 'iniciante', label: 'Iniciante', detail: 'Base técnica' },
-  { value: 'intermediario', label: 'Intermediário', detail: 'Carga progressiva' },
-  { value: 'avancado', label: 'Avançado', detail: 'Periodização' },
-];
-
-const goalOptions = ['Hipertrofia', 'Força', 'Definição', 'Condicionamento'];
-
-const equipmentOptions = [
-  'Academia completa',
-  'Casa com halteres',
-  'Peso corporal',
-  'Elásticos',
-  'Academia do prédio',
-];
-
 const STARTER_USER_KEY = '@TreinoIA:starterUser';
-
-const fieldClass = 'mt-2 w-full rounded-[22px] border-2 border-brand-light/15 bg-brand-gray px-4 py-3 font-mono text-sm text-brand-light outline-none transition-colors placeholder:text-brand-muted focus:border-brand-neon';
-const labelClass = 'block font-mono text-[11px] uppercase tracking-[0.25em] text-brand-muted';
-
-const levelScore: Record<UserProfile['level'], string> = {
-  iniciante: '03',
-  intermediario: '05',
-  avancado: '06',
-};
-
-function formatDate(timestamp: number) {
-  return new Date(timestamp).toLocaleString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 function parseNumber(value: string) {
   const parsed = Number(value.replace(',', '.'));
@@ -90,18 +45,41 @@ function createSessionId() {
     : `session_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 }
 
-function createActiveDraft(day: TrainingPlan['days'][number]): ActiveExerciseDraft[] {
-  return day.exercises.map(exercise => ({
-    exerciseId: exercise.id,
-    name: exercise.name,
-    targetSets: exercise.sets,
-    targetReps: exercise.reps,
-    targetRest: exercise.rest,
-    completed: false,
-    actualWeight: '',
-    actualReps: '',
-    rpe: '7',
-  }));
+function createActiveDraft(day: TrainingPlan['days'][number], history: WorkoutSession[]): ActiveExerciseDraft[] {
+  return day.exercises.map(exercise => {
+    const pastLogs = history.flatMap(s => s.exercises.filter(e => e.exerciseId === exercise.id));
+    const lastLog = pastLogs.length > 0 ? pastLogs[0] : null;
+
+    let plateauDetected = false;
+    if (pastLogs.length >= 3) {
+      const last3 = pastLogs.slice(0, 3);
+      // Detecção de platô simples: se nos últimos 3 treinos o volume não subiu e o rpe médio foi alto (>= 8)
+      const isStagnant = last3.every(log => log.sets?.[0]?.weight === lastLog?.sets?.[0]?.weight && log.sets?.[0]?.reps === lastLog?.sets?.[0]?.reps);
+      const highRpe = last3.every(log => (log.sets?.[0]?.rpe ?? 0) >= 8);
+      if (isStagnant && highRpe) plateauDetected = true;
+    }
+
+    const sets = Array.from({ length: exercise.sets }).map((_, i) => {
+      const pastSet = lastLog?.sets?.[i];
+      return {
+        weight: pastSet?.weight ? String(pastSet.weight) : (lastLog?.actualWeight ? String(lastLog.actualWeight) : ''),
+        reps: pastSet?.reps ? String(pastSet.reps) : (lastLog?.actualReps ? String(lastLog.actualReps) : ''),
+        rpe: pastSet?.rpe ? String(pastSet.rpe) : (lastLog?.rpe ? String(lastLog.rpe) : '8'),
+        completed: false,
+      };
+    });
+
+    return {
+      exerciseId: exercise.id,
+      name: exercise.name,
+      targetSets: exercise.sets,
+      targetReps: exercise.reps,
+      targetRest: exercise.rest,
+      completed: false,
+      sets,
+      plateauDetected,
+    };
+  });
 }
 
 function readStarterUser(): StarterUser | null {
@@ -263,7 +241,7 @@ export default function Dashboard() {
     if (!plan) return;
     const day = plan.days[dayIndex];
     setActiveDayIndex(dayIndex);
-    setActiveDraft(createActiveDraft(day));
+    setActiveDraft(createActiveDraft(day, history));
     setActiveFeedback('');
     setNotice('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -275,6 +253,17 @@ export default function Dashboard() {
     )));
   }
 
+  function updateDraftSet(exerciseIndex: number, setIndex: number, patch: Partial<ActiveExerciseDraft['sets'][0]>) {
+    setActiveDraft(current => current.map((item, i) => {
+      if (i !== exerciseIndex) return item;
+      const newSets = [...item.sets];
+      newSets[setIndex] = { ...newSets[setIndex], ...patch };
+      // Se um set foi concluído, avaliar se o exercício inteiro foi
+      const allSetsCompleted = newSets.every(s => s.completed);
+      return { ...item, sets: newSets, completed: allSetsCompleted };
+    }));
+  }
+
   async function finishActiveWorkout() {
     if (!profile || !plan || activeDayIndex === null) return;
 
@@ -283,16 +272,26 @@ export default function Dashboard() {
 
     try {
       const day = plan.days[activeDayIndex];
-      const logs: WorkoutExerciseLog[] = activeDraft.map(exercise => ({
-        ...exercise,
-        actualWeight: parseNumber(exercise.actualWeight),
-        actualReps: parseNumber(exercise.actualReps),
-        rpe: parseNumber(exercise.rpe),
-      }));
+      const logs: WorkoutExerciseLog[] = activeDraft.map(exercise => {
+        const parsedSets = exercise.sets.map(s => ({
+          weight: parseNumber(s.weight),
+          reps: parseNumber(s.reps),
+          rpe: parseNumber(s.rpe),
+        }));
+        return {
+          ...exercise,
+          sets: parsedSets,
+          // Preenche os legados com base na média ou maximo do primeiro set para compatibilidade retroativa
+          actualWeight: parsedSets[0]?.weight ?? 0,
+          actualReps: parsedSets[0]?.reps ?? 0,
+          rpe: parsedSets[0]?.rpe ?? 0,
+        };
+      });
       const completedExercises = logs.filter(exercise => exercise.completed).length;
       const totalVolume = logs.reduce((sum, exercise) => {
         if (!exercise.completed) return sum;
-        return sum + exercise.actualWeight * exercise.actualReps * exercise.targetSets;
+        const exerciseVolume = exercise.sets!.reduce((setSum, s) => setSum + (s.weight * s.reps), 0);
+        return sum + exerciseVolume;
       }, 0);
       const session: WorkoutSession = {
         id: createSessionId(),
@@ -389,6 +388,7 @@ export default function Dashboard() {
         saving={saving}
         onCancel={() => setActiveDayIndex(null)}
         onUpdateDraft={updateDraft}
+        onUpdateDraftSet={updateDraftSet}
         onFeedbackChange={setActiveFeedback}
         onFinishWorkout={finishActiveWorkout}
       />
@@ -555,5 +555,4 @@ export default function Dashboard() {
     </main>
   );
 }
-
 

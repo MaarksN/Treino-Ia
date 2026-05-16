@@ -1,7 +1,13 @@
-import { WorkoutExerciseLog } from '../../services/database';
+import { type WorkoutExerciseLog } from '../../services/database';
 
-export type ActiveExerciseDraft = Omit<WorkoutExerciseLog, 'actualWeight' | 'actualReps' | 'rpe'> & {
-  actualWeight: string;
-  actualReps: string;
+export interface DraftSet {
+  weight: string;
+  reps: string;
   rpe: string;
+  completed: boolean;
+}
+
+export type ActiveExerciseDraft = Omit<WorkoutExerciseLog, 'sets' | 'actualWeight' | 'actualReps' | 'rpe'> & {
+  sets: DraftSet[];
+  plateauDetected?: boolean;
 };

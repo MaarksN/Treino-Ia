@@ -1,6 +1,5 @@
-import React from 'react';
 import { Cloud, Database, ShieldAlert } from 'lucide-react';
-import { PersistenceStatus } from '../../../services/database';
+import { type PersistenceStatus } from '../../../services/database';
 
 const fieldClass = 'mt-2 w-full rounded-[22px] border-2 border-brand-light/15 bg-brand-gray px-4 py-3 font-mono text-sm text-brand-light outline-none transition-colors placeholder:text-brand-muted focus:border-brand-neon';
 

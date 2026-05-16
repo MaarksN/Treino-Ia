@@ -1,6 +1,5 @@
-import React from 'react';
 import { History } from 'lucide-react';
-import { WorkoutSession } from '../../../services/database';
+import { type WorkoutSession } from '../../../services/database';
 
 function formatDate(timestamp: number) {
   return new Date(timestamp).toLocaleString('pt-BR', {
