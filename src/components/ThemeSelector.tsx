@@ -31,11 +31,10 @@ export function ThemeSelector({ isPremium = false, onThemeChange }: Props) {
               key={theme.id}
               type="button"
               onClick={() => handleSelect(theme.id, theme.isPremium)}
-              className={`relative flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
-                active === theme.id
+              className={`relative flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${active === theme.id
                   ? 'border-brand-neon bg-brand-neon/5'
                   : 'border-white/10 bg-brand-dark hover:border-white/20'
-              } ${locked ? 'opacity-60 cursor-not-allowed' : ''}`}
+                } ${locked ? 'opacity-60 cursor-not-allowed' : ''}`}
             >
               <div
                 className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-xl border border-white/10"
@@ -79,11 +78,11 @@ export function ThemeSelector({ isPremium = false, onThemeChange }: Props) {
                   children: React.Children.map((buttonContent as React.ReactElement<any>).props.children, child => {
                     const c = child as React.ReactElement<any>;
                     if (c?.type === 'div' && c.props.className === 'absolute top-2 right-2') {
-                       return (
-                         <div className="absolute top-2 right-2">
-                           <span className="text-[10px] text-brand-neon font-bold">PRO</span>
-                         </div>
-                       );
+                      return (
+                        <div className="absolute top-2 right-2">
+                          <span className="text-[10px] text-brand-neon font-bold">PRO</span>
+                        </div>
+                      );
                     }
                     return child;
                   })

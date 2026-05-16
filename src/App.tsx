@@ -38,12 +38,12 @@ import { extractWorkoutFromFile, generateWorkoutPlan } from './services/geminiSe
 import { recordGamificationEvent } from './services/gamificationService';
 import { getTodayCheckinFromList } from './services/healthService';
 import {
-  loadTrainingStateFromBackend,
-  migrateLegacyTrainingStateToBackend,
   persistUserProfileToBackend,
   persistWorkoutHistoryToBackend,
   persistWorkoutPlansToBackend,
 } from './services/legacyTrainingSyncService';
+import { useAppStore } from './stores/useAppStore';
+import { useTrainingSync } from './hooks/useTrainingSync';
 
 import './index.css';
 
@@ -72,32 +72,35 @@ export default function App() {
     goToRegistration,
     goToSocial,
   } = useAppNavigation(VIEWS.LOADING);
-  const [user, setUser] = useState<User | null>(null);
-  const [isPremium, setIsPremium] = useState(false);
-  const [plans, setPlans] = useState<WorkoutPlan[]>([]);
-  const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
-  const [workoutHistory, setWorkoutHistory] = useState<WorkoutHistoryRecord[]>([]);
-  const [analyticsHistory, setAnalyticsHistory] = useState<WorkoutHistoryEntry[]>(() => loadHistory());
-  const [streakData, setStreakData] = useState<StreakData>(() => loadStreak());
+  const {
+    user, setUser,
+    profile, setProfile,
+    isPremium, setIsPremium,
+    plans, setPlans,
+    currentPlanId, setCurrentPlanId,
+    workoutHistory, setWorkoutHistory,
+    analyticsHistory, setAnalyticsHistory,
+    streakData, setStreakData,
+    todayCheckin, setTodayCheckin,
+    recoveryCheckin, setRecoveryCheckin,
+    darkMode, setDarkMode,
+    language, setLanguage,
+    voiceEnabled, setVoiceEnabled,
+    showOnboarding, setShowOnboarding,
+  } = useAppStore();
+
   const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const [challengeVersion, setChallengeVersion] = useState(0);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
-  const [recoveryCheckin, setRecoveryCheckin] = useState<RecoveryCheckin | null>(null);
-  const [todayCheckin, setTodayCheckin] = useState<DailyCheckin | null>(null);
   const [allCheckins, setAllCheckins] = useState<DailyCheckin[]>([]);
   const [healthDataMode, setHealthDataMode] = useState<DataMode | undefined>();
   const [healthWarning, setHealthWarning] = useState<string | null>(null);
   const [checkinSaving, setCheckinSaving] = useState(false);
   const [checkinError, setCheckinError] = useState<string | null>(null);
-  const [darkMode, setDarkMode] = useState(true);
-  const [language, setLanguage] = useState<'PT' | 'EN'>('PT');
-  const [voiceEnabled, setVoiceEnabled] = useState(() => localStorage.getItem('@TreinoApp:voiceEnabled') === 'true');
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCoachChat, setShowCoachChat] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem(ONBOARDING_KEY));
   const [shareEntry, setShareEntry] = useState<WorkoutHistoryEntry | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showCoach, setShowCoach] = useState(false);
@@ -150,39 +153,9 @@ export default function App() {
     }
   };
 
-  const hydrateTrainingStateFromBackend = async () => {
-    try {
-      const result = await loadTrainingStateFromBackend();
-      if (result.dataMode !== 'supabase') return;
-
-      if (result.profile) {
-        setProfile(result.profile);
-      }
-
-      if (result.history.length) {
-        setWorkoutHistory(result.history);
-      }
-
-      if (result.plans.length) {
-        setPlans(result.plans);
-        setCurrentPlanId(result.currentPlanId || result.plans[0].id);
-        goToDashboard();
-      }
-    } catch (error) {
-      captureError(error, 'App.hydrateTrainingStateFromBackend');
-    }
-  };
-
-  const migrateLegacyTrainingState = async () => {
-    try {
-      const result = await migrateLegacyTrainingStateToBackend();
-      if (result.dataMode === 'supabase') {
-        await hydrateTrainingStateFromBackend();
-      }
-    } catch (error) {
-      captureError(error, 'App.migrateLegacyTrainingState');
-    }
-  };
+  const { migrateLegacyTrainingState } = useTrainingSync({
+    onGoToDashboard: goToDashboard,
+  });
 
   useEffect(() => {
     applyTheme(loadThemeId());
