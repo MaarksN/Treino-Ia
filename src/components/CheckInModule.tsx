@@ -15,7 +15,7 @@ export function CheckInModule() {
   // Recover state if available (for persistency, a real app would use local storage)
   
   useEffect(() => {
-    let interval: any;
+    let interval: ReturnType<typeof setInterval>;
     if (isCheckedIn && checkInTime) {
       interval = setInterval(() => {
         const now = new Date();
@@ -62,8 +62,10 @@ export function CheckInModule() {
       const characteristic = await service?.getCharacteristic('heart_rate_measurement');
       
       characteristic?.startNotifications();
-      characteristic?.addEventListener('characteristicvaluechanged', (e: any) => {
-        const val = e.target.value;
+      characteristic?.addEventListener('characteristicvaluechanged', (e: Event) => {
+        const target = e.target as (EventTarget & { value?: DataView }) | null;
+        const val = target?.value;
+        if (!val) return;
         const hr = val.getUint8(1);
         setHeartRate(hr);
         setDeviceConnected(true);

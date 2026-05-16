@@ -34,9 +34,9 @@ import { applyTheme, loadThemeId } from './utils/themeUtils';
 import { fetchBillingEntitlement } from './services/billingService';
 import { extractWorkoutFromFile, generateWorkoutPlan } from './services/geminiService';
 import { recordGamificationEvent } from './services/gamificationService';
+import { useWorkoutManager } from './hooks/useWorkoutManager';
 import {
   persistUserProfileToBackend,
-  persistWorkoutHistoryToBackend,
   persistWorkoutPlansToBackend,
 } from './services/legacyTrainingSyncService';
 import { useAppStore } from './stores/useAppStore';
@@ -119,6 +119,18 @@ export default function App() {
     if (!values.length) return 0;
     return values.reduce((sum, value) => sum + value, 0) / values.length;
   };
+
+  const {
+    handleCompleteDay,
+    refreshEngagement,
+    saveLocalDashboardSnapshot
+  } = useWorkoutManager({
+    allCheckins,
+    todayCheckin,
+    onShareEntry: setShareEntry,
+    onChallengeVersionChange: () => setChallengeVersion(v => v + 1),
+    onNewBadges: (badges) => setNewBadges(badges)
+  });
 
   const {
     healthDataMode,
@@ -282,102 +294,6 @@ export default function App() {
     setVoiceEnabled(settings.voiceEnabled);
     setLanguage('PT');
     setDarkMode(true);
-  };
-
-  const getStoredArrayCount = (key: string) => {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(key) || '[]');
-      return Array.isArray(parsed) ? parsed.length : 0;
-    } catch {
-      return 0;
-    }
-  };
-
-  const getNutritionMealCount = () => Math.max(
-    getStoredArrayCount('@TreinoApp:meals:mock_dev_only'),
-    getStoredArrayCount('@TreinoApp:meals')
-  );
-
-  function refreshEngagement(
-    nextStreak = streakData,
-    nextHistory = analyticsHistory,
-    nextCheckins = allCheckins
-  ) {
-    syncChallengeProgress(
-      nextHistory.length,
-      getTotalVolumeLifted(nextHistory),
-      nextCheckins.length
-    );
-    setChallengeVersion(value => value + 1);
-
-    const newly = evaluateAndUnlockBadges(
-      nextStreak,
-      nextHistory,
-      nextCheckins.length,
-      getStoredArrayCount('@TreinoApp:prs'),
-      getNutritionMealCount()
-    );
-    if (newly.length) setNewBadges(newly);
-  }
-
-
-
-  function saveLocalDashboardSnapshot(
-    nextHistory = analyticsHistory,
-    nextStreak = streakData,
-    nextCheckins = allCheckins
-  ) {
-    try {
-      saveDashboardSnapshot(user?.email || user?.name || 'local-user', {
-        plans: plans.length,
-        workoutHistory: nextHistory.length,
-        totalVolume: getTotalVolumeLifted(nextHistory),
-        currentStreak: nextStreak.currentStreak,
-        checkins: nextCheckins.length,
-        updatedAt: new Date().toISOString(),
-      });
-    } catch (error) {
-      captureError(error, 'App.saveLocalDashboardSnapshot');
-    }
-  }
-
-  const enqueueWorkoutSync = (record: WorkoutHistoryRecord) => {
-    if (!navigator.onLine) {
-      void enqueueOfflineAction({
-        type: 'WORKOUT_SESSION_COMPLETED',
-        payload: record,
-      })
-        .then(() => registerBackgroundSync())
-        .catch(error => captureError(error, 'App.enqueueWorkoutOffline'));
-    }
-  };
-
-  const handleCompleteDay = (record: WorkoutHistoryRecord) => {
-    const newHistory = [...workoutHistory, record];
-    setWorkoutHistory(newHistory);
-    void persistWorkoutHistoryToBackend(newHistory)
-      .catch(error => captureError(error, 'App.persistWorkoutHistory'));
-    enqueueWorkoutSync(record);
-    void recordGamificationEvent('workout_completed', record.id)
-      .catch(error => captureError(error, 'App.workoutCompletedGamification'));
-
-    const completedPlan = plans.find(plan => plan.id === record.planId);
-    const completedDayIndex = completedPlan?.days.findIndex(day => day.id === record.dayId) ?? -1;
-    if (completedPlan && completedDayIndex >= 0) {
-      const completedEntry = recordWorkoutSession(
-        completedPlan,
-        completedDayIndex,
-        record.durationMinutes,
-        todayCheckin ? calculateReadiness(todayCheckin).score : undefined
-      );
-      const nextAnalyticsHistory = loadHistory();
-      const nextStreak = recordWorkoutForStreak(streakData, new Date(record.date).toISOString().slice(0, 10));
-      setAnalyticsHistory(nextAnalyticsHistory);
-      setStreakData(nextStreak);
-      setShareEntry(completedEntry);
-      refreshEngagement(nextStreak, nextAnalyticsHistory, allCheckins);
-      saveLocalDashboardSnapshot(nextAnalyticsHistory, nextStreak, allCheckins);
-    }
   };
 
   const activeProfile = profile || user?.profile || null;

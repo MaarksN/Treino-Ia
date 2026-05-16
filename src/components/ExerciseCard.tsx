@@ -31,7 +31,7 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
   
   // Variations State
   const [showVariations, setShowVariations] = useState(false);
-  const [variations, setVariations] = useState<any[]>([]);
+  const [variations, setVariations] = useState<Array<{name: string; description: string; difficulty: string;}>>([]);
   const [loadingVariations, setLoadingVariations] = useState(false);
   
   // Timer State
@@ -168,7 +168,7 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
     setSwipeX(0);
   };
 
-  const FeedbackButton = ({ type, icon: Icon, label, activeColor }: { type: Exercise['feedback'], icon: any, label: string, activeColor: string }) => {
+  const FeedbackButton = ({ type, icon: Icon, label, activeColor }: { type: Exercise['feedback'], icon: React.ElementType, label: string, activeColor: string }) => {
     const isActive = exercise.feedback === type;
     return (
       <button 
@@ -184,12 +184,12 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
 
   const chartData = useMemo(() => {
     if (!workoutHistory) return [];
-    const data: any[] = [];
+    const data: Array<{date: string, weight: number}> = [];
     const chronologicalHistory = [...workoutHistory].sort((a, b) => a.date - b.date);
     
     chronologicalHistory.forEach(record => {
-      const pastExc = record.exercises.find(e => e.name.toLowerCase() === exercise.name.toLowerCase() && e.actualWeight);
-      if (pastExc) {
+      const pastExc = record.exercises.find(e => e.name.toLowerCase() === exercise.name.toLowerCase() && e.actualWeight !== undefined);
+      if (pastExc?.actualWeight !== undefined) {
         data.push({
           date: new Date(record.date).toLocaleDateString([], { month: 'short', day: 'numeric' }),
           weight: pastExc.actualWeight,
