@@ -20,6 +20,7 @@ import {
 } from '../services/database';
 import { calculateTrainingPlan } from '../rules/iaEngine';
 import { RegistrationForm } from '../components/RegistrationForm';
+import { Skeleton } from '../components/ui/Skeleton';
 import { User as StarterUser } from '../types';
 import { ActiveExerciseDraft } from './Dashboard/types';
 import {
@@ -354,6 +355,9 @@ export default function Dashboard() {
         <p className="mt-3 font-mono text-sm uppercase tracking-widest text-brand-magenta">
           Carregando perfil, plano e histórico
         </p>
+        <div className="mt-6 w-full max-w-md">
+          <Skeleton lines={3} />
+        </div>
       </main>
     );
   }

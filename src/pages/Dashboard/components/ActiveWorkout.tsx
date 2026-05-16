@@ -82,6 +82,7 @@ export function ActiveWorkout({
             <p>Tonelagem estimada: {Math.round(summary.tonnage.totalTonnage).toLocaleString('pt-BR')} kg</p>
             <p>Tonelagem concluída: {Math.round(summary.tonnage.completedTonnage).toLocaleString('pt-BR')} kg</p>
             <p>RPE médio: {summary.averageRpe > 0 ? summary.averageRpe : '-'}</p>
+            <p>Carga percebida acumulada: {summary.accumulatedRpeLoad}</p>
           </div>
         </section>
 
