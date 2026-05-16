@@ -23,6 +23,11 @@ import { RegistrationForm } from '../components/RegistrationForm';
 import { User as StarterUser } from '../types';
 import { ActiveExerciseDraft } from './Dashboard/types';
 import {
+  buildWorkoutExerciseLog,
+  detectSimplePlateau,
+  suggestInitialExerciseDraft,
+} from './Dashboard/services/activeWorkoutEngine';
+import {
   CloudPanel,
   AnamnesisForm,
   MetricCard,
@@ -34,11 +39,6 @@ import {
 
 const STARTER_USER_KEY = '@TreinoIA:starterUser';
 
-function parseNumber(value: string) {
-  const parsed = Number(value.replace(',', '.'));
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
 function createSessionId() {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? `session_${crypto.randomUUID()}`
@@ -47,25 +47,19 @@ function createSessionId() {
 
 function createActiveDraft(day: TrainingPlan['days'][number], history: WorkoutSession[]): ActiveExerciseDraft[] {
   return day.exercises.map(exercise => {
-    const pastLogs = history.flatMap(s => s.exercises.filter(e => e.exerciseId === exercise.id));
-    const lastLog = pastLogs.length > 0 ? pastLogs[0] : null;
-
-    let plateauDetected = false;
-    if (pastLogs.length >= 3) {
-      const last3 = pastLogs.slice(0, 3);
-      // Detecção de platô simples: se nos últimos 3 treinos o volume não subiu e o rpe médio foi alto (>= 8)
-      const isStagnant = last3.every(log => log.sets?.[0]?.weight === lastLog?.sets?.[0]?.weight && log.sets?.[0]?.reps === lastLog?.sets?.[0]?.reps);
-      const highRpe = last3.every(log => (log.sets?.[0]?.rpe ?? 0) >= 8);
-      if (isStagnant && highRpe) plateauDetected = true;
-    }
+    const suggestion = suggestInitialExerciseDraft(exercise.id, history);
+    const plateau = detectSimplePlateau(exercise.id, history);
 
     const sets = Array.from({ length: exercise.sets }).map((_, i) => {
-      const pastSet = lastLog?.sets?.[i];
       return {
-        weight: pastSet?.weight ? String(pastSet.weight) : (lastLog?.actualWeight ? String(lastLog.actualWeight) : ''),
-        reps: pastSet?.reps ? String(pastSet.reps) : (lastLog?.actualReps ? String(lastLog.actualReps) : ''),
-        rpe: pastSet?.rpe ? String(pastSet.rpe) : (lastLog?.rpe ? String(lastLog.rpe) : '8'),
+        weight: '',
+        reps: '',
+        rpe: '8',
         completed: false,
+        autofillSuggested: suggestion.hasSuggestion && i === 0,
+        suggestedWeight: i === 0 ? suggestion.weight : undefined,
+        suggestedReps: i === 0 ? suggestion.reps : undefined,
+        suggestedRpe: i === 0 ? suggestion.rpe : undefined,
       };
     });
 
@@ -77,7 +71,8 @@ function createActiveDraft(day: TrainingPlan['days'][number], history: WorkoutSe
       targetRest: exercise.rest,
       completed: false,
       sets,
-      plateauDetected,
+      plateauDetected: plateau.isPlateau,
+      plateauReason: plateau.reason,
     };
   });
 }
@@ -272,21 +267,7 @@ export default function Dashboard() {
 
     try {
       const day = plan.days[activeDayIndex];
-      const logs: WorkoutExerciseLog[] = activeDraft.map(exercise => {
-        const parsedSets = exercise.sets.map(s => ({
-          weight: parseNumber(s.weight),
-          reps: parseNumber(s.reps),
-          rpe: parseNumber(s.rpe),
-        }));
-        return {
-          ...exercise,
-          sets: parsedSets,
-          // Preenche os legados com base na média ou maximo do primeiro set para compatibilidade retroativa
-          actualWeight: parsedSets[0]?.weight ?? 0,
-          actualReps: parsedSets[0]?.reps ?? 0,
-          rpe: parsedSets[0]?.rpe ?? 0,
-        };
-      });
+      const logs: WorkoutExerciseLog[] = activeDraft.map(exercise => buildWorkoutExerciseLog(exercise));
       const completedExercises = logs.filter(exercise => exercise.completed).length;
       const totalVolume = logs.reduce((sum, exercise) => {
         if (!exercise.completed) return sum;
@@ -555,4 +536,3 @@ export default function Dashboard() {
     </main>
   );
 }
-

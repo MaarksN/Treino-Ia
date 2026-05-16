@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Clock, Calculator, AlertTriangle, Play, X, Check } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Clock, Calculator, AlertTriangle, X, Check } from 'lucide-react';
 import { type TrainingPlan } from '../../../services/database';
 import { type ActiveExerciseDraft, type DraftSet } from '../types';
+import { useRestTimer } from '../hooks/useRestTimer';
+import { buildActiveWorkoutSummary, getRpeGuidance } from '../services/activeWorkoutEngine';
 
 const fieldClass = 'mt-2 w-full rounded-[22px] border-2 border-brand-light/15 bg-brand-gray px-4 py-3 font-mono text-sm text-brand-light outline-none transition-colors placeholder:text-brand-muted focus:border-brand-neon';
 const labelClass = 'block font-mono text-[11px] uppercase tracking-[0.25em] text-brand-muted';
@@ -26,12 +28,6 @@ function parseRestSeconds(rest: string): number {
   return val;
 }
 
-function formatTime(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
-
 export function ActiveWorkout({
   day,
   activeDraft,
@@ -43,26 +39,14 @@ export function ActiveWorkout({
   onFeedbackChange,
   onFinishWorkout,
 }: ActiveWorkoutProps) {
-  const [restTimer, setRestTimer] = useState<number | null>(null);
   const [showRpeCalc, setShowRpeCalc] = useState<{eIdx: number, sIdx: number} | null>(null);
-
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-    if (restTimer !== null && restTimer > 0) {
-      interval = setInterval(() => {
-        setRestTimer(t => t !== null ? t - 1 : null);
-      }, 1000);
-    } else if (restTimer === 0) {
-      // Toca um beep leve ou apenas limpa
-      setRestTimer(null);
-    }
-    return () => clearInterval(interval);
-  }, [restTimer]);
+  const { remainingSeconds, formatted, isRunning, startRest, stopRest, resetRest } = useRestTimer(90);
+  const summary = useMemo(() => buildActiveWorkoutSummary(activeDraft), [activeDraft]);
 
   const handleSetCompletion = (eIdx: number, sIdx: number, exercise: ActiveExerciseDraft, checked: boolean) => {
     onUpdateDraftSet(eIdx, sIdx, { completed: checked });
     if (checked) {
-      setRestTimer(parseRestSeconds(exercise.targetRest));
+      startRest(parseRestSeconds(exercise.targetRest));
     }
   };
 
@@ -92,6 +76,14 @@ export function ActiveWorkout({
             Voltar ao plano
           </button>
         </header>
+        <section className="mb-6 rounded-[24px] border border-brand-light/15 bg-brand-dark/40 p-4 font-mono text-xs uppercase tracking-wider text-brand-light/85">
+          <div className="grid gap-2 md:grid-cols-4">
+            <p>Progresso: {summary.progress.completedExercises}/{summary.progress.totalExercises} ({summary.progress.percent}%)</p>
+            <p>Tonelagem estimada: {Math.round(summary.tonnage.totalTonnage).toLocaleString('pt-BR')} kg</p>
+            <p>Tonelagem concluída: {Math.round(summary.tonnage.completedTonnage).toLocaleString('pt-BR')} kg</p>
+            <p>RPE médio: {summary.averageRpe > 0 ? summary.averageRpe : '-'}</p>
+          </div>
+        </section>
 
         <section className="space-y-6">
           {activeDraft.map((exercise, eIdx) => (
@@ -106,9 +98,9 @@ export function ActiveWorkout({
                       Objetivo: {exercise.targetSets}x{exercise.targetReps} | {exercise.targetRest}
                     </span>
                     {exercise.plateauDetected && (
-                      <span className="flex items-center gap-1 rounded-full bg-brand-magenta/20 border border-brand-magenta text-brand-light px-3 py-1 font-mono text-[10px] uppercase tracking-widest">
+                      <span className="flex items-center gap-1 rounded-full bg-brand-magenta/20 border border-brand-magenta text-brand-light px-3 py-1 font-mono text-[10px] uppercase tracking-widest" title={exercise.plateauReason}>
                         <AlertTriangle className="w-3 h-3 text-brand-magenta" />
-                        Platô Detectado
+                        Possível platô
                       </span>
                     )}
                   </div>
@@ -148,6 +140,29 @@ export function ActiveWorkout({
                             className="w-16 md:w-20 rounded-[12px] border-2 border-brand-light/15 bg-brand-dark px-3 py-2 text-brand-light outline-none transition-colors placeholder:text-brand-muted/50 focus:border-brand-neon"
                             placeholder="0"
                           />
+                          {set.autofillSuggested && (
+                            <div className="mt-1 flex gap-1">
+                              <button
+                                type="button"
+                                onClick={() => onUpdateDraftSet(eIdx, sIdx, {
+                                  weight: set.suggestedWeight ?? '',
+                                  reps: set.suggestedReps ?? '',
+                                  rpe: set.suggestedRpe ?? set.rpe,
+                                  autofillSuggested: false,
+                                })}
+                                className="text-[10px] text-brand-neon"
+                              >
+                                Aplicar sugestão
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => onUpdateDraftSet(eIdx, sIdx, { autofillSuggested: false })}
+                                className="text-[10px] text-brand-muted"
+                              >
+                                Ignorar
+                              </button>
+                            </div>
+                          )}
                         </td>
                         <td className="py-3 px-2">
                           <input
@@ -208,6 +223,7 @@ export function ActiveWorkout({
                               </div>
                             )}
                           </div>
+                          <p className="mt-1 text-[10px] text-brand-muted">{getRpeGuidance(set.rpe).guidance}</p>
                         </td>
                         <td className="py-3 px-2 text-center">
                           <label className="relative inline-flex cursor-pointer items-center justify-center">
@@ -230,6 +246,11 @@ export function ActiveWorkout({
         </section>
 
         <section className="mt-6 rounded-[28px] border-4 border-brand-magenta glass-panel-magenta p-6 shadow-brutal-magenta">
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            <button type="button" onClick={() => startRest(90)} className="rounded-full border border-brand-light/20 px-4 py-2 font-mono text-[11px] uppercase">Iniciar descanso</button>
+            <button type="button" onClick={resetRest} className="rounded-full border border-brand-light/20 px-4 py-2 font-mono text-[11px] uppercase">Reiniciar</button>
+            <button type="button" onClick={stopRest} className="rounded-full border border-brand-light/20 px-4 py-2 font-mono text-[11px] uppercase">Parar</button>
+          </div>
           <label>
             <span className={labelClass}>Feedback rápido</span>
             <textarea
@@ -251,17 +272,17 @@ export function ActiveWorkout({
       </div>
 
       {/* Floating Rest Timer */}
-      {restTimer !== null && (
+      {isRunning && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 glass-panel-neon px-6 py-3 rounded-full flex items-center gap-4 animate-bounce-subtle">
-          <Clock className={`w-6 h-6 ${restTimer === 0 ? 'text-brand-magenta animate-pulse' : 'text-brand-neon'}`} />
+          <Clock className={`w-6 h-6 ${remainingSeconds === 0 ? 'text-brand-magenta animate-pulse' : 'text-brand-neon'}`} />
           <span className="font-mono text-2xl font-black tracking-widest text-brand-light">
-            {formatTime(restTimer)}
+            {formatted}
           </span>
-          {restTimer === 0 && (
+          {remainingSeconds === 0 && (
             <span className="font-mono text-xs uppercase tracking-widest text-brand-magenta ml-2">Próxima série!</span>
           )}
           <button
-            onClick={() => setRestTimer(null)}
+            onClick={stopRest}
             className="ml-4 bg-brand-dark/50 hover:bg-brand-dark rounded-full p-2 transition-colors border border-brand-light/10"
           >
             <X className="w-4 h-4 text-brand-light" />
