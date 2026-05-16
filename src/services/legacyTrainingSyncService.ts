@@ -106,7 +106,7 @@ function normalizeUser(user: User | null): User | null {
     name: normalizeText(user.name, 'Atleta', 160),
     email: normalizeText(user.email, '', 240).toLowerCase(),
     avatarUrl: user.avatarUrl ? sanitizeText(user.avatarUrl).slice(0, 1200) : undefined,
-    profile: user.profile ? normalizeProfile(user.profile) : undefined,
+    profile: user.profile ? normalizeProfile(user.profile) ?? undefined : undefined,
   };
 }
 

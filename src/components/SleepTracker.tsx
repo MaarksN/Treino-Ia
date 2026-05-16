@@ -207,7 +207,7 @@ export function SleepTracker() {
                   <YAxis stroke="#9ca9bb" tick={{ fontSize: 10 }} domain={[0, 10]} />
                   <Tooltip
                     contentStyle={{ background: '#1c1b19', border: 'none', borderRadius: 8 }}
-                    formatter={(value: number) => [`${value}h`]}
+                    formatter={(value) => [`${Number(value ?? 0)}h`]}
                   />
                   <Area type="monotone" dataKey="horas" stroke="#a78bfa" strokeWidth={2} fill="url(#sleepGrad)" dot={{ fill: '#a78bfa', r: 4 }} />
                 </AreaChart>
