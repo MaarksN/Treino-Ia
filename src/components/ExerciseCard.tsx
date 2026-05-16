@@ -13,7 +13,7 @@ interface Props {
   history?: WorkoutPlan[];
   workoutHistory?: WorkoutHistoryRecord[];
   userProfile?: UserProfile;
-  previousStat?: { date: number, weight?: number, reps?: string, rpe?: number };
+  previousStat?: { date: number, weight?: number, reps?: string, rpe?: number } | null;
   previousData?: Exercise | null;
   previousPR?: PersonalRecord | null;
   onUpdate: (updated: Exercise) => void;

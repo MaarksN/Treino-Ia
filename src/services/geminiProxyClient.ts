@@ -48,13 +48,7 @@ function normalizeContents(contents: unknown): unknown {
   return contents;
 }
 
-function normalizeSystemInstruction(
-  systemInstruction: GeminiGenerateContentRequest['config'] extends infer Config
-    ? Config extends { systemInstruction?: infer Value }
-      ? Value
-      : never
-    : never,
-) {
+function normalizeSystemInstruction(systemInstruction?: string | Record<string, unknown>) {
   if (!systemInstruction) return undefined;
 
   if (typeof systemInstruction === 'string') {

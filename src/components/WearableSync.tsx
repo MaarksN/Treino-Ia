@@ -260,7 +260,7 @@ export function WearableSync({ profile, onSessionComplete }: Props) {
                       <YAxis domain={['auto', 'auto']} stroke="#9ca9bb" tick={{ fontSize: 10 }} width={30} />
                       <Tooltip
                         contentStyle={{ background: '#1c1b19', border: 'none', borderRadius: 8 }}
-                        formatter={(value: number) => [`${value} BPM`]}
+                        formatter={(value) => [`${Number(value ?? 0)} BPM`]}
                         labelFormatter={() => ''}
                       />
                       <ReferenceLine y={maxHR * 0.6} stroke={ZONE_COLORS[0]} strokeDasharray="4 4" />
