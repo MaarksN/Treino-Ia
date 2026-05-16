@@ -1,0 +1,189 @@
+import type { RecoveryCheckin } from './recovery.ts';
+
+export type ExerciseFeedback = 'easy' | 'hard' | 'painful' | 'good' | null;
+
+export interface SetLog {
+  setNumber: number;
+  weight?: number;
+  reps?: number;
+  rpe?: number;
+  failed?: boolean;
+  technicalFailure?: boolean;
+  note?: string;
+  completedAt?: number;
+}
+
+export interface Exercise {
+  id: string;
+  name: string;
+  sets: number;
+  reps: string;
+  rest: string;
+  videoUrl?: string;
+  muscleGroup?: string;
+  movementPattern?: string;
+  tags?: string[];
+  favorited?: boolean;
+  isCustom?: boolean;
+  executionDetails?: string;
+  concentricPhase?: string;
+  eccentricPhase?: string;
+  notes?: string;
+  completed?: boolean;
+  feedback?: ExerciseFeedback;
+  actualWeight?: number;
+  actualReps?: string;
+  performanceNotes?: string;
+  rpe?: number;
+  setLogs?: SetLog[];
+}
+
+export interface PersonalRecord {
+  exerciseName: string;
+  weight: number;
+  reps: number;
+  date: number;
+  planId: string;
+}
+
+export interface ExerciseLog {
+  exerciseId?: string;
+  exerciseName: string;
+  date: number;
+  actualWeight?: number;
+  actualReps?: string;
+  rpe?: number;
+  setLogs?: SetLog[];
+  feedback?: ExerciseFeedback;
+  performanceNotes?: string;
+}
+
+export interface WorkoutSession {
+  id: string;
+  planId: string;
+  dayId: string;
+  completedAt: number;
+  durationMinutes?: number;
+  logs: ExerciseLog[];
+  readiness?: RecoveryCheckin;
+}
+
+export interface WeeklyInsight {
+  title: string;
+  description: string;
+  severity: 'good' | 'warning' | 'critical' | 'info';
+}
+
+export interface MacrocyclePhase {
+  name: string;
+  objective: string;
+  durationWeeks: number;
+  intensity: string;
+  volume: string;
+}
+
+export interface Microcycle {
+  week: number;
+  focus: string;
+  notes: string;
+}
+
+export interface AiCoachMessage {
+  role: 'user' | 'assistant';
+  text: string;
+  createdAt: number;
+}
+
+export interface AiFeedback {
+  overallAssessment: string;
+  strengths: string[];
+  improvements: string[];
+  nextStepTips: string[];
+  motivationalNote: string;
+  progressIndicator: number;
+}
+
+export interface WorkoutFeedback {
+  date: number;
+  difficulty: number;
+  feeling: string;
+  comments: string;
+}
+
+export interface WorkoutDay {
+  id: string;
+  dayName: string;
+  focus: string;
+  exercises: Exercise[];
+  warmup?: string;
+  cooldown?: string;
+  estimatedDuration?: string;
+  completed?: boolean;
+  workoutFeedback?: WorkoutFeedback;
+}
+
+export interface WorkoutPlan {
+  id: string;
+  createdAt: number;
+  planName: string;
+  goalDescription: string;
+  days: WorkoutDay[];
+}
+
+export interface WorkoutHistoryRecord {
+  id: string;
+  date: number;
+  planId: string;
+  dayId: string;
+  dayName: string;
+  focus: string;
+  volumeLoad: number; // total kg lifted
+  durationMinutes: number;
+  exercises: Exercise[];
+}
+
+export interface WorkoutHistoryEntry {
+  id: string;
+  planId: string;
+  planName: string;
+  date: string;
+  dayFocus: string;
+  exerciseCount: number;
+  completedCount: number;
+  totalVolume: number;
+  durationMinutes?: number;
+  readinessScore?: number;
+  prsBroken?: string[];
+}
+
+export interface WeeklyStats {
+  weekLabel: string;
+  sessions: number;
+  totalVolume: number;
+  avgReadiness: number;
+  adherence: number;
+}
+
+export interface MuscleGroupVolume {
+  group: string;
+  volume: number;
+  sessions: number;
+}
+
+export interface StreakData {
+  currentStreak: number;
+  longestStreak: number;
+  lastWorkoutDate: string | null;
+  totalWorkouts: number;
+  workoutDates: string[];
+}
+
+export interface ReminderConfig {
+  enabled: boolean;
+  days: number[];
+  time: string;
+  message: string;
+  reactivationDays: number;
+}
+
+// Social & compartilhamento
