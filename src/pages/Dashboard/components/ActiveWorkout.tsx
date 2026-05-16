@@ -1,11 +1,7 @@
 import React from 'react';
 import { TrainingPlan, WorkoutExerciseLog } from '../../../services/database';
 
-export type ActiveExerciseDraft = Omit<WorkoutExerciseLog, 'actualWeight' | 'actualReps' | 'rpe'> & {
-  actualWeight: string;
-  actualReps: string;
-  rpe: string;
-};
+import { ActiveExerciseDraft } from '../types';
 
 const fieldClass = 'mt-2 w-full rounded-[22px] border-2 border-brand-light/15 bg-brand-gray px-4 py-3 font-mono text-sm text-brand-light outline-none transition-colors placeholder:text-brand-muted focus:border-brand-neon';
 const labelClass = 'block font-mono text-[11px] uppercase tracking-[0.25em] text-brand-muted';

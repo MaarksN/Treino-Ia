@@ -32,13 +32,16 @@ import {
 import { calculateTrainingPlan } from '../rules/iaEngine';
 import { RegistrationForm } from '../components/RegistrationForm';
 import { User as StarterUser } from '../types';
-
-import { CloudPanel } from './Dashboard/components/CloudPanel';
-import { AnamnesisForm } from './Dashboard/components/AnamnesisForm';
-import { MetricCard, MetricPanel } from './Dashboard/components/MetricPanels';
-import { WeeklyPlan } from './Dashboard/components/WeeklyPlan';
-import { HistoryPanel } from './Dashboard/components/HistoryPanel';
-import { ActiveWorkout, type ActiveExerciseDraft } from './Dashboard/components/ActiveWorkout';
+import { ActiveExerciseDraft } from './Dashboard/types';
+import {
+  CloudPanel,
+  AnamnesisForm,
+  MetricCard,
+  MetricPanel,
+  WeeklyPlan,
+  HistoryPanel,
+  ActiveWorkout,
+} from './Dashboard/components';
 
 const levelOptions: Array<{ value: UserProfile['level']; label: string; detail: string }> = [
   { value: 'iniciante', label: 'Iniciante', detail: 'Base técnica' },
