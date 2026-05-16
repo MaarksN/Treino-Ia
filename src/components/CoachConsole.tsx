@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ClipboardList, Loader2, NotebookPen, Send, UserPlus, Users } from 'lucide-react';
 import { CoachPrivateNote, CoachStudent, CoachWorkoutAssignment, WorkoutPlan } from '../types';
 import {
@@ -32,22 +32,22 @@ export function CoachConsole({ canInteract, onAuthRequired, currentPlan = null }
     [students, selectedStudentId],
   );
 
-  const loadStudents = async () => {
+  const loadStudents = useCallback(async () => {
     if (!canInteract) return;
     setLoading(true);
     try {
       const rows = await listCoachStudents();
       setStudents(rows);
       setStatus('');
-      if (!selectedStudentId && rows[0]) setSelectedStudentId(rows[0].student.id);
+      setSelectedStudentId(current => current || rows[0]?.student.id || '');
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Não foi possível carregar alunos.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [canInteract]);
 
-  const loadStudentDetails = async (studentId: string) => {
+  const loadStudentDetails = useCallback(async (studentId: string) => {
     if (!studentId || !canInteract) return;
     try {
       const [nextNotes, nextAssignments] = await Promise.all([
@@ -59,21 +59,21 @@ export function CoachConsole({ canInteract, onAuthRequired, currentPlan = null }
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Não foi possível carregar histórico do aluno.');
     }
-  };
+  }, [canInteract]);
 
   useEffect(() => {
     if (currentPlan) {
       setAssignmentTitle(currentPlan.planName);
     }
-  }, [currentPlan?.id]);
+  }, [currentPlan]);
 
   useEffect(() => {
     loadStudents();
-  }, [canInteract]);
+  }, [loadStudents]);
 
   useEffect(() => {
     loadStudentDetails(selectedStudentId);
-  }, [selectedStudentId, canInteract]);
+  }, [loadStudentDetails, selectedStudentId]);
 
   const requireInteraction = () => {
     if (canInteract) return true;

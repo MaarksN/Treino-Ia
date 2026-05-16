@@ -8,7 +8,7 @@ import {
 } from '../services/billingService';
 import { PricingTable } from './PricingTable';
 
-export const PREMIUM_FEATURE_LABELS: Record<PremiumFeature, string> = {
+const PREMIUM_FEATURE_LABELS: Record<PremiumFeature, string> = {
   premium_theme: 'Tema premium',
   export_data: 'Exportação premium',
   unlimited_ai: 'IA ilimitada',

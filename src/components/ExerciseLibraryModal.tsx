@@ -26,10 +26,13 @@ export function ExerciseLibraryModal({ onClose }: Props) {
   const [customVersion, setCustomVersion] = useState(0);
   const [newExercise, setNewExercise] = useState({ name: '', muscleGroup: '', movementPattern: '', tags: '' });
 
-  const allExercises = useMemo(() => [
-    ...EXERCISE_LIBRARY,
-    ...loadCustomExercises(),
-  ], [customVersion]);
+  const allExercises = useMemo(() => {
+    void customVersion;
+    return [
+      ...EXERCISE_LIBRARY,
+      ...loadCustomExercises(),
+    ];
+  }, [customVersion]);
 
   const filtered = useMemo(() => {
     let list = query.length > 1 ? searchExercises(query, allExercises) : allExercises;

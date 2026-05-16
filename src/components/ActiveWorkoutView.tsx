@@ -43,6 +43,8 @@ function cloneDay(day: WorkoutDay): WorkoutDay {
 export function ActiveWorkoutView(props: Props) {
   const isPlanMode = 'plan' in props;
   const initialDay = isPlanMode ? null : props.day;
+  const planDays = isPlanMode ? props.plan.days : null;
+  const dayWorkoutHistory = isPlanMode ? undefined : props.workoutHistory;
   const [localDay, setLocalDay] = useState<WorkoutDay | null>(() => initialDay ? cloneDay(initialDay) : null);
   const [index, setIndex] = useState(0);
   const [restKey, setRestKey] = useState<number | undefined>(undefined);
@@ -53,9 +55,12 @@ export function ActiveWorkoutView(props: Props) {
     if (!initialDay) return;
     setLocalDay(cloneDay(initialDay));
     setIndex(0);
-  }, [initialDay?.id]);
+  }, [initialDay]);
 
-  const days = isPlanMode ? props.plan.days : localDay ? [localDay] : [];
+  const days = useMemo(
+    () => isPlanMode ? planDays ?? [] : localDay ? [localDay] : [],
+    [isPlanMode, localDay, planDays],
+  );
   const entries = useMemo(() =>
     days.flatMap((day, dIdx) =>
       day.exercises.map((ex, eIdx) => ({ ex, dIdx, eIdx, day }))
@@ -66,7 +71,10 @@ export function ActiveWorkoutView(props: Props) {
   const total = entries.length;
   const progress = total ? ((index + 1) / total) * 100 : 0;
   const voiceEnabled = props.voiceEnabled;
-  const workoutHistory = isPlanMode ? [] : props.workoutHistory || [];
+  const workoutHistory = useMemo(
+    () => isPlanMode ? [] : dayWorkoutHistory || [],
+    [dayWorkoutHistory, isPlanMode],
+  );
 
   const previousData = useMemo(() => {
     if (!current) return null;

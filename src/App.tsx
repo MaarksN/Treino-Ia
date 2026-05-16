@@ -153,15 +153,7 @@ export default function App() {
 
   useEffect(() => {
     applyTheme(loadThemeId());
-  }, [
-    goToPublicProfile,
-    goToRegistration,
-    goToSocial,
-    migrateLegacyTrainingState,
-    setDarkMode,
-    setIsPremium,
-    setShowOnboarding,
-  ]);
+  }, []);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
@@ -202,7 +194,15 @@ export default function App() {
       .catch(() => setIsPremium(false));
 
     goToRegistration();
-  }, []);
+  }, [
+    goToPublicProfile,
+    goToRegistration,
+    goToSocial,
+    migrateLegacyTrainingState,
+    setDarkMode,
+    setIsPremium,
+    setShowOnboarding,
+  ]);
 
 
 

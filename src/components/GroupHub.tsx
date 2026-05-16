@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Copy, MessageCircle, Plus, Users } from 'lucide-react';
 import { SocialProfile, TrainingGroup, TrainingGroupMessage } from '../types';
 import {
@@ -29,18 +29,18 @@ export function GroupHub({ currentProfile }: Props) {
 
   const inviteUrl = useMemo(() => selected ? createGroupInviteUrl(selected.invite_code) : '', [selected]);
 
-  const loadGroups = async () => {
+  const loadGroups = useCallback(async () => {
     try {
       const rows = await listMyGroups();
       setGroups(rows);
       setStatus('');
-      if (!selected && rows.length) setSelected(rows[0]);
+      setSelected(current => current || rows[0] || null);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Não foi possível carregar grupos.');
     }
-  };
+  }, []);
 
-  const loadMessages = async () => {
+  const loadMessages = useCallback(async () => {
     if (!selected) return;
     try {
       setMessages(await listGroupMessages(selected.id));
@@ -48,11 +48,11 @@ export function GroupHub({ currentProfile }: Props) {
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Não foi possível carregar mensagens.');
     }
-  };
+  }, [selected]);
 
   useEffect(() => {
     loadGroups();
-  }, []);
+  }, [loadGroups]);
 
   useEffect(() => {
     if (!selected) return undefined;
@@ -69,7 +69,7 @@ export function GroupHub({ currentProfile }: Props) {
       messagesChannel.unsubscribe();
       presenceChannel?.unsubscribe();
     };
-  }, [selected?.id, currentProfile?.id]);
+  }, [currentProfile, loadMessages, selected]);
 
   const handleCreateGroup = async () => {
     if (!newGroupName.trim()) return;

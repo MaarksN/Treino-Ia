@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { BookOpen, Dumbbell, LogOut, Rss, Search, ShieldCheck, Trophy, Users } from 'lucide-react';
 import { PublicWorkoutTemplate, SocialProfile, WorkoutPlan } from '../types';
 import {
@@ -71,7 +71,7 @@ export function SocialHub({ currentPlan = null }: Props) {
     setTab('profile');
   };
 
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     if (!authUser) {
       setProfile(null);
       return;
@@ -94,25 +94,25 @@ export function SocialHub({ currentPlan = null }: Props) {
       setProfile(null);
       setStatus(error instanceof Error ? error.message : 'Supabase ainda não autenticado.');
     }
-  };
+  }, [authUser]);
 
-  const loadTemplates = async () => {
+  const loadTemplates = useCallback(async () => {
     try {
       setTemplates(await listPublicWorkoutTemplates());
     } catch {
       setTemplates([]);
     }
-  };
+  }, []);
 
-  const loadAthletes = async (search = athleteSearch) => {
+  const loadAthletes = useCallback(async (search = '') => {
     try {
       setAthletes(await listPublicProfiles(search));
     } catch {
       setAthletes([]);
     }
-  };
+  }, []);
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     setLoading(true);
     try {
       await Promise.all([loadProfile(), loadTemplates(), loadAthletes('')]);
@@ -120,7 +120,7 @@ export function SocialHub({ currentPlan = null }: Props) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [loadAthletes, loadProfile, loadTemplates]);
 
   useEffect(() => {
     getCurrentAuthUser()
@@ -138,14 +138,14 @@ export function SocialHub({ currentPlan = null }: Props) {
 
   useEffect(() => {
     refresh();
-  }, [authUser?.id]);
+  }, [refresh]);
 
   useEffect(() => {
     if (!currentPlan) return;
     setTemplateTitle(value => value || currentPlan.planName);
     setTemplateDescription(value => value || currentPlan.goalDescription);
     setTemplateGoal(value => value || currentPlan.goalDescription);
-  }, [currentPlan?.id]);
+  }, [currentPlan]);
 
   const createProfile = async () => {
     if (!authUser) {
@@ -163,7 +163,7 @@ export function SocialHub({ currentPlan = null }: Props) {
       });
       setProfile(created);
       setStatus('Perfil social salvo.');
-      await loadAthletes();
+      await loadAthletes(athleteSearch);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Não foi possível criar perfil social.');
     }

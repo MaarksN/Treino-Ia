@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Flag, Plus } from 'lucide-react';
 import { GroupChallenge } from '../types';
 import { createGroupChallenge, listGroupChallenges } from '../services/socialService';
@@ -13,18 +13,18 @@ export function ChallengeParty({ groupId }: Props) {
   const [target, setTarget] = useState(20);
   const [error, setError] = useState('');
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       setChallenges(await listGroupChallenges(groupId));
       setError('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível carregar desafios.');
     }
-  };
+  }, [groupId]);
 
   useEffect(() => {
     load();
-  }, [groupId]);
+  }, [load]);
 
   const create = async () => {
     const now = new Date();

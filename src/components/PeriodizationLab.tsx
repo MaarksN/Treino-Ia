@@ -55,7 +55,7 @@ export function PeriodizationLab({ profileId, performances = [], fatigue }: Prop
     }
   };
 
-  const fatigueSnapshot: Omit<FatigueSnapshot, 'fatigueScore'> = {
+  const fatigueSnapshot = useMemo<Omit<FatigueSnapshot, 'fatigueScore'>>(() => ({
     date: fatigue?.date ?? new Date().toISOString(),
     readiness: fatigue?.readiness ?? 100,
     soreness: fatigue?.soreness ?? 0,
@@ -65,7 +65,7 @@ export function PeriodizationLab({ profileId, performances = [], fatigue }: Prop
     weeklyVolume: fatigue?.weeklyVolume ?? 0,
     completedSessions: fatigue?.completedSessions ?? 0,
     missedSessions: fatigue?.missedSessions ?? 0,
-  };
+  }), [fatigue]);
 
   const fatigueScore = useMemo(() => {
     return calcFatigueScore(fatigueSnapshot);

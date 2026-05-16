@@ -27,6 +27,7 @@ export function BiometricDashboard({ profile }: Props) {
   const today = new Date().toISOString().slice(0, 10);
 
   const data = useMemo(() => {
+    void refreshKey;
     const wearableSessions = loadWearableSessions();
     const hydrationEntries = loadHydrationEntries();
     const sleepEntries = loadSleepEntries();
