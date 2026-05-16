@@ -77,6 +77,29 @@
   .animate-pulse-glow {
     animation: pulseGlow 2s ease-in-out infinite;
   }
+  .glass-panel {
+    background: rgba(18, 14, 47, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  }
+  .glass-panel-neon {
+    background: rgba(18, 14, 47, 0.65);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(25, 167, 255, 0.15);
+    border-top: 1px solid rgba(25, 167, 255, 0.3);
+    box-shadow: 0 8px 32px 0 rgba(3, 8, 23, 0.8), inset 0 0 15px rgba(25, 167, 255, 0.05);
+  }
+  .glass-panel-magenta {
+    background: rgba(18, 14, 47, 0.65);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(139, 92, 246, 0.15);
+    border-top: 1px solid rgba(139, 92, 246, 0.3);
+    box-shadow: 0 8px 32px 0 rgba(3, 8, 23, 0.8), inset 0 0 15px rgba(139, 92, 246, 0.05);
+  }
 }
 
 @keyframes float {

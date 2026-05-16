@@ -112,7 +112,7 @@ export function CheckInModule() {
   };
 
   return (
-    <div className="bg-brand-dark border-4 border-brand-neon p-6 md:p-8 shadow-brutal-neon mb-12 relative overflow-hidden group">
+    <div className="glass-panel-neon p-6 md:p-8 rounded-[28px] mb-12 relative overflow-hidden group transition-all duration-500 hover:shadow-[0_0_40px_rgba(25,167,255,0.15)]">
       
       {/* Background Graphic */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-brand-neon/5 blur-3xl rounded-full group-hover:bg-brand-neon/10 transition-colors pointer-events-none"></div>
@@ -148,25 +148,25 @@ export function CheckInModule() {
 
         <div className="w-full lg:w-auto mt-6 lg:mt-0">
           {isCheckedIn ? (
-            <div className="flex flex-col items-center lg:items-end gap-4 p-6 bg-brand-gray border-2 border-brand-neon/50">
+            <div className="flex flex-col items-center lg:items-end gap-4 p-6 glass-panel rounded-[24px]">
               <div className="text-5xl md:text-6xl font-mono font-black text-brand-neon text-shadow-neon tracking-widest">
                 {elapsedTime}
               </div>
               
               {location ? (
-                <div className="flex items-center text-xs text-brand-light bg-brand-dark px-4 py-2 font-mono uppercase w-full justify-center">
+                <div className="flex items-center text-xs text-brand-light bg-brand-dark/50 border border-brand-light/10 rounded-full px-4 py-2 font-mono uppercase w-full justify-center backdrop-blur-md">
                   <MapPin className="w-4 h-4 mr-2 text-brand-magenta shrink-0" />
                   <span className="truncate">L: {location.lat.toFixed(3)}, L: {location.lng.toFixed(3)}</span>
                 </div>
               ) : (
-                <div className="flex items-center text-xs text-brand-muted bg-brand-dark px-4 py-2 font-mono uppercase w-full justify-center">
+                <div className="flex items-center text-xs text-brand-muted bg-brand-dark/50 border border-brand-light/10 rounded-full px-4 py-2 font-mono uppercase w-full justify-center backdrop-blur-md">
                   <MapPin className="w-4 h-4 mr-2 text-brand-muted shrink-0" /> Local não rastreado
                 </div>
               )}
               
               <button 
                 onClick={handleCheckOut}
-                className="bg-brand-magenta text-brand-light font-black uppercase tracking-widest px-8 py-4 w-full hover:bg-brand-light hover:text-brand-magenta transition-colors border-brutal text-lg flex items-center justify-center animate-bounce-subtle mt-2"
+                className="bg-brand-magenta/90 text-brand-light font-black uppercase tracking-widest px-8 py-4 w-full rounded-[20px] hover:bg-brand-magenta transition-colors shadow-[0_0_20px_rgba(139,92,246,0.3)] text-lg flex items-center justify-center animate-bounce-subtle mt-2 backdrop-blur-md border border-brand-magenta/50"
               >
                 <CheckCircle className="w-6 h-6 mr-3" /> FAZER CHECK-OUT
               </button>
@@ -174,7 +174,7 @@ export function CheckInModule() {
           ) : (
             <button 
               onClick={handleCheckIn}
-              className="bg-brand-neon text-brand-dark font-black uppercase text-xl md:text-2xl px-12 py-8 w-full hover:scale-[1.02] transition-transform border-brutal flex flex-col items-center justify-center gap-3 shadow-[8px_8px_0px_var(--color-brand-light)]"
+              className="bg-brand-neon/90 text-brand-dark font-black uppercase text-xl md:text-2xl px-12 py-8 w-full rounded-[24px] hover:bg-brand-neon hover:scale-[1.02] transition-all flex flex-col items-center justify-center gap-3 shadow-[0_0_30px_rgba(25,167,255,0.4)] backdrop-blur-md border border-brand-neon/50"
             >
               <Map className="w-10 h-10" />
               INICIAR NA ARENA
