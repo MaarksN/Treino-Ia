@@ -35,6 +35,7 @@ export interface ActiveWorkoutSummary {
   progress: WorkoutProgressSummary;
   tonnage: WorkoutTonnageSummary;
   averageRpe: number;
+  accumulatedRpeLoad: number;
 }
 
 function parseValue(value: string | number | null | undefined): number {
@@ -123,8 +124,14 @@ export function buildActiveWorkoutSummary(draft: ActiveExerciseDraft[]): ActiveW
   const averageRpe = rpeValues.length
     ? Number((rpeValues.reduce((sum, value) => sum + value, 0) / rpeValues.length).toFixed(1))
     : 0;
+  const accumulatedRpeLoad = Number(
+    draft
+      .flatMap(ex => ex.sets)
+      .reduce((sum, set) => sum + (parseValue(set.rpe) * parseValue(set.reps)), 0)
+      .toFixed(1)
+  );
 
-  return { progress, tonnage, averageRpe };
+  return { progress, tonnage, averageRpe, accumulatedRpeLoad };
 }
 
 export function buildWorkoutExerciseLog(exercise: ActiveExerciseDraft): WorkoutExerciseLog {

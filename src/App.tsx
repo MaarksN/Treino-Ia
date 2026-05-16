@@ -3,7 +3,7 @@ import { useAppNavigation } from './hooks/useAppNavigation';
 import { useAuthState } from './hooks/useAuthState';
 import { useCheckinManager } from './hooks/useCheckinManager';
 import { Dumbbell } from 'lucide-react';
-import Dashboard from './pages/Dashboard';
+const Dashboard = lazy(() => import('./pages/Dashboard'));
 import { OnboardingTour } from './components/OnboardingTour';
 import {
   type AppSettings,
