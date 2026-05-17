@@ -1,5 +1,7 @@
 import React from 'react';
 import { estimateMicrobiotaHealth } from '../../services/nutrition/microbiotaEstimator';
+import { InlineNotice } from '../ui/InlineNotice';
+import { ActivitySquare } from 'lucide-react';
 
 interface MicrobiotaWidgetProps {
   dailyFiberGrams: number;
@@ -10,18 +12,31 @@ export const MicrobiotaWidget: React.FC<MicrobiotaWidgetProps> = ({ dailyFiberGr
   const insight = estimateMicrobiotaHealth(dailyFiberGrams, calories);
 
   return (
-    <div className="p-4 border rounded shadow-sm bg-white mt-4" data-testid="microbiota-widget">
-      <h3 className="text-lg font-bold mb-2">Microbiota e Fibras (Educacional)</h3>
-      <p className="text-sm text-gray-700">{insight.message}</p>
+    <div className="rounded-[24px] border-2 border-brand-light/10 bg-brand-dark p-5" data-testid="microbiota-widget">
+      <div className="flex items-center gap-3 mb-4">
+        <ActivitySquare className="h-5 w-5 text-brand-neon" />
+        <h3 className="font-display text-2xl uppercase text-brand-light">Microbiota e Fibras</h3>
+      </div>
+
+      <p className="font-mono text-sm leading-6 text-brand-light/85 mb-4">{insight.message}</p>
+
       {insight.status !== 'unknown' && (
-        <div className="mt-2 text-xs text-gray-500">
-          <p>Ingestão atual: {dailyFiberGrams}g</p>
-          <p>Recomendado: {Math.round(insight.recommendedFibersGrams)}g (14g a cada 1000kcal)</p>
+        <div className="mb-4 flex flex-col sm:flex-row sm:items-center gap-4 border border-brand-light/10 bg-brand-gray p-4 rounded-[16px]">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-brand-muted">Ingestão atual</p>
+            <p className="font-display text-2xl text-brand-light">{Math.round(dailyFiberGrams)}g</p>
+          </div>
+          <div className="hidden sm:block h-10 w-px bg-brand-light/10"></div>
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-brand-muted">Recomendado</p>
+            <p className="font-display text-2xl text-brand-neon">{Math.round(insight.recommendedFibersGrams)}g <span className="font-mono text-[10px] text-brand-muted">/dia</span></p>
+          </div>
         </div>
       )}
-      <div className="mt-2 text-xs italic text-gray-400">
-        Nota: Estas são estimativas educacionais e não substituem diagnóstico médico.
-      </div>
+
+      <InlineNotice type="info" title="Educacional">
+        Estas estimativas são baseadas na meta de 14g a cada 1000kcal e não substituem diagnóstico médico nutricional.
+      </InlineNotice>
     </div>
   );
 };

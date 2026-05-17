@@ -2,6 +2,7 @@ import React from 'react';
 import { Leaf, Award } from 'lucide-react';
 import { calculateEcoLiftingImpact } from '../../services/sustainability/ecoLiftingService';
 import { WorkoutSession } from '../../services/database';
+import { EmptyState } from '../ui/EmptyState';
 
 interface Props {
   history: WorkoutSession[];
@@ -45,9 +46,11 @@ export function EcoLiftingPanel({ history }: Props) {
               ))}
             </ul>
           ) : (
-            <div className="rounded-[16px] border border-dashed border-brand-light/20 p-4 text-center text-brand-light/50 font-mono text-xs">
-              Complete sessões para ganhar badges.
-            </div>
+            <EmptyState
+              icon={<Award className="h-6 w-6" />}
+              title="Nenhuma conquista"
+              description="Complete sessões consistentes para ganhar badges ecológicos."
+            />
           )}
         </div>
       </div>

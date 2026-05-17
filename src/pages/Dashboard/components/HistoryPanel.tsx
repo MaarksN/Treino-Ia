@@ -1,5 +1,6 @@
 import { History } from 'lucide-react';
 import { type WorkoutSession } from '../../../services/database';
+import { EmptyState } from '../../../components/ui/EmptyState';
 
 function formatDate(timestamp: number) {
   return new Date(timestamp).toLocaleString('pt-BR', {
@@ -22,9 +23,11 @@ export function HistoryPanel({ history }: { history: WorkoutSession[] }) {
       </div>
 
       {history.length === 0 ? (
-        <p className="font-mono text-sm text-brand-light/70">
-          Nenhum treino finalizado ainda. Inicie um dia do plano para alimentar o motor adaptativo.
-        </p>
+        <EmptyState
+          icon={<History className="h-10 w-10" />}
+          title="Nenhum treino finalizado"
+          description="Inicie um dia do plano para alimentar o motor adaptativo e começar a preencher seu histórico."
+        />
       ) : (
         <div className="space-y-3">
           {history.slice(0, 5).map(session => (

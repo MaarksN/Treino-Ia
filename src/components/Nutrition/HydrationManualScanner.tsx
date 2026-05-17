@@ -4,6 +4,8 @@ import {
   getHydrationColorMessage,
   HYDRATION_CAMERA_GUARD_MESSAGE,
 } from './HydrationManualScanner.logic';
+import { InlineNotice } from '../ui/InlineNotice';
+import { Droplets, Camera } from 'lucide-react';
 
 export const HydrationManualScanner: React.FC = () => {
   const [colorLevel, setColorLevel] = useState<number>(DEFAULT_HYDRATION_COLOR_LEVEL);
@@ -18,41 +20,60 @@ export const HydrationManualScanner: React.FC = () => {
     alert(HYDRATION_CAMERA_GUARD_MESSAGE);
   };
 
-  return (
-    <div className="p-4 border rounded shadow-sm bg-white mt-4" data-testid="hydration-scanner">
-      <h3 className="text-lg font-bold mb-2">Avaliação de Hidratação (Item 89)</h3>
-      <p className="text-sm text-gray-700 mb-4">
-        O scanner de câmera está desativado por questões de privacidade. Por favor, registre manualmente a cor.
-      </p>
+  // Generates a mock color array for the slider gradient effect
+  const colorGradient = [
+    '#f8fafc', '#fef08a', '#fde047', '#facc15',
+    '#eab308', '#ca8a04', '#a16207', '#713f12'
+  ];
 
-      <div className="mb-4">
-        <button
-          onClick={attemptCameraScan}
-          className="bg-blue-100 text-blue-800 px-3 py-1 rounded text-sm hover:bg-blue-200"
-        >
-          Tentar Escanear pela Câmera (Guard)
-        </button>
+  return (
+    <div className="rounded-[24px] border-2 border-brand-light/10 bg-brand-dark p-5" data-testid="hydration-scanner">
+      <div className="flex items-center gap-3 mb-4">
+        <Droplets className="h-5 w-5 text-brand-neon" />
+        <h3 className="font-display text-2xl uppercase text-brand-light">Cor da Urina</h3>
       </div>
 
-      <div className="mt-4 p-3 bg-gray-50 border rounded">
-        <h4 className="font-semibold text-sm mb-2">Escala de Cor (Manual)</h4>
-        <input
-          type="range"
-          min="1"
-          max="8"
-          value={colorLevel}
-          onChange={(e) => updateColor(Number(e.target.value))}
-          className="w-full"
-        />
-        <div className="flex justify-between text-xs text-gray-500 mt-1">
-          <span>Transparente (1)</span>
-          <span>Amarelo Claro (3)</span>
-          <span>Amarelo Escuro (5)</span>
-          <span>Âmbar/Marrom (8)</span>
-        </div>
-        <div className="mt-4 text-sm font-semibold p-2 border rounded bg-white">
-          <p>Nível atual selecionado: {colorLevel}</p>
-          <p className="mt-1 text-gray-700">{message}</p>
+      <InlineNotice type="info" title="Privacidade Garantida">
+        O scanner de câmera está desativado por guard. Por favor, registre manualmente a cor ou use o botão para testar a trava.
+      </InlineNotice>
+
+      <div className="mt-4 flex flex-col gap-4">
+        <button
+          onClick={attemptCameraScan}
+          className="inline-flex w-fit items-center gap-2 rounded-full border border-brand-magenta/50 bg-brand-magenta/10 px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-brand-magenta hover:bg-brand-magenta/20 transition-colors"
+        >
+          <Camera className="h-4 w-4" />
+          Testar Câmera (Guard)
+        </button>
+
+        <div className="mt-2 rounded-[20px] border border-brand-light/10 bg-brand-gray p-4">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-brand-muted mb-4">Escala Visual (1-8)</p>
+          <div className="relative mb-6">
+            <input
+              type="range"
+              min="1"
+              max="8"
+              value={colorLevel}
+              onChange={(e) => updateColor(Number(e.target.value))}
+              className="w-full appearance-none h-3 rounded-full bg-transparent z-10 relative cursor-pointer"
+              style={{
+                background: `linear-gradient(to right, ${colorGradient.join(', ')})`,
+              }}
+            />
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between border-t border-brand-light/10 pt-4">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-8 h-8 rounded-full border border-brand-light/20 shadow-inner"
+                style={{ backgroundColor: colorGradient[colorLevel - 1] }}
+              />
+              <p className="font-display text-3xl uppercase text-brand-light">Nível {colorLevel}</p>
+            </div>
+            <p className="font-mono text-xs leading-5 text-brand-light/80 text-right">
+              {message}
+            </p>
+          </div>
         </div>
       </div>
     </div>
