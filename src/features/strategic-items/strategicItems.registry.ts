@@ -315,11 +315,11 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "id": 32,
     "title": "Check-in de dor",
     "category": "nutrition_recovery",
-    "status": "existing_supported",
+    "status": "implemented_now",
     "horizon": "now",
     "risk": "low",
     "productArea": "nutrition-recovery",
-    "implementationNotes": "Funcionalidade já suportada parcialmente no código atual."
+    "implementationNotes": "Implementado nesta fase com código executável."
   },
   {
     "id": 33,
@@ -365,11 +365,11 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "id": 37,
     "title": "Modo recuperação/day off",
     "category": "nutrition_recovery",
-    "status": "existing_supported",
+    "status": "implemented_now",
     "horizon": "now",
     "risk": "low",
     "productArea": "nutrition-recovery",
-    "implementationNotes": "Funcionalidade já suportada parcialmente no código atual."
+    "implementationNotes": "Implementado nesta fase com código executável."
   },
   {
     "id": 38,

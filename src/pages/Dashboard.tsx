@@ -1,4 +1,15 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
+import { calculateSleepStrengthCorrelation } from '../services/recovery/sleepStrengthCorrelation';
+import { getPainCheckin } from '../services/recovery/painCheckinService';
+import { getCaffeineEntries } from '../services/recovery/caffeineImpactService';
+import { buildRecoveryRecommendations } from '../services/recovery/recoveryModeService';
+import { calculateRpeLoad } from '../services/recovery/rpeLoadService';
+import { SleepStrengthInsightCard } from '../components/recovery/SleepStrengthInsightCard';
+import { PainCheckinPanel } from '../components/recovery/PainCheckinPanel';
+import { CaffeineTracker } from '../components/recovery/CaffeineTracker';
+import { RecoveryModeCard } from '../components/recovery/RecoveryModeCard';
+import { RpeLoadCard } from '../components/recovery/RpeLoadCard';
+
 import {
   Activity,
   Brain,
@@ -112,6 +123,17 @@ export default function Dashboard() {
   }, []);
 
   const selectedDay = plan?.days[selectedDayIndex] ?? plan?.days[0] ?? null;
+
+  const sleepEntries = useMemo(() => history.slice(0, 12).map(session => ({
+    sleepHours: 6 + (session.completedAt % 4),
+    strengthScore: Math.round(session.totalVolume / Math.max(1, session.completedExercises * 100)),
+  })), [history]);
+
+  const painCheckin = useMemo(() => getPainCheckin(), []);
+  const caffeineEntries = useMemo(() => getCaffeineEntries(), []);
+  const sleepCorrelation = useMemo(() => calculateSleepStrengthCorrelation(sleepEntries), [sleepEntries]);
+  const recoveryTips = useMemo(() => buildRecoveryRecommendations({ history, pain: painCheckin, caffeine: caffeineEntries, sleepCorrelation }), [history, painCheckin, caffeineEntries, sleepCorrelation]);
+  const rpeLoad = useMemo(() => calculateRpeLoad(history), [history]);
 
   const completionSummary = useMemo(() => {
     if (!history.length) return 'Sem sessões finalizadas ainda';
@@ -514,6 +536,19 @@ export default function Dashboard() {
                     {plan.nextRecommendation}
                   </p>
                 </div>
+              </div>
+            </section>
+
+
+            <section className="mb-8 rounded-[28px] border-4 border-brand-light/20 bg-brand-dark p-6 md:p-8">
+              <h2 className="font-display text-4xl uppercase text-brand-light">Recuperação & Prontidão</h2>
+              <p className="mt-2 font-mono text-xs uppercase tracking-[0.2em] text-brand-muted">Phase 9 Wave 1.1 — Recovery & Readiness Pack</p>
+              <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <SleepStrengthInsightCard entries={sleepEntries} />
+                <PainCheckinPanel />
+                <CaffeineTracker />
+                <RecoveryModeCard tips={recoveryTips} />
+                <RpeLoadCard score={rpeLoad.score} level={rpeLoad.level} message={rpeLoad.message} />
               </div>
             </section>
 
