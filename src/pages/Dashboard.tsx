@@ -62,6 +62,9 @@ import {
   TrainingReportPanel,
 } from './Dashboard/components';
 import { buildGamificationRetentionState } from './Dashboard/services/gamificationRetentionEngine';
+import { GamifiedAvatar } from './Dashboard/components/socialContent/GamifiedAvatar';
+import { HumanizedNotificationCenter } from './Dashboard/components/socialContent/HumanizedNotificationCenter';
+import { WeeklyChallengePanel } from './Dashboard/components/socialContent/WeeklyChallengePanel';
 
 const PLAN_GENERATION_FEEDBACK_MS = 750;
 const primaryActionClass = getCriticalContrastClass('primaryAction');
@@ -548,6 +551,8 @@ export default function Dashboard() {
           </div>
         )}
 
+        {profile && <HumanizedNotificationCenter streakCount={history.length} />}
+
         {generationProgress && (
           <PlanGenerationProgress
             profile={generationProgress.profile}
@@ -600,9 +605,14 @@ export default function Dashboard() {
                   <p className="mb-3 font-mono text-xs uppercase tracking-[0.35em] text-brand-neon">
                     Bem-vindo de volta
                   </p>
-                  <h2 className="font-display text-7xl uppercase leading-none tracking-tight text-brand-light md:text-8xl">
-                    {profile.name}
-                  </h2>
+                  <div className="flex items-center">
+                    {gamificationRetention && (
+                      <GamifiedAvatar level={gamificationRetention.profileTitle.level} />
+                    )}
+                    <h2 className="font-display text-7xl uppercase leading-none tracking-tight text-brand-light md:text-8xl">
+                      {profile.name}
+                    </h2>
+                  </div>
                   {gamificationRetention && (
                     <div className="mt-4 inline-flex max-w-full flex-wrap items-center gap-2 border-2 border-brand-neon bg-brand-neon px-3 py-2 font-mono text-xs uppercase tracking-widest text-brand-dark shadow-brutal-neon">
                       <span>Nivel {gamificationRetention.profileTitle.level}</span>
@@ -645,6 +655,8 @@ export default function Dashboard() {
                 <GamificationRetentionPanel state={gamificationRetention} />
               </div>
             )}
+
+            <WeeklyChallengePanel history={history} />
 
             <section className="mb-8 rounded-[28px] border-4 border-brand-magenta bg-brand-gray p-6 shadow-brutal-magenta md:p-8">
               <div className="flex flex-col gap-5 md:flex-row md:items-start">

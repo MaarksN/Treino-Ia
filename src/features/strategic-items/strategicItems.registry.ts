@@ -295,11 +295,11 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "id": 30,
     "title": "Sugestões de progressão de carga",
     "category": "active_workout",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "active-workout",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Implementado com biblioteca offline de SVGs no modo ActiveWorkout."
   },
   {
     "id": 31,
@@ -425,11 +425,11 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "id": 43,
     "title": "Recompensa por consistência",
     "category": "gamification_retention",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "gamification-retention",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Implementado com efeitos sonoros retrô/arcade e controle de mute no ActiveWorkout."
   },
   {
     "id": 44,
@@ -455,11 +455,11 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "id": 46,
     "title": "Ranking pessoal por blocos",
     "category": "gamification_retention",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "gamification-retention",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Implementado com avatar gamificado por nível no Dashboard, com modo local sem transformação corporal real prometida."
   },
   {
     "id": 47,
@@ -475,21 +475,21 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "id": 48,
     "title": "Feedback de meta batida",
     "category": "gamification_retention",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "gamification-retention",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Implementado com notificações humanizadas locais por IA, guardadas sem service worker real."
   },
   {
     "id": 49,
     "title": "Plano de retorno após pausa",
     "category": "gamification_retention",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "gamification-retention",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Implementado via Desafios Semanais usando base local sem simular comunidade externa irreal."
   },
   {
     "id": 50,
