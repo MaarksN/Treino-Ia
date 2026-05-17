@@ -62,6 +62,7 @@ import {
   TrainingReportPanel,
 } from './Dashboard/components';
 import { buildGamificationRetentionState } from './Dashboard/services/gamificationRetentionEngine';
+import { BiohackingWidget } from './Dashboard/components/BiohackingWidget';
 
 const PLAN_GENERATION_FEEDBACK_MS = 750;
 const primaryActionClass = getCriticalContrastClass('primaryAction');
@@ -678,6 +679,7 @@ export default function Dashboard() {
               onUpdateExerciseNotes={updateSelectedExerciseNotes}
             />
 
+            <BiohackingWidget />
             <RecoveryReadinessSection history={history} />
 
             <HistoryPanel history={history} />
