@@ -1,0 +1,8 @@
+
+F:\Treino-Ia\src\components\NutritionLifestyleHub.tsx
+  50:60  warning  React Hook useMemo has an unnecessary dependency: 'hydrationVersion'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
+  51:83  warning  React Hook useMemo has an unnecessary dependency: 'hydrationVersion'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
+  55:6   warning  React Hook useMemo has an unnecessary dependency: 'cycleVersion'. Either exclude it or remove the dependency array      react-hooks/exhaustive-deps
+
+✖ 3 problems (0 errors, 3 warnings)
+

@@ -21,6 +21,15 @@ export async function registerSW(): Promise<ServiceWorkerRegistration | null> {
     if (event.data?.type === 'BACKGROUND_SYNC_REQUESTED') {
       window.dispatchEvent(new CustomEvent('app:background-sync'));
     }
+
+    if (event.data?.type === 'HYDRATION_QUICK_ADD') {
+      window.dispatchEvent(new CustomEvent('hydration:quick-add-request', {
+        detail: {
+          amountMl: event.data.amountMl,
+          source: 'notification-action',
+        },
+      }));
+    }
   });
 
   return registration;
@@ -61,6 +70,20 @@ export async function showLocalNotification(title: string, options?: Notificatio
     icon: '/icons/icon-192.png',
     ...options,
   });
+}
+
+export async function showHydrationReminderNotification(totalMl: number, goalMl: number): Promise<void> {
+  await showLocalNotification('Hora de hidratar', {
+    body: `Você bebeu ${totalMl}ml de ${goalMl}ml hoje.`,
+    data: {
+      type: 'HYDRATION_REMINDER',
+      url: '/?view=nutrition',
+    },
+    actions: [
+      { action: 'hydrate-250', title: '+250ml' },
+      { action: 'hydrate-500', title: '+500ml' },
+    ],
+  } as NotificationOptions);
 }
 
 export async function registerBackgroundSync(tag = 'treino-app-sync'): Promise<boolean> {

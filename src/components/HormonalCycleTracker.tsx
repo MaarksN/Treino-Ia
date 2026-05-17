@@ -40,6 +40,7 @@ export function HormonalCycleTracker() {
     };
     saveCycleEntry(entry);
     setCycles(loadCycleEntries());
+    window.dispatchEvent(new CustomEvent('cycle:updated'));
     setShowForm(false);
     setStartDate('');
   };

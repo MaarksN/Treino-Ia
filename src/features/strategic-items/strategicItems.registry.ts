@@ -3,203 +3,203 @@ import { type StrategicItem } from './strategicItems.types';
 export const strategicItemsRegistry: StrategicItem[] = [
   {
     "id": 1,
-    "title": "Refatorar componentes grandes do dashboard",
+    "title": "Desacoplar componentes grandes do dashboard",
     "category": "engineering",
     "status": "implemented_now",
     "horizon": "now",
     "risk": "low",
     "productArea": "engineering",
-    "implementationNotes": "Implementado nesta fase com código executável."
+    "implementationNotes": "Lógica de sessão ativa, starter user e draft de treino extraída para services testáveis integrados ao Dashboard."
   },
   {
     "id": 2,
-    "title": "Normalizar tipagem de sessão",
+    "title": "Roteador moderno incremental",
     "category": "engineering",
-    "status": "foundation_created",
-    "horizon": "next",
+    "status": "implemented_now",
+    "horizon": "now",
     "risk": "medium",
-    "productArea": "engineering",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "productArea": "navigation",
+    "implementationNotes": "Router adapter incremental normaliza rotas do Dashboard e deep link de nutricao sem trocar a arquitetura atual nem adicionar dependencia."
   },
   {
     "id": 3,
-    "title": "Padronizar tratamento de erros visuais",
+    "title": "Offline handlers e fila IndexedDB segura",
     "category": "engineering",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "engineering",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Fila offline preserva IndexedDB e adiciona fallback local seguro, contagem, update/remove e testes sem exigir schema novo."
   },
   {
     "id": 4,
     "title": "Preparar lazy loading seguro por rota",
     "category": "engineering",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "engineering",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Bootstrap do App reduzido e Dashboard/Onboarding/Registration carregados via lazy/Suspense sem alterar fluxos validados."
   },
   {
     "id": 5,
-    "title": "Revisar limites de cache local",
+    "title": "Testes E2E smoke",
     "category": "engineering",
-    "status": "foundation_created",
-    "horizon": "next",
+    "status": "implemented_now",
+    "horizon": "now",
     "risk": "medium",
-    "productArea": "engineering",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "productArea": "quality",
+    "implementationNotes": "Smoke E2E viavel em Vitest/jsdom cobre deep link, persistencia local de perfil, plano e historico sem instalar Playwright/Cypress."
   },
   {
     "id": 6,
-    "title": "Melhorar estrutura de hooks compartilhados",
+    "title": "CI paralelo",
     "category": "engineering",
-    "status": "foundation_created",
-    "horizon": "next",
+    "status": "implemented_now",
+    "horizon": "now",
     "risk": "medium",
-    "productArea": "engineering",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "productArea": "ci",
+    "implementationNotes": "GitHub Actions separado em jobs paralelizaveis para lint, typecheck, testes e build, cada um com instalacao limpa."
   },
   {
     "id": 7,
-    "title": "Consolidar formatação de datas",
+    "title": "Cache Gemini",
     "category": "engineering",
-    "status": "foundation_created",
-    "horizon": "next",
+    "status": "implemented_now",
+    "horizon": "now",
     "risk": "medium",
-    "productArea": "engineering",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "productArea": "ai-platform",
+    "implementationNotes": "Cache em memoria com TTL integrado ao proxy Gemini para prompts textuais; payloads multimodais nao sao cacheados e nenhum Redis fake foi criado."
   },
   {
     "id": 8,
-    "title": "Instrumentar métricas de performance",
+    "title": "Migracao JSONB progressiva",
     "category": "engineering",
     "status": "foundation_created",
     "horizon": "next",
     "risk": "medium",
-    "productArea": "engineering",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "productArea": "data-architecture",
+    "implementationNotes": "Read-models e mapeadores JSONB integrados a profile, plano e historico, sem criar migration ou alterar schema Supabase."
   },
   {
     "id": 9,
-    "title": "Simplificar fluxo de persistência local",
+    "title": "Validação Zod granular para inputs críticos",
     "category": "engineering",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "engineering",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Schemas Zod validam anamnese e métricas de séries antes de persistir perfil ou finalizar treino ativo."
   },
   {
     "id": 10,
-    "title": "Memoizar métricas derivadas críticas",
+    "title": "Reduzir renderizações supérfluas",
     "category": "engineering",
     "status": "implemented_now",
     "horizon": "now",
     "risk": "low",
     "productArea": "engineering",
-    "implementationNotes": "Implementado nesta fase com código executável."
+    "implementationNotes": "Handlers críticos foram estabilizados com useCallback/useMemo e componentes Dashboard recorrentes foram memoizados pontualmente."
   },
   {
     "id": 11,
-    "title": "Melhorar rastreamento de estado offline",
-    "category": "engineering",
+    "title": "Progresso visual na geracao de plano",
+    "category": "ui_ux",
     "status": "foundation_created",
     "horizon": "next",
     "risk": "medium",
-    "productArea": "engineering",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "productArea": "ui-ux",
+    "implementationNotes": "Codigo e UI criados para progresso visual real no fluxo de anamnese e recalculo local; promocao pendente de validacao completa."
   },
   {
     "id": 12,
-    "title": "Reforçar validações de entrada",
-    "category": "engineering",
+    "title": "Microinteracoes e animacoes leves",
+    "category": "ui_ux",
     "status": "foundation_created",
     "horizon": "next",
     "risk": "medium",
-    "productArea": "engineering",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "productArea": "ui-ux",
+    "implementationNotes": "Microinteracoes leves criadas em selecao de dias, cards, historico e conclusao de series/exercicios; promocao pendente de validacao completa."
   },
   {
     "id": 13,
-    "title": "Helpers de contraste para UI crítica",
+    "title": "Contraste alto/WCAG em UI crítica",
     "category": "ui_ux",
     "status": "implemented_now",
     "horizon": "now",
     "risk": "low",
     "productArea": "ui-ux",
-    "implementationNotes": "Implementado nesta fase com código executável."
+    "implementationNotes": "Helpers WCAG aplicados em ações e estados críticos do Dashboard/treino ativo, com testes de contraste."
   },
   {
     "id": 14,
-    "title": "Melhorar legibilidade em cards densos",
+    "title": "Haptic feedback nativo seguro",
     "category": "ui_ux",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "ui-ux",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Adapter seguro usa Capacitor Haptics quando disponível e navigator.vibrate como fallback, integrado a ações do treino ativo."
   },
   {
     "id": 15,
-    "title": "Estados vazios consistentes",
+    "title": "Gestos/swipe no treino ativo",
     "category": "ui_ux",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "ui-ux",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Swipe horizontal seguro navega entre exercícios sem capturar inputs, labels, botões ou rolagem vertical."
   },
   {
     "id": 16,
     "title": "Base de navegação mobile/PWA",
     "category": "ui_ux",
-    "status": "existing_supported",
-    "horizon": "now",
-    "risk": "low",
+    "status": "foundation_created",
+    "horizon": "next",
+    "risk": "medium",
     "productArea": "ui-ux",
-    "implementationNotes": "Funcionalidade já suportada parcialmente no código atual."
+    "implementationNotes": "Bottom navigation mobile integrada a secoes reais do Dashboard sem trocar roteador; promocao pendente de validacao completa."
   },
   {
     "id": 17,
-    "title": "Skeleton loader reutilizável",
+    "title": "Skeleton loaders reais",
     "category": "ui_ux",
-    "status": "implemented_now",
-    "horizon": "now",
-    "risk": "low",
+    "status": "foundation_created",
+    "horizon": "next",
+    "risk": "medium",
     "productArea": "ui-ux",
-    "implementationNotes": "Implementado nesta fase com código executável."
+    "implementationNotes": "Dashboard inicial passa a usar skeletons estruturais para perfil, metricas, plano e historico; promocao pendente de validacao completa."
   },
   {
     "id": 18,
-    "title": "Ajustes de foco em teclado",
+    "title": "Customização de tema premium",
     "category": "ui_ux",
     "status": "foundation_created",
     "horizon": "next",
     "risk": "medium",
     "productArea": "ui-ux",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Guard de tema premium bloqueia aplicação local sem entitlement, preservando base de customização sem fingir billing."
   },
   {
     "id": 19,
-    "title": "Melhoria de feedback de salvamento",
+    "title": "Picture-in-picture áudio/vídeo",
     "category": "ui_ux",
     "status": "foundation_created",
     "horizon": "next",
     "risk": "medium",
     "productArea": "ui-ux",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Guard PiP detecta suporte e mídia real antes de renderizar controle; nenhum player fake foi criado."
   },
   {
     "id": 20,
-    "title": "Padronizar mensagens de erro de rede",
-    "category": "ui_ux",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
-    "productArea": "ui-ux",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "title": "Reordenação drag & drop de exercícios",
+    "category": "active_workout",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
+    "productArea": "workout-authoring",
+    "implementationNotes": "Reordenação local funcional no plano semanal, com drag and drop, botões de fallback, persistência do plano atual e testes de serviço."
   },
   {
     "id": 21,
@@ -243,43 +243,43 @@ export const strategicItemsRegistry: StrategicItem[] = [
   },
   {
     "id": 25,
-    "title": "Estimativa de carga-alvo por exercício",
-    "category": "active_workout",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
-    "productArea": "active-workout",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "title": "Feedback por câmera com guard MediaPipe",
+    "category": "hardware_ar_iot",
+    "status": "blocked_external_dependency",
+    "horizon": "future",
+    "risk": "high",
+    "productArea": "workout-media",
+    "implementationNotes": "Adapter/guard criado e integrado ao treino ativo; bloqueia honestamente quando camera segura, getUserMedia ou MediaPipe Pose nao estão disponíveis."
   },
   {
     "id": 26,
-    "title": "Alertas de execução inconsistente",
+    "title": "Supersets e dropsets nativos locais",
     "category": "active_workout",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
-    "productArea": "active-workout",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
+    "productArea": "workout-authoring",
+    "implementationNotes": "Modelo local em JSON do plano, UI de técnica por exercício, chips no treino ativo, persistência no plano atual e testes de regras."
   },
   {
     "id": 27,
-    "title": "Sinalização de treino incompleto",
+    "title": "Anotações por exercício",
     "category": "active_workout",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
-    "productArea": "active-workout",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
+    "productArea": "workout-authoring",
+    "implementationNotes": "Notas textuais por exercício no plano e no treino ativo, persistidas no log; audio fica apenas com guard de suporte sem simular gravação."
   },
   {
     "id": 28,
-    "title": "Histórico com filtros básicos",
+    "title": "Importação por imagem/PDF com crop seguro",
     "category": "active_workout",
     "status": "foundation_created",
     "horizon": "next",
     "risk": "medium",
-    "productArea": "active-workout",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "productArea": "workout-media",
+    "implementationNotes": "Pipeline local de arquivo e crop criado para imagem/PDF, integrado ao Dashboard; OCR permanece bloqueado por não haver integração real neste lote."
   },
   {
     "id": 29,
@@ -309,7 +309,7 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "horizon": "now",
     "risk": "low",
     "productArea": "nutrition-recovery",
-    "implementationNotes": "Implementado nesta fase com código executável."
+    "implementationNotes": "Card no Dashboard com registro local de sono, service de correlacao e fallback honesto para amostra insuficiente."
   },
   {
     "id": 32,
@@ -319,37 +319,37 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "horizon": "now",
     "risk": "low",
     "productArea": "nutrition-recovery",
-    "implementationNotes": "Funcionalidade já suportada parcialmente no código atual."
+    "implementationNotes": "Mapa corporal simples no Dashboard com regioes, intensidade 0-10 e persistencia local; promocao para implemented_now pendente de validacao completa."
   },
   {
     "id": 33,
-    "title": "Sinal de fadiga sistêmica",
+    "title": "Diário de água persistente na tela de bloqueio",
     "category": "nutrition_recovery",
-    "status": "foundation_created",
-    "horizon": "next",
+    "status": "existing_supported",
+    "horizon": "now",
     "risk": "medium",
     "productArea": "nutrition-recovery",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Atalhos PWA e ações de notificação registram água via bridge para o diário local."
   },
   {
     "id": 34,
-    "title": "Ajuste de volume por recuperação",
+    "title": "Recomendação nutricional dinâmica",
     "category": "nutrition_recovery",
-    "status": "foundation_created",
-    "horizon": "next",
+    "status": "implemented_now",
+    "horizon": "now",
     "risk": "medium",
     "productArea": "nutrition-recovery",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Serviço considera fadiga, hidratação e ciclo hormonal para ajustar pré-treino e intensidade."
   },
   {
     "id": 35,
-    "title": "Registro de hidratação",
+    "title": "Integração de receitas com lista de mercado",
     "category": "nutrition_recovery",
-    "status": "foundation_created",
-    "horizon": "next",
+    "status": "implemented_now",
+    "horizon": "now",
     "risk": "medium",
     "productArea": "nutrition-recovery",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Seleção de receitas por macros com query de API externa e agregação automática de compras."
   },
   {
     "id": 36,
@@ -359,7 +359,7 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "horizon": "now",
     "risk": "low",
     "productArea": "nutrition-recovery",
-    "implementationNotes": "Implementado nesta fase com código executável."
+    "implementationNotes": "Tracker de cafeina no Dashboard com presets, dose customizada, estimativa de impacto no sono e persistencia local."
   },
   {
     "id": 37,
@@ -369,17 +369,17 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "horizon": "now",
     "risk": "low",
     "productArea": "nutrition-recovery",
-    "implementationNotes": "Funcionalidade já suportada parcialmente no código atual."
+    "implementationNotes": "Card de day off/recuperacao baseado em historico de RPE, dor e cafeina locais; promocao para implemented_now pendente de validacao completa."
   },
   {
     "id": 38,
-    "title": "Biblioteca de mobilidade",
+    "title": "Tracking do ciclo menstrual",
     "category": "nutrition_recovery",
-    "status": "foundation_created",
-    "horizon": "next",
+    "status": "implemented_now",
+    "horizon": "now",
     "risk": "medium",
     "productArea": "nutrition-recovery",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Tracker de ciclo conectado à recomendação de treino/nutrição do painel de lifestyle."
   },
   {
     "id": 39,
@@ -389,27 +389,27 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "horizon": "now",
     "risk": "low",
     "productArea": "nutrition-recovery",
-    "implementationNotes": "Implementado nesta fase com código executável."
+    "implementationNotes": "Metrica de carga interna por RPE acumulado dos ultimos 7 dias integrada ao Dashboard com niveis de risco."
   },
   {
     "id": 40,
-    "title": "Recomendações de deload",
+    "title": "Scan de refeição",
     "category": "nutrition_recovery",
-    "status": "foundation_created",
-    "horizon": "next",
+    "status": "implemented_now",
+    "horizon": "now",
     "risk": "medium",
     "productArea": "nutrition-recovery",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Upload de foto usa Gemini Vision para estimar macros e gerar veredito frente às metas."
   },
   {
     "id": 41,
-    "title": "Missões semanais progressivas",
+    "title": "Leaderboard por consistência local",
     "category": "gamification_retention",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "gamification-retention",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Implementado no Dashboard com ranking pessoal por semanas, usando score de consistência local sem fingir leaderboard global."
   },
   {
     "id": 42,
@@ -419,7 +419,7 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "horizon": "now",
     "risk": "low",
     "productArea": "gamification-retention",
-    "implementationNotes": "Implementado nesta fase com código executável."
+    "implementationNotes": "Implementado no Dashboard com badges locais conquistados e em progresso derivados do histórico de treino."
   },
   {
     "id": 43,
@@ -439,17 +439,17 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "horizon": "now",
     "risk": "low",
     "productArea": "gamification-retention",
-    "implementationNotes": "Implementado nesta fase com código executável."
+    "implementationNotes": "Implementado no Dashboard com regra local de freeze para descanso legítimo, sem paywall e sem backend novo."
   },
   {
     "id": 45,
-    "title": "Base de relatório mensal/anual",
+    "title": "Relatorio mensal/anual",
     "category": "gamification_retention",
-    "status": "implemented_now",
-    "horizon": "now",
-    "risk": "low",
+    "status": "foundation_created",
+    "horizon": "next",
+    "risk": "medium",
     "productArea": "gamification-retention",
-    "implementationNotes": "Implementado nesta fase com código executável."
+    "implementationNotes": "Relatorio mensal/anual visivel criado no Dashboard com metricas de sessoes, volume, aderencia, foco e tempo ativo; promocao pendente de validacao completa."
   },
   {
     "id": 46,
@@ -469,7 +469,7 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "horizon": "now",
     "risk": "low",
     "productArea": "gamification-retention",
-    "implementationNotes": "Implementado nesta fase com código executável."
+    "implementationNotes": "Implementado no Dashboard com service de títulos por nível local e badge junto ao nome do perfil."
   },
   {
     "id": 48,
@@ -499,7 +499,7 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "horizon": "now",
     "risk": "low",
     "productArea": "gamification-retention",
-    "implementationNotes": "Implementado nesta fase com código executável."
+    "implementationNotes": "Implementado no Dashboard com missões diárias escondidas geradas por data e progresso real do histórico local."
   },
   {
     "id": 51,

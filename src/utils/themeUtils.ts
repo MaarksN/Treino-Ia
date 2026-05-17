@@ -112,6 +112,17 @@ export const APP_THEMES: AppTheme[] = [
 ];
 
 const THEME_KEY = '@TreinoApp:themeId';
+const BLOCKED_THEME_KEY = '@TreinoApp:blockedPremiumThemeId';
+
+export interface ThemeAccessResult {
+  theme: AppTheme;
+  allowed: boolean;
+  reason?: 'premium_required';
+}
+
+export interface ThemeApplyResult extends ThemeAccessResult {
+  applied: boolean;
+}
 
 export function loadThemeId(): string {
   return localStorage.getItem(THEME_KEY) || 'dark';
@@ -121,7 +132,26 @@ export function getTheme(themeId: string): AppTheme {
   return APP_THEMES.find(theme => theme.id === themeId) || APP_THEMES[0];
 }
 
-export function applyTheme(themeId: string) {
+export function getThemeAccess(themeId: string, isPremium = false): ThemeAccessResult {
+  const theme = getTheme(themeId);
+
+  if (theme.isPremium && !isPremium) {
+    return { theme, allowed: false, reason: 'premium_required' };
+  }
+
+  return { theme, allowed: true };
+}
+
+export function applyTheme(
+  themeId: string,
+  options: { enforcePremium?: boolean; isPremium?: boolean } = {},
+): ThemeApplyResult {
+  const access = getThemeAccess(themeId, options.isPremium);
+  if (options.enforcePremium && !access.allowed) {
+    localStorage.setItem(BLOCKED_THEME_KEY, access.theme.id);
+    return { ...access, applied: false };
+  }
+
   const theme = getTheme(themeId);
   const root = document.documentElement;
 
@@ -131,4 +161,11 @@ export function applyTheme(themeId: string) {
   root.style.setProperty('--color-white', theme.vars['--color-brand-light'] || '#f8fafc');
 
   localStorage.setItem(THEME_KEY, theme.id);
+  localStorage.removeItem(BLOCKED_THEME_KEY);
+
+  return { theme, allowed: true, applied: true };
+}
+
+export function loadBlockedPremiumThemeId(): string | null {
+  return localStorage.getItem(BLOCKED_THEME_KEY);
 }

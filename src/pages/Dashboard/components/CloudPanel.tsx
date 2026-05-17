@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Cloud, Database, ShieldAlert } from 'lucide-react';
 import { type PersistenceStatus } from '../../../services/database';
 
@@ -15,7 +16,7 @@ interface CloudPanelProps {
   onSignOut: () => void;
 }
 
-export function CloudPanel({
+export const CloudPanel = memo(function CloudPanel({
   persistence,
   email,
   password,
@@ -101,4 +102,4 @@ export function CloudPanel({
       </div>
     </section>
   );
-}
+});

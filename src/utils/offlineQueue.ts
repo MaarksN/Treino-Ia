@@ -12,6 +12,7 @@ export interface OfflineAction {
 const DB_NAME = 'TreinoAppOfflineDB';
 const DB_VERSION = 1;
 const STORE_NAME = 'offline_actions';
+const FALLBACK_STORAGE_KEY = '@TreinoApp:offlineQueue:v1';
 
 function emitQueueChange(): void {
   if (typeof window !== 'undefined') {
@@ -19,8 +20,65 @@ function emitQueueChange(): void {
   }
 }
 
+function createActionId(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID();
+  }
+
+  return `offline_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+}
+
+function createOfflineAction(action: { type: string; payload: unknown }): OfflineAction {
+  const type = action.type.trim();
+
+  if (!type) {
+    throw new Error('Offline action type is required.');
+  }
+
+  const timestamp = Date.now();
+
+  return {
+    id: createActionId(),
+    type,
+    payload: action.payload,
+    status: 'pending',
+    attempts: 0,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+}
+
+function hasIndexedDb(): boolean {
+  return typeof indexedDB !== 'undefined';
+}
+
+function hasLocalStorage(): boolean {
+  return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+}
+
+function readFallbackActions(): OfflineAction[] {
+  if (!hasLocalStorage()) return [];
+
+  try {
+    const raw = window.localStorage.getItem(FALLBACK_STORAGE_KEY);
+    return raw ? JSON.parse(raw) as OfflineAction[] : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeFallbackActions(actions: OfflineAction[]): void {
+  if (!hasLocalStorage()) return;
+  window.localStorage.setItem(FALLBACK_STORAGE_KEY, JSON.stringify(actions));
+}
+
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
+    if (!hasIndexedDb()) {
+      reject(new Error('IndexedDB unavailable.'));
+      return;
+    }
+
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onerror = () => reject(request.error);
@@ -61,60 +119,86 @@ async function withStore<T>(
   });
 }
 
+async function tryIndexedDb<T>(operation: () => Promise<T>): Promise<T | null> {
+  try {
+    return await operation();
+  } catch {
+    return null;
+  }
+}
+
 export async function enqueueOfflineAction(action: {
   type: string;
   payload: unknown;
 }): Promise<OfflineAction> {
-  const timestamp = Date.now();
+  const row = createOfflineAction(action);
+  const indexedDbSaved = await tryIndexedDb(async () => {
+    await withStore('readwrite', store => store.add(row));
+    return true;
+  });
 
-  const row: OfflineAction = {
-    id: crypto.randomUUID(),
-    type: action.type,
-    payload: action.payload,
-    status: 'pending',
-    attempts: 0,
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  };
+  if (!indexedDbSaved) {
+    writeFallbackActions([row, ...readFallbackActions()]);
+  }
 
-  await withStore('readwrite', store => store.add(row));
   emitQueueChange();
-
   return row;
 }
 
 export async function listOfflineActions(status?: OfflineAction['status']): Promise<OfflineAction[]> {
-  const db = await openDb();
+  const indexedDbRows = await tryIndexedDb(async () => {
+    const db = await openDb();
 
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readonly');
-    const store = tx.objectStore(STORE_NAME);
-    const request = status
-      ? store.index('status').getAll(status)
-      : store.getAll();
+    return await new Promise<OfflineAction[]>((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const request = status
+        ? store.index('status').getAll(status)
+        : store.getAll();
 
-    request.onsuccess = () => resolve(request.result as OfflineAction[]);
-    request.onerror = () => reject(request.error);
-    tx.oncomplete = () => db.close();
-    tx.onerror = () => {
-      db.close();
-      reject(tx.error);
-    };
+      request.onsuccess = () => resolve(request.result as OfflineAction[]);
+      request.onerror = () => reject(request.error);
+      tx.oncomplete = () => db.close();
+      tx.onerror = () => {
+        db.close();
+        reject(tx.error);
+      };
+    });
   });
+
+  const rows = indexedDbRows ?? readFallbackActions();
+  return status ? rows.filter(row => row.status === status) : rows;
 }
 
 export async function updateOfflineAction(action: OfflineAction): Promise<void> {
-  await withStore('readwrite', store =>
-    store.put({
-      ...action,
-      updatedAt: Date.now(),
-    }),
-  );
+  const nextAction = {
+    ...action,
+    updatedAt: Date.now(),
+  };
+  const indexedDbUpdated = await tryIndexedDb(async () => {
+    await withStore('readwrite', store => store.put(nextAction));
+    return true;
+  });
+
+  if (!indexedDbUpdated) {
+    writeFallbackActions(readFallbackActions().map(row => (
+      row.id === nextAction.id ? nextAction : row
+    )));
+  }
+
   emitQueueChange();
 }
 
 export async function removeOfflineAction(id: string): Promise<void> {
-  await withStore('readwrite', store => store.delete(id));
+  const indexedDbRemoved = await tryIndexedDb(async () => {
+    await withStore('readwrite', store => store.delete(id));
+    return true;
+  });
+
+  if (!indexedDbRemoved) {
+    writeFallbackActions(readFallbackActions().filter(row => row.id !== id));
+  }
+
   emitQueueChange();
 }
 

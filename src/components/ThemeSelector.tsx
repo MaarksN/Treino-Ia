@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Check, Lock } from 'lucide-react';
-import { APP_THEMES, applyTheme, loadThemeId } from '../utils/themeUtils';
-import { PremiumFeatureGate } from './PremiumPaywall';
+import { APP_THEMES, applyTheme, getThemeAccess, loadThemeId } from '../utils/themeUtils';
 
 interface Props {
   isPremium?: boolean;
@@ -10,10 +9,20 @@ interface Props {
 
 export function ThemeSelector({ isPremium = false, onThemeChange }: Props) {
   const [active, setActive] = useState(loadThemeId);
+  const [blockedTheme, setBlockedTheme] = useState('');
 
   const handleSelect = (themeId: string, isThemePremium: boolean) => {
-    if (isThemePremium && !isPremium) return;
-    applyTheme(themeId);
+    const result = applyTheme(themeId, { enforcePremium: true, isPremium });
+
+    if (!result.applied) {
+      setBlockedTheme(result.theme.name);
+      return;
+    }
+
+    if (isThemePremium && isPremium) {
+      setBlockedTheme('');
+    }
+
     setActive(themeId);
     onThemeChange?.(themeId);
   };
@@ -22,19 +31,28 @@ export function ThemeSelector({ isPremium = false, onThemeChange }: Props) {
     <div className="bg-brand-gray border border-white/10 rounded-2xl p-5">
       <h3 className="text-white font-bold text-lg mb-2">Temas</h3>
       <p className="text-brand-muted text-sm mb-4">Personaliza toda a paleta de cores do app.</p>
+      {blockedTheme && (
+        <p className="mb-4 rounded-xl border border-brand-magenta/40 bg-brand-magenta/10 px-3 py-2 text-xs font-semibold text-brand-light">
+          {blockedTheme} requer assinatura premium ativa validada pelo servidor.
+        </p>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {APP_THEMES.map(theme => {
-          const locked = theme.isPremium && !isPremium;
-          const buttonContent = (
+          const access = getThemeAccess(theme.id, isPremium);
+          const locked = !access.allowed;
+
+          return (
             <button
               key={theme.id}
               type="button"
               onClick={() => handleSelect(theme.id, theme.isPremium)}
-              className={`relative flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${active === theme.id
+              aria-disabled={locked}
+              className={`relative flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
+                active === theme.id
                   ? 'border-brand-neon bg-brand-neon/5'
                   : 'border-white/10 bg-brand-dark hover:border-white/20'
-                } ${locked ? 'opacity-60 cursor-not-allowed' : ''}`}
+              } ${locked ? 'opacity-60 cursor-not-allowed' : ''}`}
             >
               <div
                 className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-xl border border-white/10"
@@ -53,7 +71,11 @@ export function ThemeSelector({ isPremium = false, onThemeChange }: Props) {
 
               {theme.isPremium && (
                 <div className="absolute top-2 right-2">
-                  <Lock size={12} className="text-brand-muted" />
+                  {locked ? (
+                    <Lock size={12} className="text-brand-muted" />
+                  ) : (
+                    <span className="text-[10px] text-brand-neon font-bold">PRO</span>
+                  )}
                 </div>
               )}
 
@@ -64,34 +86,6 @@ export function ThemeSelector({ isPremium = false, onThemeChange }: Props) {
               )}
             </button>
           );
-
-          if (theme.isPremium) {
-            return (
-              <PremiumFeatureGate
-                key={theme.id}
-                feature="premium_theme"
-                fallback={buttonContent}
-              >
-                {React.cloneElement(buttonContent as React.ReactElement<any>, {
-                  className: (buttonContent as React.ReactElement<any>).props.className.replace('opacity-60 cursor-not-allowed', ''),
-                  onClick: () => handleSelect(theme.id, false), // Bypass the internal premium check since gate handles it
-                  children: React.Children.map((buttonContent as React.ReactElement<any>).props.children, child => {
-                    const c = child as React.ReactElement<any>;
-                    if (c?.type === 'div' && c.props.className === 'absolute top-2 right-2') {
-                      return (
-                        <div className="absolute top-2 right-2">
-                          <span className="text-[10px] text-brand-neon font-bold">PRO</span>
-                        </div>
-                      );
-                    }
-                    return child;
-                  })
-                })}
-              </PremiumFeatureGate>
-            );
-          }
-
-          return buttonContent;
         })}
       </div>
     </div>

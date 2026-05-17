@@ -1,4 +1,4 @@
-import { type FormEvent } from 'react';
+import { memo, type FormEvent } from 'react';
 import { Save } from 'lucide-react';
 import { type UserProfile } from '../../../services/database';
 
@@ -28,7 +28,7 @@ interface AnamnesisFormProps {
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }
 
-export function AnamnesisForm({
+export const AnamnesisForm = memo(function AnamnesisForm({
   profile,
   saving,
   onChange,
@@ -146,4 +146,4 @@ export function AnamnesisForm({
       </div>
     </form>
   );
-}
+});

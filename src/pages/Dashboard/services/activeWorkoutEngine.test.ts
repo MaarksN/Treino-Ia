@@ -5,7 +5,9 @@ import {
   calculateWorkoutProgress,
   detectSimplePlateau,
   getRpeGuidance,
+  parseRestSeconds,
   suggestInitialExerciseDraft,
+  buildWorkoutExerciseLog,
 } from './activeWorkoutEngine';
 import { type ActiveExerciseDraft } from '../types';
 import { type WorkoutSession } from '../../../services/database';
@@ -17,6 +19,8 @@ const sampleDraft: ActiveExerciseDraft[] = [{
   targetReps: '8-10',
   targetRest: '90s',
   completed: true,
+  exerciseNote: 'Manter escápulas encaixadas.',
+  intensityTechnique: 'dropset',
   sets: [{ weight: '100', reps: '10', rpe: '8', completed: true }],
 }];
 
@@ -60,6 +64,23 @@ describe('activeWorkoutEngine', () => {
     const summary = buildActiveWorkoutSummary(sampleDraft);
     expect(summary.tonnage.totalTonnage).toBe(1000);
     expect(summary.averageRpe).toBe(8);
+  });
+
+  it('parseia descanso textual para segundos', () => {
+    expect(parseRestSeconds('2 min')).toBe(120);
+    expect(parseRestSeconds('90s')).toBe(90);
+    expect(parseRestSeconds('sem pausa')).toBe(60);
+  });
+
+  it('usa validacao granular ao converter draft em log', () => {
+    const log = buildWorkoutExerciseLog({
+      ...sampleDraft[0],
+      sets: [{ weight: '100,5', reps: '8.6', rpe: '12', completed: true }],
+    });
+
+    expect(log.sets?.[0]).toEqual({ weight: 100.5, reps: 9, rpe: 10 });
+    expect(log.exerciseNote).toBe('Manter escápulas encaixadas.');
+    expect(log.intensityTechnique).toBe('dropset');
   });
 });
 

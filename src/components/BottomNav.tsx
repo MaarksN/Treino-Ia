@@ -1,10 +1,10 @@
 import React from 'react';
-import { Home, Dumbbell, BarChart3, User } from 'lucide-react';
+import { BarChart3, Dumbbell, History, Home, User, Utensils } from 'lucide-react';
 
 export interface BottomNavItem {
   id: string;
   label: string;
-  icon: 'home' | 'workout' | 'progress' | 'profile';
+  icon: 'home' | 'workout' | 'progress' | 'profile' | 'history' | 'report' | 'nutrition';
 }
 
 const ICONS = {
@@ -12,6 +12,9 @@ const ICONS = {
   workout: Dumbbell,
   progress: BarChart3,
   profile: User,
+  history: History,
+  report: BarChart3,
+  nutrition: Utensils,
 } as const;
 
 interface BottomNavProps {
@@ -33,7 +36,7 @@ export function BottomNav({ items = DEFAULT_ITEMS, activeId, onChange }: BottomN
       aria-label="Navegação móvel"
       className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-brand-dark/95 backdrop-blur md:hidden"
     >
-      <ul className="grid grid-cols-4">
+      <ul className="grid" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
         {items.map((item) => {
           const Icon = ICONS[item.icon];
           const active = item.id === activeId;

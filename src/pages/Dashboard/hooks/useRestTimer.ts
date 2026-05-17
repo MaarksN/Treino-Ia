@@ -1,52 +1,47 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  createRestTimerState,
+  formatRestSeconds,
+  getRestRemainingSeconds,
+  parsePersistedRestTimerState,
+  REST_TIMER_STORAGE_KEY,
+  type PersistedRestTimerState,
+} from '../services/restTimerEngine';
 
-const STORAGE_KEY = '@TreinoIA:activeRestTimer';
+type RestTimerStatus = 'idle' | 'running' | 'expired';
 
-interface RestTimerState {
-  endAt: number;
-  duration: number;
-}
-
-function readState(): RestTimerState | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as RestTimerState;
-    if (!parsed.endAt || !parsed.duration) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
+function getStorage(): Storage | null {
+  return typeof window !== 'undefined' && window.localStorage ? window.localStorage : null;
 }
 
 export function useRestTimer(defaultSeconds = 90) {
   const [remainingSeconds, setRemainingSeconds] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
-  const endAtRef = useRef<number | null>(null);
+  const [status, setStatus] = useState<RestTimerStatus>('idle');
+  const stateRef = useRef<PersistedRestTimerState | null>(null);
 
   const stopRest = useCallback(() => {
-    endAtRef.current = null;
-    setIsRunning(false);
+    stateRef.current = null;
+    setStatus('idle');
     setRemainingSeconds(0);
-    localStorage.removeItem(STORAGE_KEY);
+    getStorage()?.removeItem(REST_TIMER_STORAGE_KEY);
   }, []);
 
   const tick = useCallback(() => {
-    if (!endAtRef.current) return;
-    const nextRemaining = Math.max(0, Math.ceil((endAtRef.current - Date.now()) / 1000));
+    const nextRemaining = getRestRemainingSeconds(stateRef.current);
     setRemainingSeconds(nextRemaining);
     if (nextRemaining <= 0) {
-      stopRest();
+      stateRef.current = null;
+      setStatus('expired');
+      getStorage()?.removeItem(REST_TIMER_STORAGE_KEY);
     }
-  }, [stopRest]);
+  }, []);
 
   const startRest = useCallback((seconds = defaultSeconds) => {
-    const safeSeconds = Number.isFinite(seconds) && seconds > 0 ? seconds : defaultSeconds;
-    const endAt = Date.now() + safeSeconds * 1000;
-    endAtRef.current = endAt;
-    setIsRunning(true);
-    setRemainingSeconds(safeSeconds);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ endAt, duration: safeSeconds }));
+    const state = createRestTimerState(seconds, Date.now(), defaultSeconds);
+    stateRef.current = state;
+    setStatus('running');
+    setRemainingSeconds(state.duration);
+    getStorage()?.setItem(REST_TIMER_STORAGE_KEY, JSON.stringify(state));
   }, [defaultSeconds]);
 
   const resetRest = useCallback(() => {
@@ -54,27 +49,38 @@ export function useRestTimer(defaultSeconds = 90) {
   }, [defaultSeconds, startRest]);
 
   useEffect(() => {
-    const state = readState();
-    if (state) {
-      endAtRef.current = state.endAt;
-      setIsRunning(true);
-      tick();
+    const state = parsePersistedRestTimerState(getStorage()?.getItem(REST_TIMER_STORAGE_KEY) ?? null);
+    const remaining = getRestRemainingSeconds(state);
+
+    if (state && remaining > 0) {
+      stateRef.current = state;
+      setStatus('running');
+      setRemainingSeconds(remaining);
+      return;
     }
-  }, [tick]);
+
+    getStorage()?.removeItem(REST_TIMER_STORAGE_KEY);
+  }, []);
 
   useEffect(() => {
-    if (!isRunning) return;
+    if (status !== 'running') return;
     const interval = setInterval(() => {
       tick();
     }, 250);
     return () => clearInterval(interval);
-  }, [isRunning, tick]);
+  }, [status, tick]);
 
   const formatted = useMemo(() => {
-    const m = Math.floor(remainingSeconds / 60);
-    const s = remainingSeconds % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
+    return formatRestSeconds(remainingSeconds);
   }, [remainingSeconds]);
 
-  return { remainingSeconds, isRunning, formatted, startRest, stopRest, resetRest };
+  return {
+    remainingSeconds,
+    isRunning: status === 'running',
+    isExpired: status === 'expired',
+    formatted,
+    startRest,
+    stopRest,
+    resetRest,
+  };
 }

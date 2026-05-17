@@ -63,6 +63,19 @@
           "type": "image/png"
         }
       ]
+    },
+    {
+      "name": "Adicionar agua",
+      "short_name": "+250ml",
+      "description": "Registrar 250ml de agua no diario de hidratacao",
+      "url": "/?view=nutrition&quickHydrationMl=250&source=shortcut",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }

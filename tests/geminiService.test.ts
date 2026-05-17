@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { generateWorkoutPlan } from '../src/services/geminiService';
+import { clearGeminiCache } from '../src/services/geminiCache';
 import { supabase } from '../src/services/supabaseClient';
 
 vi.mock('../src/services/supabaseClient', () => ({
@@ -12,6 +13,7 @@ vi.mock('../src/services/supabaseClient', () => ({
 
 describe('geminiService', () => {
   beforeEach(() => {
+    clearGeminiCache();
     vi.restoreAllMocks();
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
       data: {
@@ -89,5 +91,68 @@ describe('geminiService', () => {
     }));
     expect(plan.planName).toBe(aiPlan.planName);
     expect(plan.days[0].exercises[0].name).toBe('Supino Reto');
+  });
+
+  it('reutiliza cache em memória para prompts Gemini textuais iguais', async () => {
+    const aiPlan = {
+      planName: 'Plano em cache',
+      goalDescription: 'Gerado uma vez.',
+      days: [
+        {
+          dayName: 'Dia 1',
+          focus: 'Full Body',
+          warmup: 'Aquecimento',
+          cooldown: 'Cooldown',
+          estimatedDuration: '45 minutos',
+          exercises: [
+            {
+              name: 'Agachamento',
+              sets: 3,
+              reps: '8-10',
+              rest: '90s',
+              executionDetails: 'Controle total.',
+              concentricPhase: 'Suba com força.',
+              eccentricPhase: 'Desça com controle.',
+            },
+          ],
+        },
+      ],
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({
+        candidates: [
+          {
+            content: {
+              parts: [{ text: JSON.stringify(aiPlan) }],
+            },
+          },
+        ],
+      }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const profile = {
+      age: 30,
+      gender: 'Feminino',
+      weight: 65,
+      height: 168,
+      experienceLevel: 'Intermediario',
+      goal: 'Hipertrofia',
+      daysPerWeek: 4,
+      sessionDuration: '45 minutos',
+      injuries: '',
+      equipment: 'Academia completa',
+      gymType: 'Academia',
+      timePerWorkout: 45,
+      workoutLocation: 'Academia',
+    };
+
+    await generateWorkoutPlan(profile);
+    await generateWorkoutPlan(profile);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

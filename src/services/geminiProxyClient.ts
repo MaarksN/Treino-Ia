@@ -1,4 +1,9 @@
 import { Schema } from '../types/geminiSchema';
+import {
+  createGeminiCacheKey,
+  readGeminiCache,
+  writeGeminiCache,
+} from './geminiCache';
 import { supabase } from './supabaseClient';
 
 interface GeminiGenerateContentRequest {
@@ -61,10 +66,30 @@ function normalizeSystemInstruction(systemInstruction?: string | Record<string, 
 }
 
 export async function generateGeminiContent(request: GeminiGenerateContentRequest): Promise<{ text: string }> {
+  const normalizedContents = normalizeContents(request.contents);
+  const normalizedSystemInstruction = normalizeSystemInstruction(request.config?.systemInstruction);
+  const generationConfig = request.config
+    ? {
+        responseMimeType: request.config.responseMimeType,
+        responseSchema: request.config.responseSchema,
+      }
+    : undefined;
+  const cacheKey = createGeminiCacheKey({
+    model: request.model,
+    contents: normalizedContents,
+    systemInstruction: normalizedSystemInstruction,
+    generationConfig,
+  });
+
   const { data, error } = await supabase.auth.getSession();
 
   if (error || !data.session?.access_token) {
     throw new Error('Faça login para usar recursos de IA.');
+  }
+
+  if (cacheKey) {
+    const cachedText = readGeminiCache(cacheKey);
+    if (cachedText) return { text: cachedText };
   }
 
   const response = await fetch('/api/gemini-proxy', {
@@ -74,14 +99,9 @@ export async function generateGeminiContent(request: GeminiGenerateContentReques
       'content-type': 'application/json',
     },
     body: JSON.stringify({
-      contents: normalizeContents(request.contents),
-      systemInstruction: normalizeSystemInstruction(request.config?.systemInstruction),
-      generationConfig: request.config
-        ? {
-            responseMimeType: request.config.responseMimeType,
-            responseSchema: request.config.responseSchema,
-          }
-        : undefined,
+      contents: normalizedContents,
+      systemInstruction: normalizedSystemInstruction,
+      generationConfig,
     }),
   });
 
@@ -108,6 +128,8 @@ export async function generateGeminiContent(request: GeminiGenerateContentReques
   if (!text) {
     throw new Error('Gemini não retornou texto utilizável.');
   }
+
+  if (cacheKey) writeGeminiCache(cacheKey, text);
 
   return { text };
 }

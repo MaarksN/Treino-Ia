@@ -9,6 +9,8 @@ import {
   saveHydrationEntry,
   saveHydrationGoal,
 } from '../utils/biometricUtils';
+import { HYDRATION_QUICK_ADD_EVENT } from '../utils/hydrationQuickActions';
+import { showHydrationReminderNotification } from '../utils/pwaUtils';
 
 const QUICK_OPTIONS = [
   { label: '200ml', ml: 200, emoji: '🥤' },
@@ -47,6 +49,16 @@ export function HydrationTracker({ weightKg = 75, workoutMinutes = 0 }: Props) {
   const todayEntries = entries.filter(entry => entry.date === today).reverse();
 
   useEffect(() => {
+    const refreshEntries = () => setEntries(loadHydrationEntries());
+
+    window.addEventListener(HYDRATION_QUICK_ADD_EVENT, refreshEntries);
+
+    return () => {
+      window.removeEventListener(HYDRATION_QUICK_ADD_EVENT, refreshEntries);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!goal.remindEveryMinutes || !('Notification' in window)) return undefined;
 
     let intervalId: number | undefined;
@@ -57,10 +69,7 @@ export function HydrationTracker({ weightKg = 75, workoutMinutes = 0 }: Props) {
       intervalId = window.setInterval(() => {
         const total = getTodayHydration(loadHydrationEntries());
         if (total < goal.dailyMl) {
-          new Notification('Hora de hidratar', {
-            body: `Você bebeu ${total}ml de ${goal.dailyMl}ml hoje.`,
-            icon: '/favicon.ico',
-          });
+          void showHydrationReminderNotification(total, goal.dailyMl);
         }
       }, goal.remindEveryMinutes * 60 * 1000);
     }).catch(() => {});

@@ -4,9 +4,11 @@ import App from './App.tsx';
 import './index.css';
 import { QueryProvider } from './providers/QueryProvider';
 import { installGlobalErrorTelemetry } from './utils/errorTelemetry';
+import { installHydrationQuickActionBridge } from './utils/hydrationQuickActions';
 import { registerSW } from './utils/pwaUtils';
 
 installGlobalErrorTelemetry();
+installHydrationQuickActionBridge();
 
 registerSW().catch(error => {
   console.warn('Falha ao registrar Service Worker:', error);

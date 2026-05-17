@@ -1,102 +1,257 @@
-import React, { useState, useRef } from 'react';
-import { UploadCloud, FileImage, FileText, Activity } from 'lucide-react';
+import { useMemo, useRef, useState, type DragEvent } from 'react';
+import { Activity, Crop, FileImage, FileText, UploadCloud } from 'lucide-react';
+import {
+  buildWorkoutImportDraft,
+  cropImageDataUrl,
+  DEFAULT_WORKOUT_IMPORT_CROP,
+  getWorkoutImportGuard,
+  normalizeCropRect,
+  type CropRectPercent,
+  type WorkoutImportFileDraft,
+} from '../services/workoutImportPipeline';
 
 interface Props {
-  onImport: (base64: string, mimeType: string) => Promise<void>;
+  onImport: (draft: WorkoutImportFileDraft) => Promise<void>;
   onCancel: () => void;
   isLoading: boolean;
+}
+
+const cropFields: Array<{ key: keyof CropRectPercent; label: string }> = [
+  { key: 'x', label: 'X' },
+  { key: 'y', label: 'Y' },
+  { key: 'width', label: 'Largura' },
+  { key: 'height', label: 'Altura' },
+];
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Falha ao ler o arquivo.'));
+    reader.onload = () => resolve(String(reader.result ?? ''));
+    reader.readAsDataURL(file);
+  });
+}
+
+function formatBytes(sizeBytes: number): string {
+  if (sizeBytes < 1024 * 1024) return `${Math.round(sizeBytes / 1024)} KB`;
+  return `${(sizeBytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
 export function ImportWorkoutView({ onImport, onCancel, isLoading }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewDataUrl, setPreviewDataUrl] = useState<string | null>(null);
+  const [crop, setCrop] = useState<CropRectPercent>(DEFAULT_WORKOUT_IMPORT_CROP);
+  const [localError, setLocalError] = useState('');
 
-  const handleFile = (file: File) => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      const result = reader.result as string;
-      const base64 = result.split(',')[1];
-      onImport(base64, file.type);
-    };
+  const guard = useMemo(() => (
+    selectedFile ? getWorkoutImportGuard(selectedFile.type, selectedFile.size) : null
+  ), [selectedFile]);
+
+  const updateCrop = (key: keyof CropRectPercent, value: string) => {
+    setCrop(current => normalizeCropRect({ ...current, [key]: Number(value) }));
   };
 
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
+  const handleFile = async (file: File) => {
+    setLocalError('');
+    setSelectedFile(file);
+    setCrop(DEFAULT_WORKOUT_IMPORT_CROP);
+
+    if (file.type.startsWith('image/')) {
+      setPreviewDataUrl(await readFileAsDataUrl(file));
+      return;
     }
+
+    setPreviewDataUrl(null);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleDrag = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setDragActive(event.type === 'dragenter' || event.type === 'dragover');
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
     setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFile(e.dataTransfer.files[0]);
+
+    const file = event.dataTransfer.files[0];
+    if (file) {
+      void handleFile(file);
     }
+  };
+
+  const handlePrepareImport = async () => {
+    if (!selectedFile) {
+      setLocalError('Selecione uma imagem ou PDF antes de preparar.');
+      return;
+    }
+
+    const dataUrl = await readFileAsDataUrl(selectedFile);
+    const base64 = dataUrl.split(',')[1] ?? '';
+    const croppedImage = selectedFile.type.startsWith('image/')
+      ? await cropImageDataUrl(dataUrl, crop)
+      : null;
+    const draft = buildWorkoutImportDraft({
+      fileName: selectedFile.name,
+      mimeType: selectedFile.type,
+      sizeBytes: selectedFile.size,
+      base64,
+      crop,
+      croppedImageDataUrl: croppedImage,
+    });
+
+    if (draft.status === 'blocked') {
+      setLocalError(draft.warnings[0] ?? 'Arquivo bloqueado para importação.');
+    }
+
+    await onImport(draft);
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-6 md:p-8 mt-8">
-      <div className="text-center mb-8">
-        <h1 className="font-display font-black text-7xl tracking-tighter uppercase mb-2 text-shadow-neon">Importar Treino</h1>
-        <p className="text-brand-magenta font-mono font-bold">Envie uma foto da sua ficha ou um arquivo PDF. A IA vai ler e organizar tudo para você.</p>
+    <section className="mb-8 rounded-[28px] border-4 border-brand-magenta bg-brand-gray p-6 shadow-brutal-magenta md:p-8">
+      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="font-mono text-xs uppercase tracking-[0.35em] text-brand-magenta">
+            Importação segura
+          </p>
+          <h2 className="font-display text-5xl uppercase text-brand-light">Imagem ou PDF</h2>
+          <p className="mt-2 max-w-3xl font-mono text-sm leading-6 text-brand-light/70">
+            Prepare arquivo e crop local. OCR e leitura automatizada ficam bloqueados até existir uma integração real.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-full border-2 border-brand-light/20 px-5 py-3 font-mono text-xs uppercase tracking-widest text-brand-light transition-colors hover:border-brand-magenta hover:text-brand-magenta"
+        >
+          Fechar
+        </button>
       </div>
 
-      <div 
-        className={`relative border-4 p-12 text-center transition-all ${dragActive ? 'border-brand-neon bg-brand-neon/10 scale-105 shadow-brutal-neon' : 'border-dashed border-brand-light/20 hover:border-brand-magenta hover:bg-brand-gray bg-brand-gray/50 hover:shadow-brutal-magenta'} ${isLoading ? 'opacity-50 pointer-events-none border-solid border-brand-neon bg-brand-dark' : ''}`}
+      <div
+        className={`relative rounded-[24px] border-2 p-8 text-center transition-all ${
+          dragActive
+            ? 'border-brand-neon bg-brand-neon/10 shadow-brutal-neon'
+            : 'border-dashed border-brand-light/20 bg-brand-dark/40 hover:border-brand-magenta'
+        } ${isLoading ? 'pointer-events-none opacity-60' : ''}`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
       >
-        <input 
+        <input
           ref={fileInputRef}
-          type="file" 
-          accept="image/*,application/pdf"
+          type="file"
+          accept="image/jpeg,image/png,image/webp,application/pdf"
           className="hidden"
-          onChange={e => e.target.files && handleFile(e.target.files[0])}
+          onChange={event => {
+            const file = event.target.files?.[0];
+            if (file) void handleFile(file);
+          }}
         />
-        
+
         {isLoading ? (
-           <div className="flex flex-col items-center justify-center">
-             <Activity className="w-20 h-20 text-brand-neon animate-spin mb-6" />
-             <p className="font-display text-4xl uppercase tracking-tighter text-brand-neon font-black">Escaneando Fibras...</p>
-           </div>
+          <div className="flex flex-col items-center justify-center">
+            <Activity className="mb-5 h-12 w-12 animate-spin text-brand-neon" />
+            <p className="font-mono text-xs uppercase tracking-widest text-brand-neon">
+              Preparando arquivo
+            </p>
+          </div>
         ) : (
           <div className="flex flex-col items-center justify-center">
-            <div className="flex space-x-6 mb-8">
-              <div className="w-20 h-20 bg-brand-dark border-2 border-brand-light/20 flex items-center justify-center text-brand-light/50 shadow-[4px_4px_0px_#fff]">
-                <FileImage className="w-10 h-10" />
-              </div>
-              <div className="w-20 h-20 bg-brand-dark border-2 border-brand-light/20 flex items-center justify-center text-brand-light/50 shadow-[4px_4px_0px_#fff]">
-                <FileText className="w-10 h-10" />
-              </div>
-            </div>
-            <p className="text-2xl font-black font-display uppercase tracking-widest mb-2 text-brand-light">Arraste seu arquivo aqui</p>
-            <p className="text-brand-muted font-mono text-sm mb-8">Formatos suportados: JPG, PNG, PDF</p>
-            <button 
+            <UploadCloud className="mb-4 h-12 w-12 text-brand-neon" />
+            <p className="font-display text-4xl uppercase leading-none text-brand-light">
+              Arraste a ficha aqui
+            </p>
+            <p className="mt-2 font-mono text-xs uppercase tracking-widest text-brand-muted">
+              JPG, PNG, WebP ou PDF até 12 MB
+            </p>
+            <button
+              type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="bg-brand-light text-brand-dark px-8 py-4 font-black uppercase tracking-tighter border-brutal hover:bg-brand-neon hover:scale-105 transition-all text-xl"
+              className="mt-6 rounded-[18px] border-2 border-brand-light bg-brand-light px-6 py-3 font-mono text-xs uppercase tracking-widest text-brand-dark transition-colors hover:bg-brand-neon"
             >
-              Ou Selecione um Arquivo
+              Selecionar arquivo
             </button>
           </div>
         )}
       </div>
 
-      {!isLoading && (
-        <div className="mt-12 text-center">
-          <button onClick={onCancel} className="text-brand-muted hover:text-brand-magenta font-black uppercase tracking-widest text-sm transition-colors border-b-2 border-transparent hover:border-brand-magenta">
-            CANCELAR
-          </button>
+      {selectedFile && (
+        <div className="mt-5 grid gap-4 lg:grid-cols-[0.85fr_1.15fr]">
+          <div className="rounded-[22px] border border-brand-light/15 bg-brand-dark p-4">
+            <div className="mb-4 flex items-center gap-3">
+              {selectedFile.type === 'application/pdf' ? (
+                <FileText className="h-6 w-6 text-brand-magenta" />
+              ) : (
+                <FileImage className="h-6 w-6 text-brand-neon" />
+              )}
+              <div className="min-w-0">
+                <p className="truncate font-mono text-sm text-brand-light">{selectedFile.name}</p>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-brand-muted">
+                  {selectedFile.type || 'tipo desconhecido'} | {formatBytes(selectedFile.size)}
+                </p>
+              </div>
+            </div>
+            {guard && (
+              <p className={`rounded-[14px] border px-3 py-2 font-mono text-xs leading-5 ${
+                guard.status === 'ready'
+                  ? 'border-brand-neon/40 text-brand-neon'
+                  : 'border-brand-magenta/50 text-brand-magenta'
+              }`}>
+                {guard.reason}
+              </p>
+            )}
+            {previewDataUrl && (
+              <div className="mt-4 overflow-hidden rounded-[18px] border border-brand-light/10 bg-brand-gray">
+                <img src={previewDataUrl} alt="Prévia da ficha importada" className="max-h-72 w-full object-contain" />
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-[22px] border border-brand-light/15 bg-brand-dark p-4">
+            <div className="mb-4 flex items-center gap-2">
+              <Crop className="h-5 w-5 text-brand-neon" />
+              <p className="font-mono text-xs uppercase tracking-widest text-brand-light">
+                Crop local
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {cropFields.map(field => (
+                <label key={field.key} className="block">
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-brand-muted">
+                    {field.label}: {crop[field.key]}%
+                  </span>
+                  <input
+                    type="range"
+                    min={field.key === 'width' || field.key === 'height' ? 1 : 0}
+                    max={100}
+                    value={crop[field.key]}
+                    onChange={event => updateCrop(field.key, event.target.value)}
+                    className="mt-2 w-full accent-brand-neon"
+                  />
+                </label>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={handlePrepareImport}
+              disabled={isLoading}
+              className="mt-5 w-full rounded-[18px] border-2 border-brand-neon bg-brand-neon px-6 py-3 font-mono text-xs uppercase tracking-widest text-brand-dark transition-transform hover:scale-[1.01] disabled:opacity-60"
+            >
+              Preparar arquivo
+            </button>
+            {(localError || guard?.status === 'blocked') && (
+              <p className="mt-3 rounded-[14px] border border-brand-magenta/50 bg-brand-magenta/10 px-3 py-2 font-mono text-xs leading-5 text-brand-light">
+                {localError || guard?.reason}
+              </p>
+            )}
+          </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }

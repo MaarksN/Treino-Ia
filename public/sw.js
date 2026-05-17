@@ -74,6 +74,7 @@ self.addEventListener('push', event => {
     title: 'Treino App',
     body: 'Hora de evoluir no treino.',
     url: '/',
+    type: 'DEFAULT',
   };
 
   try {
@@ -91,7 +92,14 @@ self.addEventListener('push', event => {
       body: data.body,
       icon: '/icons/icon-192.png',
       badge: '/icons/icon-192.png',
+      actions: data.type === 'HYDRATION_REMINDER'
+        ? [
+          { action: 'hydrate-250', title: '+250ml' },
+          { action: 'hydrate-500', title: '+500ml' },
+        ]
+        : data.actions,
       data: {
+        type: data.type || 'DEFAULT',
         url: data.url || '/',
       },
     }),
@@ -101,11 +109,22 @@ self.addEventListener('push', event => {
 self.addEventListener('notificationclick', event => {
   event.notification.close();
 
-  const url = event.notification.data?.url || '/';
+  const quickHydration = getHydrationAmountFromAction(event.action);
+  const url = quickHydration
+    ? `/?view=nutrition&quickHydrationMl=${quickHydration}&source=notification`
+    : event.notification.data?.url || '/';
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then(clientList => {
+        if (quickHydration && clientList.length) {
+          clientList.forEach(client => {
+            client.postMessage({ type: 'HYDRATION_QUICK_ADD', amountMl: quickHydration });
+          });
+
+          return undefined;
+        }
+
         for (const client of clientList) {
           if ('focus' in client) {
             client.navigate(url);
@@ -159,4 +178,14 @@ function notifyClients(message) {
     .then(clients => {
       clients.forEach(client => client.postMessage(message));
     });
+}
+
+function getHydrationAmountFromAction(action) {
+  if (!action || !action.startsWith('hydrate-')) return null;
+
+  const amount = Number(action.replace('hydrate-', ''));
+
+  if (!Number.isFinite(amount) || amount < 50 || amount > 2000) return null;
+
+  return amount;
 }

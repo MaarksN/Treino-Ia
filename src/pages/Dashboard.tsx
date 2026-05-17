@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useMemo, useState } from 'react';
+import { type FormEvent, lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Activity,
   Brain,
@@ -12,6 +12,7 @@ import {
 import {
   createDefaultProfile,
   DatabaseService,
+  type ExerciseIntensityTechnique,
   PersistenceStatus,
   TrainingPlan,
   UserProfile,
@@ -19,73 +20,61 @@ import {
   WorkoutSession,
 } from '../services/database';
 import { calculateTrainingPlan } from '../rules/iaEngine';
-import { RegistrationForm } from '../components/RegistrationForm';
+import { BottomNav } from '../components/BottomNav';
+import { ImportWorkoutView } from '../components/ImportWorkoutView';
+import { NutritionLifestyleHub } from '../components/NutritionLifestyleHub';
 import { Skeleton } from '../components/ui/Skeleton';
-import { User as StarterUser } from '../types';
-import { ActiveExerciseDraft } from './Dashboard/types';
+import { type User as StarterUser } from '../types';
 import {
-  buildWorkoutExerciseLog,
-  detectSimplePlateau,
-  suggestInitialExerciseDraft,
-} from './Dashboard/services/activeWorkoutEngine';
+  getDashboardMobileSections,
+  type DashboardSectionId,
+} from '../utils/dashboardNavigation';
+import { getCurrentAppRoute, pushAppRoute } from '../navigation/appRouter';
+import { ActiveExerciseDraft } from './Dashboard/types';
+import { buildWorkoutExerciseLog, calculateWorkoutTonnage } from './Dashboard/services/activeWorkoutEngine';
+import {
+  createActiveDraft,
+  createDashboardSessionId,
+  persistStarterUser,
+  readStarterUser,
+} from './Dashboard/services/dashboardSession';
+import { validateDashboardProfileInput } from './Dashboard/services/dashboardValidation';
+import {
+  reorderExercisesInDay,
+  updateExerciseNotes,
+  updateExerciseTechnique,
+} from './Dashboard/services/workoutAuthoring';
+import { triggerHapticFeedback } from '../services/hapticFeedback';
+import { type WorkoutImportFileDraft } from '../services/workoutImportPipeline';
+import { getCriticalContrastClass } from '../utils/accessibilityContrast';
 import {
   CloudPanel,
   AnamnesisForm,
   MetricCard,
   MetricPanel,
+  GamificationRetentionPanel,
+  RecoveryReadinessSection,
   WeeklyPlan,
   HistoryPanel,
   ActiveWorkout,
+  DashboardSkeleton,
+  PlanGenerationProgress,
+  TrainingReportPanel,
 } from './Dashboard/components';
+import { buildGamificationRetentionState } from './Dashboard/services/gamificationRetentionEngine';
 
-const STARTER_USER_KEY = '@TreinoIA:starterUser';
+const PLAN_GENERATION_FEEDBACK_MS = 750;
+const primaryActionClass = getCriticalContrastClass('primaryAction');
+const positiveStatusClass = getCriticalContrastClass('positiveStatus');
+const warningStatusClass = getCriticalContrastClass('warningStatus');
+const RegistrationForm = lazy(() =>
+  import('../components/RegistrationForm').then(module => ({ default: module.RegistrationForm })),
+);
 
-function createSessionId() {
-  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
-    ? `session_${crypto.randomUUID()}`
-    : `session_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+function wait(ms: number) {
+  return new Promise<void>(resolve => setTimeout(resolve, ms));
 }
 
-function createActiveDraft(day: TrainingPlan['days'][number], history: WorkoutSession[]): ActiveExerciseDraft[] {
-  return day.exercises.map(exercise => {
-    const suggestion = suggestInitialExerciseDraft(exercise.id, history);
-    const plateau = detectSimplePlateau(exercise.id, history);
-
-    const sets = Array.from({ length: exercise.sets }).map((_, i) => {
-      return {
-        weight: '',
-        reps: '',
-        rpe: '8',
-        completed: false,
-        autofillSuggested: suggestion.hasSuggestion && i === 0,
-        suggestedWeight: i === 0 ? suggestion.weight : undefined,
-        suggestedReps: i === 0 ? suggestion.reps : undefined,
-        suggestedRpe: i === 0 ? suggestion.rpe : undefined,
-      };
-    });
-
-    return {
-      exerciseId: exercise.id,
-      name: exercise.name,
-      targetSets: exercise.sets,
-      targetReps: exercise.reps,
-      targetRest: exercise.rest,
-      completed: false,
-      sets,
-      plateauDetected: plateau.isPlateau,
-      plateauReason: plateau.reason,
-    };
-  });
-}
-
-function readStarterUser(): StarterUser | null {
-  try {
-    const raw = localStorage.getItem(STARTER_USER_KEY);
-    return raw ? JSON.parse(raw) as StarterUser : null;
-  } catch {
-    return null;
-  }
-}
 
 export default function Dashboard() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -99,6 +88,8 @@ export default function Dashboard() {
   const [activeDayIndex, setActiveDayIndex] = useState<number | null>(null);
   const [activeDraft, setActiveDraft] = useState<ActiveExerciseDraft[]>([]);
   const [activeFeedback, setActiveFeedback] = useState('');
+  const [generationProgress, setGenerationProgress] = useState<{ profile: UserProfile; plan: TrainingPlan } | null>(null);
+  const [activeSection, setActiveSection] = useState<DashboardSectionId>('overview');
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -106,20 +97,10 @@ export default function Dashboard() {
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
+  const [showWorkoutImport, setShowWorkoutImport] = useState(false);
+  const [workoutImportLoading, setWorkoutImportLoading] = useState(false);
 
-  useEffect(() => {
-    void loadData();
-  }, []);
-
-  const selectedDay = plan?.days[selectedDayIndex] ?? plan?.days[0] ?? null;
-
-  const completionSummary = useMemo(() => {
-    if (!history.length) return 'Sem sessões finalizadas ainda';
-    const totalVolume = history.reduce((sum, session) => sum + session.totalVolume, 0);
-    return `${history.length} sessões | ${Math.round(totalVolume).toLocaleString('pt-BR')} kg de volume`;
-  }, [history]);
-
-  async function loadData() {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError('');
 
@@ -165,29 +146,53 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  async function handleProfileSubmit(event: FormEvent<HTMLFormElement>) {
+  const selectedDay = useMemo(
+    () => plan?.days[selectedDayIndex] ?? plan?.days[0] ?? null,
+    [plan, selectedDayIndex],
+  );
+  const mobileSections = useMemo(
+    () => getDashboardMobileSections(Boolean(profile && plan)),
+    [profile, plan]
+  );
+
+  const completionSummary = useMemo(() => {
+    if (!history.length) return 'Sem sessões finalizadas ainda';
+    const totalVolume = history.reduce((sum, session) => sum + session.totalVolume, 0);
+    return `${history.length} sessões | ${Math.round(totalVolume).toLocaleString('pt-BR')} kg de volume`;
+  }, [history]);
+
+  const gamificationRetention = useMemo(() => (
+    profile ? buildGamificationRetentionState(profile, history) : null
+  ), [profile, history]);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
+
+  const handleProfileSubmit = useCallback(async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSaving(true);
     setError('');
     setNotice('');
 
+    const validation = validateDashboardProfileInput(formProfile);
+    if (!validation.success) {
+      setError(validation.message);
+      setSaving(false);
+      return;
+    }
+
     try {
-      const updatedProfile: UserProfile = {
-        ...formProfile,
-        name: formProfile.name.trim() || 'Atleta',
-        goal: formProfile.goal.trim() || 'Hipertrofia',
-        injuries: formProfile.injuries.trim() || 'Nenhuma',
-        equipment: formProfile.equipment.trim() || 'Academia completa',
-        daysPerWeek: Math.min(6, Math.max(1, Number(formProfile.daysPerWeek))),
-        timePerWorkout: Math.min(120, Math.max(20, Number(formProfile.timePerWorkout))),
-        updatedAt: Date.now(),
-      };
+      const updatedProfile = validation.data;
+      const startedAt = Date.now();
       const nextPlan = calculateTrainingPlan(updatedProfile, history);
+      setGenerationProgress({ profile: updatedProfile, plan: nextPlan });
 
       await DatabaseService.saveProfile(updatedProfile);
       await DatabaseService.saveCurrentPlan(nextPlan);
+      await wait(Math.max(0, PLAN_GENERATION_FEEDBACK_MS - (Date.now() - startedAt)));
 
       setProfile(updatedProfile);
       setFormProfile(updatedProfile);
@@ -199,57 +204,169 @@ export default function Dashboard() {
     } catch {
       setError('Não consegui salvar a anamnese agora.');
     } finally {
+      setGenerationProgress(null);
       setSaving(false);
     }
-  }
+  }, [formProfile, history]);
 
-  function handleStarterRegister(starterUser: StarterUser) {
+  const handleStarterRegister = useCallback((starterUser: StarterUser) => {
+    const persistedStarterUser = persistStarterUser(starterUser);
     const nextProfile = {
       ...createDefaultProfile(),
-      name: starterUser.name.trim() || 'Atleta',
+      name: persistedStarterUser.name || 'Atleta',
     };
 
     setFormProfile(nextProfile);
-    setAuthEmail(starterUser.email.trim());
-    localStorage.setItem(STARTER_USER_KEY, JSON.stringify({
-      name: starterUser.name.trim(),
-      email: starterUser.email.trim(),
-      avatarUrl: starterUser.avatarUrl,
-      createdAt: Date.now(),
-    }));
+    setAuthEmail(persistedStarterUser.email);
     setShowStarterRegistration(false);
     setShowAnamnesis(true);
     setNotice('');
     setError('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
+  }, []);
 
-  async function regeneratePlan() {
+  const regeneratePlan = useCallback(async () => {
     if (!profile) return;
-    const nextPlan = calculateTrainingPlan({ ...profile, updatedAt: Date.now() }, history);
-    await DatabaseService.saveCurrentPlan(nextPlan);
-    setPlan(nextPlan);
-    setSelectedDayIndex(0);
-    setNotice('Plano recalculado com base no histórico mais recente.');
-  }
+    setSaving(true);
+    setError('');
+    setNotice('');
 
-  function startActiveWorkout(dayIndex: number) {
+    try {
+      const startedAt = Date.now();
+      const updatedProfile = { ...profile, updatedAt: Date.now() };
+      const nextPlan = calculateTrainingPlan(updatedProfile, history);
+      setGenerationProgress({ profile: updatedProfile, plan: nextPlan });
+
+      await DatabaseService.saveCurrentPlan(nextPlan);
+      await wait(Math.max(0, PLAN_GENERATION_FEEDBACK_MS - (Date.now() - startedAt)));
+
+      setPlan(nextPlan);
+      setSelectedDayIndex(0);
+      setNotice('Plano recalculado com base no histórico mais recente.');
+    } catch {
+      setError('Não consegui recalcular o plano agora.');
+    } finally {
+      setGenerationProgress(null);
+      setSaving(false);
+    }
+  }, [history, profile]);
+
+  const persistEditedPlan = useCallback(async (nextPlan: TrainingPlan, successMessage: string) => {
+    setPlan(nextPlan);
+    setNotice(successMessage);
+    setError('');
+
+    try {
+      await DatabaseService.saveCurrentPlan(nextPlan);
+    } catch {
+      setError('Alteração aplicada na tela, mas não consegui salvar o plano agora.');
+    }
+  }, []);
+
+  const moveSelectedExercise = useCallback((fromIndex: number, toIndex: number) => {
+    if (!plan) return;
+    const nextPlan = reorderExercisesInDay(plan, selectedDayIndex, fromIndex, toIndex);
+    if (nextPlan === plan) return;
+    void persistEditedPlan(nextPlan, 'Ordem dos exercícios atualizada.');
+  }, [persistEditedPlan, plan, selectedDayIndex]);
+
+  const updateSelectedExerciseTechnique = useCallback((
+    exerciseIndex: number,
+    technique: ExerciseIntensityTechnique,
+  ) => {
+    if (!plan) return;
+    const nextPlan = updateExerciseTechnique(plan, selectedDayIndex, exerciseIndex, technique);
+    void persistEditedPlan(nextPlan, 'Técnica do exercício atualizada.');
+  }, [persistEditedPlan, plan, selectedDayIndex]);
+
+  const updateSelectedExerciseNotes = useCallback((exerciseIndex: number, notes: string) => {
+    if (!plan) return;
+    const nextPlan = updateExerciseNotes(plan, selectedDayIndex, exerciseIndex, notes);
+    setPlan(nextPlan);
+    setNotice('');
+    setError('');
+    void DatabaseService.saveCurrentPlan(nextPlan).catch(() => {
+      setError('Nota aplicada na tela, mas não consegui salvar o plano agora.');
+    });
+  }, [plan, selectedDayIndex]);
+
+  const handleWorkoutImport = useCallback(async (draft: WorkoutImportFileDraft) => {
+    setWorkoutImportLoading(true);
+    setNotice('');
+    setError('');
+
+    try {
+      if (draft.status === 'blocked') {
+        setError(draft.warnings[0] ?? 'Arquivo bloqueado para importação.');
+        return;
+      }
+
+      setNotice(
+        `Arquivo ${draft.fileName} preparado com crop ${draft.crop.width}% x ${draft.crop.height}%. OCR não executado neste lote.`,
+      );
+      setShowWorkoutImport(false);
+    } finally {
+      setWorkoutImportLoading(false);
+    }
+  }, []);
+
+  const handleMobileNavChange = useCallback((id: string) => {
+    const section = mobileSections.find(item => item.id === id);
+    if (!section) return;
+    setActiveSection(section.id);
+    pushAppRoute(section.id === 'nutrition' ? 'nutrition' : 'dashboard');
+    document.getElementById(section.targetId)?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  }, [mobileSections]);
+
+  useEffect(() => {
+    if (!profile || !plan) return;
+
+    if (getCurrentAppRoute().id === 'nutrition') {
+      window.setTimeout(() => {
+        document.getElementById('dashboard-nutrition')?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+        setActiveSection('nutrition');
+      }, 0);
+    }
+
+    const handleScroll = () => {
+      const current = mobileSections.reduce<DashboardSectionId>((active, section) => {
+        const element = document.getElementById(section.targetId);
+        if (!element) return active;
+        return element.getBoundingClientRect().top <= 140 ? section.id : active;
+      }, mobileSections[0]?.id ?? 'overview');
+
+      setActiveSection(current);
+    };
+
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [mobileSections, plan, profile]);
+
+  const startActiveWorkout = useCallback((dayIndex: number) => {
     if (!plan) return;
     const day = plan.days[dayIndex];
     setActiveDayIndex(dayIndex);
     setActiveDraft(createActiveDraft(day, history));
     setActiveFeedback('');
     setNotice('');
+    void triggerHapticFeedback('selection');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
+  }, [history, plan]);
 
-  function updateDraft(index: number, patch: Partial<ActiveExerciseDraft>) {
+  const updateDraft = useCallback((index: number, patch: Partial<ActiveExerciseDraft>) => {
     setActiveDraft(current => current.map((item, itemIndex) => (
       itemIndex === index ? { ...item, ...patch } : item
     )));
-  }
+  }, []);
 
-  function updateDraftSet(exerciseIndex: number, setIndex: number, patch: Partial<ActiveExerciseDraft['sets'][0]>) {
+  const updateDraftSet = useCallback((exerciseIndex: number, setIndex: number, patch: Partial<ActiveExerciseDraft['sets'][0]>) => {
     setActiveDraft(current => current.map((item, i) => {
       if (i !== exerciseIndex) return item;
       const newSets = [...item.sets];
@@ -258,9 +375,9 @@ export default function Dashboard() {
       const allSetsCompleted = newSets.every(s => s.completed);
       return { ...item, sets: newSets, completed: allSetsCompleted };
     }));
-  }
+  }, []);
 
-  async function finishActiveWorkout() {
+  const finishActiveWorkout = useCallback(async () => {
     if (!profile || !plan || activeDayIndex === null) return;
 
     setSaving(true);
@@ -270,13 +387,9 @@ export default function Dashboard() {
       const day = plan.days[activeDayIndex];
       const logs: WorkoutExerciseLog[] = activeDraft.map(exercise => buildWorkoutExerciseLog(exercise));
       const completedExercises = logs.filter(exercise => exercise.completed).length;
-      const totalVolume = logs.reduce((sum, exercise) => {
-        if (!exercise.completed) return sum;
-        const exerciseVolume = exercise.sets!.reduce((setSum, s) => setSum + (s.weight * s.reps), 0);
-        return sum + exerciseVolume;
-      }, 0);
+      const totalVolume = calculateWorkoutTonnage(activeDraft).completedTonnage;
       const session: WorkoutSession = {
-        id: createSessionId(),
+        id: createDashboardSessionId(),
         planId: plan.id,
         dayId: day.id,
         dayName: day.dayName,
@@ -306,15 +419,16 @@ export default function Dashboard() {
       setActiveDayIndex(null);
       setActiveDraft([]);
       setNotice(`Treino finalizado. ${adjustedPlan.nextRecommendation}`);
+      void triggerHapticFeedback('success');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch {
       setError('Não consegui finalizar o treino agora.');
     } finally {
       setSaving(false);
     }
-  }
+  }, [activeDayIndex, activeDraft, activeFeedback, history, plan, profile]);
 
-  async function handleAuth(mode: 'signin' | 'signup') {
+  const handleAuth = useCallback(async (mode: 'signin' | 'signup') => {
     setAuthLoading(true);
     setError('');
     setNotice('');
@@ -334,32 +448,25 @@ export default function Dashboard() {
     } finally {
       setAuthLoading(false);
     }
-  }
+  }, [authEmail, authPassword, loadData]);
 
-  async function handleSignOut() {
+  const handleSignIn = useCallback(() => {
+    void handleAuth('signin');
+  }, [handleAuth]);
+
+  const handleSignUp = useCallback(() => {
+    void handleAuth('signup');
+  }, [handleAuth]);
+
+  const handleSignOut = useCallback(async () => {
     await DatabaseService.signOut();
     await loadData();
-  }
+  }, [loadData]);
+
+  const cancelActiveWorkout = useCallback(() => setActiveDayIndex(null), []);
 
   if (loading) {
-    return (
-      <main className="min-h-screen bg-brand-dark text-brand-light flex flex-col items-center justify-center px-4">
-        <div className="relative mb-8 h-32 w-32">
-          <div className="absolute inset-0 rounded-full border-4 border-brand-neon opacity-20 animate-ping" />
-          <div className="absolute inset-3 rounded-full border-4 border-brand-magenta border-t-transparent animate-spin" />
-          <Dumbbell className="absolute left-1/2 top-1/2 h-14 w-14 -translate-x-1/2 -translate-y-1/2 text-brand-light animate-pulse" />
-        </div>
-        <h1 className="font-display text-5xl uppercase tracking-widest text-brand-light text-shadow-neon">
-          Inicializando
-        </h1>
-        <p className="mt-3 font-mono text-sm uppercase tracking-widest text-brand-magenta">
-          Carregando perfil, plano e histórico
-        </p>
-        <div className="mt-6 w-full max-w-md">
-          <Skeleton lines={3} />
-        </div>
-      </main>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (activeDayIndex !== null && plan) {
@@ -371,7 +478,7 @@ export default function Dashboard() {
         activeDraft={activeDraft}
         activeFeedback={activeFeedback}
         saving={saving}
-        onCancel={() => setActiveDayIndex(null)}
+        onCancel={cancelActiveWorkout}
         onUpdateDraft={updateDraft}
         onUpdateDraftSet={updateDraftSet}
         onFeedbackChange={setActiveFeedback}
@@ -381,7 +488,7 @@ export default function Dashboard() {
   }
 
   return (
-    <main className="min-h-screen bg-brand-dark text-brand-light px-4 py-8 md:py-12">
+    <main className="min-h-screen bg-brand-dark text-brand-light px-4 py-8 pb-28 md:py-12">
       <div className="mx-auto max-w-6xl">
         <header className="mb-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
@@ -406,7 +513,7 @@ export default function Dashboard() {
                   setShowAnamnesis(value => !value);
                   if (profile) setFormProfile(profile);
                 }}
-                className="rounded-full border-2 border-brand-neon bg-brand-neon px-5 py-3 font-mono text-xs uppercase tracking-widest text-brand-dark shadow-brutal-neon"
+                className={`rounded-full border-2 px-5 py-3 font-mono text-xs uppercase tracking-widest shadow-brutal-neon ${primaryActionClass}`}
               >
                 {profile ? 'Editar anamnese' : 'Criar anamnese'}
               </button>
@@ -415,9 +522,19 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={regeneratePlan}
+                disabled={saving}
                 className="rounded-full border-2 border-brand-light/20 bg-brand-gray px-5 py-3 font-mono text-xs uppercase tracking-widest text-brand-light transition-colors hover:border-brand-neon hover:text-brand-neon"
               >
-                Recalcular plano
+                {saving ? 'Recalculando' : 'Recalcular plano'}
+              </button>
+            )}
+            {profile && plan && (
+              <button
+                type="button"
+                onClick={() => setShowWorkoutImport(value => !value)}
+                className="rounded-full border-2 border-brand-light/20 bg-brand-gray px-5 py-3 font-mono text-xs uppercase tracking-widest text-brand-light transition-colors hover:border-brand-magenta hover:text-brand-magenta"
+              >
+                Importar ficha
               </button>
             )}
           </div>
@@ -425,16 +542,32 @@ export default function Dashboard() {
 
         {(notice || error) && (
           <div className={`mb-6 rounded-[24px] border-2 p-4 font-mono text-sm ${
-            error
-              ? 'border-brand-magenta bg-brand-magenta/10 text-brand-light'
-              : 'border-brand-neon bg-brand-neon/10 text-brand-light'
+            error ? warningStatusClass : positiveStatusClass
           }`}>
             {error || notice}
           </div>
         )}
 
+        {generationProgress && (
+          <PlanGenerationProgress
+            profile={generationProgress.profile}
+            history={history}
+            plan={generationProgress.plan}
+          />
+        )}
+
+        {showWorkoutImport && profile && plan && (
+          <ImportWorkoutView
+            isLoading={workoutImportLoading}
+            onImport={handleWorkoutImport}
+            onCancel={() => setShowWorkoutImport(false)}
+          />
+        )}
+
         {showStarterRegistration && !profile ? (
-          <RegistrationForm onRegister={handleStarterRegister} />
+          <Suspense fallback={<Skeleton lines={2} />}>
+            <RegistrationForm onRegister={handleStarterRegister} />
+          </Suspense>
         ) : (
           <CloudPanel
             persistence={persistence}
@@ -443,8 +576,8 @@ export default function Dashboard() {
             loading={authLoading}
             onEmailChange={setAuthEmail}
             onPasswordChange={setAuthPassword}
-            onSignIn={() => handleAuth('signin')}
-            onSignUp={() => handleAuth('signup')}
+            onSignIn={handleSignIn}
+            onSignUp={handleSignUp}
             onSignOut={handleSignOut}
           />
         )}
@@ -460,7 +593,7 @@ export default function Dashboard() {
 
         {profile && plan ? (
           <>
-            <section className="mb-8 grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
+            <section id="dashboard-overview" className="mb-8 grid gap-6 scroll-mt-24 lg:grid-cols-[1.35fr_0.65fr]">
               <div className="relative overflow-hidden rounded-[28px] border-4 border-brand-light bg-brand-gray p-6 shadow-[8px_8px_0_var(--color-brand-light)] md:p-10">
                 <div className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full bg-brand-neon/10 blur-3xl" />
                 <div className="relative z-10">
@@ -470,6 +603,13 @@ export default function Dashboard() {
                   <h2 className="font-display text-7xl uppercase leading-none tracking-tight text-brand-light md:text-8xl">
                     {profile.name}
                   </h2>
+                  {gamificationRetention && (
+                    <div className="mt-4 inline-flex max-w-full flex-wrap items-center gap-2 border-2 border-brand-neon bg-brand-neon px-3 py-2 font-mono text-xs uppercase tracking-widest text-brand-dark shadow-brutal-neon">
+                      <span>Nivel {gamificationRetention.profileTitle.level}</span>
+                      <span className="h-1 w-1 rounded-full bg-brand-dark" />
+                      <span>{gamificationRetention.profileTitle.title}</span>
+                    </div>
+                  )}
                   <p className="mt-5 max-w-3xl font-mono text-sm leading-7 text-brand-light/75">
                     {plan.goalDescription} Divisão semanal: {plan.weeklySplit}.
                   </p>
@@ -500,6 +640,12 @@ export default function Dashboard() {
               <MetricPanel icon={<Brain />} title="Foco" value={plan.focus} tone="light" />
             </section>
 
+            {gamificationRetention && (
+              <div id="dashboard-gamification" className="scroll-mt-24">
+                <GamificationRetentionPanel state={gamificationRetention} />
+              </div>
+            )}
+
             <section className="mb-8 rounded-[28px] border-4 border-brand-magenta bg-brand-gray p-6 shadow-brutal-magenta md:p-8">
               <div className="flex flex-col gap-5 md:flex-row md:items-start">
                 <div className="rounded-[24px] border-2 border-brand-magenta bg-brand-magenta p-4 text-brand-light shadow-brutal-magenta">
@@ -517,15 +663,26 @@ export default function Dashboard() {
               </div>
             </section>
 
+            <div id="dashboard-nutrition" className="scroll-mt-24">
+              <NutritionLifestyleHub profile={profile} plan={plan} history={history} />
+            </div>
+
             <WeeklyPlan
               plan={plan}
               selectedDayIndex={selectedDayIndex}
               selectedDay={selectedDay}
               onSelectDay={setSelectedDayIndex}
               onStartWorkout={startActiveWorkout}
+              onMoveExercise={moveSelectedExercise}
+              onUpdateExerciseTechnique={updateSelectedExerciseTechnique}
+              onUpdateExerciseNotes={updateSelectedExerciseNotes}
             />
 
+            <RecoveryReadinessSection history={history} />
+
             <HistoryPanel history={history} />
+
+            <TrainingReportPanel history={history} />
           </>
         ) : !showStarterRegistration ? (
           <section className="rounded-[28px] border-4 border-brand-neon bg-brand-gray p-8 text-center shadow-brutal-neon">
@@ -537,6 +694,14 @@ export default function Dashboard() {
           </section>
         ) : null}
       </div>
+
+      {profile && plan && (
+        <BottomNav
+          items={mobileSections}
+          activeId={activeSection}
+          onChange={handleMobileNavChange}
+        />
+      )}
     </main>
   );
 }

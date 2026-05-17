@@ -1,4 +1,4 @@
-import { type WorkoutExerciseLog } from '../../services/database';
+import { type ExerciseIntensityTechnique, type WorkoutExerciseLog } from '../../services/database';
 
 export interface DraftSet {
   weight: string;
@@ -13,6 +13,9 @@ export interface DraftSet {
 
 export type ActiveExerciseDraft = Omit<WorkoutExerciseLog, 'sets' | 'actualWeight' | 'actualReps' | 'rpe'> & {
   sets: DraftSet[];
+  exerciseNote?: string;
+  intensityTechnique?: ExerciseIntensityTechnique;
+  supersetGroupId?: string;
   plateauDetected?: boolean;
   plateauReason?: string;
 };

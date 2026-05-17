@@ -1,6 +1,15 @@
 import { isSupabaseConfigured, supabase } from './supabaseClient';
+import {
+  buildTrainingPlanUpsert,
+  buildTrainingProfileUpsert,
+  buildWorkoutHistoryUpsert,
+  readTrainingPlanJson,
+  readTrainingProfileJson,
+  readWorkoutSessionJson,
+} from './trainingReadModels';
 
 export type TrainingLevel = 'iniciante' | 'intermediario' | 'avancado';
+export type ExerciseIntensityTechnique = 'normal' | 'superset' | 'dropset';
 
 export interface UserProfile {
   id: string;
@@ -22,6 +31,8 @@ export interface ExercisePrescription {
   reps: string;
   rest: string;
   notes: string;
+  intensityTechnique?: ExerciseIntensityTechnique;
+  supersetGroupId?: string;
 }
 
 export interface WorkoutDayPlan {
@@ -59,6 +70,9 @@ export interface WorkoutExerciseLog {
   targetRest: string;
   completed: boolean;
   sets?: ExerciseSet[];
+  exerciseNote?: string;
+  intensityTechnique?: ExerciseIntensityTechnique;
+  supersetGroupId?: string;
   // Legacy fields for backward compatibility
   actualWeight?: number;
   actualReps?: number;
@@ -245,12 +259,7 @@ export const DatabaseService = {
     const cloudSaved = await tryCloud(async userId => {
       const { error } = await supabase
         .from('training_user_profiles')
-        .upsert({
-          user_id: userId,
-          profile_json: normalized,
-          profile_goal: normalized.goal,
-          profile_name: normalized.name,
-        }, { onConflict: 'user_id' });
+        .upsert(buildTrainingProfileUpsert(userId, normalized), { onConflict: 'user_id' });
 
       if (error) throw error;
       return true;
@@ -271,8 +280,8 @@ export const DatabaseService = {
         .maybeSingle();
 
       if (error) throw error;
-      const row = data as { profile_json?: Partial<UserProfile> } | null;
-      return row?.profile_json ? normalizeProfile(row.profile_json) : null;
+      const profileJson = readTrainingProfileJson(data);
+      return profileJson ? normalizeProfile(profileJson) : null;
     });
 
     if (cloudProfile) return cloudProfile;
@@ -291,15 +300,7 @@ export const DatabaseService = {
 
       const { error } = await supabase
         .from('training_workout_plans')
-        .upsert({
-          user_id: userId,
-          id: plan.id,
-          plan_name: plan.planName,
-          goal_description: plan.goalDescription,
-          created_at_ms: plan.createdAt,
-          is_current: true,
-          plan_json: plan,
-        }, { onConflict: 'user_id,id' });
+        .upsert(buildTrainingPlanUpsert(userId, plan), { onConflict: 'user_id,id' });
 
       if (error) throw error;
       return true;
@@ -323,8 +324,7 @@ export const DatabaseService = {
         .maybeSingle();
 
       if (error) throw error;
-      const row = data as { plan_json?: TrainingPlan } | null;
-      return row?.plan_json ?? null;
+      return readTrainingPlanJson(data);
     });
 
     if (cloudPlan) return cloudPlan;
@@ -335,18 +335,7 @@ export const DatabaseService = {
     const cloudSaved = await tryCloud(async userId => {
       const { error } = await supabase
         .from('training_workout_history_records')
-        .upsert({
-          user_id: userId,
-          id: session.id,
-          workout_date: new Date(session.completedAt).toISOString(),
-          plan_id: session.planId,
-          day_id: session.dayId,
-          day_name: session.dayName,
-          focus: session.focus,
-          volume_load: session.totalVolume,
-          duration_minutes: session.durationMinutes,
-          record_json: session,
-        }, { onConflict: 'user_id,id' });
+        .upsert(buildWorkoutHistoryUpsert(userId, session), { onConflict: 'user_id,id' });
 
       if (error) throw error;
       return true;
@@ -369,9 +358,9 @@ export const DatabaseService = {
         .limit(50);
 
       if (error) throw error;
-      return ((data ?? []) as Array<{ record_json?: WorkoutSession }>)
-        .map(row => row.record_json)
-        .filter(Boolean) as WorkoutSession[];
+      return (data ?? [])
+        .map(row => readWorkoutSessionJson(row))
+        .filter((session): session is WorkoutSession => Boolean(session));
     });
 
     if (cloudHistory) return cloudHistory;
