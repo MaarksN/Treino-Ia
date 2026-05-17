@@ -62,6 +62,8 @@ import {
   TrainingReportPanel,
 } from './Dashboard/components';
 import { buildGamificationRetentionState } from './Dashboard/services/gamificationRetentionEngine';
+import { buildRemoteGamifiedState } from './Dashboard/services/remoteGamifiedEngine';
+import { RemoteGamifiedPanel } from './Dashboard/components/RemoteGamified';
 
 const PLAN_GENERATION_FEEDBACK_MS = 750;
 const primaryActionClass = getCriticalContrastClass('primaryAction');
@@ -165,6 +167,10 @@ export default function Dashboard() {
 
   const gamificationRetention = useMemo(() => (
     profile ? buildGamificationRetentionState(profile, history) : null
+  ), [profile, history]);
+
+  const remoteGamifiedState = useMemo(() => (
+    profile ? buildRemoteGamifiedState(profile, history) : null
   ), [profile, history]);
 
   useEffect(() => {
@@ -643,6 +649,12 @@ export default function Dashboard() {
             {gamificationRetention && (
               <div id="dashboard-gamification" className="scroll-mt-24">
                 <GamificationRetentionPanel state={gamificationRetention} />
+              </div>
+            )}
+
+            {remoteGamifiedState && (
+              <div id="dashboard-remote-gamified" className="scroll-mt-24">
+                <RemoteGamifiedPanel state={remoteGamifiedState} />
               </div>
             )}
 
