@@ -315,11 +315,11 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "id": 32,
     "title": "Check-in de dor",
     "category": "nutrition_recovery",
-    "status": "existing_supported",
+    "status": "implemented_now",
     "horizon": "now",
     "risk": "low",
     "productArea": "nutrition-recovery",
-    "implementationNotes": "Mapa corporal simples no Dashboard com regioes, intensidade 0-10 e persistencia local; promocao para implemented_now pendente de validacao completa."
+    "implementationNotes": "Check-in de dor premium com 7 regioes corporais, sliders 0-10, notas, alerta de dor elevada, persistencia local, disclaimer medico, testes de sanitizacao e persistencia, integrado a secao Acessibilidade & Bem-estar do Dashboard."
   },
   {
     "id": 33,
@@ -903,33 +903,33 @@ export const strategicItemsRegistry: StrategicItem[] = [
   },
   {
     "id": 91,
-    "title": "Trilhas para iniciantes",
+    "title": "Trilhas adaptativas acessiveis",
     "category": "injury_prevention",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "injury-prevention",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "6 trilhas adaptativas (iniciante absoluto, mobilidade reduzida, baixa visao, retorno apos pausa, treino sentado, baixo impacto) com selecao persistente, disclaimers por trilha, testes de sanitizacao e persistencia, integrado ao Dashboard."
   },
   {
     "id": 92,
     "title": "Modo alto contraste total",
     "category": "injury_prevention",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "injury-prevention",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Toggle real de alto contraste com persistencia local, classe CSS treino-high-contrast no root, atributo data-high-contrast, foco visivel, testes de DOM e persistencia, integrado ao Dashboard."
   },
   {
     "id": 93,
     "title": "Navegação por leitor de tela",
     "category": "injury_prevention",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "injury-prevention",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Checklist de landmarks com auditoria de main/nav/header/h1/aria-live/skip-link, score percentual, anunciador aria-live polite, disclaimer honesto sobre necessidade de auditoria WCAG profissional, testes de landmarks e scoring, integrado ao Dashboard."
   },
   {
     "id": 94,
@@ -945,11 +945,11 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "id": 95,
     "title": "Linguagem simples guiada",
     "category": "injury_prevention",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "injury-prevention",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Glossario com 15 termos de treino em modo tecnico e simples, toggle persistente, busca por termo, simplificacao automatica de texto, conteudo medico preservado, testes de glossario/toggle/simplificacao, integrado ao Dashboard."
   },
   {
     "id": 96,

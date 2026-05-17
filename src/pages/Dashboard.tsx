@@ -73,6 +73,11 @@ import { EcoLiftingPanel } from '../components/sustainability/EcoLiftingPanel';
 import { BossFightCancellationPreview } from '../components/monetization/BossFightCancellationPreview';
 import { PartnerTokenPreview } from '../components/partners/PartnerTokenPreview';
 import { TimeTravelProgressViewer } from '../components/reports/TimeTravelProgressViewer';
+import { PainCheckinPanel } from '../components/recovery/PainCheckinPanel';
+import { AdaptivePathwaysPanel } from '../components/accessibility/AdaptivePathwaysPanel';
+import { HighContrastModeToggle } from '../components/accessibility/HighContrastModeToggle';
+import { ScreenReaderSupportPanel } from '../components/accessibility/ScreenReaderSupportPanel';
+import { PlainLanguagePanel } from '../components/accessibility/PlainLanguagePanel';
 
 const PLAN_GENERATION_FEEDBACK_MS = 750;
 const primaryActionClass = getCriticalContrastClass('primaryAction');
@@ -718,6 +723,20 @@ export default function Dashboard() {
                 <PartnerTokenPreview />
               </div>
               <TimeTravelProgressViewer history={history} />
+            </section>
+
+            <section id="dashboard-accessibility" className="mb-8 scroll-mt-24 space-y-6">
+              <div className="border-b-2 border-brand-light/10 pb-4">
+                <h2 className="font-display text-4xl uppercase text-brand-light">Acessibilidade &amp; Bem-estar</h2>
+                <p className="mt-2 font-mono text-sm text-brand-light/70">Itens estratégicos 32, 91, 92, 93 e 95 integrados.</p>
+              </div>
+              <PainCheckinPanel />
+              <AdaptivePathwaysPanel />
+              <div className="grid gap-6 md:grid-cols-2">
+                <HighContrastModeToggle />
+                <PlainLanguagePanel />
+              </div>
+              <ScreenReaderSupportPanel />
             </section>
 
             <HistoryPanel history={history} />
