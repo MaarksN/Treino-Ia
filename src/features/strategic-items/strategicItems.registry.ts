@@ -603,53 +603,53 @@ export const strategicItemsRegistry: StrategicItem[] = [
   },
   {
     "id": 61,
-    "title": "Paywall por trilhas premium",
+    "title": "Contrato de Ulisses/cashback",
     "category": "monetization",
     "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "monetization",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Criada preview local para simular regra do contrato sem estorno real no Stripe."
   },
   {
     "id": 62,
-    "title": "Marketplace de protocolos",
+    "title": "Marketplace de planos",
     "category": "monetization",
     "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "monetization",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Catálogo simulado local de planos sem pagamentos fake, para visualização de portfólio."
   },
   {
     "id": 63,
-    "title": "Assinatura de planos especializados",
+    "title": "Pay-per-workout",
     "category": "monetization",
     "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "monetization",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Criado guard local demonstrando o pricing model sem cobrança para fluxo ainda não integrado."
   },
   {
     "id": 64,
-    "title": "Carteira de créditos de IA",
+    "title": "Doações por desempenho",
     "category": "monetization",
-    "status": "deferred_high_risk",
-    "horizon": "later",
+    "status": "blocked_external_dependency",
+    "horizon": "future",
     "risk": "high",
     "productArea": "monetization",
-    "implementationNotes": "Adiado por risco alto nesta fase."
+    "implementationNotes": "Bloqueado na UI até que um provider real de pagamentos e ONG seja integrado."
   },
   {
     "id": 65,
-    "title": "Programa de afiliados",
+    "title": "Apostas contra si mesmo",
     "category": "monetization",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "blocked_external_dependency",
+    "horizon": "future",
+    "risk": "high",
     "productArea": "monetization",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Bloqueado localmente como guard aguardando compliance e KYC (conforme regra de negócios)."
   },
   {
     "id": 66,
