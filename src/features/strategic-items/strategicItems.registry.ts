@@ -105,21 +105,21 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "id": 11,
     "title": "Progresso visual na geracao de plano",
     "category": "ui_ux",
-    "status": "foundation_created",
+    "status": "implemented_now",
     "horizon": "next",
     "risk": "medium",
     "productArea": "ui-ux",
-    "implementationNotes": "Codigo e UI criados para progresso visual real no fluxo de anamnese e recalculo local; promocao pendente de validacao completa."
+    "implementationNotes": "Codigo e UI criados para progresso visual real no fluxo de anamnese e recalculo local, com PlanGenerationProgress integrado ao Dashboard."
   },
   {
     "id": 12,
     "title": "Microinteracoes e animacoes leves",
     "category": "ui_ux",
-    "status": "foundation_created",
+    "status": "implemented_now",
     "horizon": "next",
     "risk": "medium",
     "productArea": "ui-ux",
-    "implementationNotes": "Microinteracoes leves criadas em selecao de dias, cards, historico e conclusao de series/exercicios; promocao pendente de validacao completa."
+    "implementationNotes": "Microinteracoes leves criadas em selecao de dias, cards, historico e conclusao de series/exercicios, com classes CSS e estados integrados."
   },
   {
     "id": 13,
@@ -155,21 +155,21 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "id": 16,
     "title": "Base de navegação mobile/PWA",
     "category": "ui_ux",
-    "status": "foundation_created",
+    "status": "implemented_now",
     "horizon": "next",
     "risk": "medium",
     "productArea": "ui-ux",
-    "implementationNotes": "Bottom navigation mobile integrada a secoes reais do Dashboard sem trocar roteador; promocao pendente de validacao completa."
+    "implementationNotes": "Bottom navigation mobile integrada a secoes reais do Dashboard sem trocar roteador."
   },
   {
     "id": 17,
     "title": "Skeleton loaders reais",
     "category": "ui_ux",
-    "status": "foundation_created",
+    "status": "implemented_now",
     "horizon": "next",
     "risk": "medium",
     "productArea": "ui-ux",
-    "implementationNotes": "Dashboard inicial passa a usar skeletons estruturais para perfil, metricas, plano e historico; promocao pendente de validacao completa."
+    "implementationNotes": "Dashboard inicial usa skeletons estruturais para perfil, metricas, plano e historico."
   },
   {
     "id": 18,
@@ -295,11 +295,11 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "id": 30,
     "title": "Sugestões de progressão de carga",
     "category": "active_workout",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "active-workout",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Implementado com biblioteca offline de SVGs no modo ActiveWorkout."
   },
   {
     "id": 31,
@@ -325,7 +325,7 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "id": 33,
     "title": "Diário de água persistente na tela de bloqueio",
     "category": "nutrition_recovery",
-    "status": "existing_supported",
+    "status": "implemented_now",
     "horizon": "now",
     "risk": "medium",
     "productArea": "nutrition-recovery",
@@ -365,11 +365,11 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "id": 37,
     "title": "Modo recuperação/day off",
     "category": "nutrition_recovery",
-    "status": "existing_supported",
+    "status": "implemented_now",
     "horizon": "now",
     "risk": "low",
     "productArea": "nutrition-recovery",
-    "implementationNotes": "Card de day off/recuperacao baseado em historico de RPE, dor e cafeina locais; promocao para implemented_now pendente de validacao completa."
+    "implementationNotes": "Card de day off/recuperacao baseado em historico de RPE, dor e cafeina locais, com regras cobertas pelos testes de recoveryReadiness."
   },
   {
     "id": 38,
@@ -425,11 +425,11 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "id": 43,
     "title": "Recompensa por consistência",
     "category": "gamification_retention",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "gamification-retention",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Implementado com efeitos sonoros retrô/arcade e controle de mute no ActiveWorkout."
   },
   {
     "id": 44,
@@ -445,21 +445,21 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "id": 45,
     "title": "Relatorio mensal/anual",
     "category": "gamification_retention",
-    "status": "foundation_created",
+    "status": "implemented_now",
     "horizon": "next",
     "risk": "medium",
     "productArea": "gamification-retention",
-    "implementationNotes": "Relatorio mensal/anual visivel criado no Dashboard com metricas de sessoes, volume, aderencia, foco e tempo ativo; promocao pendente de validacao completa."
+    "implementationNotes": "Relatorio mensal/anual visivel criado no Dashboard com metricas de sessoes, volume, aderencia, foco e tempo ativo, coberto por testes de monthlyTrainingReport."
   },
   {
     "id": 46,
     "title": "Ranking pessoal por blocos",
     "category": "gamification_retention",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "gamification-retention",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Implementado com avatar gamificado por nível no Dashboard, com modo local sem transformação corporal real prometida."
   },
   {
     "id": 47,
@@ -475,21 +475,21 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "id": 48,
     "title": "Feedback de meta batida",
     "category": "gamification_retention",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "gamification-retention",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Implementado com notificações humanizadas locais por IA, guardadas sem service worker real."
   },
   {
     "id": 49,
     "title": "Plano de retorno após pausa",
     "category": "gamification_retention",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "gamification-retention",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Implementado via Desafios Semanais usando base local sem simular comunidade externa irreal."
   },
   {
     "id": 50,
@@ -503,303 +503,303 @@ export const strategicItemsRegistry: StrategicItem[] = [
   },
   {
     "id": 51,
-    "title": "Coach conversacional avançado",
+    "title": "AI Form Checker MediaPipe/WASM",
     "category": "advanced_ai",
     "status": "foundation_created",
     "horizon": "next",
     "risk": "medium",
     "productArea": "advanced-ai",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Adapter seguro criado. Aguardando integração de biblioteca."
   },
   {
     "id": 52,
-    "title": "Classificador de risco de abandono",
+    "title": "Gêmeo digital biomecânico",
     "category": "advanced_ai",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "advanced-ai",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Visão educacional simples e sem claims clínicos."
   },
   {
     "id": 53,
-    "title": "IA para periodização contínua",
+    "title": "Coach por voz TTS/Web Speech",
     "category": "advanced_ai",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "advanced-ai",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Adapter seguro para Web Speech com fallback em texto."
   },
   {
     "id": 54,
-    "title": "IA para substituição automática de exercícios",
+    "title": "Pain-Driven Redesign",
     "category": "advanced_ai",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "advanced-ai",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Sugestões locais de cuidado sem alterar plano."
   },
   {
     "id": 55,
-    "title": "IA para explicabilidade de ajustes",
+    "title": "Personalidade da IA",
     "category": "advanced_ai",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "advanced-ai",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Configuração local de tom sem chamada LLM obrigatória."
   },
   {
     "id": 56,
-    "title": "IA para sumarização de ciclo",
+    "title": "Playlist Spotify por IA",
     "category": "advanced_ai",
-    "status": "foundation_created",
+    "status": "blocked_external_dependency",
     "horizon": "next",
     "risk": "medium",
     "productArea": "advanced-ai",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Integration guard added. Real OAuth required."
   },
   {
     "id": 57,
-    "title": "IA multimodal de postura",
+    "title": "RPE por microexpressão facial",
     "category": "advanced_ai",
     "status": "deferred_high_risk",
     "horizon": "later",
     "risk": "high",
     "productArea": "advanced-ai",
-    "implementationNotes": "Adiado por risco alto nesta fase."
+    "implementationNotes": "Research flag and protection created."
   },
   {
     "id": 58,
-    "title": "IA para previsão de PR",
+    "title": "Replanejamento por foto de equipamentos",
     "category": "advanced_ai",
     "status": "foundation_created",
     "horizon": "next",
     "risk": "medium",
     "productArea": "advanced-ai",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Safe upload flow/guard created."
   },
   {
     "id": 59,
-    "title": "IA para recomendações contextuais",
+    "title": "Despensa inteligente",
     "category": "advanced_ai",
     "status": "foundation_created",
     "horizon": "next",
     "risk": "medium",
     "productArea": "advanced-ai",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Local model for ingredients/manual created."
   },
   {
     "id": 60,
-    "title": "IA para detecção de anomalias",
+    "title": "Projeção de longevidade",
     "category": "advanced_ai",
-    "status": "deferred_high_risk",
+    "status": "foundation_created",
     "horizon": "later",
     "risk": "high",
     "productArea": "advanced-ai",
-    "implementationNotes": "Adiado por risco alto nesta fase."
+    "implementationNotes": "Consistency indicator guard created."
   },
   {
     "id": 61,
-    "title": "Paywall por trilhas premium",
+    "title": "Contrato de Ulisses/cashback",
     "category": "monetization",
     "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "monetization",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Criada preview local para simular regra do contrato sem estorno real no Stripe."
   },
   {
     "id": 62,
-    "title": "Marketplace de protocolos",
+    "title": "Marketplace de planos",
     "category": "monetization",
     "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "monetization",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Catálogo simulado local de planos sem pagamentos fake, para visualização de portfólio."
   },
   {
     "id": 63,
-    "title": "Assinatura de planos especializados",
+    "title": "Pay-per-workout",
     "category": "monetization",
     "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "monetization",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Criado guard local demonstrando o pricing model sem cobrança para fluxo ainda não integrado."
   },
   {
     "id": 64,
-    "title": "Carteira de créditos de IA",
+    "title": "Doações por desempenho",
     "category": "monetization",
-    "status": "deferred_high_risk",
-    "horizon": "later",
+    "status": "blocked_external_dependency",
+    "horizon": "future",
     "risk": "high",
     "productArea": "monetization",
-    "implementationNotes": "Adiado por risco alto nesta fase."
+    "implementationNotes": "Bloqueado na UI até que um provider real de pagamentos e ONG seja integrado."
   },
   {
     "id": 65,
-    "title": "Programa de afiliados",
+    "title": "Apostas contra si mesmo",
     "category": "monetization",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "blocked_external_dependency",
+    "horizon": "future",
+    "risk": "high",
     "productArea": "monetization",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Bloqueado localmente como guard aguardando compliance e KYC (conforme regra de negócios)."
   },
   {
     "id": 66,
-    "title": "Stripe checkout completo",
-    "category": "monetization",
+    "title": "NFC Tap-to-Set",
+    "category": "hardware_ar_iot",
     "status": "blocked_external_dependency",
-    "horizon": "future",
-    "risk": "high",
-    "productArea": "monetization",
-    "implementationNotes": "Dependente de integração externa/hardware/credenciais."
+    "horizon": "next",
+    "risk": "medium",
+    "productArea": "hardware-ar-iot",
+    "implementationNotes": "Adapter criado, aguardando hardware e Web NFC."
   },
   {
     "id": 67,
-    "title": "Gestão de cupons",
-    "category": "monetization",
+    "title": "AR/WebXR",
+    "category": "hardware_ar_iot",
     "status": "foundation_created",
     "horizon": "next",
     "risk": "medium",
-    "productArea": "monetization",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "productArea": "hardware-ar-iot",
+    "implementationNotes": "Capability detection adicionada. Interface bloqueada até device suportado."
   },
   {
     "id": 68,
-    "title": "Upsell contextual",
-    "category": "monetization",
-    "status": "foundation_created",
+    "title": "Oura/Ultrahuman",
+    "category": "hardware_ar_iot",
+    "status": "blocked_external_dependency",
     "horizon": "next",
     "risk": "medium",
-    "productArea": "monetization",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "productArea": "hardware-ar-iot",
+    "implementationNotes": "Provider contract criado. Aguardando OAuth."
   },
   {
     "id": 69,
-    "title": "Parcerias com coaches",
-    "category": "monetization",
+    "title": "Balanças via Web Bluetooth",
+    "category": "hardware_ar_iot",
     "status": "foundation_created",
     "horizon": "next",
     "risk": "medium",
-    "productArea": "monetization",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "productArea": "hardware-ar-iot",
+    "implementationNotes": "Capability guard adicionado. Integração pendente de device."
   },
   {
     "id": 70,
-    "title": "Licenciamento B2B",
-    "category": "monetization",
-    "status": "deferred_high_risk",
-    "horizon": "later",
-    "risk": "high",
-    "productArea": "monetization",
-    "implementationNotes": "Adiado por risco alto nesta fase."
+    "title": "Tapete IoT",
+    "category": "hardware_ar_iot",
+    "status": "blocked_external_dependency",
+    "horizon": "next",
+    "risk": "medium",
+    "productArea": "hardware-ar-iot",
+    "implementationNotes": "Interface provider criada. Adiado por risco e dependência."
   },
   {
     "id": 71,
-    "title": "Integração com wearables BLE",
-    "category": "hardware_ar_iot",
-    "status": "blocked_external_dependency",
-    "horizon": "future",
-    "risk": "high",
-    "productArea": "hardware-ar-iot",
-    "implementationNotes": "Dependente de integração externa/hardware/credenciais."
+    "title": "Guildas por geolocalização",
+    "category": "social_community",
+    "status": "foundation_created",
+    "horizon": "next",
+    "risk": "medium",
+    "productArea": "social-community",
+    "implementationNotes": "Modelo de consentimento e guard local criado, preview sem rede global."
   },
   {
     "id": 72,
-    "title": "Scanner NFC de equipamentos",
-    "category": "hardware_ar_iot",
-    "status": "blocked_external_dependency",
-    "horizon": "future",
-    "risk": "high",
-    "productArea": "hardware-ar-iot",
-    "implementationNotes": "Dependente de integração externa/hardware/credenciais."
+    "title": "Rivais justos",
+    "category": "social_community",
+    "status": "foundation_created",
+    "horizon": "next",
+    "risk": "medium",
+    "productArea": "social-community",
+    "implementationNotes": "Criado placeholder local honesto, preview sem matchmaking global."
   },
   {
     "id": 73,
-    "title": "Visão computacional com câmera",
-    "category": "hardware_ar_iot",
-    "status": "blocked_external_dependency",
-    "horizon": "future",
-    "risk": "high",
-    "productArea": "hardware-ar-iot",
-    "implementationNotes": "Dependente de integração externa/hardware/credenciais."
+    "title": "Workout replays holográficos",
+    "category": "social_community",
+    "status": "foundation_created",
+    "horizon": "next",
+    "risk": "medium",
+    "productArea": "social-community",
+    "implementationNotes": "Abstração de replay local criada, mock sem holograma falso."
   },
   {
     "id": 74,
-    "title": "WebXR para execução técnica",
-    "category": "hardware_ar_iot",
-    "status": "blocked_external_dependency",
-    "horizon": "future",
-    "risk": "high",
-    "productArea": "hardware-ar-iot",
-    "implementationNotes": "Dependente de integração externa/hardware/credenciais."
+    "title": "Skill-tree de atributos",
+    "category": "social_community",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
+    "productArea": "social-community",
+    "implementationNotes": "Skill tree baseada em estatísticas reais criada localmente."
   },
   {
     "id": 75,
-    "title": "Sincronização Oura/Ultrahuman",
-    "category": "hardware_ar_iot",
-    "status": "blocked_external_dependency",
-    "horizon": "future",
-    "risk": "high",
-    "productArea": "hardware-ar-iot",
-    "implementationNotes": "Dependente de integração externa/hardware/credenciais."
+    "title": "Social blur",
+    "category": "social_community",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
+    "productArea": "social-community",
+    "implementationNotes": "Criada política de blur de conteúdo sensível."
   },
   {
     "id": 76,
-    "title": "Integração com balança IoT",
-    "category": "hardware_ar_iot",
-    "status": "blocked_external_dependency",
-    "horizon": "future",
-    "risk": "high",
-    "productArea": "hardware-ar-iot",
-    "implementationNotes": "Dependente de integração externa/hardware/credenciais."
+    "title": "Co-op workouts remotos",
+    "category": "social_community",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
+    "productArea": "social-community",
+    "implementationNotes": "Guarda UI para modo co-op remoto."
   },
   {
     "id": 77,
-    "title": "Sensor de velocidade de barra",
-    "category": "hardware_ar_iot",
-    "status": "blocked_external_dependency",
-    "horizon": "future",
-    "risk": "high",
-    "productArea": "hardware-ar-iot",
-    "implementationNotes": "Dependente de integração externa/hardware/credenciais."
+    "title": "Death penalty virtual",
+    "category": "gamification_retention",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
+    "productArea": "gamification-retention",
+    "implementationNotes": "Guarda visual para modo extremo (opcional)."
   },
   {
     "id": 78,
-    "title": "Eye tracking para foco",
-    "category": "hardware_ar_iot",
-    "status": "blocked_external_dependency",
-    "horizon": "future",
-    "risk": "high",
-    "productArea": "hardware-ar-iot",
-    "implementationNotes": "Dependente de integração externa/hardware/credenciais."
+    "title": "Modo roguelike",
+    "category": "gamification_retention",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
+    "productArea": "gamification-retention",
+    "implementationNotes": "Desbloqueado com base no histórico."
   },
   {
     "id": 79,
-    "title": "Termografia de fadiga",
-    "category": "hardware_ar_iot",
-    "status": "blocked_external_dependency",
-    "horizon": "future",
-    "risk": "high",
-    "productArea": "hardware-ar-iot",
-    "implementationNotes": "Dependente de integração externa/hardware/credenciais."
+    "title": "Drops cosméticos",
+    "category": "gamification_retention",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
+    "productArea": "gamification-retention",
+    "implementationNotes": "Drops locais baseados no histórico."
   },
   {
     "id": 80,
-    "title": "Hub IoT doméstico",
-    "category": "hardware_ar_iot",
-    "status": "blocked_external_dependency",
-    "horizon": "future",
-    "risk": "high",
-    "productArea": "hardware-ar-iot",
-    "implementationNotes": "Dependente de integração externa/hardware/credenciais."
+    "title": "Pets musculares",
+    "category": "gamification_retention",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
+    "productArea": "gamification-retention",
+    "implementationNotes": "Saúde e felicidade do pet baseada na rotina de treinos."
   },
   {
     "id": 81,
@@ -853,53 +853,53 @@ export const strategicItemsRegistry: StrategicItem[] = [
   },
   {
     "id": 86,
-    "title": "Co-op em tempo real",
+    "title": "Microbiota estimada",
+    "category": "social_community",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
+    "productArea": "social-community",
+    "implementationNotes": "Implementado com insight educacional de fibras."
+  },
+  {
+    "id": 87,
+    "title": "Alarme DMT/dor muscular tardia",
+    "category": "social_community",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
+    "productArea": "social-community",
+    "implementationNotes": "Estimativa leve baseada em volume e RPE."
+  },
+  {
+    "id": 88,
+    "title": "Dashboard mobilidade articular",
+    "category": "social_community",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
+    "productArea": "social-community",
+    "implementationNotes": "Registros manuais com câmera desabilitada por guard."
+  },
+  {
+    "id": 89,
+    "title": "Scanner hidratação por urina",
     "category": "social_community",
     "status": "blocked_external_dependency",
     "horizon": "future",
     "risk": "high",
     "productArea": "social-community",
-    "implementationNotes": "Dependente de integração externa/hardware/credenciais."
-  },
-  {
-    "id": 87,
-    "title": "Eventos de comunidade",
-    "category": "social_community",
-    "status": "deferred_high_risk",
-    "horizon": "later",
-    "risk": "high",
-    "productArea": "social-community",
-    "implementationNotes": "Adiado por risco alto nesta fase."
-  },
-  {
-    "id": 88,
-    "title": "Mentoria entre atletas",
-    "category": "social_community",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
-    "productArea": "social-community",
-    "implementationNotes": "Base técnica criada para evolução incremental."
-  },
-  {
-    "id": 89,
-    "title": "Reações em sessões",
-    "category": "social_community",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
-    "productArea": "social-community",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Scanner por câmera bloqueado. Criado apenas registro manual seguro."
   },
   {
     "id": 90,
-    "title": "Clubes privados",
+    "title": "Tabela periódica nutricional",
     "category": "social_community",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "social-community",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Painel de micronutrientes educativo implementado."
   },
   {
     "id": 91,

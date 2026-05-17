@@ -11,6 +11,8 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { type WorkoutSession } from '../../../services/database';
+import { estimateDomsRisk } from '../../../services/recovery/dmsEstimator';
+import { MobilityDashboard } from './MobilityDashboard';
 import {
   buildSleepStrengthInsight,
   normalizeSleepHours,
@@ -430,6 +432,18 @@ export function RecoveryReadinessSection({ history }: { history: WorkoutSession[
             <p className="font-bold uppercase tracking-widest">{rpeLoad.label}</p>
             <p className="mt-2 leading-5">{rpeLoad.message}</p>
           </div>
+          {rpeLoad.totalLoad > 0 && (
+            <div className={`mt-3 mb-4 rounded-[18px] border-2 px-4 py-3 font-mono text-xs ${
+              estimateDomsRisk(rpeLoad.totalLoad, rpeLoad.averageSessionRpe).risk === 'alto'
+                ? 'border-red-400/50 bg-red-500/10 text-red-200'
+                : estimateDomsRisk(rpeLoad.totalLoad, rpeLoad.averageSessionRpe).risk === 'moderado'
+                  ? 'border-yellow-300/50 bg-yellow-400/10 text-yellow-100'
+                  : 'border-green-300/50 bg-green-400/10 text-green-100'
+            }`}>
+              <p className="font-bold uppercase tracking-widest text-brand-light">Item 87: Alarme DMT</p>
+              <p className="mt-1 leading-5">{estimateDomsRisk(rpeLoad.totalLoad, rpeLoad.averageSessionRpe).message}</p>
+            </div>
+          )}
           <div className="mb-3 h-3 overflow-hidden rounded-full border border-brand-light/15 bg-brand-gray">
             <div
               className="h-full rounded-full bg-brand-neon"
@@ -456,6 +470,8 @@ export function RecoveryReadinessSection({ history }: { history: WorkoutSession[
           </p>
         </RecoveryCard>
       </div>
+
+      <MobilityDashboard />
     </section>
   );
 }

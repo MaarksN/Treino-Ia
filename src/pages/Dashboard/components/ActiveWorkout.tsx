@@ -38,6 +38,9 @@ import {
   getAudioNoteGuard,
   getCameraFeedbackGuard,
 } from '../../../services/workoutCameraFeedbackService';
+import { OfflineMediaViewer } from './socialContent/OfflineMediaViewer';
+import { RetroSoundToggle } from './socialContent/RetroSoundToggle';
+import { retroSoundService } from '../services/socialContent/retroSoundService';
 import { getExerciseTechniqueLabel } from '../services/workoutAuthoring';
 
 const fieldClass = 'mt-2 w-full rounded-[22px] border-2 border-brand-light/15 bg-brand-gray px-4 py-3 font-mono text-sm text-brand-light outline-none transition-colors placeholder:text-brand-muted focus:border-brand-neon';
@@ -92,6 +95,7 @@ export const ActiveWorkout = memo(function ActiveWorkout({
     onUpdateDraftSet(eIdx, sIdx, { completed: checked });
     void triggerHapticFeedback(checked ? 'selection' : 'impact');
     if (checked) {
+      retroSoundService.playBeep();
       startRest(parseRestSeconds(exercise.targetRest));
     }
   }, [onUpdateDraftSet, startRest]);
@@ -183,6 +187,7 @@ export const ActiveWorkout = memo(function ActiveWorkout({
             Exercício {Math.min(focusedExerciseIndex + 1, activeDraft.length)}/{activeDraft.length}: {activeDraft[focusedExerciseIndex]?.name ?? '-'}
           </p>
           <div className="flex items-center gap-2">
+            <RetroSoundToggle />
             {pipGuard.canRenderControl && (
               <button
                 type="button"
@@ -241,11 +246,14 @@ export const ActiveWorkout = memo(function ActiveWorkout({
                 exercise.completed ? 'glass-panel-neon border-brand-neon/50 scale-[1.01] animate-card-complete' : 'bg-brand-gray border-brand-light/15 shadow-brutal-light'
               } ${focusedExerciseIndex === eIdx ? 'ring-2 ring-brand-neon ring-offset-2 ring-offset-brand-dark' : ''} p-5 md:p-6`}
             >
-              <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
+              <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div className="flex-1">
                   <h3 className="font-display text-4xl uppercase leading-none text-brand-light">
                     {exercise.name}
                   </h3>
+                  {focusedExerciseIndex === eIdx && (
+                    <OfflineMediaViewer exerciseName={exercise.name} />
+                  )}
                   <div className="mt-2 flex items-center gap-3">
                     <span className="font-mono text-xs uppercase tracking-widest text-brand-muted">
                       Objetivo: {exercise.targetSets}x{exercise.targetReps} | {exercise.targetRest}

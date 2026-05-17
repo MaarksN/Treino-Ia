@@ -1,4 +1,5 @@
 import { type FormEvent, lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { HardwareCapabilitiesPanel } from './Dashboard/components/HardwareCapabilitiesPanel';
 import {
   Activity,
   Brain,
@@ -23,6 +24,7 @@ import { calculateTrainingPlan } from '../rules/iaEngine';
 import { BottomNav } from '../components/BottomNav';
 import { ImportWorkoutView } from '../components/ImportWorkoutView';
 import { NutritionLifestyleHub } from '../components/NutritionLifestyleHub';
+import { AdvancedSocialHub } from '../components/AdvancedSocial/AdvancedSocialHub';
 import { Skeleton } from '../components/ui/Skeleton';
 import { type User as StarterUser } from '../types';
 import {
@@ -60,6 +62,7 @@ import {
   DashboardSkeleton,
   PlanGenerationProgress,
   TrainingReportPanel,
+  MonetizationHub,
 } from './Dashboard/components';
 import { buildGamificationRetentionState } from './Dashboard/services/gamificationRetentionEngine';
 import { BiohackingWidget } from './Dashboard/components/BiohackingWidget';
@@ -166,6 +169,10 @@ export default function Dashboard() {
 
   const gamificationRetention = useMemo(() => (
     profile ? buildGamificationRetentionState(profile, history) : null
+  ), [profile, history]);
+
+  const remoteGamifiedState = useMemo(() => (
+    profile ? buildRemoteGamifiedState(profile, history) : null
   ), [profile, history]);
 
   useEffect(() => {
@@ -647,6 +654,12 @@ export default function Dashboard() {
               </div>
             )}
 
+            {remoteGamifiedState && (
+              <div id="dashboard-remote-gamified" className="scroll-mt-24">
+                <RemoteGamifiedPanel state={remoteGamifiedState} />
+              </div>
+            )}
+
             <section className="mb-8 rounded-[28px] border-4 border-brand-magenta bg-brand-gray p-6 shadow-brutal-magenta md:p-8">
               <div className="flex flex-col gap-5 md:flex-row md:items-start">
                 <div className="rounded-[24px] border-2 border-brand-magenta bg-brand-magenta p-4 text-brand-light shadow-brutal-magenta">
@@ -668,6 +681,10 @@ export default function Dashboard() {
               <NutritionLifestyleHub profile={profile} plan={plan} history={history} />
             </div>
 
+            <div id="dashboard-advanced-social" className="scroll-mt-24">
+              <AdvancedSocialHub profile={profile} />
+            </div>
+
             <WeeklyPlan
               plan={plan}
               selectedDayIndex={selectedDayIndex}
@@ -685,6 +702,10 @@ export default function Dashboard() {
             <HistoryPanel history={history} />
 
             <TrainingReportPanel history={history} />
+
+            <div id="dashboard-monetization" className="scroll-mt-24">
+              <MonetizationHub />
+            </div>
           </>
         ) : !showStarterRegistration ? (
           <section className="rounded-[28px] border-4 border-brand-neon bg-brand-gray p-8 text-center shadow-brutal-neon">

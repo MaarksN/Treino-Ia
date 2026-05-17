@@ -1,0 +1,295 @@
+# Phase 10 Wave 2.6 — Remote & Deep Gamification Pack
+
+Você é um Engenheiro Staff Frontend/React + Produto Fitness responsável por implementar os 100 itens estratégicos do TREINO IA em lotes de 5.
+
+REGRAS GLOBAIS:
+- Cada lote deve implementar exatamente 5 itens.
+- Não implementar itens fora do lote.
+- Não criar fake feature.
+- Não alterar schema Supabase.
+- Não criar migrations.
+- Não instalar dependência nova sem justificativa forte.
+- Não remover testes.
+- Não mascarar warnings.
+- Não marcar validação como PASS se não executou.
+- Só mudar status no registry para `implemented_now` quando houver código funcional, UI/fluxo real, testes e validação completa.
+- Se o item depender de API externa, hardware, credenciais, schema novo ou integração não disponível, criar apenas fundação/guard/adapters seguros e manter `foundation_created`, `blocked_external_dependency` ou `deferred_high_risk`.
+- Preservar Dashboard, ActiveWorkout e fluxos já validados.
+
+VALIDAÇÃO OBRIGATÓRIA:
+```bash
+git diff --check
+npm run lint
+npm run typecheck
+npm test
+npm run build
+git status --short
+```
+
+
+---
+
+# Missão do lote
+
+Implementar exatamente estes 5 itens dos 100 estratégicos:
+
+```txt
+76, 77, 78, 79, 80
+```
+
+Foco do lote:
+Gamificação profunda local e ética, sem rede fake.
+
+---
+
+# Passo 1 — Verificar base inicial
+
+```bash
+git status --short
+git branch --show-current
+git log --oneline -10
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+Se algo falhar no estado inicial, documente antes de alterar.
+
+---
+
+# Passo 2 — Auditar arquivos relevantes
+
+```txt
+src/features/strategic-items/
+src/features/strategic-items/strategicItems.registry.ts
+src/features/strategic-items/strategicItems.types.ts
+src/features/strategic-items/strategicItems.selectors.ts
+src/pages/Dashboard.tsx
+src/pages/Dashboard/types.ts
+src/pages/Dashboard/components/
+src/pages/Dashboard/services/
+src/services/
+src/components/
+src/App.tsx
+```
+
+---
+
+# Passo 3 — Implementar os 5 itens
+
+
+## Item 76 — Co-op workouts remotos
+
+Objetivo:
+- Criar contract/guard; sem WebSocket fake.
+
+Critério para `implemented_now`:
+- Código funcional.
+- Integração real em UI/fluxo.
+- Teste aplicável.
+- Validação completa verde.
+
+## Item 77 — Death penalty virtual
+
+Objetivo:
+- Implementar apenas mecânica visual opcional e ética, sem punir saúde.
+
+Critério para `implemented_now`:
+- Código funcional.
+- Integração real em UI/fluxo.
+- Teste aplicável.
+- Validação completa verde.
+
+## Item 78 — Modo roguelike
+
+Objetivo:
+- Criar modo local experimental sem quebrar plano principal.
+
+Critério para `implemented_now`:
+- Código funcional.
+- Integração real em UI/fluxo.
+- Teste aplicável.
+- Validação completa verde.
+
+## Item 79 — Drops cosméticos
+
+Objetivo:
+- Criar reward model local, sem NFT/cripto.
+
+Critério para `implemented_now`:
+- Código funcional.
+- Integração real em UI/fluxo.
+- Teste aplicável.
+- Validação completa verde.
+
+## Item 80 — Pets musculares
+
+Objetivo:
+- Criar pet local simples baseado em treino/sono/macro, se seguro.
+
+Critério para `implemented_now`:
+- Código funcional.
+- Integração real em UI/fluxo.
+- Teste aplicável.
+- Validação completa verde.
+
+
+---
+
+# Passo 4 — Atualizar registry
+
+Atualize:
+
+```txt
+src/features/strategic-items/strategicItems.registry.ts
+```
+
+Regras:
+- Só alterar os itens deste lote: 76, 77, 78, 79, 80.
+- Mudar para `implemented_now` apenas itens realmente funcionais.
+- Se algum item ficar apenas com adapter/guard/fundação, manter `foundation_created`, `blocked_external_dependency` ou `deferred_high_risk`.
+- Não alterar status de itens fora do lote.
+
+---
+
+# Passo 5 — Testes
+
+Criar/ajustar testes para services, selectors e regras novas.
+
+Não criar snapshots grandes.
+
+```bash
+npm test
+```
+
+---
+
+# Passo 6 — Evidência operacional
+
+Criar pasta e evidência:
+
+```txt
+.ops/16_lote_16_remote_gamified_76_77_78_79_80/evidence.md
+```
+
+A evidência deve conter:
+1. Objetivo do lote.
+2. Itens implementados.
+3. Itens que permaneceram como foundation/blocked.
+4. Arquivos criados.
+5. Arquivos alterados.
+6. Testes criados.
+7. Resultado real dos comandos.
+8. Warnings conhecidos.
+9. Itens fora do lote não tocados.
+10. Próximo lote recomendado.
+
+---
+
+# Passo 7 — QA manual mínimo
+
+```bash
+npm run dev
+```
+
+Validar:
+- App abre sem tela branca.
+- Dashboard preservado.
+- Treino ativo preservado.
+- Features deste lote aparecem apenas onde fazem sentido.
+- Nenhuma feature externa falsa aparece.
+- Console sem erro vermelho.
+- Sem warning novo de controlled/uncontrolled input.
+
+Se browser não estiver disponível, documentar honestamente.
+
+---
+
+# Passo 8 — Validação final
+
+```bash
+git diff --check
+npm run lint
+npm run typecheck
+npm test
+npm run build
+git status --short
+```
+
+Todos devem passar.
+
+---
+
+# Passo 9 — Commit e push
+
+```bash
+git add src .ops
+git commit -m "Implement strategic items batch 76, 77, 78, 79, 80"
+git push
+```
+
+---
+
+# Entrega final
+
+```md
+## Summary
+- Lote implementado com 5 itens reais.
+- Registry atualizado apenas nos itens: 76, 77, 78, 79, 80.
+- Testes criados/ajustados.
+- Evidência criada.
+
+## Implemented Items
+- Item ...
+
+## Still Foundation / Blocked
+- Item ...
+
+## Architecture
+- Arquivos criados:
+- Arquivos alterados:
+- Services:
+- Components:
+- Tests:
+
+## Product Integration
+- Dashboard:
+- ActiveWorkout:
+- Outros fluxos:
+
+## QA
+- App abriu:
+- Dashboard preservado:
+- Treino ativo preservado:
+- Features do lote renderizaram:
+- Sem fake external integrations:
+- Console sem erro vermelho:
+
+## Validation
+- `git diff --check`: PASS/FAIL
+- `npm run lint`: PASS/FAIL
+- `npm run typecheck`: PASS/FAIL
+- `npm test`: PASS/FAIL
+- `npm run build`: PASS/FAIL
+- `git status --short`: resultado real
+
+## Scope Control
+- Exactly 5 items in scope.
+- No fake production features.
+- No Supabase migrations.
+- No unnecessary dependencies.
+- No broad redesign.
+- No unrelated refactor.
+- No inferred validation.
+
+## Commit
+- Commit hash:
+- Push realizado: SIM/NÃO
+
+## Final Verdict
+- PASS, PASS WITH WARNINGS ou FAIL.
+
+## Next Recommended Batch
+- Execute o próximo arquivo TXT da sequência numérica.
+```
