@@ -62,6 +62,7 @@ import {
   DashboardSkeleton,
   PlanGenerationProgress,
   TrainingReportPanel,
+  MonetizationHub,
 } from './Dashboard/components';
 import { buildGamificationRetentionState } from './Dashboard/services/gamificationRetentionEngine';
 import { buildRemoteGamifiedState } from './Dashboard/services/remoteGamifiedEngine';
@@ -702,7 +703,9 @@ export default function Dashboard() {
 
             <TrainingReportPanel history={history} />
 
-            <HardwareCapabilitiesPanel />
+            <div id="dashboard-monetization" className="scroll-mt-24">
+              <MonetizationHub />
+            </div>
           </>
         ) : !showStarterRegistration ? (
           <section className="rounded-[28px] border-4 border-brand-neon bg-brand-gray p-8 text-center shadow-brutal-neon">
