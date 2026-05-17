@@ -16,6 +16,9 @@ import { getPhaseForDate, loadCycleEntries, PHASE_CONFIG } from '../utils/hormon
 import { showHydrationReminderNotification } from '../utils/pwaUtils';
 import { HormonalCycleTracker } from './HormonalCycleTracker';
 import { HydrationTracker } from './HydrationTracker';
+import { MicrobiotaWidget } from './Nutrition/MicrobiotaWidget';
+import { HydrationManualScanner } from './Nutrition/HydrationManualScanner';
+import { PeriodicTable } from './Nutrition/PeriodicTable';
 
 interface Props {
   profile: UserProfile;
@@ -288,6 +291,12 @@ export function NutritionLifestyleHub({ profile, plan, history }: Props) {
           <HormonalCycleTracker />
         </aside>
       </div>
+
+      <div className="grid gap-6 md:grid-cols-2 mt-6">
+        <MicrobiotaWidget dailyFiberGrams={macros.fiberGrams} calories={macros.calories} />
+        <HydrationManualScanner />
+      </div>
+      <PeriodicTable />
     </section>
   );
 }

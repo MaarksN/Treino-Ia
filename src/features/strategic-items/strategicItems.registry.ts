@@ -853,53 +853,53 @@ export const strategicItemsRegistry: StrategicItem[] = [
   },
   {
     "id": 86,
-    "title": "Co-op em tempo real",
+    "title": "Microbiota estimada",
+    "category": "social_community",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
+    "productArea": "social-community",
+    "implementationNotes": "Implementado com insight educacional de fibras."
+  },
+  {
+    "id": 87,
+    "title": "Alarme DMT/dor muscular tardia",
+    "category": "social_community",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
+    "productArea": "social-community",
+    "implementationNotes": "Estimativa leve baseada em volume e RPE."
+  },
+  {
+    "id": 88,
+    "title": "Dashboard mobilidade articular",
+    "category": "social_community",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
+    "productArea": "social-community",
+    "implementationNotes": "Registros manuais com câmera desabilitada por guard."
+  },
+  {
+    "id": 89,
+    "title": "Scanner hidratação por urina",
     "category": "social_community",
     "status": "blocked_external_dependency",
     "horizon": "future",
     "risk": "high",
     "productArea": "social-community",
-    "implementationNotes": "Dependente de integração externa/hardware/credenciais."
-  },
-  {
-    "id": 87,
-    "title": "Eventos de comunidade",
-    "category": "social_community",
-    "status": "deferred_high_risk",
-    "horizon": "later",
-    "risk": "high",
-    "productArea": "social-community",
-    "implementationNotes": "Adiado por risco alto nesta fase."
-  },
-  {
-    "id": 88,
-    "title": "Mentoria entre atletas",
-    "category": "social_community",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
-    "productArea": "social-community",
-    "implementationNotes": "Base técnica criada para evolução incremental."
-  },
-  {
-    "id": 89,
-    "title": "Reações em sessões",
-    "category": "social_community",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
-    "productArea": "social-community",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Scanner por câmera bloqueado. Criado apenas registro manual seguro."
   },
   {
     "id": 90,
-    "title": "Clubes privados",
+    "title": "Tabela periódica nutricional",
     "category": "social_community",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "social-community",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Painel de micronutrientes educativo implementado."
   },
   {
     "id": 91,
