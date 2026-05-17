@@ -293,7 +293,7 @@ export function NutritionLifestyleHub({ profile, plan, history }: Props) {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 mt-6">
-        <MicrobiotaWidget dailyFiberGrams={macros.fiberGrams} calories={macros.calories} />
+        <MicrobiotaWidget dailyFiberGrams={(macros.calories / 1000) * 14} calories={macros.calories} />
         <HydrationManualScanner />
       </div>
       <PeriodicTable />
