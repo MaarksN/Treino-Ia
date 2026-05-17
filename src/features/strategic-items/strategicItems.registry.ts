@@ -703,53 +703,53 @@ export const strategicItemsRegistry: StrategicItem[] = [
   },
   {
     "id": 71,
-    "title": "Integração com wearables BLE",
-    "category": "hardware_ar_iot",
-    "status": "blocked_external_dependency",
-    "horizon": "future",
-    "risk": "high",
-    "productArea": "hardware-ar-iot",
-    "implementationNotes": "Dependente de integração externa/hardware/credenciais."
+    "title": "Guildas por geolocalização",
+    "category": "social_community",
+    "status": "foundation_created",
+    "horizon": "next",
+    "risk": "medium",
+    "productArea": "social-community",
+    "implementationNotes": "Modelo de consentimento e guard local criado, preview sem rede global."
   },
   {
     "id": 72,
-    "title": "Scanner NFC de equipamentos",
-    "category": "hardware_ar_iot",
-    "status": "blocked_external_dependency",
-    "horizon": "future",
-    "risk": "high",
-    "productArea": "hardware-ar-iot",
-    "implementationNotes": "Dependente de integração externa/hardware/credenciais."
+    "title": "Rivais justos",
+    "category": "social_community",
+    "status": "foundation_created",
+    "horizon": "next",
+    "risk": "medium",
+    "productArea": "social-community",
+    "implementationNotes": "Criado placeholder local honesto, preview sem matchmaking global."
   },
   {
     "id": 73,
-    "title": "Visão computacional com câmera",
-    "category": "hardware_ar_iot",
-    "status": "blocked_external_dependency",
-    "horizon": "future",
-    "risk": "high",
-    "productArea": "hardware-ar-iot",
-    "implementationNotes": "Dependente de integração externa/hardware/credenciais."
+    "title": "Workout replays holográficos",
+    "category": "social_community",
+    "status": "foundation_created",
+    "horizon": "next",
+    "risk": "medium",
+    "productArea": "social-community",
+    "implementationNotes": "Abstração de replay local criada, mock sem holograma falso."
   },
   {
     "id": 74,
-    "title": "WebXR para execução técnica",
-    "category": "hardware_ar_iot",
-    "status": "blocked_external_dependency",
-    "horizon": "future",
-    "risk": "high",
-    "productArea": "hardware-ar-iot",
-    "implementationNotes": "Dependente de integração externa/hardware/credenciais."
+    "title": "Skill-tree de atributos",
+    "category": "social_community",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
+    "productArea": "social-community",
+    "implementationNotes": "Skill tree baseada em estatísticas reais criada localmente."
   },
   {
     "id": 75,
-    "title": "Sincronização Oura/Ultrahuman",
-    "category": "hardware_ar_iot",
-    "status": "blocked_external_dependency",
-    "horizon": "future",
-    "risk": "high",
-    "productArea": "hardware-ar-iot",
-    "implementationNotes": "Dependente de integração externa/hardware/credenciais."
+    "title": "Social blur",
+    "category": "social_community",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
+    "productArea": "social-community",
+    "implementationNotes": "Criada política de blur de conteúdo sensível."
   },
   {
     "id": 76,
