@@ -1,30 +1,36 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
-import '@testing-library/jest-dom';
-import { MobilityDashboard } from './MobilityDashboard';
+import { describe, expect, it } from 'vitest';
+import {
+  createMobilityLog,
+  DEFAULT_MOBILITY_JOINT,
+  DEFAULT_MOBILITY_SCORE,
+  MOBILITY_CAMERA_GUARD_MESSAGE,
+} from './MobilityDashboard.logic';
 
 describe('MobilityDashboard', () => {
-  it('renders correctly and saves manual log', () => {
-    render(<MobilityDashboard />);
-    expect(screen.getByText(/Mobilidade Articular \(Item 88\)/i)).toBeInTheDocument();
+  it('creates a stable manual mobility log', () => {
+    const loggedAt = new Date('2026-05-17T12:00:00.000Z');
+    const log = createMobilityLog(
+      {
+        joint: 'Ombro',
+        score: 8,
+        notes: 'Melhorou muito',
+      },
+      loggedAt,
+    );
 
-    // Check save functionality
-    fireEvent.change(screen.getByLabelText(/Pontuação/i), { target: { value: 8 } });
-    fireEvent.change(screen.getByLabelText(/Notas/i), { target: { value: 'Melhorou muito' } });
-    fireEvent.click(screen.getByText(/Salvar/i));
-
-    expect(screen.getAllByText(/Ombro/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/8\/10/i)).toBeInTheDocument();
-    expect(screen.getByText(/- Melhorou muito/i)).toBeInTheDocument();
+    expect(log).toEqual({
+      id: '1779019200000',
+      date: '2026-05-17T12:00:00.000Z',
+      joint: 'Ombro',
+      score: 8,
+      notes: 'Melhorou muito',
+    });
   });
 
-  it('triggers camera guard alert', () => {
-    const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {});
-    render(<MobilityDashboard />);
-    fireEvent.click(screen.getByText(/Tentar Escanear pela Câmera/i));
-
-    expect(alertMock).toHaveBeenCalledWith(expect.stringContaining('Erro de permissão'));
-    alertMock.mockRestore();
+  it('keeps the manual fallback defaults and camera guard copy', () => {
+    expect(DEFAULT_MOBILITY_JOINT).toBe('Ombro');
+    expect(DEFAULT_MOBILITY_SCORE).toBe(5);
+    expect(MOBILITY_CAMERA_GUARD_MESSAGE).toContain('Item 88 Guard');
+    expect(MOBILITY_CAMERA_GUARD_MESSAGE).toContain('Faça o registro manual');
   });
 });

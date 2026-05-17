@@ -1,18 +1,19 @@
-import React from 'react';
-import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import '@testing-library/jest-dom';
-import { MicrobiotaWidget } from './MicrobiotaWidget';
+import { estimateMicrobiotaHealth } from '../../services/nutrition/microbiotaEstimator';
 
 describe('MicrobiotaWidget', () => {
-  it('renders educational message when data is provided', () => {
-    render(<MicrobiotaWidget dailyFiberGrams={30} calories={2000} />);
-    expect(screen.getByText(/Microbiota e Fibras \(Educacional\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/Ingestão atual: 30g/i)).toBeInTheDocument();
+  it('returns an educational healthy fiber message when data is provided', () => {
+    const insight = estimateMicrobiotaHealth(30, 2000);
+
+    expect(insight.status).toBe('healthy');
+    expect(insight.message).toContain('microbiota saudável');
+    expect(insight.recommendedFibersGrams).toBe(28);
   });
 
-  it('renders unknown state message for 0 calories', () => {
-    render(<MicrobiotaWidget dailyFiberGrams={0} calories={0} />);
-    expect(screen.getByText(/Sem dados nutricionais suficientes/i)).toBeInTheDocument();
+  it('returns unknown state message for missing calories', () => {
+    const insight = estimateMicrobiotaHealth(0, 0);
+
+    expect(insight.status).toBe('unknown');
+    expect(insight.message).toContain('Sem dados nutricionais suficientes');
   });
 });

@@ -1,35 +1,32 @@
 import React, { useState } from 'react';
-
-export interface MobilityLog {
-  id: string;
-  date: string;
-  joint: string;
-  score: number; // 1-10
-  notes: string;
-}
+import {
+  createMobilityLog,
+  DEFAULT_MOBILITY_JOINT,
+  DEFAULT_MOBILITY_SCORE,
+  MOBILITY_CAMERA_GUARD_MESSAGE,
+  type MobilityLog,
+} from './MobilityDashboard.logic';
 
 export const MobilityDashboard: React.FC = () => {
   const [logs, setLogs] = useState<MobilityLog[]>([]);
-  const [joint, setJoint] = useState('Ombro');
-  const [score, setScore] = useState(5);
+  const [joint, setJoint] = useState(DEFAULT_MOBILITY_JOINT);
+  const [score, setScore] = useState(DEFAULT_MOBILITY_SCORE);
   const [notes, setNotes] = useState('');
 
   const saveLog = () => {
-    const newLog: MobilityLog = {
-      id: Date.now().toString(),
-      date: new Date().toISOString(),
+    const newLog = createMobilityLog({
       joint,
       score,
-      notes
-    };
+      notes,
+    });
     setLogs([newLog, ...logs]);
-    setJoint('Ombro');
-    setScore(5);
+    setJoint(DEFAULT_MOBILITY_JOINT);
+    setScore(DEFAULT_MOBILITY_SCORE);
     setNotes('');
   };
 
   const attemptCameraScan = () => {
-    alert('Erro de permissão: Acesso à câmera para avaliação articular está bloqueado ou em fundação devido a riscos de privacidade/integração (Item 88 Guard). Faça o registro manual.');
+    alert(MOBILITY_CAMERA_GUARD_MESSAGE);
   };
 
   return (

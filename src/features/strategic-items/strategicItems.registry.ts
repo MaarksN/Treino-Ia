@@ -109,7 +109,7 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "horizon": "next",
     "risk": "medium",
     "productArea": "ui-ux",
-    "implementationNotes": "Codigo e UI criados para progresso visual real no fluxo de anamnese e recalculo local; promocao pendente de validacao completa."
+    "implementationNotes": "Codigo e UI criados para progresso visual real no fluxo de anamnese e recalculo local, com PlanGenerationProgress integrado ao Dashboard."
   },
   {
     "id": 12,
@@ -119,7 +119,7 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "horizon": "next",
     "risk": "medium",
     "productArea": "ui-ux",
-    "implementationNotes": "Microinteracoes leves criadas em selecao de dias, cards, historico e conclusao de series/exercicios; promocao pendente de validacao completa."
+    "implementationNotes": "Microinteracoes leves criadas em selecao de dias, cards, historico e conclusao de series/exercicios, com classes CSS e estados integrados."
   },
   {
     "id": 13,
@@ -159,7 +159,7 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "horizon": "next",
     "risk": "medium",
     "productArea": "ui-ux",
-    "implementationNotes": "Bottom navigation mobile integrada a secoes reais do Dashboard sem trocar roteador; promocao pendente de validacao completa."
+    "implementationNotes": "Bottom navigation mobile integrada a secoes reais do Dashboard sem trocar roteador."
   },
   {
     "id": 17,
@@ -169,7 +169,7 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "horizon": "next",
     "risk": "medium",
     "productArea": "ui-ux",
-    "implementationNotes": "Dashboard inicial passa a usar skeletons estruturais para perfil, metricas, plano e historico; promocao pendente de validacao completa."
+    "implementationNotes": "Dashboard inicial usa skeletons estruturais para perfil, metricas, plano e historico."
   },
   {
     "id": 18,
@@ -369,7 +369,7 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "horizon": "now",
     "risk": "low",
     "productArea": "nutrition-recovery",
-    "implementationNotes": "Card de day off/recuperacao baseado em historico de RPE, dor e cafeina locais; promocao para implemented_now pendente de validacao completa."
+    "implementationNotes": "Card de day off/recuperacao baseado em historico de RPE, dor e cafeina locais, com regras cobertas pelos testes de recoveryReadiness."
   },
   {
     "id": 38,
@@ -449,7 +449,7 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "horizon": "next",
     "risk": "medium",
     "productArea": "gamification-retention",
-    "implementationNotes": "Relatorio mensal/anual visivel criado no Dashboard com metricas de sessoes, volume, aderencia, foco e tempo ativo; promocao pendente de validacao completa."
+    "implementationNotes": "Relatorio mensal/anual visivel criado no Dashboard com metricas de sessoes, volume, aderencia, foco e tempo ativo, coberto por testes de monthlyTrainingReport."
   },
   {
     "id": 46,

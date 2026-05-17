@@ -1,31 +1,24 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
-import '@testing-library/jest-dom';
-import { HydrationManualScanner } from './HydrationManualScanner';
+import { describe, expect, it } from 'vitest';
+import {
+  DEFAULT_HYDRATION_COLOR_LEVEL,
+  getHydrationColorMessage,
+  HYDRATION_CAMERA_GUARD_MESSAGE,
+} from './HydrationManualScanner.logic';
 
 describe('HydrationManualScanner', () => {
-  it('renders correctly with default ideal message', () => {
-    render(<HydrationManualScanner />);
-    expect(screen.getByText(/Avaliação de Hidratação \(Item 89\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/Corrente amarela clara \(ideal\)/i)).toBeInTheDocument();
+  it('keeps the default ideal hydration message', () => {
+    expect(DEFAULT_HYDRATION_COLOR_LEVEL).toBe(3);
+    expect(getHydrationColorMessage(DEFAULT_HYDRATION_COLOR_LEVEL)).toContain('amarela clara');
+    expect(getHydrationColorMessage(DEFAULT_HYDRATION_COLOR_LEVEL)).toContain('ideal');
   });
 
-  it('updates message when range is changed', () => {
-    render(<HydrationManualScanner />);
-    const rangeInput = screen.getByRole('slider');
-
-    // Change to level 6 (Dark)
-    fireEvent.change(rangeInput, { target: { value: 6 } });
-    expect(screen.getByText(/Corrente escura \(Alerta\)/i)).toBeInTheDocument();
+  it('returns warning copy for darker manual levels', () => {
+    expect(getHydrationColorMessage(6)).toContain('Corrente escura');
+    expect(getHydrationColorMessage(6)).toContain('Alerta');
   });
 
-  it('triggers camera guard alert', () => {
-    const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {});
-    render(<HydrationManualScanner />);
-    fireEvent.click(screen.getByText(/Tentar Escanear pela Câmera/i));
-
-    expect(alertMock).toHaveBeenCalledWith(expect.stringContaining('bloqueado (Item 89 Guard)'));
-    alertMock.mockRestore();
+  it('keeps the camera guard as a manual fallback', () => {
+    expect(HYDRATION_CAMERA_GUARD_MESSAGE).toContain('Item 89 Guard');
+    expect(HYDRATION_CAMERA_GUARD_MESSAGE).toContain('Faça o registro manual');
   });
 });

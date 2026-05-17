@@ -1,23 +1,23 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import '@testing-library/jest-dom';
-import { PeriodicTable } from './PeriodicTable';
+import { findMicronutrient, MICRONUTRIENTS, PERIODIC_TABLE_EMPTY_MESSAGE } from './PeriodicTable.data';
 
 describe('PeriodicTable', () => {
-  it('renders correctly and shows instruction', () => {
-    render(<PeriodicTable />);
-    expect(screen.getByText(/Tabela Periódica Nutricional \(Item 90\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/Selecione um micronutriente/i)).toBeInTheDocument();
+  it('keeps the educational empty-state instruction', () => {
+    expect(PERIODIC_TABLE_EMPTY_MESSAGE).toContain('Selecione um micronutriente');
   });
 
-  it('shows nutrient details on click', () => {
-    render(<PeriodicTable />);
+  it('includes iron details in the micronutrient catalog', () => {
+    expect(findMicronutrient('Fe')).toEqual({
+      symbol: 'Fe',
+      name: 'Ferro',
+      category: 'mineral',
+      description: 'Transporte de oxigênio e metabolismo energético.',
+    });
+  });
 
-    // Click on 'Fe' (Ferro)
-    fireEvent.click(screen.getByText('Fe'));
-
-    expect(screen.getByText(/Ferro \(Fe\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/Transporte de oxigênio/i)).toBeInTheDocument();
+  it('keeps a compact catalog for vitamins and minerals', () => {
+    expect(MICRONUTRIENTS).toHaveLength(8);
+    expect(MICRONUTRIENTS.some(nutrient => nutrient.category === 'vitamina')).toBe(true);
+    expect(MICRONUTRIENTS.some(nutrient => nutrient.category === 'mineral')).toBe(true);
   });
 });

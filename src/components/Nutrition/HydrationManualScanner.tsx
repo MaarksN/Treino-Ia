@@ -1,22 +1,21 @@
 import React, { useState } from 'react';
+import {
+  DEFAULT_HYDRATION_COLOR_LEVEL,
+  getHydrationColorMessage,
+  HYDRATION_CAMERA_GUARD_MESSAGE,
+} from './HydrationManualScanner.logic';
 
 export const HydrationManualScanner: React.FC = () => {
-  const [colorLevel, setColorLevel] = useState<number>(3);
-  const [message, setMessage] = useState<string>('Corrente amarela clara (ideal). Mantenha a hidratação.');
+  const [colorLevel, setColorLevel] = useState<number>(DEFAULT_HYDRATION_COLOR_LEVEL);
+  const [message, setMessage] = useState<string>(getHydrationColorMessage(DEFAULT_HYDRATION_COLOR_LEVEL));
 
   const updateColor = (level: number) => {
     setColorLevel(level);
-    if (level <= 3) {
-      setMessage('Corrente amarela clara (ideal). Mantenha a hidratação.');
-    } else if (level <= 5) {
-      setMessage('Corrente amarelada. Você precisa beber um pouco mais de água.');
-    } else {
-      setMessage('Corrente escura (Alerta). Sinal de desidratação significativa. Beba água imediatamente.');
-    }
+    setMessage(getHydrationColorMessage(level));
   };
 
   const attemptCameraScan = () => {
-    alert('Erro de permissão: Acesso à câmera para hidratação está bloqueado (Item 89 Guard). O recurso de scanner automatizado não está disponível no momento por risco de privacidade. Faça o registro manual.');
+    alert(HYDRATION_CAMERA_GUARD_MESSAGE);
   };
 
   return (
