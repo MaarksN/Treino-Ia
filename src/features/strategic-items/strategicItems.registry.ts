@@ -503,53 +503,53 @@ export const strategicItemsRegistry: StrategicItem[] = [
   },
   {
     "id": 51,
-    "title": "Coach conversacional avançado",
+    "title": "AI Form Checker MediaPipe/WASM",
     "category": "advanced_ai",
     "status": "foundation_created",
     "horizon": "next",
     "risk": "medium",
     "productArea": "advanced-ai",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Adapter seguro criado. Aguardando integração de biblioteca."
   },
   {
     "id": 52,
-    "title": "Classificador de risco de abandono",
+    "title": "Gêmeo digital biomecânico",
     "category": "advanced_ai",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "advanced-ai",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Visão educacional simples e sem claims clínicos."
   },
   {
     "id": 53,
-    "title": "IA para periodização contínua",
+    "title": "Coach por voz TTS/Web Speech",
     "category": "advanced_ai",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "advanced-ai",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Adapter seguro para Web Speech com fallback em texto."
   },
   {
     "id": 54,
-    "title": "IA para substituição automática de exercícios",
+    "title": "Pain-Driven Redesign",
     "category": "advanced_ai",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "advanced-ai",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Sugestões locais de cuidado sem alterar plano."
   },
   {
     "id": 55,
-    "title": "IA para explicabilidade de ajustes",
+    "title": "Personalidade da IA",
     "category": "advanced_ai",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "advanced-ai",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Configuração local de tom sem chamada LLM obrigatória."
   },
   {
     "id": 56,

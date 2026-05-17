@@ -23,6 +23,7 @@ import { calculateTrainingPlan } from '../rules/iaEngine';
 import { BottomNav } from '../components/BottomNav';
 import { ImportWorkoutView } from '../components/ImportWorkoutView';
 import { NutritionLifestyleHub } from '../components/NutritionLifestyleHub';
+import { AdvancedAIPanel } from '../features/advanced-ai/components/AdvancedAIPanel';
 import { Skeleton } from '../components/ui/Skeleton';
 import { type User as StarterUser } from '../types';
 import {
@@ -665,6 +666,10 @@ export default function Dashboard() {
 
             <div id="dashboard-nutrition" className="scroll-mt-24">
               <NutritionLifestyleHub profile={profile} plan={plan} history={history} />
+            </div>
+
+            <div id="dashboard-advanced-ai" className="scroll-mt-24">
+              <AdvancedAIPanel />
             </div>
 
             <WeeklyPlan
