@@ -553,53 +553,53 @@ export const strategicItemsRegistry: StrategicItem[] = [
   },
   {
     "id": 56,
-    "title": "IA para sumarização de ciclo",
+    "title": "Playlist Spotify por IA",
     "category": "advanced_ai",
-    "status": "foundation_created",
+    "status": "blocked_external_dependency",
     "horizon": "next",
     "risk": "medium",
     "productArea": "advanced-ai",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Integration guard added. Real OAuth required."
   },
   {
     "id": 57,
-    "title": "IA multimodal de postura",
+    "title": "RPE por microexpressão facial",
     "category": "advanced_ai",
     "status": "deferred_high_risk",
     "horizon": "later",
     "risk": "high",
     "productArea": "advanced-ai",
-    "implementationNotes": "Adiado por risco alto nesta fase."
+    "implementationNotes": "Research flag and protection created."
   },
   {
     "id": 58,
-    "title": "IA para previsão de PR",
+    "title": "Replanejamento por foto de equipamentos",
     "category": "advanced_ai",
     "status": "foundation_created",
     "horizon": "next",
     "risk": "medium",
     "productArea": "advanced-ai",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Safe upload flow/guard created."
   },
   {
     "id": 59,
-    "title": "IA para recomendações contextuais",
+    "title": "Despensa inteligente",
     "category": "advanced_ai",
     "status": "foundation_created",
     "horizon": "next",
     "risk": "medium",
     "productArea": "advanced-ai",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "Local model for ingredients/manual created."
   },
   {
     "id": 60,
-    "title": "IA para detecção de anomalias",
+    "title": "Projeção de longevidade",
     "category": "advanced_ai",
-    "status": "deferred_high_risk",
+    "status": "foundation_created",
     "horizon": "later",
     "risk": "high",
     "productArea": "advanced-ai",
-    "implementationNotes": "Adiado por risco alto nesta fase."
+    "implementationNotes": "Consistency indicator guard created."
   },
   {
     "id": 61,
