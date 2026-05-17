@@ -365,7 +365,7 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "id": 37,
     "title": "Modo recuperação/day off",
     "category": "nutrition_recovery",
-    "status": "existing_supported",
+    "status": "implemented_now",
     "horizon": "now",
     "risk": "low",
     "productArea": "nutrition-recovery",
