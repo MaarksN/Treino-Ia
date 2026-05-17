@@ -42,8 +42,8 @@ describe('strategicItemsRegistry', () => {
 
     expect(batchItems).toHaveLength(batchIds.length);
     expect(batchItems.map(item => item.id)).toEqual(batchIds);
-    expect(batchItems.filter(item => item.status === 'implemented_now').map(item => item.id)).toEqual([20, 26, 27]);
-    expect(batchItems.filter(item => item.status !== 'implemented_now').map(item => item.id)).toEqual([25, 28]);
+    expect(batchItems.filter(item => item.status === 'implemented_now').map(item => item.id)).toEqual([20, 26, 27, 28]);
+    expect(batchItems.filter(item => item.status !== 'implemented_now').map(item => item.id)).toEqual([25]);
   });
 
   it('tracks batch 06 UI accessibility and interaction items only', () => {
@@ -52,8 +52,8 @@ describe('strategicItemsRegistry', () => {
 
     expect(batchItems).toHaveLength(batchIds.length);
     expect(batchItems.map(item => item.id)).toEqual(batchIds);
-    expect(batchItems.filter(item => item.status === 'implemented_now').map(item => item.id)).toEqual([13, 14, 15]);
-    expect(batchItems.filter(item => item.status === 'foundation_created').map(item => item.id)).toEqual([18, 19]);
+    expect(batchItems.filter(item => item.status === 'implemented_now').map(item => item.id)).toEqual([13, 14, 15, 18, 19]);
+    expect(batchItems.filter(item => item.status === 'foundation_created').map(item => item.id)).toEqual([]);
   });
 
   it('tracks batch 09 quality, CI and data architecture items only', () => {
@@ -62,7 +62,7 @@ describe('strategicItemsRegistry', () => {
 
     expect(batchItems).toHaveLength(batchIds.length);
     expect(batchItems.map(item => item.id)).toEqual(batchIds);
-    expect(batchItems.filter(item => item.status === 'implemented_now').map(item => item.id)).toEqual([2, 5, 6, 7]);
-    expect(batchItems.filter(item => item.status === 'foundation_created').map(item => item.id)).toEqual([8]);
+    expect(batchItems.filter(item => item.status === 'implemented_now').map(item => item.id)).toEqual([2, 5, 6, 7, 8]);
+    expect(batchItems.filter(item => item.status === 'foundation_created').map(item => item.id)).toEqual([]);
   });
 });

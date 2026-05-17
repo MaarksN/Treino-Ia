@@ -75,11 +75,11 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "id": 8,
     "title": "Migracao JSONB progressiva",
     "category": "engineering",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "data-architecture",
-    "implementationNotes": "Read-models e mapeadores JSONB integrados a profile, plano e historico, sem criar migration ou alterar schema Supabase."
+    "implementationNotes": "Adapters tipados jsonbWorkoutAdapter e jsonbProfileAdapter com normalizacao, fallback seguro para dados ausentes/corrompidos, extração de nivel, completude de perfil, sem migration. Read-models existentes (trainingReadModels) ja integrados no DatabaseService. Testes cobrem dados validos, nulos, corrompidos e listas."
   },
   {
     "id": 9,
@@ -175,21 +175,21 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "id": 18,
     "title": "Customização de tema premium",
     "category": "ui_ux",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "ui-ux",
-    "implementationNotes": "Guard de tema premium bloqueia aplicação local sem entitlement, preservando base de customização sem fingir billing."
+    "implementationNotes": "4 variações visuais (neon, high_contrast, minimal, performance_dark) com preview local, persistencia, aplicação real de CSS vars, sem billing fake, disclaimer de preview local, testes de aplicação e persistencia, integrado ao Dashboard."
   },
   {
     "id": 19,
     "title": "Picture-in-picture áudio/vídeo",
     "category": "ui_ux",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "ui-ux",
-    "implementationNotes": "Guard PiP detecta suporte e mídia real antes de renderizar controle; nenhum player fake foi criado."
+    "implementationNotes": "PiP service com detecção real de suporte do browser e mídia real, guard completo via mediaPipService, UI com checklist de disponibilidade, sem player fake, disclaimer honesto, testes de suporte/sem suporte, integrado ao Dashboard."
   },
   {
     "id": 20,
@@ -275,11 +275,11 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "id": 28,
     "title": "Importação por imagem/PDF com crop seguro",
     "category": "active_workout",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "workout-media",
-    "implementationNotes": "Pipeline local de arquivo e crop criado para imagem/PDF, integrado ao Dashboard; OCR permanece bloqueado por não haver integração real neste lote."
+    "implementationNotes": "Service de import com metadata extraction, validacao de formato/tamanho, pipeline de crop existente no ImportWorkoutView, painel resumo com formatos aceitos e OCR guard, OCR guardado como not_started, disclaimer honesto, testes de metadata/validacao, integrado ao Dashboard."
   },
   {
     "id": 29,
@@ -935,11 +935,11 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "id": 94,
     "title": "Protocolos para PCD",
     "category": "injury_prevention",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "injury-prevention",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "implementationNotes": "7 protocolos adaptativos (sentado, baixo impacto, mobilidade reduzida, baixa visao, pos-lesao, amputacao MS, amputacao MI) com recomendações, contraindicações, disclaimers individuais, persistencia local, linguagem cuidadosa, testes de sanitizacao e persistencia, integrado ao Dashboard."
   },
   {
     "id": 95,

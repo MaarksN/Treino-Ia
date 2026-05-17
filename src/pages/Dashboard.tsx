@@ -78,6 +78,10 @@ import { AdaptivePathwaysPanel } from '../components/accessibility/AdaptivePathw
 import { HighContrastModeToggle } from '../components/accessibility/HighContrastModeToggle';
 import { ScreenReaderSupportPanel } from '../components/accessibility/ScreenReaderSupportPanel';
 import { PlainLanguagePanel } from '../components/accessibility/PlainLanguagePanel';
+import { AdaptiveProtocolsPanel } from '../components/accessibility/AdaptiveProtocolsPanel';
+import { ThemeCustomizationPanel } from '../components/premium/ThemeCustomizationPanel';
+import { PictureInPicturePanel } from '../components/media/PictureInPicturePanel';
+import { WorkoutImportPanel } from '../components/media/WorkoutImportPanel';
 
 const PLAN_GENERATION_FEEDBACK_MS = 750;
 const primaryActionClass = getCriticalContrastClass('primaryAction');
@@ -737,6 +741,19 @@ export default function Dashboard() {
                 <PlainLanguagePanel />
               </div>
               <ScreenReaderSupportPanel />
+              <AdaptiveProtocolsPanel />
+            </section>
+
+            <section className="mb-8 space-y-6">
+              <div className="border-b-2 border-brand-light/10 pb-4">
+                <h2 className="font-display text-4xl uppercase text-brand-light">Dados, Premium UX &amp; Mídia</h2>
+                <p className="mt-2 font-mono text-sm text-brand-light/70">Itens estratégicos 08, 18, 19 e 28 integrados.</p>
+              </div>
+              <div className="grid gap-6 md:grid-cols-2">
+                <ThemeCustomizationPanel />
+                <PictureInPicturePanel />
+              </div>
+              <WorkoutImportPanel />
             </section>
 
             <HistoryPanel history={history} />
