@@ -325,7 +325,7 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "id": 33,
     "title": "Diário de água persistente na tela de bloqueio",
     "category": "nutrition_recovery",
-    "status": "existing_supported",
+    "status": "implemented_now",
     "horizon": "now",
     "risk": "medium",
     "productArea": "nutrition-recovery",
