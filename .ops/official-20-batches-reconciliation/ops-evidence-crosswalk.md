@@ -44,3 +44,12 @@ Escopo: mapear evidencias antigas sem apagar historico.
 - `.ops/08_lote_08_engineering_foundation_01_03_04_09_10`
 - `.ops/09_lote_09_quality_ci_data_architecture_02_05_06_07_08`
 - `.ops/10_lote_10_social_content_retention_30_43_46_48_49`
+
+## Remediation Update
+
+- Lote 06: PASS WITH WARNINGS. Duplicidade documental tratada.
+- Lote 08: PASS WITH WARNINGS. Evidências mapeadas no crosswalk.
+- Lote 09: PASS WITH WARNINGS. Evidências mapeadas no crosswalk.
+- Lote 10: PASS WITH WARNINGS. Evidências mapeadas no crosswalk.
+- Lote 18: PASS. Testes corrigidos e documentados.
+- Lote 20: PASS WITH WARNINGS. Registry atualizado para itens 96-100.

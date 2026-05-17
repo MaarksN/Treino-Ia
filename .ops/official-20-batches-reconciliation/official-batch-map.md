@@ -434,3 +434,12 @@ Divergencias:
 
 Proxima acao:
 - Revalidar definicao oficial dos itens 96-100 antes de qualquer alteracao de registry.
+
+## Remediation Update
+
+- Lote 06: PASS WITH WARNINGS. Duplicidade documental tratada.
+- Lote 08: PASS WITH WARNINGS. Evidências mapeadas no crosswalk.
+- Lote 09: PASS WITH WARNINGS. Evidências mapeadas no crosswalk.
+- Lote 10: PASS WITH WARNINGS. Evidências mapeadas no crosswalk.
+- Lote 18: PASS. Testes corrigidos e documentados.
+- Lote 20: PASS WITH WARNINGS. Registry atualizado para itens 96-100.

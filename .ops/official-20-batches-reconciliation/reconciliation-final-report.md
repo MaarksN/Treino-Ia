@@ -94,3 +94,12 @@ Se houver uma etapa documental adicional, a prioridade deve ser:
 1. Revisar a clareza da nota de registry do item 84 em uma rodada futura, se necessario.
 2. Criar dossie retroativo para Lote 20 apos validar a fonte oficial dos itens 96-100.
 3. Decidir se as pastas 06, 08, 09 e 10 devem ser renomeadas, duplicadas como aliases documentais ou preservadas apenas via crosswalk.
+
+## Remediation Update
+
+- Lote 06: PASS WITH WARNINGS. Duplicidade documental tratada.
+- Lote 08: PASS WITH WARNINGS. Evidências mapeadas no crosswalk.
+- Lote 09: PASS WITH WARNINGS. Evidências mapeadas no crosswalk.
+- Lote 10: PASS WITH WARNINGS. Evidências mapeadas no crosswalk.
+- Lote 18: PASS. Testes corrigidos e documentados.
+- Lote 20: PASS WITH WARNINGS. Registry atualizado para itens 96-100.

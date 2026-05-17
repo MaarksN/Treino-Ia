@@ -953,52 +953,52 @@ export const strategicItemsRegistry: StrategicItem[] = [
   },
   {
     "id": 96,
-    "title": "Ajustes por idade",
-    "category": "injury_prevention",
+    "title": "Modo calma",
+    "category": "accessibility_inclusion",
     "status": "foundation_created",
     "horizon": "next",
     "risk": "medium",
-    "productArea": "injury-prevention",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "productArea": "accessibility-inclusion",
+    "implementationNotes": "Base técnica criada para evolução incremental. Evita qualquer promessa médica ou de emergência."
   },
   {
     "id": 97,
-    "title": "Segurança para pós-lesão",
-    "category": "injury_prevention",
+    "title": "Eco-lifting",
+    "category": "accessibility_inclusion",
     "status": "foundation_created",
     "horizon": "next",
     "risk": "medium",
-    "productArea": "injury-prevention",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "productArea": "accessibility-inclusion",
+    "implementationNotes": "Base técnica criada para evolução incremental. Tema ecológico aplicado de forma leve."
   },
   {
     "id": 98,
-    "title": "Relatórios para profissionais de saúde",
-    "category": "injury_prevention",
-    "status": "blocked_external_dependency",
-    "horizon": "future",
-    "risk": "high",
-    "productArea": "injury-prevention",
-    "implementationNotes": "Dependente de integração externa/hardware/credenciais."
+    "title": "Cancelamento por boss fight",
+    "category": "accessibility_inclusion",
+    "status": "foundation_created",
+    "horizon": "next",
+    "risk": "medium",
+    "productArea": "accessibility-inclusion",
+    "implementationNotes": "Base técnica criada. Gamificação interna sem cobrança financeira neste momento."
   },
   {
     "id": 99,
-    "title": "Compliance e consentimento clínico",
-    "category": "injury_prevention",
-    "status": "deferred_high_risk",
-    "horizon": "later",
+    "title": "Tokens reais com parceiros",
+    "category": "accessibility_inclusion",
+    "status": "blocked_external_dependency",
+    "horizon": "future",
     "risk": "high",
-    "productArea": "injury-prevention",
-    "implementationNotes": "Adiado por risco alto nesta fase."
+    "productArea": "accessibility-inclusion",
+    "implementationNotes": "Bloqueado por depender de integração e contratos com parceiros reais."
   },
   {
     "id": 100,
-    "title": "Modo pesquisa experimental",
+    "title": "Time-travel progress viewer",
     "category": "accessibility_inclusion",
-    "status": "deferred_high_risk",
-    "horizon": "later",
-    "risk": "high",
+    "status": "foundation_created",
+    "horizon": "next",
+    "risk": "medium",
     "productArea": "accessibility-inclusion",
-    "implementationNotes": "Adiado por risco alto nesta fase."
+    "implementationNotes": "Adiado como preview/foundation já que não utiliza dados ou fotos existentes reais nesta fase."
   }
 ];
