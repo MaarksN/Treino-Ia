@@ -66,6 +66,8 @@ import {
 } from './Dashboard/components';
 import { buildGamificationRetentionState } from './Dashboard/services/gamificationRetentionEngine';
 import { BiohackingWidget } from './Dashboard/components/BiohackingWidget';
+import { RemoteGamifiedPanel } from './Dashboard/components/RemoteGamified';
+import { buildRemoteGamifiedState } from './Dashboard/services/remoteGamifiedEngine';
 
 const PLAN_GENERATION_FEEDBACK_MS = 750;
 const primaryActionClass = getCriticalContrastClass('primaryAction');
