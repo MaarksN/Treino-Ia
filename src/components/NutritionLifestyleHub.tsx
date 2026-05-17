@@ -47,9 +47,16 @@ export function NutritionLifestyleHub({ profile, plan, history }: Props) {
     };
   }, []);
 
-  const hydrationGoal = useMemo(() => loadHydrationGoal(), [hydrationVersion]);
-  const todayHydration = useMemo(() => getTodayHydration(loadHydrationEntries()), [hydrationVersion]);
+  const hydrationGoal = useMemo(() => {
+    void hydrationVersion;
+    return loadHydrationGoal();
+  }, [hydrationVersion]);
+  const todayHydration = useMemo(() => {
+    void hydrationVersion;
+    return getTodayHydration(loadHydrationEntries());
+  }, [hydrationVersion]);
   const todayPhase = useMemo(() => {
+    void cycleVersion;
     const today = new Date().toISOString().slice(0, 10);
     return getPhaseForDate(today, loadCycleEntries());
   }, [cycleVersion]);

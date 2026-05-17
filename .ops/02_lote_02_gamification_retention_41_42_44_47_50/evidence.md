@@ -50,7 +50,7 @@ Criar uma secao `Gamificacao & Retencao` no Dashboard sem backend novo, sem sche
 - Teste do lote (`gamificationRetentionEngine.test.ts` + `strategicItems.test.ts`): PASS, 2 files / 13 tests.
 - Suite completa via Vitest direto com `--pool=threads --maxWorkers=1`: INCONCLUSIVE/FAIL, iniciou e executou dezenas de testes, mas o processo terminou com `LASTEXIT=-1` antes de resumo final.
 - `npm run build` equivalente no espelho temporario (`vite build` direto): PASS. Warning conhecido: `Generated an empty chunk: "motion".`
-- `git status --short` final: workspace contem tambem alteracoes fora do lote, como `src/components/NutritionLifestyleHub.tsx` e `.ops/08_lote_08...`, que nao fazem parte deste lote.
+- `git status --short --branch` final apos commit: `main...origin/main [ahead 2]` e `.ops/08_lote_08_engineering_foundation_01_03_04_09_10/` nao rastreado, fora deste lote.
 
 ## 8. Warnings conhecidos
 
@@ -79,6 +79,11 @@ Criar uma secao `Gamificacao & Retencao` no Dashboard sem backend novo, sem sche
 - Browser embutido Codex: indisponivel (`No active Codex browser pane available`); fallback usado com Playwright headless e Chrome local.
 - Console sem erro vermelho: PASS WITH WARNING; houve um 404 de recurso, sem quebrar renderizacao.
 
-## 11. Proximo lote recomendado
+## 11. Commit e push
+
+- Commit local do fechamento deste lote: `741d50b037ed8c67f919acb511658005a983725e`.
+- Push: NAO concluido. `git push` travou no remote HTTPS/credential manager e precisou ser encerrado apos timeout; branch ficou `ahead 2`.
+
+## 12. Proximo lote recomendado
 
 Executar o proximo TXT da sequencia numerica ainda nao finalizado pelo fluxo atual.
