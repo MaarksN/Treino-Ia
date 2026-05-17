@@ -1,4 +1,5 @@
 import { type FormEvent, lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { HardwareCapabilitiesPanel } from './Dashboard/components/HardwareCapabilitiesPanel';
 import {
   Activity,
   Brain,
@@ -683,6 +684,8 @@ export default function Dashboard() {
             <HistoryPanel history={history} />
 
             <TrainingReportPanel history={history} />
+
+            <HardwareCapabilitiesPanel />
           </>
         ) : !showStarterRegistration ? (
           <section className="rounded-[28px] border-4 border-brand-neon bg-brand-gray p-8 text-center shadow-brutal-neon">
