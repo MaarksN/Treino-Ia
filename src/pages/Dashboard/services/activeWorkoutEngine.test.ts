@@ -8,6 +8,9 @@ import {
   parseRestSeconds,
   suggestInitialExerciseDraft,
   buildWorkoutExerciseLog,
+  calculateRpeFromRir,
+  calculateRirFromRpe,
+  getRpeCalculatorOptions,
 } from './activeWorkoutEngine';
 import { type ActiveExerciseDraft } from '../types';
 import { type WorkoutSession } from '../../../services/database';
@@ -39,6 +42,33 @@ describe('activeWorkoutEngine', () => {
 
   it('retorna orientação correta de RPE', () => {
     expect(getRpeGuidance('9').label).toBe('RPE 9');
+  });
+
+  it('calcula RPE a partir de RIR', () => {
+    expect(calculateRpeFromRir(0)).toBe(10);
+    expect(calculateRpeFromRir(1)).toBe(9);
+    expect(calculateRpeFromRir(2)).toBe(8);
+    expect(calculateRpeFromRir(4)).toBe(6);
+    expect(calculateRpeFromRir(-1)).toBe(10);
+    expect(calculateRpeFromRir(10)).toBe(6);
+    expect(calculateRpeFromRir('invalid')).toBe(0);
+  });
+
+  it('calcula RIR a partir de RPE', () => {
+    expect(calculateRirFromRpe(10)).toBe(0);
+    expect(calculateRirFromRpe(9)).toBe(1);
+    expect(calculateRirFromRpe(8)).toBe(2);
+    expect(calculateRirFromRpe(6)).toBe(4);
+    expect(calculateRirFromRpe(5)).toBeNull();
+    expect(calculateRirFromRpe(12)).toBe(0);
+    expect(calculateRirFromRpe('invalid')).toBeNull();
+  });
+
+  it('gera opções de calculadora RPE', () => {
+    const options = getRpeCalculatorOptions();
+    expect(options.length).toBe(5);
+    expect(options[0].rirLabel).toBe('0');
+    expect(options[0].rpe).toBe('10');
   });
 
   it('detecta platô simples com histórico suficiente', () => {
