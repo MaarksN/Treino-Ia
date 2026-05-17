@@ -21,6 +21,8 @@ import {
 import { calculateTrainingPlan } from '../rules/iaEngine';
 import { RegistrationForm } from '../components/RegistrationForm';
 import { Skeleton } from '../components/ui/Skeleton';
+import { RecoveryPanels } from '../components/recovery/RecoveryPanels';
+import { GamificationPanels } from '../components/gamification/GamificationPanels';
 import { User as StarterUser } from '../types';
 import { ActiveExerciseDraft } from './Dashboard/types';
 import {
@@ -106,6 +108,7 @@ export default function Dashboard() {
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
+  const [generationStep, setGenerationStep] = useState('');
 
   useEffect(() => {
     void loadData();
@@ -226,11 +229,19 @@ export default function Dashboard() {
 
   async function regeneratePlan() {
     if (!profile) return;
+    setGenerationStep('Analisando histórico');
+    await new Promise(r => setTimeout(r, 150));
+    setGenerationStep('Calculando volume');
+    await new Promise(r => setTimeout(r, 150));
+    setGenerationStep('Ajustando recuperação');
+    await new Promise(r => setTimeout(r, 150));
+    setGenerationStep('Montando plano');
     const nextPlan = calculateTrainingPlan({ ...profile, updatedAt: Date.now() }, history);
     await DatabaseService.saveCurrentPlan(nextPlan);
     setPlan(nextPlan);
     setSelectedDayIndex(0);
     setNotice('Plano recalculado com base no histórico mais recente.');
+    setGenerationStep('');
   }
 
   function startActiveWorkout(dayIndex: number) {
@@ -406,7 +417,7 @@ export default function Dashboard() {
                   setShowAnamnesis(value => !value);
                   if (profile) setFormProfile(profile);
                 }}
-                className="rounded-full border-2 border-brand-neon bg-brand-neon px-5 py-3 font-mono text-xs uppercase tracking-widest text-brand-dark shadow-brutal-neon"
+                className="rounded-full border-2 border-brand-neon bg-brand-neon px-5 py-3 font-mono text-xs uppercase tracking-widest text-brand-dark shadow-brutal-neon transition-transform hover:-translate-y-0.5"
               >
                 {profile ? 'Editar anamnese' : 'Criar anamnese'}
               </button>
@@ -516,6 +527,11 @@ export default function Dashboard() {
                 </div>
               </div>
             </section>
+
+            {generationStep && <div className="mb-6 rounded-2xl border border-brand-neon/40 bg-brand-neon/10 p-3 font-mono text-xs">Recalculando plano: {generationStep}...</div>}
+
+            <RecoveryPanels history={history} />
+            <GamificationPanels history={history} />
 
             <WeeklyPlan
               plan={plan}
