@@ -68,7 +68,7 @@ Validacao final:
 - `npm run typecheck`: PASS na copia temporaria, exit 0.
 - `npm test`: PASS na copia temporaria, 66 arquivos de teste, 237 testes.
 - `npm run build`: PASS na copia temporaria. Warning conhecido do Vite: `Generated an empty chunk: "motion"`.
-- `git status --short`: worktree ainda contem alteracoes externas nao relacionadas ao lote 07, incluindo `.ops/08_lote_08_engineering_foundation_01_03_04_09_10/`.
+- `git status --short`: limpo apos commit local. `git status -sb`: `main...origin/main [ahead 3]`.
 
 ## 8. Warnings conhecidos
 
@@ -83,7 +83,7 @@ O registry do lote foi limitado aos itens 20, 25, 26, 27 e 28. Nenhum status de 
 
 ## 10. Proximo lote recomendado
 
-Executar o proximo arquivo TXT da sequencia numerica disponivel. No estado atual ha uma pasta `.ops/08_lote_08_engineering_foundation_01_03_04_09_10/`, entao recomenda-se conferir se o lote 08 ja foi parcialmente executado antes de iniciar outra rodada.
+Executar o proximo arquivo TXT da sequencia numerica disponivel. O historico local indica commits de outros lotes tambem a frente de `origin/main`; conferir sincronizacao antes de iniciar outra rodada.
 
 ## QA manual minimo
 
