@@ -653,53 +653,53 @@ export const strategicItemsRegistry: StrategicItem[] = [
   },
   {
     "id": 66,
-    "title": "Stripe checkout completo",
-    "category": "monetization",
+    "title": "NFC Tap-to-Set",
+    "category": "hardware_ar_iot",
     "status": "blocked_external_dependency",
-    "horizon": "future",
-    "risk": "high",
-    "productArea": "monetization",
-    "implementationNotes": "Dependente de integração externa/hardware/credenciais."
+    "horizon": "next",
+    "risk": "medium",
+    "productArea": "hardware-ar-iot",
+    "implementationNotes": "Adapter criado, aguardando hardware e Web NFC."
   },
   {
     "id": 67,
-    "title": "Gestão de cupons",
-    "category": "monetization",
+    "title": "AR/WebXR",
+    "category": "hardware_ar_iot",
     "status": "foundation_created",
     "horizon": "next",
     "risk": "medium",
-    "productArea": "monetization",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "productArea": "hardware-ar-iot",
+    "implementationNotes": "Capability detection adicionada. Interface bloqueada até device suportado."
   },
   {
     "id": 68,
-    "title": "Upsell contextual",
-    "category": "monetization",
-    "status": "foundation_created",
+    "title": "Oura/Ultrahuman",
+    "category": "hardware_ar_iot",
+    "status": "blocked_external_dependency",
     "horizon": "next",
     "risk": "medium",
-    "productArea": "monetization",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "productArea": "hardware-ar-iot",
+    "implementationNotes": "Provider contract criado. Aguardando OAuth."
   },
   {
     "id": 69,
-    "title": "Parcerias com coaches",
-    "category": "monetization",
+    "title": "Balanças via Web Bluetooth",
+    "category": "hardware_ar_iot",
     "status": "foundation_created",
     "horizon": "next",
     "risk": "medium",
-    "productArea": "monetization",
-    "implementationNotes": "Base técnica criada para evolução incremental."
+    "productArea": "hardware-ar-iot",
+    "implementationNotes": "Capability guard adicionado. Integração pendente de device."
   },
   {
     "id": 70,
-    "title": "Licenciamento B2B",
-    "category": "monetization",
-    "status": "deferred_high_risk",
-    "horizon": "later",
-    "risk": "high",
-    "productArea": "monetization",
-    "implementationNotes": "Adiado por risco alto nesta fase."
+    "title": "Tapete IoT",
+    "category": "hardware_ar_iot",
+    "status": "blocked_external_dependency",
+    "horizon": "next",
+    "risk": "medium",
+    "productArea": "hardware-ar-iot",
+    "implementationNotes": "Interface provider criada. Adiado por risco e dependência."
   },
   {
     "id": 71,
