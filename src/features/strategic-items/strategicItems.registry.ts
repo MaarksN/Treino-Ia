@@ -753,53 +753,53 @@ export const strategicItemsRegistry: StrategicItem[] = [
   },
   {
     "id": 76,
-    "title": "Integração com balança IoT",
-    "category": "hardware_ar_iot",
-    "status": "blocked_external_dependency",
-    "horizon": "future",
-    "risk": "high",
-    "productArea": "hardware-ar-iot",
-    "implementationNotes": "Dependente de integração externa/hardware/credenciais."
+    "title": "Co-op workouts remotos",
+    "category": "social_community",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
+    "productArea": "social-community",
+    "implementationNotes": "Guarda UI para modo co-op remoto."
   },
   {
     "id": 77,
-    "title": "Sensor de velocidade de barra",
-    "category": "hardware_ar_iot",
-    "status": "blocked_external_dependency",
-    "horizon": "future",
-    "risk": "high",
-    "productArea": "hardware-ar-iot",
-    "implementationNotes": "Dependente de integração externa/hardware/credenciais."
+    "title": "Death penalty virtual",
+    "category": "gamification_retention",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
+    "productArea": "gamification-retention",
+    "implementationNotes": "Guarda visual para modo extremo (opcional)."
   },
   {
     "id": 78,
-    "title": "Eye tracking para foco",
-    "category": "hardware_ar_iot",
-    "status": "blocked_external_dependency",
-    "horizon": "future",
-    "risk": "high",
-    "productArea": "hardware-ar-iot",
-    "implementationNotes": "Dependente de integração externa/hardware/credenciais."
+    "title": "Modo roguelike",
+    "category": "gamification_retention",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
+    "productArea": "gamification-retention",
+    "implementationNotes": "Desbloqueado com base no histórico."
   },
   {
     "id": 79,
-    "title": "Termografia de fadiga",
-    "category": "hardware_ar_iot",
-    "status": "blocked_external_dependency",
-    "horizon": "future",
-    "risk": "high",
-    "productArea": "hardware-ar-iot",
-    "implementationNotes": "Dependente de integração externa/hardware/credenciais."
+    "title": "Drops cosméticos",
+    "category": "gamification_retention",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
+    "productArea": "gamification-retention",
+    "implementationNotes": "Drops locais baseados no histórico."
   },
   {
     "id": 80,
-    "title": "Hub IoT doméstico",
-    "category": "hardware_ar_iot",
-    "status": "blocked_external_dependency",
-    "horizon": "future",
-    "risk": "high",
-    "productArea": "hardware-ar-iot",
-    "implementationNotes": "Dependente de integração externa/hardware/credenciais."
+    "title": "Pets musculares",
+    "category": "gamification_retention",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
+    "productArea": "gamification-retention",
+    "implementationNotes": "Saúde e felicidade do pet baseada na rotina de treinos."
   },
   {
     "id": 81,
