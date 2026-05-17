@@ -68,6 +68,11 @@ import { buildGamificationRetentionState } from './Dashboard/services/gamificati
 import { BiohackingWidget } from './Dashboard/components/BiohackingWidget';
 import { RemoteGamifiedPanel } from './Dashboard/components/RemoteGamified';
 import { buildRemoteGamifiedState } from './Dashboard/services/remoteGamifiedEngine';
+import { CalmModePanel } from '../components/wellness/CalmModePanel';
+import { EcoLiftingPanel } from '../components/sustainability/EcoLiftingPanel';
+import { BossFightCancellationPreview } from '../components/monetization/BossFightCancellationPreview';
+import { PartnerTokenPreview } from '../components/partners/PartnerTokenPreview';
+import { TimeTravelProgressViewer } from '../components/reports/TimeTravelProgressViewer';
 
 const PLAN_GENERATION_FEEDBACK_MS = 750;
 const primaryActionClass = getCriticalContrastClass('primaryAction');
@@ -700,6 +705,20 @@ export default function Dashboard() {
 
             <BiohackingWidget />
             <RecoveryReadinessSection history={history} />
+
+            <section className="mb-8 space-y-6">
+              <div className="border-b-2 border-brand-light/10 pb-4">
+                <h2 className="font-display text-4xl uppercase text-brand-light">Bem-estar, Sustentabilidade & Retrospectiva</h2>
+                <p className="mt-2 font-mono text-sm text-brand-light/70">Itens estratégicos 96 a 100 integrados.</p>
+              </div>
+              <CalmModePanel />
+              <EcoLiftingPanel history={history} />
+              <div className="grid gap-6 md:grid-cols-2">
+                <BossFightCancellationPreview />
+                <PartnerTokenPreview />
+              </div>
+              <TimeTravelProgressViewer history={history} />
+            </section>
 
             <HistoryPanel history={history} />
 

@@ -955,21 +955,21 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "id": 96,
     "title": "Modo calma",
     "category": "accessibility_inclusion",
-    "status": "foundation_created",
+    "status": "implemented_now",
     "horizon": "next",
     "risk": "medium",
     "productArea": "accessibility-inclusion",
-    "implementationNotes": "Base técnica criada para evolução incremental. Evita qualquer promessa médica ou de emergência."
+    "implementationNotes": "Implementado com UI de apoio de bem-estar, sem claims médicos ou substituição de atendimento profissional."
   },
   {
     "id": 97,
     "title": "Eco-lifting",
     "category": "accessibility_inclusion",
-    "status": "foundation_created",
+    "status": "implemented_now",
     "horizon": "next",
     "risk": "medium",
     "productArea": "accessibility-inclusion",
-    "implementationNotes": "Base técnica criada para evolução incremental. Tema ecológico aplicado de forma leve."
+    "implementationNotes": "Implementado com sistema de pontuação e badges ecológicas baseadas em sessões locais, sem invenção de auditoria de CO2."
   },
   {
     "id": 98,
@@ -979,7 +979,7 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "horizon": "next",
     "risk": "medium",
     "productArea": "accessibility-inclusion",
-    "implementationNotes": "Base técnica criada. Gamificação interna sem cobrança financeira neste momento."
+    "implementationNotes": "Guard ético criado como preview visual, sem criar barreiras ou dark patterns no cancelamento real."
   },
   {
     "id": 99,
@@ -989,16 +989,16 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "horizon": "future",
     "risk": "high",
     "productArea": "accessibility-inclusion",
-    "implementationNotes": "Bloqueado por depender de integração e contratos com parceiros reais."
+    "implementationNotes": "Preview criado avisando que requer backend de parceiros e sistema de QR codes reais."
   },
   {
     "id": 100,
     "title": "Time-travel progress viewer",
     "category": "accessibility_inclusion",
-    "status": "foundation_created",
+    "status": "implemented_now",
     "horizon": "next",
     "risk": "medium",
     "productArea": "accessibility-inclusion",
-    "implementationNotes": "Adiado como preview/foundation já que não utiliza dados ou fotos existentes reais nesta fase."
+    "implementationNotes": "Implementado visualizador retrospectivo baseado exclusivamente no volume e sessões reais do histórico."
   }
 ];
