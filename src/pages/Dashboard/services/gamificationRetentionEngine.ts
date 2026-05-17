@@ -436,7 +436,7 @@ function calculateDailyStreak(activeKeys: Set<string>, today: Date, freezeAllowa
       continue;
     }
 
-    if (streak > 0 && freezesUsed < freezeAllowance) {
+    if ((streak > 0 || sameDate(cursor, today)) && freezesUsed < freezeAllowance) {
       freezesUsed += 1;
       streak += 1;
       cursor = addDays(cursor, -1);

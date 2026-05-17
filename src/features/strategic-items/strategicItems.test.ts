@@ -26,6 +26,16 @@ describe('strategicItemsRegistry', () => {
     expect(getStrategicItemsByCategory('engineering').length).toBeGreaterThan(0);
   });
 
+  it('tracks batch 02 gamification and retention items only', () => {
+    const batchIds = [41, 42, 44, 47, 50];
+    const batchItems = strategicItemsRegistry.filter(item => batchIds.includes(item.id));
+
+    expect(batchItems).toHaveLength(batchIds.length);
+    expect(batchItems.map(item => item.id)).toEqual(batchIds);
+    expect(batchItems.every(item => item.category === 'gamification_retention')).toBe(true);
+    expect(batchItems.filter(item => item.status === 'implemented_now').map(item => item.id)).toEqual(batchIds);
+  });
+
   it('tracks batch 07 workout authoring and media items only', () => {
     const batchIds = [20, 25, 26, 27, 28];
     const batchItems = strategicItemsRegistry.filter(item => batchIds.includes(item.id));
