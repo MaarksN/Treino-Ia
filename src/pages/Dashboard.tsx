@@ -20,6 +20,7 @@ import {
   WorkoutExerciseLog,
   WorkoutSession,
 } from '../services/database';
+import { CurrentPlanConsistencyHelper } from '../services/data/currentPlanConsistency';
 import { calculateTrainingPlan } from '../rules/iaEngine';
 import { BottomNav } from '../components/BottomNav';
 import { ImportWorkoutView } from '../components/ImportWorkoutView';
@@ -157,7 +158,8 @@ export default function Dashboard() {
         : calculateTrainingPlan(storedProfile, storedHistory);
 
       if (!storedPlan?.days?.length) {
-        await DatabaseService.saveCurrentPlan(currentPlan);
+        const res = await CurrentPlanConsistencyHelper.setCurrentPlan(currentPlan);
+      if (res.status === 'local_fallback') setNotice('Plano salvo localmente. Aguardando sincronização.');
       }
 
       setProfile(storedProfile);
@@ -220,7 +222,8 @@ export default function Dashboard() {
       setGenerationProgress({ profile: updatedProfile, plan: nextPlan });
 
       await DatabaseService.saveProfile(updatedProfile);
-      await DatabaseService.saveCurrentPlan(nextPlan);
+      const res = await CurrentPlanConsistencyHelper.setCurrentPlan(nextPlan);
+      if (res.status === 'local_fallback') setNotice('Plano salvo localmente. Aguardando sincronização.');
       await wait(Math.max(0, PLAN_GENERATION_FEEDBACK_MS - (Date.now() - startedAt)));
 
       setProfile(updatedProfile);
@@ -266,7 +269,8 @@ export default function Dashboard() {
       const nextPlan = calculateTrainingPlan(updatedProfile, history);
       setGenerationProgress({ profile: updatedProfile, plan: nextPlan });
 
-      await DatabaseService.saveCurrentPlan(nextPlan);
+      const res = await CurrentPlanConsistencyHelper.setCurrentPlan(nextPlan);
+      if (res.status === 'local_fallback') setNotice('Plano salvo localmente. Aguardando sincronização.');
       await wait(Math.max(0, PLAN_GENERATION_FEEDBACK_MS - (Date.now() - startedAt)));
 
       setPlan(nextPlan);
@@ -286,7 +290,8 @@ export default function Dashboard() {
     setError('');
 
     try {
-      await DatabaseService.saveCurrentPlan(nextPlan);
+      const res = await CurrentPlanConsistencyHelper.setCurrentPlan(nextPlan);
+      if (res.status === 'local_fallback') setNotice('Plano salvo localmente. Aguardando sincronização.');
     } catch {
       setError('Alteração aplicada na tela, mas não consegui salvar o plano agora.');
     }
@@ -314,7 +319,7 @@ export default function Dashboard() {
     setPlan(nextPlan);
     setNotice('');
     setError('');
-    void DatabaseService.saveCurrentPlan(nextPlan).catch(() => {
+    void CurrentPlanConsistencyHelper.setCurrentPlan(nextPlan).catch(() => {
       setError('Nota aplicada na tela, mas não consegui salvar o plano agora.');
     });
   }, [plan, selectedDayIndex]);
@@ -441,7 +446,8 @@ export default function Dashboard() {
       const finalHistory = [completedSession, ...history].slice(0, 50);
 
       await DatabaseService.saveWorkoutSession(completedSession);
-      await DatabaseService.saveCurrentPlan(adjustedPlan);
+      const res = await CurrentPlanConsistencyHelper.setCurrentPlan(adjustedPlan);
+      if (res.status === 'local_fallback') setNotice('Plano salvo localmente. Aguardando sincronização.');
 
       setHistory(finalHistory);
       setPlan(adjustedPlan);

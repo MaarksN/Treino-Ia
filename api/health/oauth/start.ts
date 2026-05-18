@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { handleApiError, HttpError, json, readJsonObject } from '../../_lib/http';
 import { sanitizeRedirectTarget } from '../../_lib/oauthRedirect';
 import { getSupabaseAdmin, requireSupabaseUser } from '../../_lib/server-supabase';
+import { normalizeRedirectTo } from '../../_lib/redirectAllowlist';
 
 export const config = {
   runtime: 'nodejs',

@@ -1,5 +1,5 @@
 import { getErrorMessage, toError } from './errors';
-import { redactMetadata, redactSensitiveString } from '../../api/_lib/redact';
+import { sanitizeTelemetryMessage, sanitizeTelemetryMetadata, sanitizeTelemetryUrl } from '../../api/_lib/piiRedaction';
 
 export interface ErrorTelemetryEvent {
   id: string;
@@ -19,15 +19,12 @@ let installed = false;
 function sanitizeTelemetryEvent(event: ErrorTelemetryEvent): ErrorTelemetryEvent {
   return {
     ...event,
-    message: redactSensitiveString(event.message, 1_000),
-    stack: event.stack ? redactSensitiveString(event.stack, 6_000) : undefined,
-    source: redactSensitiveString(event.source, 120),
-    userAgent: redactSensitiveString(event.userAgent, 500),
-    url: redactSensitiveString(event.url, 1_000),
-    metadata: redactMetadata(event.metadata, {
-      maxSerializedBytes: 8_000,
-      maxStringLength: 1_000,
-    }),
+    message: sanitizeTelemetryMessage(event.message),
+    stack: event.stack ? sanitizeTelemetryMessage(event.stack) : undefined,
+    source: sanitizeTelemetryMessage(event.source),
+    userAgent: sanitizeTelemetryMessage(event.userAgent),
+    url: sanitizeTelemetryUrl(event.url),
+    metadata: sanitizeTelemetryMetadata(event.metadata),
   };
 }
 

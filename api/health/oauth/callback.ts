@@ -3,6 +3,8 @@ import { handleApiError, HttpError, json } from '../../_lib/http';
 import { sanitizeRedirectTarget } from '../../_lib/oauthRedirect';
 import { encryptOAuthToken } from '../../_lib/oauthTokenCrypto';
 import { getSupabaseAdmin } from '../../_lib/server-supabase';
+import { normalizeRedirectTo } from '../../_lib/redirectAllowlist';
+import { assertOAuthTokenStorageAllowed, buildOAuthTokenStorageWarning, redactOAuthTokenPayload } from '../../_lib/oauthTokenSecurity';
 
 export const config = {
   runtime: 'nodejs',
@@ -144,7 +146,7 @@ export default async function handler(request: Request) {
 
     if (!code) throw new HttpError(400, 'OAuth code is required');
 
-    const token = await exchangeToken(provider, code, `${getBaseUrl(request)}/api/health/oauth/callback`);
+    const token = await exchangeToken(provider, code, `${baseUrl}/api/health/oauth/callback`);
     if (!token.access_token) {
       throw new Error(token.error_description || token.error || 'OAuth token response did not include access_token');
     }
@@ -155,6 +157,12 @@ export default async function handler(request: Request) {
 
     const scope = token.scope || '';
     const scopes = scope ? scope.split(/[,\s]+/).filter(Boolean) : [];
+
+    assertOAuthTokenStorageAllowed();
+    const securityWarning = buildOAuthTokenStorageWarning();
+    if (securityWarning) {
+      console.warn('OAuth token storage warning', { provider, warning: securityWarning });
+    }
 
     const { error: tokenError } = await supabase
       .from('health_integration_tokens')
@@ -170,7 +178,7 @@ export default async function handler(request: Request) {
       }, { onConflict: 'user_id,provider' });
 
     if (tokenError) {
-      throw new Error(`Failed to store OAuth token: ${tokenError.message}`);
+      throw new Error(`Failed to store OAuth token: ${JSON.stringify(redactOAuthTokenPayload({ provider, error: tokenError.message }))}`);
     }
 
     const { error: integrationError } = await supabase
