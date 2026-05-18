@@ -157,8 +157,7 @@ export default async function handler(request: Request) {
       : null;
 
     const scope = token.scope || '';
-    const scopes = scope ? scope.split(/[,
-\s]+/).filter(Boolean) : [];
+    const scopes = scope ? scope.split(/[,\s]+/).filter(Boolean) : [];
 
     assertOAuthTokenStorageAllowed();
     const securityWarning = buildOAuthTokenStorageWarning();
