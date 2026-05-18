@@ -54,7 +54,9 @@ import { summarizeAiDecisionQuality } from '../utils/aiDecisionObservability';
 import { aiDecisionAuditRepository } from './aiDecisionAuditRepository';
 import { createGeminiProxyClient } from './geminiProxyClient';
 
-const MODEL = 'gemini-2.5-pro';
+import { getAiModelPolicy } from './ai/aiModelPolicy';
+
+const MODEL = getAiModelPolicy('personalization').model;
 
 const decisionAudits: AiDecisionAudit[] = [];
 

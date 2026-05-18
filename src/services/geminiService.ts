@@ -1,6 +1,8 @@
 import { Type, Schema } from "../types/geminiSchema";
 import { Exercise, UserProfile, WorkoutHistoryRecord, WorkoutPlan } from "../types";
 import { createGeminiProxyClient } from './geminiProxyClient';
+import { getAiModelPolicy } from './ai/aiModelPolicy';
+import { safeAiJsonParser } from './ai/safeAiJsonParser';
 
 const LOCAL_EXERCISE_BANK = {
   gym: {
@@ -400,7 +402,7 @@ REGRAS OBRIGATÓRIAS (FALHAR NÃO É UMA OPÇÃO):
 6. JSON VALIDO: Você deve retornar o plano estritamente validado com o schema exigido.`;
 
   const response = await getAI().models.generateContent({
-    model: "gemini-2.5-pro",
+    model: getAiModelPolicy('training_plan').model,
     contents: prompt,
     config: {
       responseMimeType: "application/json",
@@ -410,7 +412,9 @@ REGRAS OBRIGATÓRIAS (FALHAR NÃO É UMA OPÇÃO):
 
   const jsonStr = response.text || "{}";
   try {
-    const parsed = JSON.parse(jsonStr) as WorkoutPlan;
+    const parsedResult = safeAiJsonParser<WorkoutPlan>(jsonStr, (value): value is WorkoutPlan => Boolean(value) && typeof value === 'object' && Array.isArray((value as { days?: unknown }).days));
+    if (!parsedResult.ok) throw new Error('Invalid workout plan response');
+    const parsed = parsedResult.data;
     parsed.id = crypto.randomUUID();
     parsed.createdAt = Date.now();
     parsed.days = parsed.days.map(day => ({
@@ -438,7 +442,7 @@ O usuário enviou uma foto de progressão. Analise a imagem em relação ao biot
 IMPORTANTE: Não dê conselhos médicos, fale estritamente como um bodybuilder avaliando um atleta.`;
 
   const response = await getAI().models.generateContent({
-    model: "gemini-2.5-pro",
+    model: getAiModelPolicy('training_plan').model,
     contents: [
       {
         inlineData: {
@@ -463,7 +467,7 @@ Baseado no usuário (Peso: ${profile.weight}kg, Objetivo: ${profile.goal}):
 Formate em Markdown curto e grosso.`;
 
   const response = await getAI().models.generateContent({
-    model: "gemini-2.5-pro",
+    model: getAiModelPolicy('training_plan').model,
     contents: [
       {
         inlineData: {
@@ -492,7 +496,7 @@ Dados do histórico recente (apenas para contexto, não imprima o JSON na respos
 ${JSON.stringify(workoutHistory.map(r => ({ date: new Date(r.date).toISOString(), focus: r.focus, load: r.volumeLoad })).slice(0, 10))}`;
 
   const response = await getAI().models.generateContent({
-    model: "gemini-2.5-pro",
+    model: getAiModelPolicy('training_plan').model,
     contents: prompt,
   });
 
@@ -511,7 +515,7 @@ REGRAS OBRIGATÓRIAS (FALHAR NÃO É UMA OPÇÃO):
 6. RETORNE JSON EXATAMENTE SEGUNDO O SCHEMA.`;
 
   const response = await getAI().models.generateContent({
-    model: "gemini-2.5-pro",
+    model: getAiModelPolicy('training_plan').model,
     contents: [
       {
         role: "user",
@@ -529,7 +533,9 @@ REGRAS OBRIGATÓRIAS (FALHAR NÃO É UMA OPÇÃO):
 
   const jsonStr = response.text || "{}";
   try {
-    const parsed = JSON.parse(jsonStr) as WorkoutPlan;
+    const parsedResult = safeAiJsonParser<WorkoutPlan>(jsonStr, (value): value is WorkoutPlan => Boolean(value) && typeof value === 'object' && Array.isArray((value as { days?: unknown }).days));
+    if (!parsedResult.ok) throw new Error('Invalid workout plan response');
+    const parsed = parsedResult.data;
     parsed.id = crypto.randomUUID();
     parsed.createdAt = Date.now();
     parsed.days = parsed.days.map(day => ({
@@ -576,7 +582,7 @@ ${userProfile ? `Perfil do usuário (para adaptar as sugestões):
   };
 
   const response = await getAI().models.generateContent({
-    model: "gemini-2.5-pro",
+    model: getAiModelPolicy('training_plan').model,
     contents: prompt,
     config: {
       responseMimeType: "application/json",
@@ -586,7 +592,17 @@ ${userProfile ? `Perfil do usuário (para adaptar as sugestões):
 
   const jsonStr = response.text || "[]";
   try {
-    return JSON.parse(jsonStr);
+    const parsedResult = safeAiJsonParser<Array<{ name: string; description: string; difficulty: 'Easier' | 'Harder' | 'Different Focus' }>>(
+      jsonStr,
+      (value): value is Array<{ name: string; description: string; difficulty: 'Easier' | 'Harder' | 'Different Focus' }> => Array.isArray(value)
+        && value.every(item => Boolean(item)
+          && typeof item === 'object'
+          && typeof (item as { name?: unknown }).name === 'string'
+          && typeof (item as { description?: unknown }).description === 'string'
+          && ['Easier', 'Harder', 'Different Focus'].includes(String((item as { difficulty?: unknown }).difficulty))),
+    );
+    if (!parsedResult.ok) throw new Error('Invalid JSON response');
+    return parsedResult.data;
   } catch (error) {
     console.error("Failed to parse variations:", error);
     return [];
@@ -606,7 +622,7 @@ Responda em tópicos curtos, em português do Brasil.
 `;
 
   const response = await getAI().models.generateContent({
-    model: "gemini-2.5-pro",
+    model: getAiModelPolicy('training_plan').model,
     contents: prompt,
   });
 
@@ -660,7 +676,7 @@ ${JSON.stringify(planSummary, null, 2)}
 `;
 
   const response = await getAI().models.generateContent({
-    model: "gemini-2.5-pro",
+    model: getAiModelPolicy('training_plan').model,
     contents: prompt,
   });
 
@@ -687,7 +703,7 @@ Responda apenas com JSON array de strings.
   };
 
   const response = await getAI().models.generateContent({
-    model: "gemini-2.5-pro",
+    model: getAiModelPolicy('training_plan').model,
     contents: prompt,
     config: {
       responseMimeType: "application/json",
@@ -723,7 +739,7 @@ Responda estritamente em JSON no schema de WorkoutPlan.
 `;
 
   const response = await getAI().models.generateContent({
-    model: "gemini-2.5-pro",
+    model: getAiModelPolicy('training_plan').model,
     contents: prompt,
     config: {
       responseMimeType: "application/json",

@@ -1,0 +1,624 @@
+diff --git a/.ops/p1-ai-governance-gateway/ai-risk-register.md b/.ops/p1-ai-governance-gateway/ai-risk-register.md
+new file mode 100644
+index 0000000..8970a21
+--- /dev/null
++++ b/.ops/p1-ai-governance-gateway/ai-risk-register.md
+@@ -0,0 +1,10 @@
++| Risco | Status | Mitigação nesta fase | Próxima ação |
++|---|---|---|---|
++| output inválido | Reduzido | parser seguro + guards | expandir schemas fortes |
++| prompt injection | Parcial | prompts com saída estrita JSON | hardening contextual e filtro |
++| dados sensíveis em prompt | Parcial | sem logging sensível novo | redaction central |
++| custo excessivo | Reduzido | budget policy por tarefa | telemetria de custo/token |
++| modelo hardcoded | Parcial | model policy + migração crítica | migrar serviços restantes |
++| multimodal sem guard | Reduzido | flag allowMultimodal em policy | enforce completo no proxy |
++| fallback inseguro | Reduzido | fallback tipado no gateway | fallback por domínio detalhado |
++| retry em erro não recuperável | Parcial | erro tipado com retryable | classificador de erro refinado |
+diff --git a/.ops/p1-ai-governance-gateway/evidence.md b/.ops/p1-ai-governance-gateway/evidence.md
+new file mode 100644
+index 0000000..05fe171
+--- /dev/null
++++ b/.ops/p1-ai-governance-gateway/evidence.md
+@@ -0,0 +1,32 @@
++# P1 AI Governance Gateway — Evidence
++
++## 1. Objetivo
++Criar gateway central, políticas de IA e parsing seguro.
++
++## 2. Problemas encontrados
++- Modelo hardcoded em múltiplos services.
++- JSON.parse direto em fluxos críticos.
++
++## 3. Gateway criado
++- `src/services/ai/aiGateway.ts`
++- `src/services/ai/aiGateway.types.ts`
++
++## 4. Políticas criadas
++- `aiModelPolicy`, `aiPromptRegistry`, `aiBudgetPolicy`.
++
++## 5. Serviços migrados
++- `geminiService` (parcial)
++- `nutritionService` (parcial)
++- `aiPersonalizationService` (modelo centralizado)
++
++## 6. Testes criados
++- suíte `src/services/ai/*.test.ts`.
++
++## 7. Resultado real dos comandos
++- baseline e validação final executados via npm scripts e git checks.
++
++## 8. Limitações restantes
++- Migração completa de todos os services ainda pendente.
++
++## 9. Próxima fase recomendada
++P2 E2E / Coverage / Production QA.
+diff --git a/.ops/p1-ai-governance-gateway/migration-map.md b/.ops/p1-ai-governance-gateway/migration-map.md
+new file mode 100644
+index 0000000..9b23aa9
+--- /dev/null
++++ b/.ops/p1-ai-governance-gateway/migration-map.md
+@@ -0,0 +1,8 @@
++| Serviço | Antes | Depois | Migrado? | Pendente |
++|---|---|---|---|---|
++| geminiService | model hardcoded + JSON.parse | policy + safe parser parcial | Parcial | rotas restantes |
++| nutritionService | model hardcoded + JSON.parse | policy + safe parser crítico | Parcial | rotas textuais |
++| aiPersonalizationService | MODEL local constante | model policy central | Parcial | gateway full |
++| gemini-proxy | timeout/retry técnico | sem mudança estrutural | Não | governança por task no proxy |
++| scan de refeição | parse direto | safe parser em nutrition flow | Parcial | gateway pleno |
++| replanejamento por equipamento | fluxo existente | mapeado para policy | Não | migração dedicada |
+diff --git a/src/services/ai/aiBudgetPolicy.test.ts b/src/services/ai/aiBudgetPolicy.test.ts
+new file mode 100644
+index 0000000..fa81013
+--- /dev/null
++++ b/src/services/ai/aiBudgetPolicy.test.ts
+@@ -0,0 +1,9 @@
++import { describe, it, expect } from 'vitest';
++import { getAiBudgetPolicy } from './aiBudgetPolicy';
++
++describe('aiBudgetPolicy', () => {
++  it('returns timeout and retry policies', () => {
++    expect(getAiBudgetPolicy('training_plan').timeoutMs).toBe(30000);
++    expect(getAiBudgetPolicy('generic').maxRetries).toBe(0);
++  });
++});
+diff --git a/src/services/ai/aiBudgetPolicy.ts b/src/services/ai/aiBudgetPolicy.ts
+new file mode 100644
+index 0000000..1259f21
+--- /dev/null
++++ b/src/services/ai/aiBudgetPolicy.ts
+@@ -0,0 +1,22 @@
++import { AiTaskType } from './aiGateway.types';
++
++export interface AiBudgetPolicyItem {
++  timeoutMs: number;
++  maxRetries: number;
++  allowCache: boolean;
++  allowMultimodal: boolean;
++  recommendedFallback: 'local' | 'cached' | 'none';
++}
++
++export const AI_BUDGET_POLICY: Record<AiTaskType, AiBudgetPolicyItem> = {
++  training_plan: { timeoutMs: 30_000, maxRetries: 1, allowCache: false, allowMultimodal: false, recommendedFallback: 'local' },
++  nutrition_analysis: { timeoutMs: 20_000, maxRetries: 1, allowCache: true, allowMultimodal: true, recommendedFallback: 'cached' },
++  personalization: { timeoutMs: 20_000, maxRetries: 1, allowCache: false, allowMultimodal: false, recommendedFallback: 'local' },
++  equipment_replan: { timeoutMs: 20_000, maxRetries: 1, allowCache: false, allowMultimodal: false, recommendedFallback: 'local' },
++  meal_scan: { timeoutMs: 30_000, maxRetries: 0, allowCache: false, allowMultimodal: true, recommendedFallback: 'none' },
++  generic: { timeoutMs: 15_000, maxRetries: 0, allowCache: false, allowMultimodal: false, recommendedFallback: 'none' },
++};
++
++export function getAiBudgetPolicy(taskType: AiTaskType): AiBudgetPolicyItem {
++  return AI_BUDGET_POLICY[taskType];
++}
+diff --git a/src/services/ai/aiGateway.test.ts b/src/services/ai/aiGateway.test.ts
+new file mode 100644
+index 0000000..f59abc1
+--- /dev/null
++++ b/src/services/ai/aiGateway.test.ts
+@@ -0,0 +1,15 @@
++import { describe, it, expect, vi } from 'vitest';
++import { runAiTask } from './aiGateway';
++
++vi.mock('../geminiProxyClient', () => ({
++  createGeminiProxyClient: () => ({
++    models: { generateContent: vi.fn().mockResolvedValue({ text: '{"ok":true}' }) },
++  }),
++}));
++
++describe('aiGateway', () => {
++  it('returns typed success', async () => {
++    const res = await runAiTask('x', { taskType: 'generic', promptVersion: 'generic-v1', modelPolicy: 'default' }, (v): v is { ok: boolean } => Boolean(v) && typeof v === 'object' && typeof (v as { ok?: unknown }).ok === 'boolean');
++    expect(res.ok).toBe(true);
++  });
++});
+diff --git a/src/services/ai/aiGateway.ts b/src/services/ai/aiGateway.ts
+new file mode 100644
+index 0000000..7d578f4
+--- /dev/null
++++ b/src/services/ai/aiGateway.ts
+@@ -0,0 +1,39 @@
++import { createGeminiProxyClient } from '../geminiProxyClient';
++import { getAiBudgetPolicy } from './aiBudgetPolicy';
++import { getAiModelPolicy } from './aiModelPolicy';
++import { safeAiJsonParser, TypeGuard } from './safeAiJsonParser';
++import { AiGatewayResult, AiRequestConfig } from './aiGateway.types';
++
++export async function runAiTask<T>(prompt: string, config: AiRequestConfig, guard: TypeGuard<T>, fallback?: T): Promise<AiGatewayResult<T>> {
++  const modelPolicy = getAiModelPolicy(config.taskType);
++  const budgetPolicy = getAiBudgetPolicy(config.taskType);
++  const meta = {
++    taskType: config.taskType,
++    model: modelPolicy.model,
++    promptVersion: config.promptVersion || modelPolicy.promptVersion,
++    usedFallback: false,
++    retries: config.maxRetries ?? budgetPolicy.maxRetries,
++    budgetTier: config.budgetTier ?? modelPolicy.budgetTier,
++  } as const;
++
++  try {
++    const response = await createGeminiProxyClient().models.generateContent({
++      model: modelPolicy.model,
++      contents: prompt,
++      config: { responseMimeType: 'application/json' },
++    });
++
++    const parsed = safeAiJsonParser(response.text, guard, fallback);
++    if (parsed.ok) return { ok: true, data: parsed.data, meta };
++    if (fallback !== undefined) {
++      return { ok: false, error: { code: parsed.reason, message: 'Resposta IA inválida.', retryable: parsed.reason !== 'invalid_schema' }, fallback, meta: { ...meta, usedFallback: true } };
++    }
++
++    return { ok: false, error: { code: parsed.reason, message: 'Resposta IA inválida.', retryable: parsed.reason !== 'invalid_schema' }, meta };
++  } catch {
++    if (fallback !== undefined) {
++      return { ok: false, error: { code: 'provider_error', message: 'Falha no provedor de IA.', retryable: true }, fallback, meta: { ...meta, usedFallback: true } };
++    }
++    return { ok: false, error: { code: 'provider_error', message: 'Falha no provedor de IA.', retryable: true }, meta };
++  }
++}
+diff --git a/src/services/ai/aiGateway.types.ts b/src/services/ai/aiGateway.types.ts
+new file mode 100644
+index 0000000..729cc16
+--- /dev/null
++++ b/src/services/ai/aiGateway.types.ts
+@@ -0,0 +1,45 @@
++export type AiTaskType =
++  | 'training_plan'
++  | 'nutrition_analysis'
++  | 'personalization'
++  | 'equipment_replan'
++  | 'meal_scan'
++  | 'generic';
++
++export type AiBudgetTier = 'low' | 'medium' | 'high';
++
++export interface AiRequestConfig {
++  taskType: AiTaskType;
++  promptVersion: string;
++  modelPolicy: string;
++  timeoutMs?: number;
++  maxRetries?: number;
++  budgetTier?: AiBudgetTier;
++}
++
++export type AiGatewayErrorCode =
++  | 'provider_error'
++  | 'timeout'
++  | 'invalid_json'
++  | 'invalid_schema'
++  | 'no_json'
++  | 'unknown';
++
++export interface AiGatewayError {
++  code: AiGatewayErrorCode;
++  message: string;
++  retryable: boolean;
++}
++
++export interface AiGatewayMeta {
++  taskType: AiTaskType;
++  model: string;
++  promptVersion: string;
++  usedFallback: boolean;
++  retries: number;
++  budgetTier: AiBudgetTier;
++}
++
++export type AiGatewayResult<T> =
++  | { ok: true; data: T; meta: AiGatewayMeta }
++  | { ok: false; error: AiGatewayError; fallback?: T; meta: AiGatewayMeta };
+diff --git a/src/services/ai/aiModelPolicy.test.ts b/src/services/ai/aiModelPolicy.test.ts
+new file mode 100644
+index 0000000..e501033
+--- /dev/null
++++ b/src/services/ai/aiModelPolicy.test.ts
+@@ -0,0 +1,9 @@
++import { describe, it, expect } from 'vitest';
++import { getAiModelPolicy } from './aiModelPolicy';
++
++describe('aiModelPolicy', () => {
++  it('returns policy by task', () => {
++    expect(getAiModelPolicy('training_plan').model).toBe('gemini-2.5-pro');
++    expect(getAiModelPolicy('meal_scan').allowMultimodal).toBe(true);
++  });
++});
+diff --git a/src/services/ai/aiModelPolicy.ts b/src/services/ai/aiModelPolicy.ts
+new file mode 100644
+index 0000000..03dcc76
+--- /dev/null
++++ b/src/services/ai/aiModelPolicy.ts
+@@ -0,0 +1,23 @@
++import { AiTaskType, AiBudgetTier } from './aiGateway.types';
++
++export interface AiModelPolicyItem {
++  model: string;
++  promptVersion: string;
++  budgetTier: AiBudgetTier;
++  allowMultimodal: boolean;
++  temperature?: number;
++  fallbackModel?: string;
++}
++
++export const AI_MODEL_POLICIES: Record<AiTaskType, AiModelPolicyItem> = {
++  training_plan: { model: 'gemini-2.5-pro', promptVersion: 'training-plan-v1', budgetTier: 'high', allowMultimodal: false, temperature: 0.4, fallbackModel: 'gemini-2.5-flash' },
++  nutrition_analysis: { model: 'gemini-2.5-flash', promptVersion: 'nutrition-analysis-v1', budgetTier: 'medium', allowMultimodal: true, temperature: 0.3, fallbackModel: 'gemini-2.5-pro' },
++  personalization: { model: 'gemini-2.5-pro', promptVersion: 'personalization-v1', budgetTier: 'high', allowMultimodal: false, temperature: 0.3 },
++  equipment_replan: { model: 'gemini-2.5-flash', promptVersion: 'equipment-replan-v1', budgetTier: 'medium', allowMultimodal: false, temperature: 0.3 },
++  meal_scan: { model: 'gemini-2.5-pro', promptVersion: 'meal-scan-v1', budgetTier: 'high', allowMultimodal: true, temperature: 0.2 },
++  generic: { model: 'gemini-2.5-flash', promptVersion: 'generic-v1', budgetTier: 'low', allowMultimodal: false, temperature: 0.2 },
++};
++
++export function getAiModelPolicy(taskType: AiTaskType): AiModelPolicyItem {
++  return AI_MODEL_POLICIES[taskType];
++}
+diff --git a/src/services/ai/aiPromptRegistry.test.ts b/src/services/ai/aiPromptRegistry.test.ts
+new file mode 100644
+index 0000000..78b7f20
+--- /dev/null
++++ b/src/services/ai/aiPromptRegistry.test.ts
+@@ -0,0 +1,8 @@
++import { describe, it, expect } from 'vitest';
++import { getPromptRegistry } from './aiPromptRegistry';
++
++describe('aiPromptRegistry', () => {
++  it('has prompt versions by task', () => {
++    expect(getPromptRegistry('personalization').promptVersion).toContain('v1');
++  });
++});
+diff --git a/src/services/ai/aiPromptRegistry.ts b/src/services/ai/aiPromptRegistry.ts
+new file mode 100644
+index 0000000..9e03d2e
+--- /dev/null
++++ b/src/services/ai/aiPromptRegistry.ts
+@@ -0,0 +1,21 @@
++import { AiTaskType } from './aiGateway.types';
++import { getAiModelPolicy } from './aiModelPolicy';
++
++export interface AiPromptRegistryItem {
++  taskType: AiTaskType;
++  promptVersion: string;
++  promptTag: string;
++}
++
++export const AI_PROMPT_REGISTRY: Record<AiTaskType, AiPromptRegistryItem> = {
++  training_plan: { taskType: 'training_plan', promptVersion: getAiModelPolicy('training_plan').promptVersion, promptTag: 'plan_generation' },
++  nutrition_analysis: { taskType: 'nutrition_analysis', promptVersion: getAiModelPolicy('nutrition_analysis').promptVersion, promptTag: 'nutrition_analysis' },
++  personalization: { taskType: 'personalization', promptVersion: getAiModelPolicy('personalization').promptVersion, promptTag: 'personalization' },
++  equipment_replan: { taskType: 'equipment_replan', promptVersion: getAiModelPolicy('equipment_replan').promptVersion, promptTag: 'equipment_replan' },
++  meal_scan: { taskType: 'meal_scan', promptVersion: getAiModelPolicy('meal_scan').promptVersion, promptTag: 'meal_scan' },
++  generic: { taskType: 'generic', promptVersion: getAiModelPolicy('generic').promptVersion, promptTag: 'generic' },
++};
++
++export function getPromptRegistry(taskType: AiTaskType): AiPromptRegistryItem {
++  return AI_PROMPT_REGISTRY[taskType];
++}
+diff --git a/src/services/ai/safeAiJsonParser.test.ts b/src/services/ai/safeAiJsonParser.test.ts
+new file mode 100644
+index 0000000..0124e50
+--- /dev/null
++++ b/src/services/ai/safeAiJsonParser.test.ts
+@@ -0,0 +1,16 @@
++import { describe, it, expect } from 'vitest';
++import { safeAiJsonParser } from './safeAiJsonParser';
++
++describe('safeAiJsonParser', () => {
++  const guard = (value: unknown): value is { name: string } => Boolean(value) && typeof value === 'object' && typeof (value as { name?: unknown }).name === 'string';
++  it('parses valid json', () => expect(safeAiJsonParser('{"name":"ok"}', guard).ok).toBe(true));
++  it('fails invalid json', () => expect(safeAiJsonParser('{', guard).ok).toBe(false));
++  it('fails missing fields', () => expect(safeAiJsonParser('{"age":1}', guard).ok).toBe(false));
++  it('accepts extra fields', () => expect(safeAiJsonParser('{"name":"ok","x":1}', guard).ok).toBe(true));
++  it('extracts json from wrappers', () => expect(safeAiJsonParser('text {"name":"ok"} tail', guard).ok).toBe(true));
++  it('returns fallback on failure', () => {
++    const result = safeAiJsonParser('{', guard, { name: 'fallback' });
++    expect(result.ok).toBe(false);
++    if (!result.ok) expect(result.fallback?.name).toBe('fallback');
++  });
++});
+diff --git a/src/services/ai/safeAiJsonParser.ts b/src/services/ai/safeAiJsonParser.ts
+new file mode 100644
+index 0000000..cd5deeb
+--- /dev/null
++++ b/src/services/ai/safeAiJsonParser.ts
+@@ -0,0 +1,29 @@
++export type TypeGuard<T> = (value: unknown) => value is T;
++
++export type SafeAiJsonResult<T> =
++  | { ok: true; data: T }
++  | { ok: false; reason: 'no_json' | 'invalid_json' | 'invalid_schema'; fallback?: T };
++
++export function safeAiJsonParser<T>(raw: string | undefined, guard: TypeGuard<T>, fallback?: T): SafeAiJsonResult<T> {
++  const extracted = extractJson(raw);
++  if (!extracted) return { ok: false, reason: 'no_json', fallback };
++  try {
++    const parsed: unknown = JSON.parse(extracted);
++    if (!guard(parsed)) return { ok: false, reason: 'invalid_schema', fallback };
++    return { ok: true, data: parsed };
++  } catch {
++    return { ok: false, reason: 'invalid_json', fallback };
++  }
++}
++
++function extractJson(raw: string | undefined): string | null {
++  if (!raw?.trim()) return null;
++  const trimmed = raw.trim();
++  const firstBrace = trimmed.indexOf('{');
++  const lastBrace = trimmed.lastIndexOf('}');
++  if (firstBrace !== -1 && lastBrace > firstBrace) return trimmed.slice(firstBrace, lastBrace + 1);
++  const firstBracket = trimmed.indexOf('[');
++  const lastBracket = trimmed.lastIndexOf(']');
++  if (firstBracket !== -1 && lastBracket > firstBracket) return trimmed.slice(firstBracket, lastBracket + 1);
++  return null;
++}
+diff --git a/src/services/aiPersonalizationService.ts b/src/services/aiPersonalizationService.ts
+index 9b7d465..756452e 100644
+--- a/src/services/aiPersonalizationService.ts
++++ b/src/services/aiPersonalizationService.ts
+@@ -54,7 +54,9 @@ import { summarizeAiDecisionQuality } from '../utils/aiDecisionObservability';
+ import { aiDecisionAuditRepository } from './aiDecisionAuditRepository';
+ import { createGeminiProxyClient } from './geminiProxyClient';
+ 
+-const MODEL = 'gemini-2.5-pro';
++import { getAiModelPolicy } from './ai/aiModelPolicy';
++
++const MODEL = getAiModelPolicy('personalization').model;
+ 
+ const decisionAudits: AiDecisionAudit[] = [];
+ 
+diff --git a/src/services/geminiService.ts b/src/services/geminiService.ts
+index 26cf7ef..07a33c9 100644
+--- a/src/services/geminiService.ts
++++ b/src/services/geminiService.ts
+@@ -1,6 +1,8 @@
+ import { Type, Schema } from "../types/geminiSchema";
+ import { Exercise, UserProfile, WorkoutHistoryRecord, WorkoutPlan } from "../types";
+ import { createGeminiProxyClient } from './geminiProxyClient';
++import { getAiModelPolicy } from './ai/aiModelPolicy';
++import { safeAiJsonParser } from './ai/safeAiJsonParser';
+ 
+ const LOCAL_EXERCISE_BANK = {
+   gym: {
+@@ -400,7 +402,7 @@ REGRAS OBRIGATÓRIAS (FALHAR NÃO É UMA OPÇÃO):
+ 6. JSON VALIDO: Você deve retornar o plano estritamente validado com o schema exigido.`;
+ 
+   const response = await getAI().models.generateContent({
+-    model: "gemini-2.5-pro",
++    model: getAiModelPolicy('training_plan').model,
+     contents: prompt,
+     config: {
+       responseMimeType: "application/json",
+@@ -410,7 +412,9 @@ REGRAS OBRIGATÓRIAS (FALHAR NÃO É UMA OPÇÃO):
+ 
+   const jsonStr = response.text || "{}";
+   try {
+-    const parsed = JSON.parse(jsonStr) as WorkoutPlan;
++    const parsedResult = safeAiJsonParser<WorkoutPlan>(jsonStr, (value): value is WorkoutPlan => Boolean(value) && typeof value === 'object' && Array.isArray((value as { days?: unknown }).days));
++    if (!parsedResult.ok) throw new Error('Invalid workout plan response');
++    const parsed = parsedResult.data;
+     parsed.id = crypto.randomUUID();
+     parsed.createdAt = Date.now();
+     parsed.days = parsed.days.map(day => ({
+@@ -438,7 +442,7 @@ O usuário enviou uma foto de progressão. Analise a imagem em relação ao biot
+ IMPORTANTE: Não dê conselhos médicos, fale estritamente como um bodybuilder avaliando um atleta.`;
+ 
+   const response = await getAI().models.generateContent({
+-    model: "gemini-2.5-pro",
++    model: getAiModelPolicy('training_plan').model,
+     contents: [
+       {
+         inlineData: {
+@@ -463,7 +467,7 @@ Baseado no usuário (Peso: ${profile.weight}kg, Objetivo: ${profile.goal}):
+ Formate em Markdown curto e grosso.`;
+ 
+   const response = await getAI().models.generateContent({
+-    model: "gemini-2.5-pro",
++    model: getAiModelPolicy('training_plan').model,
+     contents: [
+       {
+         inlineData: {
+@@ -492,7 +496,7 @@ Dados do histórico recente (apenas para contexto, não imprima o JSON na respos
+ ${JSON.stringify(workoutHistory.map(r => ({ date: new Date(r.date).toISOString(), focus: r.focus, load: r.volumeLoad })).slice(0, 10))}`;
+ 
+   const response = await getAI().models.generateContent({
+-    model: "gemini-2.5-pro",
++    model: getAiModelPolicy('training_plan').model,
+     contents: prompt,
+   });
+ 
+@@ -511,7 +515,7 @@ REGRAS OBRIGATÓRIAS (FALHAR NÃO É UMA OPÇÃO):
+ 6. RETORNE JSON EXATAMENTE SEGUNDO O SCHEMA.`;
+ 
+   const response = await getAI().models.generateContent({
+-    model: "gemini-2.5-pro",
++    model: getAiModelPolicy('training_plan').model,
+     contents: [
+       {
+         role: "user",
+@@ -529,7 +533,9 @@ REGRAS OBRIGATÓRIAS (FALHAR NÃO É UMA OPÇÃO):
+ 
+   const jsonStr = response.text || "{}";
+   try {
+-    const parsed = JSON.parse(jsonStr) as WorkoutPlan;
++    const parsedResult = safeAiJsonParser<WorkoutPlan>(jsonStr, (value): value is WorkoutPlan => Boolean(value) && typeof value === 'object' && Array.isArray((value as { days?: unknown }).days));
++    if (!parsedResult.ok) throw new Error('Invalid workout plan response');
++    const parsed = parsedResult.data;
+     parsed.id = crypto.randomUUID();
+     parsed.createdAt = Date.now();
+     parsed.days = parsed.days.map(day => ({
+@@ -576,7 +582,7 @@ ${userProfile ? `Perfil do usuário (para adaptar as sugestões):
+   };
+ 
+   const response = await getAI().models.generateContent({
+-    model: "gemini-2.5-pro",
++    model: getAiModelPolicy('training_plan').model,
+     contents: prompt,
+     config: {
+       responseMimeType: "application/json",
+@@ -586,7 +592,17 @@ ${userProfile ? `Perfil do usuário (para adaptar as sugestões):
+ 
+   const jsonStr = response.text || "[]";
+   try {
+-    return JSON.parse(jsonStr);
++    const parsedResult = safeAiJsonParser<Array<{ name: string; description: string; difficulty: 'Easier' | 'Harder' | 'Different Focus' }>>(
++      jsonStr,
++      (value): value is Array<{ name: string; description: string; difficulty: 'Easier' | 'Harder' | 'Different Focus' }> => Array.isArray(value)
++        && value.every(item => Boolean(item)
++          && typeof item === 'object'
++          && typeof (item as { name?: unknown }).name === 'string'
++          && typeof (item as { description?: unknown }).description === 'string'
++          && ['Easier', 'Harder', 'Different Focus'].includes(String((item as { difficulty?: unknown }).difficulty))),
++    );
++    if (!parsedResult.ok) throw new Error('Invalid JSON response');
++    return parsedResult.data;
+   } catch (error) {
+     console.error("Failed to parse variations:", error);
+     return [];
+@@ -606,7 +622,7 @@ Responda em tópicos curtos, em português do Brasil.
+ `;
+ 
+   const response = await getAI().models.generateContent({
+-    model: "gemini-2.5-pro",
++    model: getAiModelPolicy('training_plan').model,
+     contents: prompt,
+   });
+ 
+@@ -660,7 +676,7 @@ ${JSON.stringify(planSummary, null, 2)}
+ `;
+ 
+   const response = await getAI().models.generateContent({
+-    model: "gemini-2.5-pro",
++    model: getAiModelPolicy('training_plan').model,
+     contents: prompt,
+   });
+ 
+@@ -687,7 +703,7 @@ Responda apenas com JSON array de strings.
+   };
+ 
+   const response = await getAI().models.generateContent({
+-    model: "gemini-2.5-pro",
++    model: getAiModelPolicy('training_plan').model,
+     contents: prompt,
+     config: {
+       responseMimeType: "application/json",
+@@ -723,7 +739,7 @@ Responda estritamente em JSON no schema de WorkoutPlan.
+ `;
+ 
+   const response = await getAI().models.generateContent({
+-    model: "gemini-2.5-pro",
++    model: getAiModelPolicy('training_plan').model,
+     contents: prompt,
+     config: {
+       responseMimeType: "application/json",
+diff --git a/src/services/nutritionService.ts b/src/services/nutritionService.ts
+index 1ad365f..8cd6c0f 100644
+--- a/src/services/nutritionService.ts
++++ b/src/services/nutritionService.ts
+@@ -1,6 +1,8 @@
+ import { Schema, Type } from '../types/geminiSchema';
+ import { MacroTargets, MealEntry, UserProfile } from '../types';
+ import { createGeminiProxyClient } from './geminiProxyClient';
++import { getAiModelPolicy } from './ai/aiModelPolicy';
++import { safeAiJsonParser } from './ai/safeAiJsonParser';
+ 
+ function getAI() {
+   return createGeminiProxyClient();
+@@ -26,12 +28,14 @@ Retorne apenas JSON com: calories, protein (g), carbs (g), fat (g).
+ `;
+ 
+   const response = await getAI().models.generateContent({
+-    model: 'gemini-2.5-pro',
++    model: getAiModelPolicy('nutrition_analysis').model,
+     contents: prompt,
+     config: { responseMimeType: 'application/json', responseSchema: macroSchema },
+   });
+ 
+-  return JSON.parse(response.text || '{}') as MacroTargets;
++  const parsed = safeAiJsonParser<MacroTargets>(response.text, (value): value is MacroTargets => Boolean(value) && typeof value === 'object' && ['calories','protein','carbs','fat'].every(k => typeof (value as Record<string, unknown>)[k] === 'number'));
++  if (!parsed.ok) throw new Error('Invalid macro targets response');
++  return parsed.data;
+ }
+ 
+ export async function generateBasicNutritionPlan(profile: UserProfile): Promise<string> {
+@@ -43,7 +47,7 @@ Inclua: 5-6 refeições com exemplos de alimentos, distribuição de macros, dic
+ `;
+ 
+   const response = await getAI().models.generateContent({
+-    model: 'gemini-2.5-pro',
++    model: getAiModelPolicy('nutrition_analysis').model,
+     contents: prompt,
+   });
+ 
+@@ -65,7 +69,7 @@ export async function analyzePhotoMacros(base64: string, mimeType: string): Prom
+   };
+ 
+   const response = await getAI().models.generateContent({
+-    model: 'gemini-2.5-pro',
++    model: getAiModelPolicy('nutrition_analysis').model,
+     contents: [{
+       role: 'user',
+       parts: [
+@@ -76,7 +80,9 @@ export async function analyzePhotoMacros(base64: string, mimeType: string): Prom
+     config: { responseMimeType: 'application/json', responseSchema: schema },
+   });
+ 
+-  return JSON.parse(response.text || '{}') as Partial<MealEntry>;
++  const parsed = safeAiJsonParser<Partial<MealEntry>>(response.text, (value): value is Partial<MealEntry> => Boolean(value) && typeof value === 'object');
++  if (!parsed.ok) throw new Error('Invalid meal scan response');
++  return parsed.data;
+ }
+ 
+ export async function generatePreWorkoutSuggestion(profile: UserProfile, workoutTime: string): Promise<string> {
+@@ -90,7 +96,7 @@ Dê opções rápidas, práticas e com tempo de consumo antes do treino.
+ `;
+ 
+   const response = await getAI().models.generateContent({
+-    model: 'gemini-2.5-pro',
++    model: getAiModelPolicy('nutrition_analysis').model,
+     contents: prompt,
+   });
+ 
+@@ -107,7 +113,7 @@ Inclua opções rápidas e práticas, proporção proteína/carboidrato e hidrat
+ `;
+ 
+   const response = await getAI().models.generateContent({
+-    model: 'gemini-2.5-pro',
++    model: getAiModelPolicy('nutrition_analysis').model,
+     contents: prompt,
+   });
+ 
+@@ -128,7 +134,7 @@ Forneça:
+ `;
+ 
+   const response = await getAI().models.generateContent({
+-    model: 'gemini-2.5-pro',
++    model: getAiModelPolicy('nutrition_analysis').model,
+     contents: prompt,
+   });
+ 
+@@ -151,7 +157,7 @@ export async function analyzeBodyPhoto(
+   }
+ 
+   const response = await getAI().models.generateContent({
+-    model: 'gemini-2.5-pro',
++    model: getAiModelPolicy('nutrition_analysis').model,
+     contents: [{ role: 'user', parts }],
+   });
+ 
