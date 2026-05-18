@@ -117,3 +117,12 @@ Validacao apos implementacao:
 ## 8. Proxima fase recomendada
 
 P1 Security & Data Governance: OAuth encryption, sensitive localStorage migration, transactional gamification.
+
+## 9. Revalidacao em 2026-05-18
+
+- `git diff --check`: PASS.
+- `npm run lint`: PASS.
+- `npm run typecheck`: PASS.
+- `npm test`: PASS, concluiu com 126 files / 483 tests em 338.34s.
+- `npm run build`: PASS (mantem warning conhecido `Generated an empty chunk: "motion"`).
+- `git status --short`: sem alteracoes de codigo de produto apos a revalidacao.
