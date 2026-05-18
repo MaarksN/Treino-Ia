@@ -1,5 +1,8 @@
+import { pruneBoundedTtlCache, setBoundedTtlCacheEntry } from './_lib/boundedTtlCache';
 import { getServerEntitlement, incrementUsageCounter } from './_lib/billing-entitlements';
+import { fetchWithTimeout } from './_lib/fetchWithTimeout';
 import { handleApiError, HttpError, json, requireEnv } from './_lib/http';
+import { isTransientFetchError, retryWithBackoff, shouldRetryGeminiStatus } from './_lib/retryPolicy';
 import { requireSupabaseUser } from './_lib/server-supabase';
 
 export const config = {
@@ -12,7 +15,12 @@ const RATE_WINDOW_MS = 60_000;
 const FREE_RATE_LIMIT = 20;
 const PREMIUM_RATE_LIMIT = 60;
 const CACHE_TTL_MS = 10 * 60 * 1000;
+const MAX_RESPONSE_CACHE_ENTRIES = 100;
+const MAX_RATE_BUCKETS = 1_000;
 const MAX_REQUEST_BYTES = 120_000;
+const GEMINI_TIMEOUT_MS = 25_000;
+const GEMINI_MAX_RETRIES = 2;
+const GEMINI_RETRY_BASE_DELAY_MS = 300;
 
 interface RateBucket {
   count: number;
@@ -46,6 +54,8 @@ function withCorsHeaders(response: Response) {
 
 function enforceMinuteRateLimit(userId: string, hasUnlimitedAi: boolean) {
   const now = Date.now();
+  pruneRateBuckets(now);
+
   const limit = hasUnlimitedAi ? PREMIUM_RATE_LIMIT : FREE_RATE_LIMIT;
   const current = rateBuckets.get(userId);
 
@@ -63,6 +73,24 @@ function enforceMinuteRateLimit(userId: string, hasUnlimitedAi: boolean) {
   }
 
   current.count += 1;
+}
+
+function pruneRateBuckets(now = Date.now()) {
+  for (const [key, bucket] of rateBuckets.entries()) {
+    if (bucket.resetAt <= now) {
+      rateBuckets.delete(key);
+    }
+  }
+
+  if (rateBuckets.size <= MAX_RATE_BUCKETS) return;
+
+  const bucketsByReset = [...rateBuckets.entries()]
+    .sort(([, left], [, right]) => left.resetAt - right.resetAt);
+
+  for (const [key] of bucketsByReset) {
+    if (rateBuckets.size <= MAX_RATE_BUCKETS) return;
+    rateBuckets.delete(key);
+  }
 }
 
 function isCacheableGeminiBody(bodyText: string) {
@@ -124,6 +152,10 @@ export default async function handler(request: Request) {
     const bodyText = ensureValidGeminiPayload(rawBody);
     const cacheable = isCacheableGeminiBody(bodyText);
     const cacheKey = cacheable ? await sha256(`${user.id}:${bodyText}`) : '';
+    pruneBoundedTtlCache(responseCache, {
+      maxEntries: MAX_RESPONSE_CACHE_ENTRIES,
+      now: Date.now(),
+    });
     const cached = cacheable ? responseCache.get(cacheKey) : undefined;
 
     enforceMinuteRateLimit(user.id, hasUnlimitedAi);
@@ -133,16 +165,28 @@ export default async function handler(request: Request) {
         status: cached.status,
         headers: {
           'content-type': cached.contentType,
-          'cache-control': 'private, max-age=60',
+          'cache-control': 'private, no-store',
           'x-treino-ai-cache': 'hit',
         },
       }));
     }
 
-    const response = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: bodyText,
+    const response = await retryWithBackoff(
+      () => fetchWithTimeout(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: bodyText,
+      }, {
+        timeoutMs: GEMINI_TIMEOUT_MS,
+      }),
+      {
+        maxRetries: GEMINI_MAX_RETRIES,
+        baseDelayMs: GEMINI_RETRY_BASE_DELAY_MS,
+        shouldRetryResult: result => shouldRetryGeminiStatus(result.status),
+        shouldRetryError: isTransientFetchError,
+      },
+    ).catch(() => {
+      throw new HttpError(502, 'AI provider temporarily unavailable.');
     });
     const responseText = await response.text();
 
@@ -152,12 +196,24 @@ export default async function handler(request: Request) {
 
     const contentType = response.headers.get('content-type') ?? 'application/json';
 
+    if (!response.ok) {
+      return cors({
+        error: response.status >= 500
+          ? 'AI provider temporarily unavailable.'
+          : 'Gemini request was rejected.',
+      }, response.status >= 500 ? 502 : response.status);
+    }
+
     if (response.ok && cacheable) {
-      responseCache.set(cacheKey, {
+      // In-memory cache/rate state is per runtime instance; distributed KV/Redis is a follow-up.
+      setBoundedTtlCacheEntry(responseCache, cacheKey, {
         body: responseText,
         contentType,
         expiresAt: Date.now() + CACHE_TTL_MS,
         status: response.status,
+      }, {
+        maxEntries: MAX_RESPONSE_CACHE_ENTRIES,
+        now: Date.now(),
       });
     }
 
@@ -165,7 +221,7 @@ export default async function handler(request: Request) {
       status: response.status,
       headers: {
         'content-type': contentType,
-        'cache-control': cacheable ? 'private, max-age=60' : 'private, no-store',
+        'cache-control': 'private, no-store',
         'x-treino-ai-cache': 'miss',
       },
     }));

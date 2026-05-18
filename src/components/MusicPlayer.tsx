@@ -1,29 +1,25 @@
 import React, { useState } from 'react';
 import { Music, Maximize2, Minimize2, X, Plus } from 'lucide-react';
+import { SafeMusicEmbed, createSafeMusicEmbed } from '../services/media/musicEmbedService';
 
 export function MusicPlayer() {
   const [url, setUrl] = useState('');
-  const [embedUrl, setEmbedUrl] = useState('');
+  const [embed, setEmbed] = useState<SafeMusicEmbed | null>(null);
+  const [error, setError] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
 
   const handleLoad = () => {
-    if (!url) return;
-    let finalUrl = url;
-    
-    // Auto-convert Spotify track/playlist links to embed links if needed
-    if (url.includes('spotify.com') && !url.includes('embed')) {
-      // https://open.spotify.com/playlist/37i9dQZF1DX76Wlfdnj7bg
-      const parts = url.split('/');
-      const typeIndex = parts.findIndex(p => p === 'playlist' || p === 'track' || p === 'album');
-      if (typeIndex !== -1 && parts[typeIndex+1]) {
-        const id = parts[typeIndex+1].split('?')[0];
-        const type = parts[typeIndex];
-        finalUrl = `https://open.spotify.com/embed/${type}/${id}?utm_source=generator`;
-      }
+    const result = createSafeMusicEmbed(url);
+
+    if (!result.ok || !result.embed) {
+      setEmbed(null);
+      setError(result.error ?? 'URL de musica invalida.');
+      return;
     }
-    
-    setEmbedUrl(finalUrl);
+
+    setError('');
+    setEmbed(result.embed);
   };
 
   if (!isOpen) {
@@ -59,15 +55,18 @@ export function MusicPlayer() {
 
       {!isMinimized && (
         <div className="space-y-4">
-          {!embedUrl ? (
+          {!embed ? (
             <div className="space-y-3">
-              <p className="text-xs text-brand-light font-mono font-bold uppercase">Conecte sua playlist (Spotify, SoundCloud, etc)</p>
+              <p className="text-xs text-brand-light font-mono font-bold uppercase">Conecte YouTube, Spotify ou SoundCloud</p>
               <div className="flex gap-2">
                 <input 
                   type="text" 
                   value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder="Cole o link ou embed aqui..."
+                  onChange={(e) => {
+                    setUrl(e.target.value);
+                    setError('');
+                  }}
+                  placeholder="Cole uma URL HTTPS..."
                   className="flex-1 bg-brand-gray border-2 border-brand-magenta/50 px-3 py-2 text-brand-light font-mono text-xs focus:outline-none focus:border-brand-magenta"
                 />
                 <button 
@@ -77,25 +76,29 @@ export function MusicPlayer() {
                   <Plus className="w-5 h-5" />
                 </button>
               </div>
+              {error && (
+                <p className="text-xs text-red-300 font-mono font-bold" role="alert">
+                  {error}
+                </p>
+              )}
             </div>
           ) : (
             <div>
               {/* Iframe wrapper */}
               <div className="w-full h-80 bg-brand-gray border-2 border-brand-light/20 flex items-center justify-center">
-                {embedUrl.startsWith('<iframe') ? (
-                  <div dangerouslySetInnerHTML={{__html: embedUrl}} className="w-full h-full" />
-                ) : (
-                  <iframe 
-                    src={embedUrl} 
-                    className="w-full h-full" 
-                    frameBorder="0" 
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
-                    loading="lazy" 
-                  />
-                )}
+                <iframe
+                  src={embed.src}
+                  title={embed.title}
+                  className="w-full h-full"
+                  allow={embed.allow}
+                  sandbox={embed.sandbox}
+                  referrerPolicy={embed.referrerPolicy}
+                  loading="lazy"
+                  allowFullScreen
+                />
               </div>
               <button 
-                onClick={() => setEmbedUrl('')}
+                onClick={() => setEmbed(null)}
                 className="w-full text-center mt-3 text-xs text-brand-muted hover:text-brand-magenta font-mono font-bold uppercase transition-colors"
               >
                 Trocar Playlist

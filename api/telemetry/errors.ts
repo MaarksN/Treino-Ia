@@ -1,4 +1,5 @@
 import { handleApiError, HttpError, json, readJsonObject } from '../_lib/http';
+import { redactMetadata, redactSensitiveString } from '../_lib/redact';
 import { getSupabaseAdmin, requireSupabaseUser } from '../_lib/server-supabase';
 
 export const config = {
@@ -16,6 +17,16 @@ interface IncomingErrorEvent {
   metadata?: unknown;
 }
 
+interface AnonymousRateBucket {
+  count: number;
+  resetAt: number;
+}
+
+const MAX_TELEMETRY_BODY_BYTES = 120_000;
+const ANONYMOUS_RATE_WINDOW_MS = 60_000;
+const ANONYMOUS_RATE_LIMIT = 20;
+const anonymousBuckets = new Map<string, AnonymousRateBucket>();
+
 function parseEvents(value: unknown): IncomingErrorEvent[] {
   if (!Array.isArray(value)) {
     throw new HttpError(400, 'events must be an array.');
@@ -28,21 +39,88 @@ function parseEvents(value: unknown): IncomingErrorEvent[] {
   return value as IncomingErrorEvent[];
 }
 
+function getAllowedOrigins(): Set<string> {
+  return new Set(
+    (process.env.TELEMETRY_ALLOWED_ORIGINS ?? '')
+      .split(',')
+      .map(origin => origin.trim())
+      .filter(Boolean),
+  );
+}
+
+function enforceSameOriginTelemetry(request: Request) {
+  const origin = request.headers.get('origin');
+  if (!origin) return;
+
+  const allowedOrigins = getAllowedOrigins();
+  if (allowedOrigins.has(origin)) return;
+
+  const host = request.headers.get('host');
+  if (!host) {
+    throw new HttpError(403, 'Telemetry origin is not allowed.');
+  }
+
+  let originHost = '';
+
+  try {
+    originHost = new URL(origin).host;
+  } catch {
+    throw new HttpError(403, 'Telemetry origin is not allowed.');
+  }
+
+  if (originHost !== host) {
+    throw new HttpError(403, 'Telemetry origin is not allowed.');
+  }
+}
+
+function getAnonymousClientKey(request: Request): string {
+  return (
+    request.headers.get('cf-connecting-ip') ||
+    request.headers.get('x-real-ip') ||
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    'anonymous'
+  );
+}
+
+function enforceAnonymousRateLimit(request: Request) {
+  const now = Date.now();
+  const key = getAnonymousClientKey(request);
+  const bucket = anonymousBuckets.get(key);
+
+  if (!bucket || bucket.resetAt <= now) {
+    anonymousBuckets.set(key, {
+      count: 1,
+      resetAt: now + ANONYMOUS_RATE_WINDOW_MS,
+    });
+    return;
+  }
+
+  if (bucket.count >= ANONYMOUS_RATE_LIMIT) {
+    throw new HttpError(429, 'Too many telemetry events.');
+  }
+
+  bucket.count += 1;
+}
+
+async function getTelemetryUserId(request: Request): Promise<string | null> {
+  if (!request.headers.get('authorization')) {
+    enforceSameOriginTelemetry(request);
+    enforceAnonymousRateLimit(request);
+    return null;
+  }
+
+  return (await requireSupabaseUser(request)).id;
+}
+
 export default async function handler(request: Request) {
   if (request.method !== 'POST') {
     return json({ error: 'Method not allowed' }, 405);
   }
 
   try {
-    const body = await readJsonObject(request);
+    const body = await readJsonObject(request, { maxBytes: MAX_TELEMETRY_BODY_BYTES });
     const events = parseEvents(body.events);
-    let userId: string | null = null;
-
-    try {
-      userId = (await requireSupabaseUser(request)).id;
-    } catch {
-      userId = null;
-    }
+    const userId = await getTelemetryUserId(request);
 
     const rows = events.map(event => {
       if (typeof event.message !== 'string' || typeof event.source !== 'string') {
@@ -51,12 +129,15 @@ export default async function handler(request: Request) {
 
       return {
         user_id: userId,
-        source: event.source.slice(0, 120),
-        message: event.message.slice(0, 1000),
-        stack: typeof event.stack === 'string' ? event.stack.slice(0, 6000) : null,
-        url: typeof event.url === 'string' ? event.url.slice(0, 1000) : null,
-        user_agent: typeof event.userAgent === 'string' ? event.userAgent.slice(0, 500) : null,
-        metadata: event.metadata && typeof event.metadata === 'object' ? event.metadata : {},
+        source: redactSensitiveString(event.source, 120),
+        message: redactSensitiveString(event.message, 1000),
+        stack: typeof event.stack === 'string' ? redactSensitiveString(event.stack, 6000) : null,
+        url: typeof event.url === 'string' ? redactSensitiveString(event.url, 1000) : null,
+        user_agent: typeof event.userAgent === 'string' ? redactSensitiveString(event.userAgent, 500) : null,
+        metadata: redactMetadata(event.metadata, {
+          maxSerializedBytes: 8_000,
+          maxStringLength: 1_000,
+        }),
         created_at: typeof event.createdAt === 'number'
           ? new Date(event.createdAt).toISOString()
           : new Date().toISOString(),
@@ -73,7 +154,7 @@ export default async function handler(request: Request) {
       .insert(rows);
 
     if (error) {
-      throw new Error(`Failed to store telemetry: ${error.message}`);
+      throw new Error('Failed to store telemetry.');
     }
 
     return json({ ok: true, stored: rows.length });

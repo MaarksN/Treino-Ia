@@ -1,4 +1,5 @@
 import { getErrorMessage, toError } from './errors';
+import { redactMetadata, redactSensitiveString } from '../../api/_lib/redact';
 
 export interface ErrorTelemetryEvent {
   id: string;
@@ -12,7 +13,23 @@ export interface ErrorTelemetryEvent {
 }
 
 const ERROR_KEY = '@TreinoApp:errorTelemetry';
+const MAX_FLUSH_EVENTS = 50;
 let installed = false;
+
+function sanitizeTelemetryEvent(event: ErrorTelemetryEvent): ErrorTelemetryEvent {
+  return {
+    ...event,
+    message: redactSensitiveString(event.message, 1_000),
+    stack: event.stack ? redactSensitiveString(event.stack, 6_000) : undefined,
+    source: redactSensitiveString(event.source, 120),
+    userAgent: redactSensitiveString(event.userAgent, 500),
+    url: redactSensitiveString(event.url, 1_000),
+    metadata: redactMetadata(event.metadata, {
+      maxSerializedBytes: 8_000,
+      maxStringLength: 1_000,
+    }),
+  };
+}
 
 export function loadErrorTelemetry(): ErrorTelemetryEvent[] {
   try {
@@ -23,7 +40,7 @@ export function loadErrorTelemetry(): ErrorTelemetryEvent[] {
 }
 
 export function saveErrorTelemetry(events: ErrorTelemetryEvent[]): void {
-  localStorage.setItem(ERROR_KEY, JSON.stringify(events.slice(-100)));
+  localStorage.setItem(ERROR_KEY, JSON.stringify(events.slice(-100).map(sanitizeTelemetryEvent)));
 }
 
 export function captureError(
@@ -32,7 +49,7 @@ export function captureError(
   metadata?: Record<string, unknown>,
 ): ErrorTelemetryEvent {
   const normalizedError = toError(error);
-  const event: ErrorTelemetryEvent = {
+  const event = sanitizeTelemetryEvent({
     id: crypto.randomUUID(),
     message: getErrorMessage(normalizedError),
     stack: normalizedError.stack,
@@ -41,7 +58,7 @@ export function captureError(
     url: window.location.href,
     createdAt: Date.now(),
     metadata,
-  };
+  });
 
   const events = loadErrorTelemetry();
   saveErrorTelemetry([...events, event]);
@@ -86,13 +103,15 @@ export async function flushErrorTelemetry(endpoint = '/api/telemetry/errors'): P
       };
     }
   } catch {
-    // Telemetry can still be flushed anonymously.
+    // Anonymous telemetry is still allowed; the API applies origin and rate guards.
   }
+
+  const sanitizedEvents = events.slice(-MAX_FLUSH_EVENTS).map(sanitizeTelemetryEvent);
 
   const response = await fetch(endpoint, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ events }),
+    body: JSON.stringify({ events: sanitizedEvents }),
   });
 
   if (response.ok) {

@@ -1,3 +1,5 @@
+import { redactSensitiveData } from './redact';
+
 export class HttpError extends Error {
   status: number;
 
@@ -13,6 +15,8 @@ export function json(body: unknown, status = 200) {
     status,
     headers: {
       'content-type': 'application/json; charset=utf-8',
+      'cache-control': 'no-store',
+      vary: 'Authorization',
       'access-control-allow-origin': '*',
       'access-control-allow-methods': 'GET, POST, OPTIONS',
       'access-control-allow-headers': 'authorization, content-type, stripe-signature',
@@ -41,8 +45,32 @@ export function getBearerToken(request: Request): string {
   return match[1];
 }
 
-export async function readJsonObject(request: Request): Promise<Record<string, unknown>> {
-  const body = await request.json().catch(() => null);
+interface ReadJsonObjectOptions {
+  maxBytes?: number;
+}
+
+export async function readJsonObject(
+  request: Request,
+  options: ReadJsonObjectOptions = {},
+): Promise<Record<string, unknown>> {
+  let body: unknown;
+
+  if (options.maxBytes) {
+    const text = await request.text();
+    const size = new TextEncoder().encode(text).byteLength;
+
+    if (size > options.maxBytes) {
+      throw new HttpError(413, 'Request body is too large');
+    }
+
+    try {
+      body = JSON.parse(text || 'null');
+    } catch {
+      body = null;
+    }
+  } else {
+    body = await request.json().catch(() => null);
+  }
 
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
     throw new HttpError(400, 'Request body must be a JSON object');
@@ -53,10 +81,29 @@ export async function readJsonObject(request: Request): Promise<Record<string, u
 
 export function handleApiError(error: unknown) {
   if (error instanceof HttpError) {
+    if (error.status === 500) {
+      const requestId = crypto.randomUUID();
+      console.error('API HttpError', {
+        requestId,
+        error: redactSensitiveData({
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        }),
+      });
+      return json({ error: 'Internal server error', requestId }, 500);
+    }
+
     return json({ error: error.message }, error.status);
   }
 
-  const message = error instanceof Error ? error.message : 'Internal server error';
-  return json({ error: message }, 500);
-}
+  const requestId = crypto.randomUUID();
+  console.error('API unexpected error', {
+    requestId,
+    error: redactSensitiveData(error instanceof Error
+      ? { name: error.name, message: error.message, stack: error.stack }
+      : error),
+  });
 
+  return json({ error: 'Internal server error', requestId }, 500);
+}

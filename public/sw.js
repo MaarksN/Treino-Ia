@@ -46,13 +46,17 @@ self.addEventListener('fetch', event => {
 
   const url = new URL(request.url);
 
+  if (shouldBypassCache(request, url)) {
+    event.respondWith(networkOnly(request, url));
+    return;
+  }
+
   if (url.origin !== self.location.origin) {
     event.respondWith(networkFirst(request));
     return;
   }
 
   if (
-    url.pathname.startsWith('/api/') ||
     url.pathname.startsWith('/src/') ||
     url.pathname.startsWith('/@vite/') ||
     url.pathname.includes('/node_modules/.vite/')
@@ -150,8 +154,10 @@ async function cacheFirst(request) {
 
   try {
     const response = await fetch(request);
-    const cache = await caches.open(CACHE_NAME);
-    cache.put(request, response.clone());
+    if (response.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, response.clone());
+    }
     return response;
   } catch {
     return caches.match('/offline.html');
@@ -161,8 +167,10 @@ async function cacheFirst(request) {
 async function networkFirst(request) {
   try {
     const response = await fetch(request);
-    const cache = await caches.open(DATA_CACHE_NAME);
-    cache.put(request, response.clone());
+    if (response.ok && !hasAuthorizationHeader(request)) {
+      const cache = await caches.open(DATA_CACHE_NAME);
+      cache.put(request, response.clone());
+    }
     return response;
   } catch {
     const cached = await caches.match(request);
@@ -171,6 +179,36 @@ async function networkFirst(request) {
 
     return caches.match('/offline.html');
   }
+}
+
+async function networkOnly(request, url) {
+  try {
+    return await fetch(request);
+  } catch {
+    if (url.origin === self.location.origin && url.pathname.startsWith('/api/')) {
+      return new Response(JSON.stringify({
+        error: 'Network unavailable',
+      }), {
+        status: 503,
+        headers: {
+          'content-type': 'application/json; charset=utf-8',
+          'cache-control': 'no-store',
+        },
+      });
+    }
+
+    return caches.match('/offline.html');
+  }
+}
+
+// Keep this aligned with src/services/pwa/cachePolicy.ts.
+function shouldBypassCache(request, url) {
+  return hasAuthorizationHeader(request) ||
+    (url.origin === self.location.origin && url.pathname.startsWith('/api/'));
+}
+
+function hasAuthorizationHeader(request) {
+  return Boolean(request.headers.get('authorization'));
 }
 
 function notifyClients(message) {

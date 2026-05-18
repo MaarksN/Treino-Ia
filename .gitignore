@@ -1,4 +1,6 @@
 node_modules/
+node_modules_broken_*/
+.tmp_empty_node_modules/
 build/
 dist/
 coverage/
