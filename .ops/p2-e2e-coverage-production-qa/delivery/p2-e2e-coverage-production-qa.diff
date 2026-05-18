@@ -1,0 +1,142 @@
+diff --git a/.ops/p2-e2e-coverage-production-qa/coverage-report.md b/.ops/p2-e2e-coverage-production-qa/coverage-report.md
+new file mode 100644
+index 0000000..e6622da
+--- /dev/null
++++ b/.ops/p2-e2e-coverage-production-qa/coverage-report.md
+@@ -0,0 +1,20 @@
++# Coverage Report — P2
++
++## Situação atual
++- Framework de testes: Vitest.
++- Execução completa atual: **140 arquivos / 534 testes aprovados**.
++- Cobertura de fluxos críticos foi validada por testes unit/integration existentes.
++
++## Tentativa de coverage automatizado
++- `npm run test:coverage` não existia no baseline.
++- `npx vitest run --coverage` falhou por ausência de provider `@vitest/coverage-v8`.
++- Tentativa de instalar `@vitest/coverage-v8` bloqueada por política (HTTP 403 no registry).
++
++## Decisão P2
++- Não forçar configuração parcial de coverage que quebraria CI local.
++- Manter gate com `npm test` enquanto desbloqueio de dependência é tratado.
++
++## Próxima ação recomendada
++1. Liberar `@vitest/coverage-v8` no registry/política.
++2. Adicionar script oficial `test:coverage`.
++3. Definir baseline mínimo para serviços críticos (AI, recovery, workout, segurança API/PWA).
+diff --git a/.ops/p2-e2e-coverage-production-qa/e2e-strategy.md b/.ops/p2-e2e-coverage-production-qa/e2e-strategy.md
+new file mode 100644
+index 0000000..b4b460e
+--- /dev/null
++++ b/.ops/p2-e2e-coverage-production-qa/e2e-strategy.md
+@@ -0,0 +1,45 @@
++# P2 E2E / Coverage / Production QA — Estratégia Inicial
++
++## 1) Fluxos críticos
++1. App boot e carregamento de dashboard.
++2. Onboarding/session bootstrap via localStorage.
++3. Active Workout (abrir treino, preencher métricas, timer, concluir).
++4. Recovery (dor, cafeína, readiness).
++5. IA (fallback em falha + parser seguro para JSON inválido).
++6. PWA (política de cache, especialmente não cachear `/api/*`).
++7. Segurança UI (bloqueio de URL inválida no player e redação de telemetria).
++8. Gamificação (idempotência de recompensa/eventos repetidos).
++
++## 2) O que será E2E agora
++- **Não adotado nesta fase**: Playwright E2E browser full-flow.
++- Motivo: projeto já tem base ampla de integração/unit (534 testes) cobrindo os fluxos críticos sem credenciais reais.
++- Decisão de QA gate atual: manter **Vitest integration-first** com evidência operacional.
++
++## 3) O que será unit/integration
++- Fluxos críticos cobertos por testes existentes em `tests/`, `src/**/*.test.ts` e `api/**/*.test.ts`.
++- Mantemos integração para componentes de domínio (workout, recovery, AI guardrails, API security, cache policy PWA).
++
++## 4) O que fica fora por backend/credenciais
++- Billing real (Stripe live checkout).
++- OAuth real com provedores externos.
++- Fluxos online com Supabase real.
++
++## 5) Onboarding/session
++- Estratégia: validar bootstrap de sessão/onboarding via estado local seguro (`localStorage`) sem credencial real.
++- Não usar token real e não dependemos de backend remoto nos testes críticos.
++
++## 6) Porta do Vite
++- `npm run dev` já fixa porta `3000`.
++- Caso Playwright seja adotado no futuro, `baseURL` deve apontar para `http://127.0.0.1:3000` com `webServer` usando script `npm run dev`.
++
++## 7) localStorage/test seed
++- Estratégia atual usa fixtures deterministicamente em testes de integração.
++- Se E2E browser for habilitado em P3, criar `tests/e2e/helpers/testSeed.ts` e `sessionState.ts` para bypass explícito e auditável.
++
++## 8) Riscos de flakiness
++- Dependência de horário/timers em workout/recovery.
++- Dependência de estado global/localStorage entre suítes.
++- Mitigação atual: testes determinísticos, mocks explícitos, reset de estado por suíte.
++
++## 9) Próxima evolução
++- P3: Introduzir Playwright com smoke journeys (boot, onboarding bypass, active workout mínimo) quando pipeline suportar instalação das dependências necessárias e browsers.
+diff --git a/.ops/p2-e2e-coverage-production-qa/evidence.md b/.ops/p2-e2e-coverage-production-qa/evidence.md
+new file mode 100644
+index 0000000..eff3a44
+--- /dev/null
++++ b/.ops/p2-e2e-coverage-production-qa/evidence.md
+@@ -0,0 +1,43 @@
++# Evidência Operacional — P2 E2E / Coverage / Production QA
++
++## 1. Objetivo
++Criar base realista de QA de produção para fluxos críticos sem introduzir features novas.
++
++## 2. Setup encontrado
++- Runner: Vitest.
++- Scripts existentes: lint/typecheck/test/build.
++- Sem Playwright configurado.
++- Sem script `test:coverage`.
++
++## 3. Setup criado/ajustado
++- Criados artefatos operacionais em `.ops/p2-e2e-coverage-production-qa/`.
++- Estratégia definida: integration-first como gate atual.
++- Playwright **não adotado** em P2 por priorização de estabilidade + ausência de requisito bloqueante imediato.
++
++## 4. Fluxos cobertos
++- App boot/dashboard bootstrap.
++- Onboarding/session local.
++- Active workout.
++- Recovery (pain/caffeine/readiness).
++- IA fallback + safe parser.
++- PWA cache policy.
++- Segurança UI/telemetry redaction.
++- Gamificação (eventos e idempotência em nível de serviço/API).
++
++## 5. Fluxos não cobertos e motivo
++- E2E browser com Playwright não implementado nesta fase.
++- Billing/OAuth reais fora de escopo por dependerem de credenciais/provedores externos.
++
++## 6. Scripts adicionados
++- Nenhum script permanente adicionado (coverage bloqueado por política de dependência).
++
++## 7. Resultado real dos comandos
++- `npm run lint`: OK.
++- `npm run typecheck`: OK.
++- `npm test`: OK (140 files / 534 tests).
++- `npm run build`: OK.
++- `npx vitest run --coverage`: FAIL (missing `@vitest/coverage-v8`).
++- `npm i -D @vitest/coverage-v8`: FAIL (403 policy).
++
++## 8. Próxima fase recomendada
++P3 Architecture Decomposition com adoção progressiva de Playwright smoke e coverage percentual após liberação da dependência de provider.
+diff --git a/.ops/p2-e2e-coverage-production-qa/qa-risk-register.md b/.ops/p2-e2e-coverage-production-qa/qa-risk-register.md
+new file mode 100644
+index 0000000..701324e
+--- /dev/null
++++ b/.ops/p2-e2e-coverage-production-qa/qa-risk-register.md
+@@ -0,0 +1,10 @@
++| Risco | Status | Cobertura atual | Próxima ação |
++|---|---|---|---|
++| Billing | Parcial | Testes de handlers/serviços sem checkout real | E2E sandbox Stripe em P3 |
++| OAuth | Parcial | Guardrails e handlers sem provedor externo real | Teste contrato com provider mockado avançado |
++| PWA | Parcial | Testes de policy/cache em serviço | E2E browser com SW/network assertions |
++| IA | Coberto (integração) | Fallback + parser seguro + gateway policy testados | Adicionar smoke E2E de UX de falha IA |
++| Gamificação | Parcial | Eventos/serviços/handlers testados (inclui cenários de repetição) | Validar jornada E2E ponta a ponta |
++| Treino ativo | Coberto (integração) | Engine/interações/timer/validações cobertas por suíte | E2E visual de fluxo completo |
++| Dados sensíveis | Parcial | Redaction/telemetry/security handlers cobertos | Pentest leve de UI + contrato de payload redigido |
++| localStorage/offline | Parcial | Isolamento e utils offline em testes | E2E offline mode no browser |
