@@ -31,17 +31,18 @@ function isYesterdayUtc(value?: string | null) {
   return then.getUTCFullYear() === yesterday.getUTCFullYear() && then.getUTCMonth() === yesterday.getUTCMonth() && then.getUTCDate() === yesterday.getUTCDate();
 }
 
-async function ensureUniqueSourceEvent(supabase: ReturnType<typeof getSupabaseAdmin>, userId: string, eventType: string, sourceId?: string | null, period?: string) {
+async function ensureUniqueSourceEvent(supabase: ReturnType<typeof getSupabaseAdmin>, userId: string, eventType: string, sourceId?: string | null, period: string = '') {
   const normalizedKey = normalizeEventKey(eventType, sourceId);
   const idempotencyKey = buildIdempotencyKey(userId, eventType, sourceId, period);
 
   // Future: Requires transactional RPC for strong multi-instance guarantees.
+  const finalSourceId = sourceId || idempotencyKey;
   const { data, error } = await supabase
     .from('gamification_ledger')
     .select('id')
     .eq('user_id', userId)
     .eq('event_type', eventType)
-    .eq('source_id', sourceId || idempotencyKey) // Fallback to idempotencyKey as a source_id for uniqueness if sourceId is null
+    .eq('source_id', finalSourceId) // Fallback to idempotencyKey as a source_id for uniqueness if sourceId is null
     .maybeSingle();
   if (error) throw new Error(`Failed to validate idempotency: ${error.message}`);
   if (data) throw new HttpError(409, `Evento já processado para esta chave: ${idempotencyKey}`);

@@ -21,8 +21,6 @@ import {
   WorkoutSession,
 } from '../services/database';
 import { CurrentPlanConsistencyHelper } from '../services/data/currentPlanConsistency';
-import { CurrentPlanConsistencyHelper } from '../services/data/currentPlanConsistency';
-import { CurrentPlanConsistencyHelper } from '../services/data/currentPlanConsistency';
 import { calculateTrainingPlan } from '../rules/iaEngine';
 import { BottomNav } from '../components/BottomNav';
 import { ImportWorkoutView } from '../components/ImportWorkoutView';
