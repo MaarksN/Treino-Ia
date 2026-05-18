@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { handleApiError, HttpError, json, readJsonObject } from '../../_lib/http';
+import { sanitizeRedirectTarget } from '../../_lib/oauthRedirect';
 import { getSupabaseAdmin, requireSupabaseUser } from '../../_lib/server-supabase';
 
 export const config = {
@@ -15,6 +16,7 @@ function getBaseUrl(request: Request): string {
   if (configured) return configured.replace(/\/$/, '');
   return new URL(request.url).origin;
 }
+
 
 function getProviderClientId(provider: OAuthProvider): string {
   if (provider === 'google_fit') return process.env.GOOGLE_FIT_CLIENT_ID || '';
@@ -83,7 +85,7 @@ export default async function handler(request: Request) {
     const baseUrl = getBaseUrl(request);
     const redirectUri = `${baseUrl}/api/health/oauth/callback`;
     const state = randomBytes(32).toString('hex');
-    const redirectTo = typeof body.redirectTo === 'string' ? body.redirectTo.slice(0, 500) : `${baseUrl}/`;
+    const redirectTo = sanitizeRedirectTarget(body.redirectTo, baseUrl).slice(0, 500);
 
     const supabase = getSupabaseAdmin();
     const { error } = await supabase.from('health_oauth_states').insert({
