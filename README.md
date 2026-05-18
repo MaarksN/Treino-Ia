@@ -66,3 +66,17 @@ Segredos de CI/CD ficam no GitHub Actions: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VER
 ## Status de execução por fases
 - ✅ Parte 1 (fundação/arquitetura) documentada em `docs/architecture.md`, `docs/database.md`, `docs/deployment.md`, `docs/runbook.md` e `docs/privacy.md`.
 - 🔜 Partes 2–6 serão entregues incrementalmente preservando source-of-truth server-side, RLS e testes críticos.
+
+## Remote Git
+
+Remote `origin` configurado no ambiente local para:
+
+```bash
+git remote add origin https://github.com/MaarksN/Treino-Ia.git
+```
+
+Verificação:
+
+```bash
+git remote -v
+```
