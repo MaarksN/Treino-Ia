@@ -1,5 +1,7 @@
 import { Buffer } from 'node:buffer';
 import { handleApiError, HttpError, json } from '../../_lib/http';
+import { sanitizeRedirectTarget } from '../../_lib/oauthRedirect';
+import { encryptOAuthToken } from '../../_lib/oauthTokenCrypto';
 import { getSupabaseAdmin } from '../../_lib/server-supabase';
 import { normalizeRedirectTo } from '../../_lib/redirectAllowlist';
 import { assertOAuthTokenStorageAllowed, buildOAuthTokenStorageWarning, redactOAuthTokenPayload } from '../../_lib/oauthTokenSecurity';
@@ -38,6 +40,7 @@ function getClientId(provider: OAuthProvider): string {
   if (provider === 'fitbit') return process.env.FITBIT_CLIENT_ID || '';
   return process.env.STRAVA_CLIENT_ID || '';
 }
+
 
 async function exchangeToken(provider: OAuthProvider, code: string, redirectUri: string): Promise<OAuthTokenResponse> {
   const clientId = getClientId(provider);
@@ -123,8 +126,7 @@ export default async function handler(request: Request) {
     }
     if (!storedState) throw new HttpError(400, 'OAuth state is invalid or expired');
 
-    const baseUrl = getBaseUrl(request);
-    const redirectTo = normalizeRedirectTo(storedState.redirect_to, { baseUrl, fallbackPath: '/' });
+    const redirectTo = sanitizeRedirectTarget(storedState.redirect_to, getBaseUrl(request));
     const provider = storedState.provider as OAuthProvider;
 
     if (oauthError) {
@@ -167,8 +169,8 @@ export default async function handler(request: Request) {
       .upsert({
         user_id: storedState.user_id,
         provider,
-        access_token: token.access_token,
-        refresh_token: token.refresh_token ?? null,
+        access_token: encryptOAuthToken(token.access_token),
+        refresh_token: token.refresh_token ? encryptOAuthToken(token.refresh_token) : null,
         token_type: token.token_type ?? null,
         scope,
         expires_at: expiresAt,
