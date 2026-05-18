@@ -1,6 +1,8 @@
 import { Schema, Type } from '../types/geminiSchema';
 import { MacroTargets, MealEntry, UserProfile } from '../types';
 import { createGeminiProxyClient } from './geminiProxyClient';
+import { getAiModelPolicy } from './ai/aiModelPolicy';
+import { safeAiJsonParser } from './ai/safeAiJsonParser';
 
 function getAI() {
   return createGeminiProxyClient();
@@ -26,12 +28,14 @@ Retorne apenas JSON com: calories, protein (g), carbs (g), fat (g).
 `;
 
   const response = await getAI().models.generateContent({
-    model: 'gemini-2.5-pro',
+    model: getAiModelPolicy('nutrition_analysis').model,
     contents: prompt,
     config: { responseMimeType: 'application/json', responseSchema: macroSchema },
   });
 
-  return JSON.parse(response.text || '{}') as MacroTargets;
+  const parsed = safeAiJsonParser<MacroTargets>(response.text, (value): value is MacroTargets => Boolean(value) && typeof value === 'object' && ['calories','protein','carbs','fat'].every(k => typeof (value as Record<string, unknown>)[k] === 'number'));
+  if (!parsed.ok) throw new Error('Invalid macro targets response');
+  return parsed.data;
 }
 
 export async function generateBasicNutritionPlan(profile: UserProfile): Promise<string> {
@@ -43,7 +47,7 @@ Inclua: 5-6 refeições com exemplos de alimentos, distribuição de macros, dic
 `;
 
   const response = await getAI().models.generateContent({
-    model: 'gemini-2.5-pro',
+    model: getAiModelPolicy('nutrition_analysis').model,
     contents: prompt,
   });
 
@@ -65,7 +69,7 @@ export async function analyzePhotoMacros(base64: string, mimeType: string): Prom
   };
 
   const response = await getAI().models.generateContent({
-    model: 'gemini-2.5-pro',
+    model: getAiModelPolicy('nutrition_analysis').model,
     contents: [{
       role: 'user',
       parts: [
@@ -76,7 +80,9 @@ export async function analyzePhotoMacros(base64: string, mimeType: string): Prom
     config: { responseMimeType: 'application/json', responseSchema: schema },
   });
 
-  return JSON.parse(response.text || '{}') as Partial<MealEntry>;
+  const parsed = safeAiJsonParser<Partial<MealEntry>>(response.text, (value): value is Partial<MealEntry> => Boolean(value) && typeof value === 'object');
+  if (!parsed.ok) throw new Error('Invalid meal scan response');
+  return parsed.data;
 }
 
 export async function generatePreWorkoutSuggestion(profile: UserProfile, workoutTime: string): Promise<string> {
@@ -90,7 +96,7 @@ Dê opções rápidas, práticas e com tempo de consumo antes do treino.
 `;
 
   const response = await getAI().models.generateContent({
-    model: 'gemini-2.5-pro',
+    model: getAiModelPolicy('nutrition_analysis').model,
     contents: prompt,
   });
 
@@ -107,7 +113,7 @@ Inclua opções rápidas e práticas, proporção proteína/carboidrato e hidrat
 `;
 
   const response = await getAI().models.generateContent({
-    model: 'gemini-2.5-pro',
+    model: getAiModelPolicy('nutrition_analysis').model,
     contents: prompt,
   });
 
@@ -128,7 +134,7 @@ Forneça:
 `;
 
   const response = await getAI().models.generateContent({
-    model: 'gemini-2.5-pro',
+    model: getAiModelPolicy('nutrition_analysis').model,
     contents: prompt,
   });
 
@@ -151,7 +157,7 @@ export async function analyzeBodyPhoto(
   }
 
   const response = await getAI().models.generateContent({
-    model: 'gemini-2.5-pro',
+    model: getAiModelPolicy('nutrition_analysis').model,
     contents: [{ role: 'user', parts }],
   });
 
