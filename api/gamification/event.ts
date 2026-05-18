@@ -1,5 +1,6 @@
 import { handleApiError, HttpError, json, readJsonObject } from '../_lib/http';
 import { getSupabaseAdmin, requireSupabaseUser } from '../_lib/server-supabase';
+import { buildIdempotencyKey, getDailyPeriod, normalizeEventKey } from '../_lib/idempotency';
 
 export const config = {
   runtime: 'nodejs',
@@ -30,17 +31,22 @@ function isYesterdayUtc(value?: string | null) {
   return then.getUTCFullYear() === yesterday.getUTCFullYear() && then.getUTCMonth() === yesterday.getUTCMonth() && then.getUTCDate() === yesterday.getUTCDate();
 }
 
-async function ensureUniqueSourceEvent(supabase: ReturnType<typeof getSupabaseAdmin>, userId: string, eventType: string, sourceId?: string | null) {
-  if (!sourceId) return;
+async function ensureUniqueSourceEvent(supabase: ReturnType<typeof getSupabaseAdmin>, userId: string, eventType: string, sourceId?: string | null, period?: string) {
+  const normalizedKey = normalizeEventKey(eventType, sourceId);
+  const idempotencyKey = buildIdempotencyKey(userId, eventType, sourceId, period);
+
+  // Future: Requires transactional RPC for strong multi-instance guarantees.
   const { data, error } = await supabase
     .from('gamification_ledger')
     .select('id')
     .eq('user_id', userId)
     .eq('event_type', eventType)
-    .eq('source_id', sourceId)
+    .eq('source_id', sourceId || idempotencyKey) // Fallback to idempotencyKey as a source_id for uniqueness if sourceId is null
     .maybeSingle();
   if (error) throw new Error(`Failed to validate idempotency: ${error.message}`);
-  if (data) throw new HttpError(409, 'Evento já processado para este sourceId.');
+  if (data) throw new HttpError(409, `Evento já processado para esta chave: ${idempotencyKey}`);
+
+  return idempotencyKey;
 }
 
 export default async function handler(request: Request) {
@@ -74,9 +80,16 @@ export default async function handler(request: Request) {
       return json({ skipped: true, reason: 'Login already recorded today' });
     }
 
+    if (eventType === 'checkin' || eventType === 'daily_checkin' || eventType === 'login') {
+       await ensureUniqueSourceEvent(supabase, user.id, eventType, null, getDailyPeriod());
+    }
+
     if (eventType === 'mission_claimed') {
       const missionId = sourceId;
       if (!missionId) throw new HttpError(400, 'mission_claimed exige sourceId (mission id).');
+
+      const idempotencyKey = await ensureUniqueSourceEvent(supabase, user.id, eventType, missionId);
+
       const { data: mission, error: missionError } = await supabase
         .from('gamification_missions')
         .select('id,status,xp_reward,coin_reward')
@@ -98,7 +111,7 @@ export default async function handler(request: Request) {
 
       const { data: profile, error: eventError } = await supabase.rpc('apply_gamification_event', {
         p_user_id: user.id, p_event_type: eventType, p_source_id: missionId, p_xp_delta: mission.xp_reward, p_coin_delta: mission.coin_reward,
-        p_metadata: { origin: 'api', eventType, missionId },
+        p_metadata: { origin: 'api', eventType, missionId, idempotencyKey },
       });
       if (eventError) throw new Error(`Failed to apply gamification event: ${eventError.message}`);
       return json({ profile });
@@ -116,7 +129,7 @@ export default async function handler(request: Request) {
       if (existingError) throw new Error(`Failed to verify cosmetic ownership: ${existingError.message}`);
       if (existingCosmetic) return json({ skipped: true, reason: 'Cosmetic already unlocked' });
 
-      await ensureUniqueSourceEvent(supabase, user.id, eventType, cosmeticId);
+      const idempotencyKey = await ensureUniqueSourceEvent(supabase, user.id, eventType, cosmeticId);
 
       const { error: insertError } = await supabase
         .from('gamification_cosmetics')
@@ -125,21 +138,28 @@ export default async function handler(request: Request) {
 
       const { data: profile, error: eventError } = await supabase.rpc('apply_gamification_event', {
         p_user_id: user.id, p_event_type: eventType, p_source_id: cosmeticId, p_xp_delta: 0, p_coin_delta: -cost,
-        p_metadata: { origin: 'api', eventType, cosmeticId, cost },
+        p_metadata: { origin: 'api', eventType, cosmeticId, cost, idempotencyKey },
       });
       if (eventError) throw new Error(`Failed to apply gamification event: ${eventError.message}`);
       return json({ profile });
     }
 
-    await ensureUniqueSourceEvent(supabase, user.id, eventType, sourceId);
+    let resolvedSourceId = sourceId;
+    let idempotencyKey;
+    if (eventType !== 'checkin' && eventType !== 'daily_checkin' && eventType !== 'login') {
+        idempotencyKey = await ensureUniqueSourceEvent(supabase, user.id, eventType, sourceId);
+    } else {
+        idempotencyKey = buildIdempotencyKey(user.id, eventType, null, getDailyPeriod());
+        resolvedSourceId = idempotencyKey;
+    }
 
     const { data: profile, error: eventError } = await supabase.rpc('apply_gamification_event', {
       p_user_id: user.id,
       p_event_type: eventType,
-      p_source_id: sourceId,
+      p_source_id: resolvedSourceId,
       p_xp_delta: reward.xp,
       p_coin_delta: reward.coins,
-      p_metadata: { origin: 'api', eventType },
+      p_metadata: { origin: 'api', eventType, idempotencyKey },
     });
     if (eventError) throw new Error(`Failed to apply gamification event: ${eventError.message}`);
 
