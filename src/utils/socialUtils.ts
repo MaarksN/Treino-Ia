@@ -17,9 +17,7 @@ function randomBase36(length: number): string {
   if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
     crypto.getRandomValues(bytes);
   } else {
-    for (let index = 0; index < bytes.length; index += 1) {
-      bytes[index] = Math.floor(Math.random() * 256);
-    }
+    throw new Error('Secure random number generation is not supported in this environment.');
   }
 
   return Array.from(bytes, value => alphabet[value % alphabet.length]).join('');
