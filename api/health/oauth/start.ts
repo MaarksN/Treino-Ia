@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { handleApiError, HttpError, json, readJsonObject } from '../../_lib/http';
 import { getSupabaseAdmin, requireSupabaseUser } from '../../_lib/server-supabase';
+import { normalizeRedirectTo } from '../../_lib/redirectAllowlist';
 
 export const config = {
   runtime: 'nodejs',
@@ -83,7 +84,10 @@ export default async function handler(request: Request) {
     const baseUrl = getBaseUrl(request);
     const redirectUri = `${baseUrl}/api/health/oauth/callback`;
     const state = randomBytes(32).toString('hex');
-    const redirectTo = typeof body.redirectTo === 'string' ? body.redirectTo.slice(0, 500) : `${baseUrl}/`;
+    const redirectTo = normalizeRedirectTo(body.redirectTo, {
+      baseUrl,
+      fallbackPath: '/',
+    }).slice(0, 500);
 
     const supabase = getSupabaseAdmin();
     const { error } = await supabase.from('health_oauth_states').insert({

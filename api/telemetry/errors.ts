@@ -1,5 +1,5 @@
 import { handleApiError, HttpError, json, readJsonObject } from '../_lib/http';
-import { redactMetadata, redactSensitiveString } from '../_lib/redact';
+import { sanitizeTelemetryMessage, sanitizeTelemetryMetadata, sanitizeTelemetryUrl } from '../_lib/piiRedaction';
 import { getSupabaseAdmin, requireSupabaseUser } from '../_lib/server-supabase';
 
 export const config = {
@@ -129,15 +129,12 @@ export default async function handler(request: Request) {
 
       return {
         user_id: userId,
-        source: redactSensitiveString(event.source, 120),
-        message: redactSensitiveString(event.message, 1000),
-        stack: typeof event.stack === 'string' ? redactSensitiveString(event.stack, 6000) : null,
-        url: typeof event.url === 'string' ? redactSensitiveString(event.url, 1000) : null,
-        user_agent: typeof event.userAgent === 'string' ? redactSensitiveString(event.userAgent, 500) : null,
-        metadata: redactMetadata(event.metadata, {
-          maxSerializedBytes: 8_000,
-          maxStringLength: 1_000,
-        }),
+        source: sanitizeTelemetryMessage(event.source),
+        message: sanitizeTelemetryMessage(event.message),
+        stack: typeof event.stack === 'string' ? sanitizeTelemetryMessage(event.stack) : null,
+        url: typeof event.url === 'string' ? sanitizeTelemetryUrl(event.url) : null,
+        user_agent: typeof event.userAgent === 'string' ? sanitizeTelemetryMessage(event.userAgent) : null,
+        metadata: sanitizeTelemetryMetadata(event.metadata),
         created_at: typeof event.createdAt === 'number'
           ? new Date(event.createdAt).toISOString()
           : new Date().toISOString(),
