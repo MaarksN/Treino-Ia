@@ -146,6 +146,7 @@ export default async function handler(request: Request) {
 
     if (!code) throw new HttpError(400, 'OAuth code is required');
 
+    const baseUrl = getBaseUrl(request); // <- Definido antes do uso
     const token = await exchangeToken(provider, code, `${baseUrl}/api/health/oauth/callback`);
     if (!token.access_token) {
       throw new Error(token.error_description || token.error || 'OAuth token response did not include access_token');
@@ -156,7 +157,8 @@ export default async function handler(request: Request) {
       : null;
 
     const scope = token.scope || '';
-    const scopes = scope ? scope.split(/[,\s]+/).filter(Boolean) : [];
+    const scopes = scope ? scope.split(/[,
+\s]+/).filter(Boolean) : [];
 
     assertOAuthTokenStorageAllowed();
     const securityWarning = buildOAuthTokenStorageWarning();
@@ -208,3 +210,4 @@ export default async function handler(request: Request) {
     return handleApiError(error);
   }
 }
+
