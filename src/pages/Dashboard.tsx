@@ -82,6 +82,11 @@ import { AdaptiveProtocolsPanel } from '../components/accessibility/AdaptiveProt
 import { ThemeCustomizationPanel } from '../components/premium/ThemeCustomizationPanel';
 import { PictureInPicturePanel } from '../components/media/PictureInPicturePanel';
 import { WorkoutImportPanel } from '../components/media/WorkoutImportPanel';
+import { FormCheckerPreviewPanel } from '../components/ai/FormCheckerPreviewPanel';
+import { EquipmentReplanPanel } from '../components/ai/EquipmentReplanPanel';
+import { PantryPlannerPanel } from '../components/Nutrition/PantryPlannerPanel';
+import { LongevitySignalPanel } from '../components/wellness/LongevitySignalPanel';
+import { WebXRPreviewPanel } from '../components/xr/WebXRPreviewPanel';
 
 const PLAN_GENERATION_FEEDBACK_MS = 750;
 const primaryActionClass = getCriticalContrastClass('primaryAction');
@@ -754,6 +759,22 @@ export default function Dashboard() {
                 <PictureInPicturePanel />
               </div>
               <WorkoutImportPanel />
+            </section>
+
+            <section className="mb-8 space-y-6">
+              <div className="border-b-2 border-brand-light/10 pb-4">
+                <h2 className="font-display text-4xl uppercase text-brand-light">IA, Hábitos &amp; Tecnologias Futuras</h2>
+                <p className="mt-2 font-mono text-sm text-brand-light/70">Itens estratégicos 51, 58, 59, 60 e 67 integrados.</p>
+              </div>
+              <div className="grid gap-6 md:grid-cols-2">
+                <EquipmentReplanPanel />
+                <PantryPlannerPanel />
+              </div>
+              <LongevitySignalPanel history={history} />
+              <div className="grid gap-6 md:grid-cols-2">
+                <FormCheckerPreviewPanel />
+                <WebXRPreviewPanel />
+              </div>
             </section>
 
             <HistoryPanel history={history} />

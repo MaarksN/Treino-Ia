@@ -509,7 +509,7 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "horizon": "next",
     "risk": "medium",
     "productArea": "advanced-ai",
-    "implementationNotes": "Adapter seguro criado. Aguardando integração de biblioteca."
+    "implementationNotes": "Capability guard com checklist real de camera/MediaPipe/WASM/processamento local, preview panel no Dashboard, engine MediaPipe ausente (dependencia nao instalada), disclaimer honesto, testes de capabilities. Sem analise de video fake."
   },
   {
     "id": 52,
@@ -575,31 +575,31 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "id": 58,
     "title": "Replanejamento por foto de equipamentos",
     "category": "advanced_ai",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "advanced-ai",
-    "implementationNotes": "Safe upload flow/guard created."
+    "implementationNotes": "10 equipamentos com selecao manual, upload/preview local de foto sem reconhecimento visual fake, adaptacoes locais por equipamento, persistencia local, guard explicito de foto apenas como referencia, disclaimer educacional, testes de sanitizacao/persistencia/adaptacao, integrado ao Dashboard."
   },
   {
     "id": 59,
     "title": "Despensa inteligente",
     "category": "advanced_ai",
-    "status": "foundation_created",
-    "horizon": "next",
-    "risk": "medium",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "advanced-ai",
-    "implementationNotes": "Local model for ingredients/manual created."
+    "implementationNotes": "15 alimentos com selecao manual, 8 receitas com match por ingredientes, labels com emoji, persistencia local, sugestoes por timing (pre/pos-treino, lanche), sem IoT/geladeira, disclaimer nutricionista, testes de pantry/receitas, integrado ao Dashboard."
   },
   {
     "id": 60,
     "title": "Projeção de longevidade",
     "category": "advanced_ai",
-    "status": "foundation_created",
-    "horizon": "later",
-    "risk": "high",
+    "status": "implemented_now",
+    "horizon": "now",
+    "risk": "low",
     "productArea": "advanced-ai",
-    "implementationNotes": "Consistency indicator guard created."
+    "implementationNotes": "Indicador educativo de consistencia com 5 fatores locais (consistencia de treino, sono, hidratacao, recuperacao, RPE excessivo), score 0-100, labels de tendencia de habitos sem claim medico, disclaimer explicito 'nao representa idade biologica', testes de calculo/labels/RPE, integrado ao Dashboard."
   },
   {
     "id": 61,
@@ -669,7 +669,7 @@ export const strategicItemsRegistry: StrategicItem[] = [
     "horizon": "next",
     "risk": "medium",
     "productArea": "hardware-ar-iot",
-    "implementationNotes": "Capability detection adicionada. Interface bloqueada até device suportado."
+    "implementationNotes": "Capability guard com deteccao de navigator.xr e verificacao assincrona de immersive-ar, preview panel no Dashboard, sem sessao AR iniciada, disclaimer de tecnologia experimental, testes de API ausente/presente mockada, integrado ao Dashboard."
   },
   {
     "id": 68,
