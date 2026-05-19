@@ -9,31 +9,32 @@ Definir o gate final de promoção para produção com critérios explícitos de
 
 ## Critérios de Gate (obrigatórios)
 1. **Qualidade estática**: `npm run lint` e `npm run typecheck` devem passar.
-2. **Build de produção**: `npm run build` deve passar e gerar artefatos.
-3. **Segurança operacional mínima**:
+2. **Testes automatizados**: `npm test` deve passar sem flags inválidas.
+3. **Build de produção**: `npm run build` deve passar e gerar artefatos.
+4. **Segurança operacional mínima**:
    - Sem segredos hardcoded em código versionado.
    - Fluxos OAuth com sanitização de redirect e armazenamento protegido conforme utilitários existentes.
-4. **Risco residual conhecido**:
-   - Todos os riscos P2/P3 de severidade alta devem ter owner e ação com data-alvo.
-5. **Rollback readiness**:
+5. **Risco residual conhecido**:
+   - Todos os riscos de severidade alta devem ter owner e ação com data-alvo.
+6. **Rollback readiness**:
    - Release precisa de estratégia de rollback documentada (revert de deploy + rollback de configuração).
 
 ## Resultado do Gate P4 (estado atual)
 - **Lint**: PASS
 - **Typecheck**: PASS
+- **Testes (`npm test`)**: PASS
 - **Build produção**: PASS
-- **Testes automatizados completos**: INCONCLUSIVO no ambiente local desta execução (comando `npm run validate` não retornou relatório completo no terminal capturado).
-- **Decisão**: **GO CONDICIONAL**
+- **Decisão**: **GO WITH WARNINGS**
 
-## Condições para GO final (antes do deploy)
-1. Executar `npm test` em pipeline CI com publicação de relatório (pass/fail + duração).
-2. Anexar evidência de smoke pós-deploy em ambiente staging.
-3. Confirmar owners e datas dos riscos abertos em `release-risk-register.md`.
+## Warnings ainda abertos
+1. Confirmação final de env vars e secrets por ambiente no momento da promoção.
+2. Smoke pós-deploy obrigatório (PWA/offline + OAuth + billing crítico).
+3. Evidência de observabilidade/alertas ativa antes do GO operacional definitivo.
 
 ## Checklist operacional de promoção
 - [ ] Tag de release definida e changelog atualizado.
 - [ ] Variáveis de ambiente de produção validadas (sem placeholders).
-- [ ] Migrações de banco revisadas (forward + rollback).
+- [ ] Migrações de banco revisadas (forward + rollback) ou marcadas não aplicáveis.
 - [ ] Monitoramento/alertas ativos para API e front.
 - [ ] Plano de comunicação de incidente e on-call de plantão.
 - [ ] Aprovação final de engenharia + produto.
