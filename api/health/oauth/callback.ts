@@ -126,7 +126,8 @@ export default async function handler(request: Request) {
     }
     if (!storedState) throw new HttpError(400, 'OAuth state is invalid or expired');
 
-    const redirectTo = sanitizeRedirectTarget(storedState.redirect_to, getBaseUrl(request));
+    const baseUrl = getBaseUrl(request);
+    const redirectTo = sanitizeRedirectTarget(storedState.redirect_to, baseUrl);
     const provider = storedState.provider as OAuthProvider;
 
     if (oauthError) {
@@ -146,7 +147,6 @@ export default async function handler(request: Request) {
 
     if (!code) throw new HttpError(400, 'OAuth code is required');
 
-    const baseUrl = getBaseUrl(request); // <- Definido antes do uso
     const token = await exchangeToken(provider, code, `${baseUrl}/api/health/oauth/callback`);
     if (!token.access_token) {
       throw new Error(token.error_description || token.error || 'OAuth token response did not include access_token');
