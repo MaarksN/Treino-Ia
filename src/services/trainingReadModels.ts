@@ -2,7 +2,7 @@ import {
   type TrainingPlan,
   type UserProfile,
   type WorkoutSession,
-} from './database';
+} from './database/database.types';
 
 export interface TrainingProfileRow {
   profile_json?: Partial<UserProfile> | null;

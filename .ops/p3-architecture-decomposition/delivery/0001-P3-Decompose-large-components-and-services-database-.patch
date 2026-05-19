@@ -1,0 +1,373 @@
+From 328a5bcc16cba0f836767abdee53f01f0d00cefc Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Mon, 18 May 2026 11:43:21 +0000
+Subject: [PATCH] P3: Decompose large components and services (database types +
+ workout helpers)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+### Motivation
+- Reduce architectural debt by starting a safe, incremental decomposition of large "god" files without changing visible behavior or tests.
+- Separate UI helpers from container/orchestration logic in `WorkoutDashboard` and reduce conceptual coupling between `database.ts` and `trainingReadModels.ts` by moving domain types to a shared module.
+- Create operational artifacts to document the decomposition plan, import map, risks and evidence for traceability and next phases.
+
+### Description
+- Extracted domain types into `src/services/database/database.types.ts` and re-exported them from `src/services/database.ts` to preserve existing imports/compatibility.
+- Updated `src/services/trainingReadModels.ts` to import only the pure types from `database.database.types` to break the conceptual cycle with `database.ts`.
+- Extracted pure helper logic from `src/components/WorkoutDashboard.tsx` into `src/components/workout-dashboard/workoutDashboard.helpers.ts` and updated the component to import those helpers.
+- Added operational documentation under `.ops/p3-architecture-decomposition/` (`decomposition-plan.md`, `evidence.md`, `import-map.md`, `risk-register.md`) to record scope, decisions and next actions while keeping `DatabaseService` façade unchanged.
+
+### Testing
+- Ran `git diff --check` and `npm run lint` with no blocking issues reported.
+- Ran `npm run typecheck` and TypeScript reported no errors after the refactor.
+- Ran the test suite with `npm test` and observed all tests pass (`140` test files, `534` tests passed).
+- Built the app with `npm run build` and the production build completed successfully.
+---
+ .../decomposition-plan.md                     |   6 +
+ .../p3-architecture-decomposition/evidence.md |  37 +++++++
+ .../import-map.md                             |   5 +
+ .../risk-register.md                          |   8 ++
+ src/components/WorkoutDashboard.tsx           |  40 +------
+ .../workoutDashboard.helpers.ts               |  39 +++++++
+ src/services/database.ts                      | 104 ++----------------
+ src/services/database/database.types.ts       |  10 ++
+ src/services/trainingReadModels.ts            |   2 +-
+ 9 files changed, 117 insertions(+), 134 deletions(-)
+ create mode 100644 .ops/p3-architecture-decomposition/decomposition-plan.md
+ create mode 100644 .ops/p3-architecture-decomposition/evidence.md
+ create mode 100644 .ops/p3-architecture-decomposition/import-map.md
+ create mode 100644 .ops/p3-architecture-decomposition/risk-register.md
+ create mode 100644 src/components/workout-dashboard/workoutDashboard.helpers.ts
+ create mode 100644 src/services/database/database.types.ts
+
+diff --git a/.ops/p3-architecture-decomposition/decomposition-plan.md b/.ops/p3-architecture-decomposition/decomposition-plan.md
+new file mode 100644
+index 0000000..078804f
+--- /dev/null
++++ b/.ops/p3-architecture-decomposition/decomposition-plan.md
+@@ -0,0 +1,6 @@
++| Arquivo | Linhas | Responsabilidades atuais | Extrações seguras | Risco | Decisão |
++|---|---:|---|---|---|---|
++| src/components/platform/AdvancedPlatformHub.tsx | 1115 | Hub único com navegação, métricas, painéis operacionais e utilitários locais | Extrair tipos/constantes/painéis puros por etapas mantendo wrapper | Médio (regressão visual) | Planejado, sem mudança estrutural agressiva nesta fase |
++| src/components/WorkoutDashboard.tsx | 993 | Container de treino + UI + helpers locais | Extrair helpers puros para módulo dedicado (`workout-dashboard`) | Baixo | Executado |
++| src/services/database.ts | 384 | Façade de persistência + tipos de domínio + fallback local/cloud | Extrair tipos para `database.types.ts` e manter façade | Baixo | Executado |
++| src/services/trainingReadModels.ts | 72 | Mappers de leitura/escrita para JSONB e validação básica | Depender de tipos puros sem importar `database.ts` | Baixo | Executado |
+diff --git a/.ops/p3-architecture-decomposition/evidence.md b/.ops/p3-architecture-decomposition/evidence.md
+new file mode 100644
+index 0000000..1f65459
+--- /dev/null
++++ b/.ops/p3-architecture-decomposition/evidence.md
+@@ -0,0 +1,37 @@
++# P3 Architecture Decomposition — Evidence
++
++## 1) Objetivo
++Reduzir acoplamento arquitetural e iniciar decomposição segura sem alterar comportamento funcional.
++
++## 2) Arquivos auditados
++- src/components/platform/AdvancedPlatformHub.tsx
++- src/components/WorkoutDashboard.tsx
++- src/services/database.ts
++- src/services/trainingReadModels.ts
++- Top 30 maiores arquivos via `find ... wc -l | sort -nr | head -30`
++
++## 3) Arquivos extraídos
++- src/services/database/database.types.ts
++- src/components/workout-dashboard/workoutDashboard.helpers.ts
++
++## 4) Comportamento preservado
++- Nenhuma feature nova.
++- Fluxo de treino e persistência mantidos.
++- API pública `DatabaseService` preservada.
++
++## 5) Testes adicionados/ajustados
++- Sem novos testes nesta etapa; suíte existente executada integralmente.
++
++## 6) Resultado real dos comandos
++- `npm run lint` ✅
++- `npm run typecheck` ✅
++- `npm test` ✅ (140 arquivos / 534 testes)
++- `npm run build` ✅
++
++## 7) Limitações
++- `AdvancedPlatformHub` ainda monolítico; extração estrutural completa ficará para fase incremental.
++- `database.ts` ainda centraliza operações; extração de repositories pendente.
++
++## 8) Próxima fase recomendada
++- Extrair painéis de UI de `AdvancedPlatformHub` em arquivos dedicados.
++- Extrair repositories de `database.ts` (profile/plan/history/localFallback) mantendo façade.
+diff --git a/.ops/p3-architecture-decomposition/import-map.md b/.ops/p3-architecture-decomposition/import-map.md
+new file mode 100644
+index 0000000..9e5a358
+--- /dev/null
++++ b/.ops/p3-architecture-decomposition/import-map.md
+@@ -0,0 +1,5 @@
++| Import antigo | Import novo | Compatibilidade mantida? |
++|---|---|---|
++| `../services/database` (tipos) | `../services/database` (re-exporta de `database/database.types`) | Sim |
++| `./database` em `trainingReadModels.ts` | `./database/database.types` | Sim (sem impacto externo) |
++| Helpers internos de `WorkoutDashboard.tsx` | `./workout-dashboard/workoutDashboard.helpers` | Sim |
+diff --git a/.ops/p3-architecture-decomposition/risk-register.md b/.ops/p3-architecture-decomposition/risk-register.md
+new file mode 100644
+index 0000000..fb6a27c
+--- /dev/null
++++ b/.ops/p3-architecture-decomposition/risk-register.md
+@@ -0,0 +1,8 @@
++| Risco | Mitigação | Próxima ação |
++|---|---|---|
++| Quebra de import por mover tipos | Re-export de tipos no `database.ts` | Migrar consumidores gradualmente para imports diretos de tipos |
++| Regressão visual em dashboard | Refactor limitado a helpers puros sem mudar JSX | Extrair painéis visuais em fases menores com snapshot/UI test |
++| Alteração de comportamento de treino | Sem alteração de fluxo; somente extração de funções idênticas | Adicionar testes unitários dedicados dos helpers extraídos |
++| Falta de teste UI | Validação por lint/type/test/build existentes | Evoluir suíte de componentes em fase seguinte |
++| Circular dependency | `trainingReadModels` passa a depender de `database.types` | Adicionar checagem automatizada de dependências circulares |
++| Façade database ainda grande | Extração inicial somente de tipos para reduzir acoplamento | Próxima fase: extrair repositories local/cloud mantendo API |
+diff --git a/src/components/WorkoutDashboard.tsx b/src/components/WorkoutDashboard.tsx
+index 75bcab2..f7c750b 100644
+--- a/src/components/WorkoutDashboard.tsx
++++ b/src/components/WorkoutDashboard.tsx
+@@ -48,6 +48,7 @@ import { detectPlateau, parseFirstNumber, shouldSuggestDeload } from '../utils/w
+ import { getJSON, STORAGE_KEYS, updateWorkoutStreak, WorkoutStreak } from '../utils/storage';
+ import { extractAndSavePRsFromPlan, getPRForExercise } from '../utils/prUtils';
+ import { calculateReadiness as calculateDailyReadiness, getOvertrainingRisk } from '../utils/readinessUtils';
++import { RECOVERY_FIELDS, createDefaultReadiness, formatAiPanelResult, parseRestToSeconds } from './workout-dashboard/workoutDashboard.helpers';
+ 
+ interface Props {
+   plan: WorkoutPlan;
+@@ -71,45 +72,6 @@ interface Props {
+   userProfile?: UserProfile;
+ }
+ 
+-const parseRestToSeconds = (rest: string) => {
+-  const match = rest.match(/\d+/);
+-  return match ? Number(match[0]) : 90;
+-};
+-
+-const RECOVERY_FIELDS = [
+-  { key: 'sorenessLevel', label: 'Dor' },
+-  { key: 'stressLevel', label: 'Stress' },
+-  { key: 'energyLevel', label: 'Energia' },
+-] as const;
+-
+-function createDefaultReadiness(profile: UserProfile | null): RecoveryCheckin {
+-  const parsedSleep = Number(profile?.sleepHours || 7);
+-
+-  return {
+-    sleepHours: Number.isFinite(parsedSleep) ? parsedSleep : 7,
+-    stressLevel: profile?.stressLevel === 'Alto' ? 8 : profile?.stressLevel === 'Baixo' ? 3 : 5,
+-    sorenessLevel: 4,
+-    energyLevel: 7,
+-    timestamp: Date.now(),
+-  };
+-}
+-
+-function formatAiPanelResult(result: unknown): string {
+-  if (typeof result === 'string') return result;
+-  if (!result || typeof result !== 'object') return 'Sem resposta estruturada.';
+-
+-  const maybeStructured = result as { data?: unknown; audit?: { reason?: string; deterministicFlags?: string[] } };
+-  if (!('data' in maybeStructured)) return JSON.stringify(result, null, 2);
+-
+-  const flags = maybeStructured.audit?.deterministicFlags?.length
+-    ? `\n\nAuditoria: ${maybeStructured.audit.deterministicFlags.join(', ')}`
+-    : maybeStructured.audit?.reason
+-      ? `\n\nAuditoria: ${maybeStructured.audit.reason}`
+-      : '';
+-
+-  return `${JSON.stringify(maybeStructured.data, null, 2)}${flags}`;
+-}
+-
+ export function WorkoutDashboard({
+   plan,
+   history,
+diff --git a/src/components/workout-dashboard/workoutDashboard.helpers.ts b/src/components/workout-dashboard/workoutDashboard.helpers.ts
+new file mode 100644
+index 0000000..0c5eacd
+--- /dev/null
++++ b/src/components/workout-dashboard/workoutDashboard.helpers.ts
+@@ -0,0 +1,39 @@
++import type { RecoveryCheckin, UserProfile } from '../../types';
++
++export const parseRestToSeconds = (rest: string) => {
++  const match = rest.match(/\d+/);
++  return match ? Number(match[0]) : 90;
++};
++
++export const RECOVERY_FIELDS = [
++  { key: 'sorenessLevel', label: 'Dor' },
++  { key: 'stressLevel', label: 'Stress' },
++  { key: 'energyLevel', label: 'Energia' },
++] as const;
++
++export function createDefaultReadiness(profile: UserProfile | null): RecoveryCheckin {
++  const parsedSleep = Number(profile?.sleepHours || 7);
++  return {
++    sleepHours: Number.isFinite(parsedSleep) ? parsedSleep : 7,
++    stressLevel: profile?.stressLevel === 'Alto' ? 8 : profile?.stressLevel === 'Baixo' ? 3 : 5,
++    sorenessLevel: 4,
++    energyLevel: 7,
++    timestamp: Date.now(),
++  };
++}
++
++export function formatAiPanelResult(result: unknown): string {
++  if (typeof result === 'string') return result;
++  if (!result || typeof result !== 'object') return 'Sem resposta estruturada.';
++
++  const maybeStructured = result as { data?: unknown; audit?: { reason?: string; deterministicFlags?: string[] } };
++  if (!('data' in maybeStructured)) return JSON.stringify(result, null, 2);
++
++  const flags = maybeStructured.audit?.deterministicFlags?.length
++    ? `\n\nAuditoria: ${maybeStructured.audit.deterministicFlags.join(', ')}`
++    : maybeStructured.audit?.reason
++      ? `\n\nAuditoria: ${maybeStructured.audit.reason}`
++      : '';
++
++  return `${JSON.stringify(maybeStructured.data, null, 2)}${flags}`;
++}
+diff --git a/src/services/database.ts b/src/services/database.ts
+index 71c1b34..f961713 100644
+--- a/src/services/database.ts
++++ b/src/services/database.ts
+@@ -8,100 +8,16 @@ import {
+   readWorkoutSessionJson,
+ } from './trainingReadModels';
+ 
+-export type TrainingLevel = 'iniciante' | 'intermediario' | 'avancado';
+-export type ExerciseIntensityTechnique = 'normal' | 'superset' | 'dropset';
+-
+-export interface UserProfile {
+-  id: string;
+-  name: string;
+-  level: TrainingLevel;
+-  goal: string;
+-  daysPerWeek: number;
+-  timePerWorkout: number;
+-  injuries: string;
+-  equipment: string;
+-  updatedAt?: number;
+-}
+-
+-export interface ExercisePrescription {
+-  id: string;
+-  name: string;
+-  muscleGroup: string;
+-  sets: number;
+-  reps: string;
+-  rest: string;
+-  notes: string;
+-  intensityTechnique?: ExerciseIntensityTechnique;
+-  supersetGroupId?: string;
+-}
+-
+-export interface WorkoutDayPlan {
+-  id: string;
+-  dayName: string;
+-  focus: string;
+-  exercises: ExercisePrescription[];
+-}
+-
+-export interface TrainingPlan {
+-  id: string;
+-  createdAt: number;
+-  planName: string;
+-  goalDescription: string;
+-  volume: string;
+-  frequency: string;
+-  focus: string;
+-  weeklySplit: string;
+-  aiRecommendation: string;
+-  nextRecommendation: string;
+-  days: WorkoutDayPlan[];
+-}
+-
+-export interface ExerciseSet {
+-  weight: number;
+-  reps: number;
+-  rpe: number;
+-}
+-
+-export interface WorkoutExerciseLog {
+-  exerciseId: string;
+-  name: string;
+-  targetSets: number;
+-  targetReps: string;
+-  targetRest: string;
+-  completed: boolean;
+-  sets?: ExerciseSet[];
+-  exerciseNote?: string;
+-  intensityTechnique?: ExerciseIntensityTechnique;
+-  supersetGroupId?: string;
+-  // Legacy fields for backward compatibility
+-  actualWeight?: number;
+-  actualReps?: number;
+-  rpe?: number;
+-}
+-
+-export interface WorkoutSession {
+-  id: string;
+-  planId: string;
+-  dayId: string;
+-  dayName: string;
+-  focus: string;
+-  completedAt: number;
+-  durationMinutes: number;
+-  totalVolume: number;
+-  completedExercises: number;
+-  totalExercises: number;
+-  feedback: string;
+-  nextRecommendation: string;
+-  exercises: WorkoutExerciseLog[];
+-}
+-
+-export interface PersistenceStatus {
+-  mode: 'supabase' | 'local';
+-  configured: boolean;
+-  authenticated: boolean;
+-  email: string | null;
+-  message: string;
+-}
++import type {
++  ExerciseIntensityTechnique,
++  PersistenceStatus,
++  TrainingLevel,
++  TrainingPlan,
++  UserProfile,
++  WorkoutSession,
++} from './database/database.types';
++
++export type * from './database/database.types';
+ 
+ const STORAGE_KEYS = {
+   profile: '@TreinoIA:profile',
+diff --git a/src/services/database/database.types.ts b/src/services/database/database.types.ts
+new file mode 100644
+index 0000000..0d31d41
+--- /dev/null
++++ b/src/services/database/database.types.ts
+@@ -0,0 +1,10 @@
++export type TrainingLevel = 'iniciante' | 'intermediario' | 'avancado';
++export type ExerciseIntensityTechnique = 'normal' | 'superset' | 'dropset';
++export interface UserProfile { id: string; name: string; level: TrainingLevel; goal: string; daysPerWeek: number; timePerWorkout: number; injuries: string; equipment: string; updatedAt?: number; }
++export interface ExercisePrescription { id: string; name: string; muscleGroup: string; sets: number; reps: string; rest: string; notes: string; intensityTechnique?: ExerciseIntensityTechnique; supersetGroupId?: string; }
++export interface WorkoutDayPlan { id: string; dayName: string; focus: string; exercises: ExercisePrescription[]; }
++export interface TrainingPlan { id: string; createdAt: number; planName: string; goalDescription: string; volume: string; frequency: string; focus: string; weeklySplit: string; aiRecommendation: string; nextRecommendation: string; days: WorkoutDayPlan[]; }
++export interface ExerciseSet { weight: number; reps: number; rpe: number; }
++export interface WorkoutExerciseLog { exerciseId: string; name: string; targetSets: number; targetReps: string; targetRest: string; completed: boolean; sets?: ExerciseSet[]; exerciseNote?: string; intensityTechnique?: ExerciseIntensityTechnique; supersetGroupId?: string; actualWeight?: number; actualReps?: number; rpe?: number; }
++export interface WorkoutSession { id: string; planId: string; dayId: string; dayName: string; focus: string; completedAt: number; durationMinutes: number; totalVolume: number; completedExercises: number; totalExercises: number; feedback: string; nextRecommendation: string; exercises: WorkoutExerciseLog[]; }
++export interface PersistenceStatus { mode: 'supabase' | 'local'; configured: boolean; authenticated: boolean; email: string | null; message: string; }
+diff --git a/src/services/trainingReadModels.ts b/src/services/trainingReadModels.ts
+index 1224943..ea8e13c 100644
+--- a/src/services/trainingReadModels.ts
++++ b/src/services/trainingReadModels.ts
+@@ -2,7 +2,7 @@ import {
+   type TrainingPlan,
+   type UserProfile,
+   type WorkoutSession,
+-} from './database';
++} from './database/database.types';
+ 
+ export interface TrainingProfileRow {
+   profile_json?: Partial<UserProfile> | null;
+-- 
+2.43.0
+
