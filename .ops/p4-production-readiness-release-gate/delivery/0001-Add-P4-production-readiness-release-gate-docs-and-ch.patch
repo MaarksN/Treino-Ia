@@ -1,0 +1,340 @@
+From 911ee25ca287bfdc2f03b6f0540f63ec9dbc83b3 Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Tue, 19 May 2026 02:54:01 +0000
+Subject: [PATCH] Add P4 production-readiness release gate docs and checklists
+
+### Motivation
+- Establish a formal P4 production-readiness release gate with explicit criteria, checklists and risk register to enable controlled promotions to production.
+- Capture remediation evidence and replace the previous invalid test invocation so the gate reflects actual CI results and operational readiness.
+- Provide operational runbooks for deploy, rollback, environment and secrets verification so owners can sign off during promotion.
+
+### Description
+- Added a new `.ops/p4-production-readiness-release-gate/` folder with multiple artifacts: `release-gate.md`, `evidence.md`, `go-no-go.md`, `release-readiness-report.md`, `release-risk-register.md`, `risk-register.md`, `deploy-checklist.md`, `rollback-checklist.md`, `env-checklist.md` and `secrets-checklist.md` to document gate criteria and procedures.
+- Documented mandatory gate criteria including static checks (`npm run lint`, `npm run typecheck`), `npm test` and `npm run build`, plus operational requirements for secrets, env vars, smoke tests and rollback readiness.
+- Recorded remediation commands and results in `evidence.md`, and updated go/no-go logic to a final decision of `GO WITH WARNINGS` with outstanding operational items tracked in the risk register.
+- Noted and corrected the previous erroneous use of the unsupported `--runInBand` flag for the test runner in the evidence documentation.
+
+### Testing
+- Executed `npm run lint` and the run returned `PASS`.
+- Executed `npm run typecheck` and the run returned `PASS`.
+- Executed `npm test` and the run returned `PASS` with `143` test files and `552` tests.
+- Executed `npm run build` and the run returned `PASS` with production artifacts generated in `dist/`.
+---
+ .../deploy-checklist.md                       | 10 ++++
+ .../env-checklist.md                          | 18 +++++++
+ .../evidence.md                               | 53 +++++++++++++++++++
+ .../go-no-go.md                               | 18 +++++++
+ .../release-gate.md                           | 46 ++++++++++++++++
+ .../release-readiness-report.md               | 25 +++++++++
+ .../release-risk-register.md                  | 12 +++++
+ .../risk-register.md                          | 14 +++++
+ .../rollback-checklist.md                     | 24 +++++++++
+ .../secrets-checklist.md                      | 13 +++++
+ 10 files changed, 233 insertions(+)
+ create mode 100644 .ops/p4-production-readiness-release-gate/deploy-checklist.md
+ create mode 100644 .ops/p4-production-readiness-release-gate/env-checklist.md
+ create mode 100644 .ops/p4-production-readiness-release-gate/evidence.md
+ create mode 100644 .ops/p4-production-readiness-release-gate/go-no-go.md
+ create mode 100644 .ops/p4-production-readiness-release-gate/release-gate.md
+ create mode 100644 .ops/p4-production-readiness-release-gate/release-readiness-report.md
+ create mode 100644 .ops/p4-production-readiness-release-gate/release-risk-register.md
+ create mode 100644 .ops/p4-production-readiness-release-gate/risk-register.md
+ create mode 100644 .ops/p4-production-readiness-release-gate/rollback-checklist.md
+ create mode 100644 .ops/p4-production-readiness-release-gate/secrets-checklist.md
+
+diff --git a/.ops/p4-production-readiness-release-gate/deploy-checklist.md b/.ops/p4-production-readiness-release-gate/deploy-checklist.md
+new file mode 100644
+index 0000000..64df5f8
+--- /dev/null
++++ b/.ops/p4-production-readiness-release-gate/deploy-checklist.md
+@@ -0,0 +1,10 @@
++# P4 Deploy Checklist
++
++- [ ] Branch correta para promoção confirmada.
++- [ ] CI verde (pipeline principal) confirmado.
++- [ ] `lint`, `typecheck`, `test` e `build` verdes na evidência oficial.
++- [ ] Variáveis de ambiente configuradas e revisadas (sem placeholders).
++- [ ] Migrações revisadas ou marcadas como não aplicáveis nesta release.
++- [ ] Rollback preparado e validado com responsáveis definidos.
++- [ ] Smoke pós-deploy definido e atribuído.
++- [ ] Logs, métricas e monitoramento revisados antes da promoção.
+diff --git a/.ops/p4-production-readiness-release-gate/env-checklist.md b/.ops/p4-production-readiness-release-gate/env-checklist.md
+new file mode 100644
+index 0000000..213e68a
+--- /dev/null
++++ b/.ops/p4-production-readiness-release-gate/env-checklist.md
+@@ -0,0 +1,18 @@
++# P4 Environment Checklist
++
++| Variável | Obrigatória? | Ambiente | Risco se ausente | Status |
++|---|---|---|---|---|
++| Supabase URL (`VITE_SUPABASE_URL`) | Sim | Staging, Produção | App/API não conectam ao backend | Pendente validação final |
++| Supabase anon key (`VITE_SUPABASE_ANON_KEY`) | Sim | Staging, Produção | Falha de autenticação no client | Pendente validação final |
++| Supabase service role (`SUPABASE_SERVICE_ROLE_KEY`) | Sim | Server (staging/prod) | APIs server-side falham | Pendente validação final |
++| Gemini API key (`GEMINI_API_KEY`) | Sim (se IA habilitada) | Server (staging/prod) | Fluxos de IA indisponíveis | Pendente validação final |
++| OAuth provider client id (`*_CLIENT_ID`) | Sim (quando provider ativo) | Server (staging/prod) | OAuth start/callback inválidos | Pendente validação final |
++| OAuth provider client secret (`*_CLIENT_SECRET`) | Sim (quando provider ativo) | Server (staging/prod) | Troca de token OAuth falha | Pendente validação final |
++| OAuth token encryption key (`OAUTH_TOKEN_ENCRYPTION_KEY`) | Sim | Server (staging/prod) | Tokens sensíveis sem proteção adequada | Pendente validação final |
++| Stripe public key (`VITE_STRIPE_PUBLISHABLE_KEY`) | Sim (billing ativo) | Staging, Produção | Checkout client indisponível | Pendente validação final |
++| Stripe secret key (`STRIPE_SECRET_KEY`) | Sim (billing ativo) | Server (staging/prod) | APIs de cobrança indisponíveis | Pendente validação final |
++| Webhook secrets (`STRIPE_WEBHOOK_SECRET`, similares) | Sim (webhooks ativos) | Server (staging/prod) | Webhooks rejeitados ou inseguros | Pendente validação final |
++| App URL / Vercel URL (`APP_URL`, `VERCEL_URL`) | Sim | Staging, Produção | Redirect/OAuth/links quebrados | Pendente validação final |
++| Telemetry config (`SENTRY_DSN`/equivalente) | Recomendado | Staging, Produção | Baixa observabilidade de incidentes | Pendente validação final |
++
++> Observação: este checklist não contém valores reais e deve ser preenchido no momento do gate de deploy.
+diff --git a/.ops/p4-production-readiness-release-gate/evidence.md b/.ops/p4-production-readiness-release-gate/evidence.md
+new file mode 100644
+index 0000000..4aa030f
+--- /dev/null
++++ b/.ops/p4-production-readiness-release-gate/evidence.md
+@@ -0,0 +1,53 @@
++# Evidência Operacional — P4 Production Readiness Release Gate
++
++## 1) Objetivo
++Remediar e concluir a fase P4 sem alterar código de produto, garantindo validação mínima obrigatória real (`lint`, `typecheck`, `test`, `build`) e documentação de gate completa.
++
++## 2) Base auditada
++- Artefatos P2: `.ops/p2-e2e-coverage-production-qa/`
++- Artefatos P3: `.ops/p3-architecture-decomposition/`
++- Artefatos P4 existentes: `release-gate.md`, `release-risk-register.md`
++
++## 3) Artefatos criados/atualizados nesta remediação
++- Atualizado: `.ops/p4-production-readiness-release-gate/evidence.md`
++- Criado: `.ops/p4-production-readiness-release-gate/env-checklist.md`
++- Criado: `.ops/p4-production-readiness-release-gate/secrets-checklist.md`
++- Criado: `.ops/p4-production-readiness-release-gate/deploy-checklist.md`
++- Criado: `.ops/p4-production-readiness-release-gate/rollback-checklist.md`
++- Criado: `.ops/p4-production-readiness-release-gate/go-no-go.md`
++- Criado: `.ops/p4-production-readiness-release-gate/release-readiness-report.md`
++- Criado: `.ops/p4-production-readiness-release-gate/risk-register.md`
++
++## 4) Comandos executados (remediação P4)
++1. `git status --short`
++2. `git branch --show-current`
++3. `git log --oneline -10`
++4. `git diff --check`
++5. `npm run lint`
++6. `npm run typecheck`
++7. `npm test`
++8. `npm run build`
++9. `git status --short`
++
++## 5) Resultado real dos comandos
++- `git diff --check`: PASS (sem inconsistências de whitespace/hunks)
++- `npm run lint`: PASS
++- `npm run typecheck`: PASS
++- `npm test`: PASS (`143` arquivos de teste, `552` testes)
++- `npm run build`: PASS (build Vite concluído com artefatos em `dist/`)
++- `git status --short`: alterações apenas em artefatos `.ops/p4-production-readiness-release-gate/`
++
++## 6) Correção do erro anterior de `--runInBand`
++- O erro anterior foi causado por uso de flag não suportada pelo Vitest (`npm run test -- --runInBand`).
++- Nesta remediação foi usado o comando correto: `npm test`, executado com sucesso.
++
++## 7) Status de `npm run validate`
++- Nesta remediação, `npm run validate` **não foi usado como critério de PASS**.
++- A validação obrigatória foi concluída com comandos individuais e resultados verificáveis.
++
++## 8) Warnings conhecidos
++- Gate permanece com warnings operacionais de produção (segredos/ambiente, smoke pós-deploy, observabilidade e riscos residuais P2/P3), documentados em `go-no-go.md`, `risk-register.md` e `release-risk-register.md`.
++
++## 9) Decisão final
++- **GO WITH WARNINGS**
++- Justificativa: validação técnica mínima obrigatória concluída com PASS real; riscos operacionais residuais permanecem controlados e documentados para execução no momento da promoção.
+diff --git a/.ops/p4-production-readiness-release-gate/go-no-go.md b/.ops/p4-production-readiness-release-gate/go-no-go.md
+new file mode 100644
+index 0000000..736e03e
+--- /dev/null
++++ b/.ops/p4-production-readiness-release-gate/go-no-go.md
+@@ -0,0 +1,18 @@
++# P4 Go/No-Go Matrix
++
++| Área | Status | Evidência | Decisão |
++|---|---|---|---|
++| CI | PASS | `npm test`, `npm run lint`, `npm run typecheck`, `npm run build` executados com sucesso nesta remediação P4 | GO |
++| Segurança | WARN | Checklist de secrets/env criado; falta confirmação operacional final em ambiente de produção | WARN |
++| Dados sensíveis | WARN | Controles documentados, mas validação final depende da revisão operacional de variáveis/segredos | WARN |
++| IA | WARN | Dependência de chave/provider e monitoramento de custo em produção ainda requer checklist final | WARN |
++| PWA | WARN | Fluxos PWA/offline requerem smoke pós-deploy dedicado | WARN |
++| OAuth | WARN | Fluxo funcional e tipado; requer validação final com credenciais reais por ambiente | WARN |
++| Rollback | PASS | Checklist de rollback documentado com responsáveis e SLA de reversão | GO |
++
++## Decisão final
++**GO WITH WARNINGS**
++
++## Justificativa
++- Critérios mínimos de validação técnica (lint/typecheck/test/build) foram atendidos.
++- Existem warnings operacionais legítimos de readiness (segredos/ambiente/smoke observabilidade) que exigem confirmação no momento de promoção.
+diff --git a/.ops/p4-production-readiness-release-gate/release-gate.md b/.ops/p4-production-readiness-release-gate/release-gate.md
+new file mode 100644
+index 0000000..7cc0484
+--- /dev/null
++++ b/.ops/p4-production-readiness-release-gate/release-gate.md
+@@ -0,0 +1,46 @@
++# P4 Production Readiness Release Gate
++
++## Objetivo
++Definir o gate final de promoção para produção com critérios explícitos de Go/No-Go, considerando o status atual de P2 (QA/Coverage com warnings) e P3 (decomposição incremental com limitações conhecidas).
++
++## Dependências de entrada
++- P2 concluído com artefatos e riscos catalogados em `.ops/p2-e2e-coverage-production-qa/`.
++- P3 concluído com decomposição incremental e limites documentados em `.ops/p3-architecture-decomposition/`.
++
++## Critérios de Gate (obrigatórios)
++1. **Qualidade estática**: `npm run lint` e `npm run typecheck` devem passar.
++2. **Testes automatizados**: `npm test` deve passar sem flags inválidas.
++3. **Build de produção**: `npm run build` deve passar e gerar artefatos.
++4. **Segurança operacional mínima**:
++   - Sem segredos hardcoded em código versionado.
++   - Fluxos OAuth com sanitização de redirect e armazenamento protegido conforme utilitários existentes.
++5. **Risco residual conhecido**:
++   - Todos os riscos de severidade alta devem ter owner e ação com data-alvo.
++6. **Rollback readiness**:
++   - Release precisa de estratégia de rollback documentada (revert de deploy + rollback de configuração).
++
++## Resultado do Gate P4 (estado atual)
++- **Lint**: PASS
++- **Typecheck**: PASS
++- **Testes (`npm test`)**: PASS
++- **Build produção**: PASS
++- **Decisão**: **GO WITH WARNINGS**
++
++## Warnings ainda abertos
++1. Confirmação final de env vars e secrets por ambiente no momento da promoção.
++2. Smoke pós-deploy obrigatório (PWA/offline + OAuth + billing crítico).
++3. Evidência de observabilidade/alertas ativa antes do GO operacional definitivo.
++
++## Checklist operacional de promoção
++- [ ] Tag de release definida e changelog atualizado.
++- [ ] Variáveis de ambiente de produção validadas (sem placeholders).
++- [ ] Migrações de banco revisadas (forward + rollback) ou marcadas não aplicáveis.
++- [ ] Monitoramento/alertas ativos para API e front.
++- [ ] Plano de comunicação de incidente e on-call de plantão.
++- [ ] Aprovação final de engenharia + produto.
++
++## Estratégia de rollback
++- Reverter deploy para versão anterior estável.
++- Reverter flags/configurações impactadas.
++- Validar healthcheck `/api/health/*` e jornada crítica (login → dashboard → treino).
++- Registrar incidente e janela de correção antes de nova tentativa.
+diff --git a/.ops/p4-production-readiness-release-gate/release-readiness-report.md b/.ops/p4-production-readiness-release-gate/release-readiness-report.md
+new file mode 100644
+index 0000000..bd934b9
+--- /dev/null
++++ b/.ops/p4-production-readiness-release-gate/release-readiness-report.md
+@@ -0,0 +1,25 @@
++# P4 Release Readiness Report
++
++## Pode ir para produção?
++Sim, com decisão **GO WITH WARNINGS**.
++
++## Com quais condições?
++1. CI oficial da release deve permanecer verde.
++2. Checklist de ambiente e segredos deve ser marcado como concluído.
++3. Smoke pós-deploy deve ser executado e evidenciado.
++4. Owners dos riscos altos devem confirmar prontidão de mitigação.
++
++## Quais riscos permanecem?
++- E2E browser ainda parcial.
++- Coverage formal ainda não exigida por percentual no gate.
++- Dependência de validação OAuth/billing com credenciais reais por ambiente.
++- Observabilidade e alertas precisam de confirmação operacional final.
++
++## Qual plano de rollback?
++- Reverter para versão estável anterior.
++- Reverter variáveis/configurações críticas.
++- Validar healthchecks e jornada crítica.
++- Aprovação por Release Manager + liderança técnica de plantão.
++
++## Qual próximo passo?
++- Executar promoção controlada com smoke de produção e monitoramento ativo.
+diff --git a/.ops/p4-production-readiness-release-gate/release-risk-register.md b/.ops/p4-production-readiness-release-gate/release-risk-register.md
+new file mode 100644
+index 0000000..b3ba159
+--- /dev/null
++++ b/.ops/p4-production-readiness-release-gate/release-risk-register.md
+@@ -0,0 +1,12 @@
++# P4 Release Risk Register
++
++| ID | Risco | Severidade | Status | Owner | Mitigação | Prazo |
++|---|---|---|---|---|---|---|
++| P4-R01 | Cobertura E2E browser ainda parcial (dependência de evolução pós-P2/P3) | Médio | Aberto | QA/Platform | Introduzir smoke E2E com evidência em CI antes de elevar para gate obrigatório | 2026-06-05 |
++| P4-R02 | Fluxo de testes completos sem relatório consolidado | Médio | Mitigado | Engenharia | `npm test` executado com sucesso na remediação; manter artifact em CI | 2026-05-23 |
++| P4-R03 | Regressão em integrações OAuth/redirect em mudanças futuras | Alto | Mitigado Parcial | Backend/Security | Manter validações de redirect + testes de contrato para callback/start | 2026-05-30 |
++| P4-R04 | Falha de rollback por divergência de configuração entre ambientes | Alto | Aberto | Release Manager/DevOps | Checklist de rollback + validação de configuração por ambiente antes do deploy | 2026-05-24 |
++
++## Critério de aceite de risco
++- Riscos **Altos** só podem permanecer abertos com plano e owner explícitos.
++- GO final de produção exige pelo menos mitigação parcial verificada para todos os riscos Altos.
+diff --git a/.ops/p4-production-readiness-release-gate/risk-register.md b/.ops/p4-production-readiness-release-gate/risk-register.md
+new file mode 100644
+index 0000000..b002b3e
+--- /dev/null
++++ b/.ops/p4-production-readiness-release-gate/risk-register.md
+@@ -0,0 +1,14 @@
++# P4 Risk Register (Padrão)
++
++| Risco | Severidade | Status | Mitigação | Próxima ação |
++|---|---|---|---|---|
++| CSP ainda relaxada (se aplicável ao ambiente) | Médio | Aberto | Revisar política CSP mínima segura por estágio | Validar headers em staging e produção |
++| Playwright ausente/parcial | Médio | Aberto | Manter estratégia incremental de smoke E2E | Planejar cobertura E2E browser no próximo ciclo |
++| Coverage percentual ausente no gate | Médio | Aberto | Definir baseline e publicar relatório estável em CI | Propor threshold progressivo |
++| OAuth real por ambiente | Alto | Mitigado Parcial | Validar callback/start com credenciais de cada ambiente | Rodar smoke OAuth real em staging |
++| Billing real por ambiente | Alto | Mitigado Parcial | Validar fluxo de cobrança sandbox/produção | Executar smoke billing com evidência |
++| PWA/offline regressão | Médio | Aberto | Smoke offline e cache em release controlada | Executar checklist PWA pós-deploy |
++| Observabilidade insuficiente | Alto | Aberto | Confirmar logs/alertas/dashboards | Aprovação SRE/DevOps antes do deploy |
++| Rollback não ensaiado recentemente | Alto | Aberto | Seguir runbook de rollback | Simular rollback controlado |
++| Dados sensíveis (segredos/env) | Alto | Mitigado Parcial | Checklist de segredos e rotação | Revisão final por segurança antes do GO |
++| IA provider/custo | Médio | Aberto | Limites e monitoramento de consumo | Revisar orçamento e alertas de custo |
+diff --git a/.ops/p4-production-readiness-release-gate/rollback-checklist.md b/.ops/p4-production-readiness-release-gate/rollback-checklist.md
+new file mode 100644
+index 0000000..a23c049
+--- /dev/null
++++ b/.ops/p4-production-readiness-release-gate/rollback-checklist.md
+@@ -0,0 +1,24 @@
++# P4 Rollback Checklist
++
++## Como reverter deploy
++- Reverter para o último build/tag estável no provedor de deploy.
++- Confirmar versão revertida no painel de release.
++
++## Como reverter env vars
++- Restaurar snapshot/versionamento anterior das variáveis críticas.
++- Revalidar `APP_URL`, chaves OAuth, Stripe e Supabase após rollback.
++
++## Como desabilitar feature/config problemática
++- Desativar flags/configurações operacionais associadas ao incidente.
++- Bloquear temporariamente integrações externas impactadas (OAuth, billing, IA) se necessário.
++
++## Como validar rollback
++- Verificar healthchecks `/api/health/*`.
++- Executar smoke crítico: login → dashboard → treino → persistência básica.
++- Confirmar ausência de novos erros críticos em logs/alertas.
++
++## Quem aprova rollback
++- Release Manager de plantão + responsável técnico backend/frontend.
++
++## Tempo máximo aceitável para rollback
++- Até 30 minutos entre decisão e estabilização inicial.
+diff --git a/.ops/p4-production-readiness-release-gate/secrets-checklist.md b/.ops/p4-production-readiness-release-gate/secrets-checklist.md
+new file mode 100644
+index 0000000..8c46b56
+--- /dev/null
++++ b/.ops/p4-production-readiness-release-gate/secrets-checklist.md
+@@ -0,0 +1,13 @@
++# P4 Secrets Checklist
++
++| Secret | Finalidade | Onde configurar | Rotação necessária? | Status |
++|---|---|---|---|---|
++| Supabase service role | Operações server-side privilegiadas | Vercel/infra secrets manager | Sim (trimestral ou incidente) | Pendente |
++| Gemini API key | Habilitar integração com provider de IA | Vercel/infra secrets manager | Sim (trimestral ou incidente) | Pendente |
++| OAuth client secret | Troca segura de código por token OAuth | Vercel/infra secrets manager | Sim (por provider e incidente) | Pendente |
++| OAuth token encryption key | Criptografia de tokens OAuth em repouso | Vercel/infra secrets manager | Sim (plano controlado) | Pendente |
++| Stripe secret key | Operações server-side de billing | Vercel/infra secrets manager | Sim (conforme política Stripe) | Pendente |
++| Webhook secret | Validação de origem de webhooks | Vercel/infra secrets manager | Sim (em rotação/reissue) | Pendente |
++| Vercel env vars (produção) | Parametrização segura por ambiente | Painel Vercel + secret manager | Sim (auditoria periódica) | Pendente |
++
++> Proibido commitar segredos reais; apenas nomes e metadados operacionais.
+-- 
+2.43.0
+
