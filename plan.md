@@ -1,18 +1,11 @@
-1. **Update Registry Items 76-80 Titles (`src/features/strategic-items/strategicItems.registry.ts`)**:
-   - I need to carefully inspect the current titles for 76-80 and change them to reflect the actual implemented items as instructed in `lote16.txt`.
-     - 76 -> "Co-op workouts remotos"
-     - 77 -> "Death penalty virtual"
-     - 78 -> "Modo roguelike"
-     - 79 -> "Drops cosméticos"
-     - 80 -> "Pets musculares"
-   - Update their `status` to `implemented_now` since I am implementing them locally based on history, or as UI guards.
-
-2. **Dashboard Component Update (`src/pages/Dashboard.tsx`)**:
-   - I will integrate the `RemoteGamifiedPanel` in `src/pages/Dashboard.tsx`.
-   - Calculate state via `buildRemoteGamifiedState` and render it inside the Dashboard overview, near gamification panel.
-
-3. **Complete Tests and Validation (`src/pages/Dashboard/services/remoteGamifiedEngine.test.ts`)**:
-   - Make sure test coverage is adequate.
-
-4. **Add Evidence (`.ops/16_lote_16_remote_gamified_76_77_78_79_80/evidence.md`)**:
-   - Follow the template in `lote16.txt`.
+1. **Initial Verification**: Run initial checks like `git status`, `git branch`, node/npm versions, `npm run lint`, `typecheck`, `test`, `build` and log it to `.ops/technical-debt-remediation/sprint-01/initial-state.md`. (Completed)
+2. **Audit Gamification RPCs**: Analyze SQL definitions for `apply_gamification_event`, `purchase_gamification_item`, and `open_loot_box` and create `.ops/technical-debt-remediation/sprint-01/gamification-rpc-audit.md`. (Completed)
+3. **Harden RPCs**: Create migration `20260514000000_harden_gamification_rpcs.sql` to add `SET search_path = public` and `REVOKE EXECUTE FROM PUBLIC` to prevent security risks. (Completed)
+4. **Static Security SQL Test**: Create `check_rpc_security.sh` script to verify migrations enforce `search_path` and `REVOKE EXECUTE`. (Completed)
+5. **Schema Inventory**: Create `inventory_script.cjs` to scan `src/` and `api/` for `rpc` and `from` usages, mapping them against `CREATE TABLE/FUNCTION` in versioned migrations. Generate `.ops/technical-debt-remediation/sprint-01/schema-inventory.md` and `.ops/technical-debt-remediation/sprint-01/missing-schema-report.md`. (Completed)
+6. **Schema Source of Truth Document**: Create `.ops/technical-debt-remediation/sprint-01/schema-source-of-truth.md` deciding that versioned migrations are the sole source of truth and pointing out what must be done to migrate legacy ones. (Completed)
+7. **Tenancy Decision Document**: Create `.ops/technical-debt-remediation/sprint-01/tenancy-decision-needed.md` defining the problem of SaaS versus B2B structures. (Completed)
+8. **Final Validation**: Ensure that CI commands still pass (`lint`, `typecheck`, `test`, `build`, etc.) and the automated `check_rpc_security.sh` script succeeds. Write to `.ops/technical-debt-remediation/sprint-01/validation.md`. (Completed)
+9. **Final Report & Risk Register**: Generate `.ops/technical-debt-remediation/sprint-01/final-report.md` (including the verdict `PASS WITH WARNINGS`) and `risk-register.md`. (Completed)
+10. **Pre-commit Instructions**: Complete pre-commit steps to ensure proper testing, verification, review, and reflection are done.
+11. **Submit**: Commit files with `fix: harden gamification sql and audit schema source` and submit.

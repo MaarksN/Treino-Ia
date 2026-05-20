@@ -1,0 +1,78 @@
+
+# Schema Inventory Report
+
+## Tables
+* Found in migrations: 1
+* Used in code: 59
+* Missing from migrations: 59
+
+Missing Tables:
+- ai_decision_audits
+- ai_long_term_memory
+- training_user_profiles
+- training_workout_plans
+- training_workout_history_records
+- recovery_daily_checkins
+- health_injury_records
+- health_symptom_records
+- nutrition_macro_targets
+- nutrition_meal_entries
+- nutrition_favorite_foods
+- hydration_entries
+- hydration_goals
+- sleep_entries
+- legacy_training_migration_audits
+- user_periodization_plans
+- retention_profiles
+- user_streaks
+- habit_reminders
+- health_integrations
+- habit_events
+- consistency_challenges
+- retention_badges
+- onboarding_progress
+- automated_checkins
+- alternative_workouts
+- workout_calendar_items
+- white_label_tenants
+- tenant_students
+- student_assessments
+- student_messages
+- social_profiles
+- social_follows
+- social_posts
+- social_post_likes
+- social_post_comments
+- training_groups
+- training_group_members
+- training_group_messages
+- group_challenges
+- coach_students
+- coach_private_notes
+- coach_workout_assignments
+- public_workout_templates
+- social_content_reports
+- billing_subscriptions
+- billing_usage_counters
+- stripe_webhook_events
+- gamification_ledger
+- gamification_profiles
+- gamification_missions
+- gamification_cosmetics
+- health_oauth_states
+- health_integration_tokens
+- health_sync_jobs
+- background_jobs
+- notification_deliveries
+- offline_sync_actions
+- telemetry_error_events
+
+## RPCs
+* Found in migrations: 4
+* Used in code: 4
+* Missing from migrations: 3
+
+Missing RPCs:
+- join_training_group_by_invite
+- get_group_leaderboard
+- increment_billing_usage
