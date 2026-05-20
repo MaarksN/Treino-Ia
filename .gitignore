@@ -11,3 +11,7 @@ test-results/
 .env*
 !.env.example
 *.bak
+
+# Ignore operational artifacts for orchestrator
+.ops/technical-debt-remediation/orchestrator/downloads/
+.ops/technical-debt-remediation/orchestrator/extracted/
