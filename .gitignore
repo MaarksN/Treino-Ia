@@ -4,6 +4,8 @@ node_modules_broken_*/
 build/
 dist/
 coverage/
+playwright-report/
+test-results/
 .DS_Store
 *.log
 .env*
