@@ -9,8 +9,10 @@ export default defineConfig({
   expect: {
     timeout: 10_000,
   },
+  forbidOnly: !!process.env.CI,
   fullyParallel: false,
   retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : undefined,
   reporter: [
     ['list'],
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
@@ -19,6 +21,7 @@ export default defineConfig({
     baseURL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
   },
   projects: [
     {
