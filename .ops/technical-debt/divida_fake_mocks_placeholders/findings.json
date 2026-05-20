@@ -1,0 +1,92 @@
+[
+  {
+    "id": "FAKE-01",
+    "title": "Saude/nutricao/retencao dependem de mock ou tabelas ausentes",
+    "severity": "ALTA",
+    "effort": "GRANDE",
+    "area": "Product completeness",
+    "evidence_files": [
+      "src/services/healthService.ts:18",
+      "src/services/healthService.ts:218",
+      "src/services/retentionService.ts:196"
+    ],
+    "evidence_summary": "Servicos usam mock_dev_only sem auth e tabelas sem migrations quando autenticado.",
+    "risk": "Funcionalidade aparenta estar pronta, mas pode falhar em producao.",
+    "recommendation": "Criar migrations completas ou esconder como preview.",
+    "suggested_order": 1
+  },
+  {
+    "id": "FAKE-02",
+    "title": "Webhooks simulados no frontend",
+    "severity": "ALTA",
+    "effort": "MEDIO",
+    "area": "Integracoes",
+    "evidence_files": [
+      "src/services/webhookService.ts:10",
+      "src/components/platform/AdvancedPlatformHub.tsx:609"
+    ],
+    "evidence_summary": "Entregas sao registradas em localStorage com URL example.com.",
+    "risk": "Integracao nao entrega eventos reais nem auditoria.",
+    "recommendation": "Implementar backend de webhooks ou rotular como demo.",
+    "suggested_order": 2
+  },
+  {
+    "id": "FAKE-03",
+    "title": "Sessoes ativas hardcoded",
+    "severity": "ALTA",
+    "effort": "MEDIO",
+    "area": "Security UX",
+    "evidence_files": [
+      "src/services/sessionService.ts:3"
+    ],
+    "evidence_summary": "getActiveSessions retorna Navegador atual e PWA Mobile demo.",
+    "risk": "Usuario acredita haver gestao real de sessoes.",
+    "recommendation": "Integrar com auth/session logs ou remover da UI real.",
+    "suggested_order": 3
+  },
+  {
+    "id": "FAKE-04",
+    "title": "Gamificacao season/clan/cosmetics parcial",
+    "severity": "ALTA",
+    "effort": "GRANDE",
+    "area": "Gamificacao",
+    "evidence_files": [
+      "api/gamification/state.ts:37",
+      "api/gamification/state.ts:51"
+    ],
+    "evidence_summary": "Producao retorna arrays vazios/nulos; dev retorna mocks.",
+    "risk": "Features prometidas sem backend completo.",
+    "recommendation": "Implementar estado real ou reduzir superficie.",
+    "suggested_order": 4
+  },
+  {
+    "id": "FAKE-05",
+    "title": "IA educacional e fallback estatico",
+    "severity": "MEDIA",
+    "effort": "PEQUENO",
+    "area": "AI/Product",
+    "evidence_files": [
+      "src/services/educationAiService.ts:1",
+      "src/components/platform/AdvancedPlatformHub.tsx:594"
+    ],
+    "evidence_summary": "Textos sao templates deterministicas rotuladas como fallback IA.",
+    "risk": "Expectativa de IA acima do comportamento real.",
+    "recommendation": "Rotular como deterministico ou integrar AI gateway.",
+    "suggested_order": 5
+  },
+  {
+    "id": "FAKE-06",
+    "title": "CSRF/rate limit locais demonstrativos",
+    "severity": "MEDIA",
+    "effort": "PEQUENO",
+    "area": "Security demo",
+    "evidence_files": [
+      "src/utils/csrf.ts:1",
+      "src/utils/rateLimit.ts:1"
+    ],
+    "evidence_summary": "Controles vivem em localStorage.",
+    "risk": "Demo confundida com controle real.",
+    "recommendation": "Mover protecoes para backend ou rotular como demo.",
+    "suggested_order": 6
+  }
+]

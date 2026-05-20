@@ -1,0 +1,78 @@
+[
+  {
+    "id": "TEST-01",
+    "title": "Suites nao executaveis no ambiente atual",
+    "severity": "ALTA",
+    "effort": "PEQUENO",
+    "area": "Local validation",
+    "evidence_files": [
+      "package.json",
+      "node_modules/.bin/vitest.cmd"
+    ],
+    "evidence_summary": "vitest/tsc/eslint retornaram Acesso negado; npm/pnpm ausentes no PATH.",
+    "risk": "Nao e possivel confirmar qualidade atual por execucao local.",
+    "recommendation": "Corrigir runtime Node ou validar via CI.",
+    "suggested_order": 1
+  },
+  {
+    "id": "TEST-02",
+    "title": "E2E Playwright nao roda no CI",
+    "severity": "ALTA",
+    "effort": "MEDIO",
+    "area": "CI/CD",
+    "evidence_files": [
+      ".github/workflows/ci.yml",
+      "playwright.config.ts",
+      "package.json"
+    ],
+    "evidence_summary": "CI nao chama test:e2e apesar de existir script e config.",
+    "risk": "Fluxos criticos nao bloqueiam merge.",
+    "recommendation": "Adicionar job Playwright smoke.",
+    "suggested_order": 2
+  },
+  {
+    "id": "TEST-03",
+    "title": "RLS/RPC criticos sem testes",
+    "severity": "ALTA",
+    "effort": "PEQUENO",
+    "area": "Database security tests",
+    "evidence_files": [
+      "tests/supabaseRlsCriticalTables.test.ts",
+      "supabase/migrations/20260512000000_gamification.sql",
+      "supabase/social-schema.sql"
+    ],
+    "evidence_summary": "Teste atual cobre periodizacao, nao RPCs de gamificacao ou policies sociais amplas.",
+    "risk": "Regressoes criticas de SQL security passam sem alarme.",
+    "recommendation": "Adicionar testes estaticos de grants/policies.",
+    "suggested_order": 3
+  },
+  {
+    "id": "TEST-04",
+    "title": "Sem coverage threshold",
+    "severity": "MEDIA",
+    "effort": "PEQUENO",
+    "area": "Test quality",
+    "evidence_files": [
+      "vitest.config.ts"
+    ],
+    "evidence_summary": "Config inclui testes, mas nao define cobertura minima.",
+    "risk": "Cobertura pode degradar sem falhar CI.",
+    "recommendation": "Ativar coverage em modulos criticos.",
+    "suggested_order": 4
+  },
+  {
+    "id": "TEST-05",
+    "title": "OpenAPI diverge de handlers sem teste de contrato",
+    "severity": "MEDIA",
+    "effort": "MEDIO",
+    "area": "API contracts",
+    "evidence_files": [
+      "docs/api/openapi.yaml",
+      "api/health/oauth/start.ts"
+    ],
+    "evidence_summary": "OpenAPI documenta GET, handler exige POST.",
+    "risk": "Docs/SDKs quebram consumidores.",
+    "recommendation": "Criar teste contrato OpenAPI vs handlers.",
+    "suggested_order": 5
+  }
+]

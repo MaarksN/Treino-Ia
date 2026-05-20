@@ -1,0 +1,310 @@
+[
+  {
+    "id": "F-001",
+    "category": "banco_dados",
+    "severity": "CRITICA",
+    "effort": "XL",
+    "title": "Servicos referenciam tabelas ausentes nas migrations",
+    "evidence_files": [
+      "src/services/healthService.ts",
+      "src/services/retentionService.ts",
+      "supabase/"
+    ],
+    "evidence_summary": "Health, nutrition, retention, white-label tenants e students usam varias tabelas que nao aparecem como CREATE TABLE nas migrations versionadas.",
+    "risk": "Deploy de SaaS real quebra em runtime ou passa a depender de schema manual fora do repositorio.",
+    "recommendation": "Criar migrations oficiais para as tabelas usadas ou remover/ocultar fluxos ate que o backend real exista.",
+    "suggested_order": 1
+  },
+  {
+    "id": "F-002",
+    "category": "seguranca",
+    "severity": "CRITICA",
+    "effort": "L",
+    "title": "RPCs de gamification com security definer sem hardening",
+    "evidence_files": [
+      "supabase/migrations/20260512000000_gamification.sql",
+      "api/gamification/event.ts"
+    ],
+    "evidence_summary": "Funcoes aplicam XP/moedas/loot box com security definer, sem revoke/grant restrito, sem search_path fixo e com parametros sensiveis.",
+    "risk": "Cliente autenticado pode ganhar recompensas indevidas se conseguir chamar RPCs diretamente.",
+    "recommendation": "Restringir execute a service_role, adicionar search_path fixo, validar invariantes no servidor e cobrir com testes de permissao.",
+    "suggested_order": 2
+  },
+  {
+    "id": "F-003",
+    "category": "multi_tenancy",
+    "severity": "CRITICA",
+    "effort": "XL",
+    "title": "Nao ha tenant/workspace global no modelo de dados",
+    "evidence_files": [
+      ".ops/technical-debt/02-multi-tenancy.md",
+      "src/services/retentionService.ts",
+      "src/types/retention.ts",
+      "supabase/migrations/"
+    ],
+    "evidence_summary": "Conceitos de tenant/white-label existem em camada de servico/tipos, mas tabelas e policies centrais continuam baseadas principalmente em user_id.",
+    "risk": "Vazamento cruzado entre clientes e impossibilidade de operar SaaS B2B com isolamento verificavel.",
+    "recommendation": "Definir modelo tenant/workspace, migrar tabelas centrais, criar helpers de auth scope e testes RLS por tenant.",
+    "suggested_order": 3
+  },
+  {
+    "id": "F-004",
+    "category": "banco_dados",
+    "severity": "CRITICA",
+    "effort": "L",
+    "title": "Schemas standalone e migrations divergem",
+    "evidence_files": [
+      "supabase/billing-gamification-schema.sql",
+      "supabase/migrations/20260511120000_platform_blocks_11_20_core.sql",
+      "supabase/migrations/20260512000000_gamification.sql"
+    ],
+    "evidence_summary": "Billing/gamification aparecem em SQL standalone e migrations com grants, constraints e funcoes diferentes.",
+    "risk": "Ambientes podem nascer com permissao e estrutura diferentes, dificultando incident response e testes.",
+    "recommendation": "Eleger migrations como fonte unica, reconciliar diferencas e arquivar SQL standalone como referencia historica.",
+    "suggested_order": 4
+  },
+  {
+    "id": "F-005",
+    "category": "auth_autorizacao",
+    "severity": "ALTA",
+    "effort": "M",
+    "title": "Policies sociais amplas podem continuar ativas",
+    "evidence_files": [
+      "supabase/social-schema.sql",
+      "supabase/migrations/20260511051000_social_moderation_reports.sql"
+    ],
+    "evidence_summary": "Policies antigas com leitura ampla aparecem ao lado de policies mais estritas; em Postgres RLS policies permissivas sao combinadas por OR.",
+    "risk": "Dados sociais podem ficar publicos para usuarios autenticados alem do pretendido.",
+    "recommendation": "Dropar policies antigas por nome, recriar grants minimos e adicionar testes negativos.",
+    "suggested_order": 5
+  },
+  {
+    "id": "F-006",
+    "category": "billing",
+    "severity": "ALTA",
+    "effort": "S",
+    "title": "Redirects Stripe usam Origin nao confiavel",
+    "evidence_files": [
+      "api/stripe/create-checkout-session.ts",
+      "api/stripe/create-portal-session.ts"
+    ],
+    "evidence_summary": "URLs de sucesso/cancelamento/retorno sao montadas a partir do header Origin.",
+    "risk": "Open redirect ou phishing pos-checkout/portal.",
+    "recommendation": "Usar APP_URL canonical ou allowlist estrita de origens por ambiente/tenant.",
+    "suggested_order": 6
+  },
+  {
+    "id": "F-007",
+    "category": "auth_autorizacao",
+    "severity": "ALTA",
+    "effort": "M",
+    "title": "Eventos de gamification sao aceitos do cliente",
+    "evidence_files": [
+      "api/gamification/event.ts"
+    ],
+    "evidence_summary": "Handler aceita eventType/sourceId do cliente e aplica recompensas para eventos como workout_completed.",
+    "risk": "Fraude de progresso, XP, moedas e ranking.",
+    "recommendation": "Derivar eventos de fontes server-side ja verificadas e limitar endpoints client-side a leitura/claim seguro.",
+    "suggested_order": 7
+  },
+  {
+    "id": "F-008",
+    "category": "fake_mocks_placeholders",
+    "severity": "ALTA",
+    "effort": "M",
+    "title": "Webhooks sao locais/simulados",
+    "evidence_files": [
+      "src/services/webhookService.ts",
+      "src/components/platform/AdvancedPlatformHub.tsx"
+    ],
+    "evidence_summary": "Configuracoes e eventos de webhook sao salvos em localStorage e a UI simula envio para endpoint de exemplo.",
+    "risk": "Clientes podem acreditar que automacoes reais estao ativas sem entrega confiavel.",
+    "recommendation": "Mover webhooks para backend com assinatura, retries, logs e estado persistente.",
+    "suggested_order": 8
+  },
+  {
+    "id": "F-009",
+    "category": "auditoria",
+    "severity": "ALTA",
+    "effort": "M",
+    "title": "Audit log principal usa localStorage",
+    "evidence_files": [
+      "src/services/auditLogService.ts",
+      "src/services/privacyService.ts",
+      "src/components/platform/AdvancedPlatformHub.tsx"
+    ],
+    "evidence_summary": "Eventos de privacidade e seguranca sao registrados no browser, nao em trilha imutavel server-side.",
+    "risk": "Perda, adulteracao ou ausencia de evidencia em incidentes e compliance.",
+    "recommendation": "Usar tabela server-side de audit logs, com append-only, redacao de PII e correlacao de request.",
+    "suggested_order": 9
+  },
+  {
+    "id": "F-010",
+    "category": "fake_mocks_placeholders",
+    "severity": "ALTA",
+    "effort": "M",
+    "title": "Sessoes ativas sao hardcoded",
+    "evidence_files": [
+      "src/services/sessionService.ts"
+    ],
+    "evidence_summary": "Servico retorna sessoes demonstrativas em vez de consultar backend real de sessoes/dispositivos.",
+    "risk": "Usuario recebe falsa sensacao de controle de conta e revogacao.",
+    "recommendation": "Integrar com mecanismo real de sessoes, refresh tokens, devices e revogacao.",
+    "suggested_order": 10
+  },
+  {
+    "id": "F-011",
+    "category": "seguranca",
+    "severity": "ALTA",
+    "effort": "S",
+    "title": "CORS wildcard em APIs",
+    "evidence_files": [
+      "api/_lib/http.ts",
+      "api/gemini-proxy.ts"
+    ],
+    "evidence_summary": "Headers permitem origem ampla em pontos de API.",
+    "risk": "Superficie maior para abuso cross-origin e dificuldade de controle por ambiente.",
+    "recommendation": "Centralizar CORS por allowlist de origens confiaveis.",
+    "suggested_order": 11
+  },
+  {
+    "id": "F-012",
+    "category": "seguranca",
+    "severity": "ALTA",
+    "effort": "S",
+    "title": "Limites de body JSON nao sao obrigatorios",
+    "evidence_files": [
+      "api/_lib/http.ts",
+      "api/jobs/create.ts",
+      "api/health/sync.ts",
+      "api/stripe/create-checkout-session.ts"
+    ],
+    "evidence_summary": "Helper suporta maxBytes, mas varios handlers chamam readJsonObject sem limite explicito.",
+    "risk": "Risco de consumo excessivo de memoria/custo por payload grande.",
+    "recommendation": "Definir limite default seguro e exigir override explicito para rotas maiores.",
+    "suggested_order": 12
+  },
+  {
+    "id": "F-013",
+    "category": "testes",
+    "severity": "ALTA",
+    "effort": "S",
+    "title": "E2E nao roda no CI",
+    "evidence_files": [
+      ".github/workflows/ci.yml",
+      "package.json",
+      "playwright.config.ts",
+      "tests/e2e/"
+    ],
+    "evidence_summary": "Scripts Playwright existem, mas workflow principal nao executa npm run test:e2e.",
+    "risk": "Regressoes de login, billing, dashboards e fluxos criticos podem chegar em main.",
+    "recommendation": "Adicionar job E2E com artefatos e criterios de bloqueio progressivos.",
+    "suggested_order": 13
+  },
+  {
+    "id": "F-014",
+    "category": "testes",
+    "severity": "ALTA",
+    "effort": "M",
+    "title": "Testes nao executam no ambiente local atual",
+    "evidence_files": [
+      "package.json",
+      "node_modules/.bin/"
+    ],
+    "evidence_summary": "node.exe, vitest.cmd, tsc.cmd e eslint.cmd retornaram Acesso negado; npm/pnpm nao foram encontrados.",
+    "risk": "Auditoria nao consegue confirmar estado real de lint/typecheck/testes/build localmente.",
+    "recommendation": "Corrigir instalacao/permissao do runtime Node e documentar bootstrap reproducivel.",
+    "suggested_order": 14
+  },
+  {
+    "id": "F-015",
+    "category": "auth_autorizacao",
+    "severity": "ALTA",
+    "effort": "M",
+    "title": "Coach pode criar vinculo ativo de student sem consentimento robusto",
+    "evidence_files": [
+      "src/services/socialService.ts",
+      "supabase/social-schema.sql"
+    ],
+    "evidence_summary": "Fluxo adiciona student por username e policy permite insert quando coach_id = auth.uid().",
+    "risk": "Associacao indevida entre contas e exposicao de dados relacionais.",
+    "recommendation": "Criar convite pendente, aceite do student e policies que respeitem status/relacao.",
+    "suggested_order": 15
+  },
+  {
+    "id": "F-016",
+    "category": "auditoria",
+    "severity": "ALTA",
+    "effort": "S",
+    "title": "Stripe webhook persiste payload completo",
+    "evidence_files": [
+      "api/_lib/billing-store.ts",
+      "api/stripe/webhook.ts"
+    ],
+    "evidence_summary": "Evento Stripe inteiro e armazenado como JSONB.",
+    "risk": "Retencao desnecessaria de dados sensiveis e maior impacto em incidente.",
+    "recommendation": "Persistir envelope minimo, ids, tipo, status e payload redigido quando necessario.",
+    "suggested_order": 16
+  },
+  {
+    "id": "F-017",
+    "category": "contratos_api",
+    "severity": "MEDIA",
+    "effort": "S",
+    "title": "OpenAPI diverge do handler health OAuth",
+    "evidence_files": [
+      "docs/api/openapi.yaml",
+      "api/health/oauth/start.ts"
+    ],
+    "evidence_summary": "Documentacao descreve GET, mas handler implementa POST com body.",
+    "risk": "Clientes e testes de contrato ficam desalinhados.",
+    "recommendation": "Corrigir OpenAPI ou handler e adicionar validacao automatica.",
+    "suggested_order": 17
+  },
+  {
+    "id": "F-018",
+    "category": "escalabilidade",
+    "severity": "MEDIA",
+    "effort": "M",
+    "title": "Rate limit, caches e workers usam estado local em memoria",
+    "evidence_files": [
+      "api/security/rate-limit.ts",
+      "api/retention/worker.ts",
+      "api/_lib/"
+    ],
+    "evidence_summary": "Map/in-memory aparecem em controles que precisariam funcionar entre instancias serverless.",
+    "risk": "Limites inconsistentes, perda de estado e comportamento nao deterministico em escala.",
+    "recommendation": "Usar Redis/Supabase/Durable store ou mecanismo gerenciado para limites, filas e locks.",
+    "suggested_order": 18
+  },
+  {
+    "id": "F-019",
+    "category": "migracao_dados",
+    "severity": "MEDIA",
+    "effort": "M",
+    "title": "Entidades de treino centrais persistidas como JSONB amplo",
+    "evidence_files": [
+      "supabase/migrations/20260511052000_legacy_training_profile_plan_history.sql"
+    ],
+    "evidence_summary": "Profile, plan e history legados ficam em JSONB, reduzindo constraints, indexes e governanca de schema.",
+    "risk": "Dificuldade de migracao, query, validacao e evolucao de dominio.",
+    "recommendation": "Planejar normalizacao progressiva ou contratos JSON versionados com validacao.",
+    "suggested_order": 19
+  },
+  {
+    "id": "F-020",
+    "category": "seguranca",
+    "severity": "MEDIA",
+    "effort": "M",
+    "title": "CSRF e rate limit de UI sao demonstrativos",
+    "evidence_files": [
+      "src/utils/csrf.ts",
+      "src/utils/rateLimit.ts",
+      "src/components/platform/AdvancedPlatformHub.tsx"
+    ],
+    "evidence_summary": "Controles de seguranca apresentados no frontend dependem de localStorage e estado do browser.",
+    "risk": "Falsa sensacao de protecao e lacuna em endpoints reais.",
+    "recommendation": "Substituir por controles server-side reais e deixar a UI apenas como monitor/administracao.",
+    "suggested_order": 20
+  }
+]

@@ -1,0 +1,76 @@
+[
+  {
+    "id": "AUD-01",
+    "title": "Auditoria LGPD/seguranca gravada em localStorage",
+    "severity": "ALTA",
+    "effort": "MEDIO",
+    "area": "Audit trail",
+    "evidence_files": [
+      "src/services/auditLogService.ts:3",
+      "src/services/privacyService.ts:31",
+      "src/components/platform/AdvancedPlatformHub.tsx:794"
+    ],
+    "evidence_summary": "Eventos criticos sao persistidos localmente e podem ser alterados pelo usuario.",
+    "risk": "Trilha de auditoria nao confiavel para compliance ou incidentes.",
+    "recommendation": "Criar auditoria server-side com userId/requestId/IP hash.",
+    "suggested_order": 1
+  },
+  {
+    "id": "AUD-02",
+    "title": "Webhook Stripe armazena payload completo",
+    "severity": "ALTA",
+    "effort": "MEDIO",
+    "area": "Billing audit",
+    "evidence_files": [
+      "api/_lib/billing-store.ts:125"
+    ],
+    "evidence_summary": "stripe_webhook_events recebe payload JSONB do evento inteiro.",
+    "risk": "Retencao excessiva de dados pessoais/financeiros.",
+    "recommendation": "Persistir campos minimos e definir retencao/redacao.",
+    "suggested_order": 2
+  },
+  {
+    "id": "AUD-03",
+    "title": "user_audit_logs existe mas nao e usado",
+    "severity": "ALTA",
+    "effort": "MEDIO",
+    "area": "Audit architecture",
+    "evidence_files": [
+      "supabase/migrations/20260511120000_platform_blocks_11_20_core.sql:78",
+      "src/services/auditLogService.ts:15"
+    ],
+    "evidence_summary": "Tabela server-side existe; servico atual escreve em localStorage.",
+    "risk": "Eventos reais ficam fora da trilha confiavel.",
+    "recommendation": "Integrar eventos criticos a user_audit_logs via API.",
+    "suggested_order": 3
+  },
+  {
+    "id": "AUD-04",
+    "title": "Rate limit de telemetria e por memoria de instancia",
+    "severity": "MEDIA",
+    "effort": "MEDIO",
+    "area": "Telemetry",
+    "evidence_files": [
+      "api/telemetry/errors.ts:25"
+    ],
+    "evidence_summary": "anonymousBuckets usa Map local.",
+    "risk": "Limite nao e global em serverless multi-instancia.",
+    "recommendation": "Usar storage distribuido ou WAF/platform rate limit.",
+    "suggested_order": 4
+  },
+  {
+    "id": "AUD-05",
+    "title": "Auditoria de IA nao cobre todos os fluxos",
+    "severity": "MEDIA",
+    "effort": "MEDIO",
+    "area": "AI audit",
+    "evidence_files": [
+      "supabase/migrations/20260511002500_ai_decision_audits.sql:1",
+      "src/services/aiDecisionAuditRepository.ts:1"
+    ],
+    "evidence_summary": "Tabela e repositorio existem, mas chamadas de IA estao espalhadas.",
+    "risk": "Decisoes/fallbacks de IA podem ficar sem rastreabilidade.",
+    "recommendation": "Forcar gateway unico de IA com auditoria obrigatoria.",
+    "suggested_order": 5
+  }
+]

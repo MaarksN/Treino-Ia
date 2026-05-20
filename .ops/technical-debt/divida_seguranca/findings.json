@@ -1,0 +1,100 @@
+[
+  {
+    "id": "SEC-01",
+    "title": "RPCs security definer de gamificacao podem ficar executaveis por clientes",
+    "severity": "CRITICA",
+    "effort": "PEQUENO",
+    "area": "Banco / Gamificacao",
+    "evidence_files": [
+      "supabase/migrations/20260512000000_gamification.sql:115",
+      "supabase/migrations/20260512000000_gamification.sql:158",
+      "supabase/migrations/20260512000000_gamification.sql:191",
+      "api/gamification/event.ts:113"
+    ],
+    "evidence_summary": "Funcoes security definer aceitam user_id e deltas de recompensa sem revoke/grant restritivo no arquivo de migration.",
+    "risk": "Manipulacao de XP, moedas e compras via chamada RPC direta.",
+    "recommendation": "Revogar execute de public/anon/authenticated, conceder a service_role, fixar search_path e testar as migrations.",
+    "suggested_order": 1
+  },
+  {
+    "id": "SEC-02",
+    "title": "CORS wildcard em endpoints autenticados",
+    "severity": "ALTA",
+    "effort": "MEDIO",
+    "area": "API",
+    "evidence_files": [
+      "api/_lib/http.ts:20",
+      "api/gemini-proxy.ts:42",
+      "api/gemini-proxy.ts:49",
+      "api/gemini-proxy.ts:230"
+    ],
+    "evidence_summary": "Respostas comuns e Gemini proxy retornam access-control-allow-origin '*'.",
+    "risk": "Aumenta impacto de token leakage e uso nao autorizado de APIs tokenizadas.",
+    "recommendation": "Implementar allowlist de origins por ambiente e responder 403 para origins desconhecidos.",
+    "suggested_order": 2
+  },
+  {
+    "id": "SEC-03",
+    "title": "Redirects Stripe confiam no header Origin",
+    "severity": "ALTA",
+    "effort": "PEQUENO",
+    "area": "Billing / API",
+    "evidence_files": [
+      "api/stripe/create-checkout-session.ts:29",
+      "api/stripe/create-checkout-session.ts:42",
+      "api/stripe/create-portal-session.ts:32",
+      "api/stripe/create-portal-session.ts:36"
+    ],
+    "evidence_summary": "success_url, cancel_url e return_url sao montadas a partir do Origin da request.",
+    "risk": "Fluxos Stripe podem retornar para dominio controlado por terceiro.",
+    "recommendation": "Usar APP_URL ou allowlist e rejeitar origins nao confiaveis.",
+    "suggested_order": 3
+  },
+  {
+    "id": "SEC-04",
+    "title": "POSTs sem limite consistente de body",
+    "severity": "ALTA",
+    "effort": "MEDIO",
+    "area": "API",
+    "evidence_files": [
+      "api/_lib/http.ts:58",
+      "api/jobs/create.ts:17",
+      "api/health/sync.ts:28",
+      "api/stripe/create-checkout-session.ts:20"
+    ],
+    "evidence_summary": "readJsonObject so limita tamanho quando maxBytes e passado; varios endpoints nao passam.",
+    "risk": "DoS, custo e armazenamento excessivo de payloads JSON.",
+    "recommendation": "Definir limites por endpoint e validar schemas.",
+    "suggested_order": 4
+  },
+  {
+    "id": "SEC-05",
+    "title": "Webhook interno sem HMAC, timeout e replay protection",
+    "severity": "MEDIA",
+    "effort": "MEDIO",
+    "area": "Workflows / Retencao",
+    "evidence_files": [
+      "api/retention/worker.ts:91"
+    ],
+    "evidence_summary": "Fetch para RETENTION_NOTIFICATION_WEBHOOK_URL usa bearer opcional, sem timeout e sem assinatura do payload.",
+    "risk": "Execucoes presas, replay e menor confianca em entregas externas.",
+    "recommendation": "Adicionar fetchWithTimeout, HMAC com timestamp, idempotency key e retry/backoff.",
+    "suggested_order": 5
+  },
+  {
+    "id": "SEC-06",
+    "title": "CSRF e rate limit locais aparecem como controles de seguranca",
+    "severity": "MEDIA",
+    "effort": "PEQUENO",
+    "area": "Frontend / Product security",
+    "evidence_files": [
+      "src/utils/csrf.ts:1",
+      "src/utils/rateLimit.ts:1",
+      "src/components/platform/AdvancedPlatformHub.tsx:722"
+    ],
+    "evidence_summary": "Tokens e buckets ficam em localStorage e sao mostrados no painel de seguranca.",
+    "risk": "Controles demonstrativos podem ser confundidos com protecao real.",
+    "recommendation": "Mover para backend ou rotular explicitamente como demo.",
+    "suggested_order": 6
+  }
+]

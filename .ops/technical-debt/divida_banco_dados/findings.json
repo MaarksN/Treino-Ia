@@ -1,0 +1,97 @@
+[
+  {
+    "id": "DB-01",
+    "title": "Tabelas usadas pelo app nao existem nas migrations",
+    "severity": "CRITICA",
+    "effort": "GRANDE",
+    "area": "Schema / Migrations",
+    "evidence_files": [
+      "src/services/healthService.ts:228",
+      "src/services/healthService.ts:516",
+      "src/services/retentionService.ts:257",
+      "src/services/retentionService.ts:268"
+    ],
+    "evidence_summary": "Servicos usam tabelas de saude, nutricao e retencao sem create table correspondente em supabase/.",
+    "risk": "Falhas de runtime e ausencia de RLS/constraints versionadas.",
+    "recommendation": "Criar migrations ou esconder features ate o schema existir.",
+    "suggested_order": 1
+  },
+  {
+    "id": "DB-02",
+    "title": "Schemas billing/gamificacao duplicados e divergentes",
+    "severity": "CRITICA",
+    "effort": "MEDIO",
+    "area": "Migrations",
+    "evidence_files": [
+      "supabase/migrations/20260511120000_platform_blocks_11_20_core.sql:7",
+      "supabase/migrations/20260512000000_gamification.sql:5",
+      "supabase/billing-gamification-schema.sql:6"
+    ],
+    "evidence_summary": "Ha definicoes duplicadas com constraints/grants diferentes fora e dentro de migrations.",
+    "risk": "Ambientes inconsistentes e auditoria de DB nao confiavel.",
+    "recommendation": "Consolidar caminho unico de migrations.",
+    "suggested_order": 2
+  },
+  {
+    "id": "DB-03",
+    "title": "RPCs security definer sem revoke/search_path na migration oficial",
+    "severity": "CRITICA",
+    "effort": "PEQUENO",
+    "area": "SQL Security",
+    "evidence_files": [
+      "supabase/migrations/20260512000000_gamification.sql:115",
+      "supabase/billing-gamification-schema.sql:253"
+    ],
+    "evidence_summary": "Arquivo solto revoga grants, mas migration versionada de gamificacao nao.",
+    "risk": "Execucao direta indevida de RPCs de recompensa.",
+    "recommendation": "Adicionar migration oficial de hardening.",
+    "suggested_order": 3
+  },
+  {
+    "id": "DB-04",
+    "title": "Policies sociais amplas podem permanecer ativas",
+    "severity": "ALTA",
+    "effort": "PEQUENO",
+    "area": "RLS",
+    "evidence_files": [
+      "supabase/social-schema.sql:178",
+      "supabase/social-schema.sql:199",
+      "supabase/migrations/20260511051000_social_moderation_reports.sql:169"
+    ],
+    "evidence_summary": "Migration nova nao remove policies antigas com using true.",
+    "risk": "Exposicao de comentarios e membros de grupos.",
+    "recommendation": "Dropar policies legadas amplas.",
+    "suggested_order": 4
+  },
+  {
+    "id": "DB-05",
+    "title": "Ausencia de tenant_id e indices por tenant",
+    "severity": "ALTA",
+    "effort": "GRANDE",
+    "area": "Data model",
+    "evidence_files": [
+      "supabase/migrations/20260511120000_platform_blocks_11_20_core.sql:7",
+      "supabase/migrations/20260511052000_legacy_training_profile_plan_history.sql:3"
+    ],
+    "evidence_summary": "Schema central e orientado a user_id, nao workspace/tenant.",
+    "risk": "Bloqueia B2B seguro.",
+    "recommendation": "Adicionar modelo workspace e migrar chaves.",
+    "suggested_order": 5
+  },
+  {
+    "id": "DB-06",
+    "title": "Dados centrais de treino persistidos como JSONB amplo",
+    "severity": "MEDIA",
+    "effort": "GRANDE",
+    "area": "Data model",
+    "evidence_files": [
+      "supabase/migrations/20260511052000_legacy_training_profile_plan_history.sql:5",
+      "supabase/migrations/20260511052000_legacy_training_profile_plan_history.sql:19",
+      "supabase/migrations/20260511052000_legacy_training_profile_plan_history.sql:35"
+    ],
+    "evidence_summary": "Planos e historico ficam em blobs JSONB com pouca estrutura relacional.",
+    "risk": "Dificulta analytics, constraints e migracoes de dominio.",
+    "recommendation": "Criar tabelas normalizadas para sessoes/exercicios/series mantendo snapshot JSON.",
+    "suggested_order": 6
+  }
+]

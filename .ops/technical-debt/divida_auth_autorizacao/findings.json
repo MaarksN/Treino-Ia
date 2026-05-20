@@ -1,0 +1,79 @@
+[
+  {
+    "id": "AUTH-01",
+    "title": "Ausencia de escopo organizacional global",
+    "severity": "CRITICA",
+    "effort": "GRANDE",
+    "area": "Auth / Multi-tenancy",
+    "evidence_files": [
+      "api/_lib/server-supabase.ts:30",
+      "supabase/migrations/20260511120000_platform_blocks_11_20_core.sql:7",
+      "src/services/retentionService.ts:268"
+    ],
+    "evidence_summary": "A autenticacao retorna usuario individual e o schema principal usa user_id; tenant aparece apenas em feature de retencao sem migrations correspondentes.",
+    "risk": "Sem RBAC por workspace e isolamento cross-tenant.",
+    "recommendation": "Criar workspace_members, roles e middleware tenant-aware.",
+    "suggested_order": 1
+  },
+  {
+    "id": "AUTH-02",
+    "title": "Gamificacao aceita eventos controlados pelo cliente",
+    "severity": "ALTA",
+    "effort": "MEDIO",
+    "area": "API / Gamificacao",
+    "evidence_files": [
+      "api/gamification/event.ts:60",
+      "api/gamification/event.ts:148"
+    ],
+    "evidence_summary": "eventType/sourceId vindos do body podem disparar recompensas sem prova server-side.",
+    "risk": "Fraude de XP/moedas e ranking.",
+    "recommendation": "Gerar eventos a partir de registros server-side idempotentes.",
+    "suggested_order": 2
+  },
+  {
+    "id": "AUTH-03",
+    "title": "Coach pode adicionar aluno ativo sem aceite",
+    "severity": "ALTA",
+    "effort": "MEDIO",
+    "area": "Social / Coach",
+    "evidence_files": [
+      "src/services/socialService.ts:617",
+      "supabase/social-schema.sql:246"
+    ],
+    "evidence_summary": "A relacao coach_students nasce active e a policy so valida coach_id = auth.uid().",
+    "risk": "Acesso indevido a contexto de aluno e violacao de privacidade.",
+    "recommendation": "Implementar convite pendente, aceite do aluno e validacao de role coach.",
+    "suggested_order": 3
+  },
+  {
+    "id": "AUTH-04",
+    "title": "Policies sociais antigas continuam amplas",
+    "severity": "ALTA",
+    "effort": "PEQUENO",
+    "area": "RLS / Social",
+    "evidence_files": [
+      "supabase/social-schema.sql:178",
+      "supabase/social-schema.sql:199",
+      "supabase/migrations/20260511051000_social_moderation_reports.sql:169"
+    ],
+    "evidence_summary": "Policies using true nao sao removidas pela migration de moderacao.",
+    "risk": "Comentarios e membership podem ficar expostos alem da regra nova.",
+    "recommendation": "Dropar policies legadas amplas e testar SQL.",
+    "suggested_order": 4
+  },
+  {
+    "id": "AUTH-05",
+    "title": "Falta middleware central de autorizacao",
+    "severity": "MEDIA",
+    "effort": "MEDIO",
+    "area": "API",
+    "evidence_files": [
+      "api/_lib/server-supabase.ts:30",
+      "api/gemini-proxy.ts:143"
+    ],
+    "evidence_summary": "Ha autenticacao comum, mas roles, entitlements e tenant checks ficam espalhados.",
+    "risk": "Endpoints novos podem nascer sem permissao correta.",
+    "recommendation": "Criar requireRole/requireEntitlement/requireWorkspaceMember.",
+    "suggested_order": 5
+  }
+]
