@@ -98,3 +98,9 @@ Commit and push the E2E foundation. Recommended next phase remains Stabilization
 
 ## Note on unrelated working tree content
 An untracked `.ops/technical-debt/` directory appeared during the sprint and is outside this task. It was not staged for this commit.
+
+## CI Hotfix Update (Missing test:e2e script)
+- CI E2E job agora faz skip honesto quando o script não existe.
+- E2E continua risco aberto (blocked by registry policy 403).
+- Não houve E2E falso.
+- Não houve dependency change.

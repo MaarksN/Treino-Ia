@@ -37,3 +37,9 @@ PASS, pending commit/push completion.
 
 ## Next recommended phase
 Stabilization Execution Sprint 02 - Observability Provider Approved or Rollback Rehearsal Real.
+
+## CI Hotfix Update (Missing test:e2e script)
+- CI E2E job agora faz skip honesto quando o script não existe.
+- E2E continua risco aberto (blocked by registry policy 403).
+- Não houve E2E falso.
+- Não houve dependency change.
