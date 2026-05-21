@@ -1,0 +1,14 @@
+- Data/Hora: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+- Prompt executado: `01_P0_GAMIFICATION_RPC_HARDENING.txt`
+- Resumo da implementação: Hardened gamification RPCs by adding search_path, revoking execute from public/anon/authenticated and granting to service_role. Added static unit tests.
+- Arquivos alterados:
+  - `supabase/migrations/20260515000000_gamification_rpc_hardening.sql`
+  - `tests/gamificationRpcHardening.test.ts`
+  - `.ops/technical-debt-remediation/p0-gamification-rpc-hardening/initial-state.md`
+  - `.ops/technical-debt-remediation/p0-gamification-rpc-hardening/rpc-audit.md`
+  - `.ops/technical-debt-remediation/p0-gamification-rpc-hardening/migration-summary.md`
+  - `.ops/technical-debt-remediation/p0-gamification-rpc-hardening/test-evidence.md`
+  - `.ops/technical-debt-remediation/p0-gamification-rpc-hardening/final-report.md`
+- Comandos executados: `git status --short`, `npm test`, `npm run lint`, `npm run typecheck`, `npm run build`
+- Resultado: PASS
+- Commit hash: 5a03d8342bca69751586d1df008e154a0d496311
