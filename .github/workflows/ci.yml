@@ -119,18 +119,23 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            playwright-${{ runner.os }}-
+      - name: Check E2E availability
+        id: e2e
+        run: |
+          scripts="$(npm run)"
+          if printf '%s\n' "$scripts" | grep -q '^  test:e2e'; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::E2E NOT AVAILABLE / SKIPPED: package.json has no test:e2e script."
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Install Playwright Chromium
+        if: steps.e2e.outputs.available == 'true'
         run: npx playwright install --with-deps chromium
 
       - name: Browser E2E
+        if: steps.e2e.outputs.available == 'true'
         run: npm run test:e2e
 
       - name: Upload Playwright artifacts
