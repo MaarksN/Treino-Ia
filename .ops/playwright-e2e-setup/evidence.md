@@ -22,7 +22,8 @@ Configurar foundation real de Playwright E2E integrada ao CI existente, com test
   - `e2e/**/*.spec.ts`
 - Teste real mínimo criado em `e2e/example.spec.ts`:
   - navega para `/`
-  - valida `title` com padrão `treino|vite|react`.
+  - valida renderização com `#root` visível
+  - valida `title` esperado da home (`Treino Inteligente`).
 
 ## Git Ignore
 - Adicionados artefatos/cache Playwright:
