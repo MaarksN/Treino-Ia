@@ -1,5 +1,9 @@
 import { getErrorMessage, toError } from './errors';
-import { sanitizeTelemetryMessage, sanitizeTelemetryMetadata, sanitizeTelemetryUrl } from '../../api/_lib/piiRedaction';
+import {
+  redactObservabilityMetadata,
+  redactObservabilityString,
+  redactObservabilityUrl,
+} from '../services/observability/observabilityRedaction';
 
 export interface ErrorTelemetryEvent {
   id: string;
@@ -19,12 +23,12 @@ let installed = false;
 function sanitizeTelemetryEvent(event: ErrorTelemetryEvent): ErrorTelemetryEvent {
   return {
     ...event,
-    message: sanitizeTelemetryMessage(event.message),
-    stack: event.stack ? sanitizeTelemetryMessage(event.stack) : undefined,
-    source: sanitizeTelemetryMessage(event.source),
-    userAgent: sanitizeTelemetryMessage(event.userAgent),
-    url: sanitizeTelemetryUrl(event.url),
-    metadata: sanitizeTelemetryMetadata(event.metadata),
+    message: redactObservabilityString(event.message),
+    stack: event.stack ? redactObservabilityString(event.stack) : undefined,
+    source: redactObservabilityString(event.source),
+    userAgent: redactObservabilityString(event.userAgent),
+    url: redactObservabilityUrl(event.url),
+    metadata: redactObservabilityMetadata(event.metadata),
   };
 }
 
