@@ -1,4 +1,4 @@
-name: Copilot Setup Steps
+name: Copilot Cloud Agent Environment Setup
 
 on:
   workflow_dispatch:
