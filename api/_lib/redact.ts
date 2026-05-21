@@ -27,9 +27,19 @@ const SENSITIVE_KEY_PARTS = [
   'refreshtoken',
   'apikey',
   'token',
+  'secret',
+  'cookie',
+  'session',
+  'oauthcode',
+  'code',
+  'state',
   'email',
   'cpf',
   'phone',
+  'base64',
+  'image',
+  'photo',
+  'prompt',
 ];
 
 function normalizeKey(key: string): string {
@@ -49,8 +59,8 @@ export function redactSensitiveString(value: string, maxLength = DEFAULT_OPTIONS
   const redacted = value
     .replace(/data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/=\s]+/gi, REDACTED_IMAGE)
     .replace(/(authorization\s*[:=]\s*bearer\s+)[^\s,;"']+/gi, `$1${REDACTED}`)
-    .replace(/([?&](?:token|access_token|refresh_token|apiKey|password|email|cpf|phone|authorization)=)[^&#\s]+/gi, `$1${REDACTED}`)
-    .replace(/"((?:access_)?token|refresh_token|apiKey|authorization|password|email|cpf|phone)"\s*:\s*"[^"]*"/gi, (_, key: string) => `"${key}":"${REDACTED}"`)
+    .replace(/([?&](?:token|access_token|refresh_token|apiKey|password|email|cpf|phone|authorization|code|state|cookie|session|secret|prompt)=)[^&#\s]+/gi, `$1${REDACTED}`)
+    .replace(/"((?:access_)?token|refresh_token|apiKey|authorization|password|email|cpf|phone|code|state|cookie|session|secret|prompt)"\s*:\s*"[^"]*"/gi, (_, key: string) => `"${key}":"${REDACTED}"`)
     .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, REDACTED_EMAIL)
     .replace(/\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/g, REDACTED_CPF)
     .replace(/\b(?:\+?55\s*)?(?:\(?\d{2}\)?\s*)?\d{4,5}-?\d{4}\b/g, REDACTED_PHONE);

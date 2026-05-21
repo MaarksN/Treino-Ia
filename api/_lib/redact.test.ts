@@ -37,7 +37,7 @@ describe('redact helpers', () => {
     });
 
     expect(redacted.truncated).toBe(true);
-    expect(String(redacted.preview)).toContain('[REDACTED_IMAGE_DATA]');
+    expect(String(redacted.preview)).toContain('"image":"[REDACTED]"');
     expect(String(redacted.preview).length).toBeLessThanOrEqual(114);
   });
 });
