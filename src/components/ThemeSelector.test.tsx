@@ -19,7 +19,7 @@ describe('ThemeSelector', () => {
   });
 
   it('renders available themes', () => {
-    vi.mocked(themeUtils.getThemeAccess).mockReturnValue({ allowed: true });
+    vi.mocked(themeUtils.getThemeAccess).mockReturnValue({ allowed: true, theme: themeUtils.APP_THEMES[0] });
 
     render(<ThemeSelector />);
     
@@ -30,7 +30,7 @@ describe('ThemeSelector', () => {
 
   it('shows locked state for premium themes when user is not premium', () => {
     vi.mocked(themeUtils.getThemeAccess).mockImplementation((id, isPremium) => {
-      return { allowed: isPremium || id === 'light' };
+      return { allowed: isPremium || id === 'light', theme: themeUtils.APP_THEMES[0] };
     });
 
     render(<ThemeSelector isPremium={false} />);
@@ -41,8 +41,8 @@ describe('ThemeSelector', () => {
   });
 
   it('calls applyTheme and onThemeChange when a theme is selected', () => {
-    vi.mocked(themeUtils.getThemeAccess).mockReturnValue({ allowed: true });
-    vi.mocked(themeUtils.applyTheme).mockReturnValue({ applied: true, theme: themeUtils.APP_THEMES[0] });
+    vi.mocked(themeUtils.getThemeAccess).mockReturnValue({ allowed: true, theme: themeUtils.APP_THEMES[0] });
+    vi.mocked(themeUtils.applyTheme).mockReturnValue({ allowed: true, applied: true, theme: themeUtils.APP_THEMES[0] });
     
     const mockOnChange = vi.fn();
     render(<ThemeSelector isPremium={true} onThemeChange={mockOnChange} />);
@@ -55,8 +55,8 @@ describe('ThemeSelector', () => {
   });
 
   it('shows blocked message if applyTheme fails (e.g. server validation)', () => {
-    vi.mocked(themeUtils.getThemeAccess).mockReturnValue({ allowed: true });
-    vi.mocked(themeUtils.applyTheme).mockReturnValue({ applied: false, theme: themeUtils.APP_THEMES[1] });
+    vi.mocked(themeUtils.getThemeAccess).mockReturnValue({ allowed: true, theme: themeUtils.APP_THEMES[0] });
+    vi.mocked(themeUtils.applyTheme).mockReturnValue({ allowed: true, applied: false, theme: themeUtils.APP_THEMES[1] });
     
     render(<ThemeSelector isPremium={false} />);
     
