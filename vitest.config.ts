@@ -21,7 +21,16 @@ export default defineConfig({
         'tests/**',
         'node_modules/**',
       ],
-      // No thresholds in baseline sprint — capturing current state only
+      // Progressive thresholds — Sprint 03 (Conservative baseline gate)
+      // Baseline from Sprint 02: Stmts 26.06%, Branches 22.71%, Funcs 26.04%, Lines 25.83%
+      // Thresholds set ~1-2% below baseline to allow rounding tolerance.
+      // Increase by +5% increments in future sprints as coverage improves.
+      thresholds: {
+        statements: 25,
+        branches: 20,
+        functions: 25,
+        lines: 25,
+      },
     },
   },
 });
