@@ -3,6 +3,7 @@ import { BillingInterval, BillingTier } from './billing';
 import { HttpError } from './http';
 import { getSupabaseAdmin } from './server-supabase';
 import { getStripeClient } from './stripe-client';
+import { minimizeStripeWebhookPayload } from './stripe-webhook-payload';
 
 interface SubscriptionRow {
   user_id: string;
@@ -130,7 +131,7 @@ export async function recordStripeWebhookEvent(event: Stripe.Event): Promise<boo
       id: event.id,
       type: event.type,
       stripe_created_at: secondsToIso(event.created),
-      payload: event as unknown as Record<string, unknown>,
+      payload: minimizeStripeWebhookPayload(event) as unknown as Record<string, unknown>,
       processed_at: new Date().toISOString(),
     });
 
