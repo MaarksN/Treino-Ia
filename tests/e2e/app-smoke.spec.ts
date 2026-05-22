@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { collectCriticalErrors } from './helpers/console';
 
 /**
  * Smoke E2E — Controlled Technical Sprint 02.
@@ -17,28 +18,6 @@ import { test, expect } from '@playwright/test';
  */
 
 test.describe('App smoke', () => {
-  const criticalErrors: string[] = [];
-
-  test.beforeEach(async ({ page }) => {
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') {
-        // Filter out known benign browser errors (e.g. favicon, network blocked in CI)
-        const text = msg.text();
-        const benign =
-          text.includes('favicon') ||
-          text.includes('Failed to load resource') ||
-          text.includes('ERR_NAME_NOT_RESOLVED') ||
-          text.includes('net::ERR') ||
-          text.includes('supabase') ||
-          text.includes('google') ||
-          text.includes('fonts.g');
-        if (!benign) {
-          criticalErrors.push(text);
-        }
-      }
-    });
-  });
-
   test('app loads with status 200', async ({ page }) => {
     const response = await page.goto('/');
     expect(response?.status()).toBe(200);
@@ -60,10 +39,10 @@ test.describe('App smoke', () => {
   });
 
   test('no critical console errors on load', async ({ page }) => {
-    criticalErrors.length = 0;
+    const errors = collectCriticalErrors(page);
     await page.goto('/');
     // Allow the page 2 seconds to settle
     await page.waitForTimeout(2_000);
-    expect(criticalErrors).toEqual([]);
+    expect(errors).toEqual([]);
   });
 });
