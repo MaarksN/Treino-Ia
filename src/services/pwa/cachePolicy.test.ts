@@ -28,4 +28,20 @@ describe('service worker cache policy', () => {
       },
     }, APP_ORIGIN)).toBe('network-only');
   });
+
+  it('never caches requests with lowercase authorization headers', () => {
+    expect(getServiceWorkerCacheStrategy({
+      url: '/assets/app.css',
+      headers: new Headers({
+        authorization: 'Bearer test-token',
+      }),
+    }, APP_ORIGIN)).toBe('network-only');
+  });
+
+  it('keeps non-GET requests network-only', () => {
+    expect(getServiceWorkerCacheStrategy({
+      url: '/assets/app.js',
+      method: 'POST',
+    }, APP_ORIGIN)).toBe('network-only');
+  });
 });
