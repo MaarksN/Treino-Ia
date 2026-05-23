@@ -53,10 +53,12 @@ describe('gemini proxy hardening', () => {
   });
 
   it('does not retry rejected 4xx upstream responses', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(new Response('{"error":"bad payload"}', {
-      status: 400,
-      headers: { 'content-type': 'application/json' },
-    }));
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(
+      new Response('{"error":"bad payload"}', {
+        status: 400,
+        headers: { 'content-type': 'application/json' },
+      }),
+    ));
     vi.stubGlobal('fetch', fetchMock);
 
     const { default: handler } = await import('../api/gemini-proxy');

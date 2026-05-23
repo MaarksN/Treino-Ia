@@ -29,8 +29,8 @@ describe('redact helpers', () => {
 
   it('redacts base64 image payloads and truncates oversized metadata', () => {
     const redacted = redactMetadata({
-      image: 'data:image/png;base64,a'.padEnd(15_000, 'a'),
-      notes: 'x'.repeat(15_000),
+      image: 'data:image/png;base64,a'.padEnd(1_500, 'a'),
+      notes: 'x'.repeat(1_500),
     }, {
       maxSerializedBytes: 50,
       maxStringLength: 100,
