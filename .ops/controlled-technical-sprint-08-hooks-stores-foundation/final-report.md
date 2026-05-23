@@ -14,9 +14,10 @@ Hooks e Stores candidatos auditados
 7 testes reais adicionados
 Padrão isolado estabelecido (Zustand setState/getState direct access)
 TS error remanescente de ThemeSelector resolvido
+viewStore.test.ts ajustado para usar somente VIEWS existentes
 Coverage cresceu em todas as métricas
 E2E preservado em 16/16
-Coverage gate preservado e expandido (27.03% statements)
+Coverage gate preservado e expandido (27.02% statements)
 Nenhum fake test criado
 Nenhuma dependência nova adicionada
 Validação completa passou
@@ -40,4 +41,4 @@ Controlled Technical Sprint 09 — Stores/Hooks Coverage Expansion II
 
 ## Motivo
 
-A base de teste direto de estado global (Zustand) provou ser rápida (1.93s) e não flaky, cobrindo com precisão lógica global sem sobrecarga de renderização. A expansão dessa fundação para hooks que exigem mock de timing e side-effects de rede será crucial antes de atacar componentes mais complexos acoplados a dados mutáveis (Dashboard/ActiveWorkoutView).
+A base de teste direto de estado global (Zustand) provou ser rápida (2.29s) e não flaky, cobrindo com precisão lógica global sem sobrecarga de renderização. A expansão dessa fundação para hooks que exigem mock de timing e side-effects de rede será crucial antes de atacar componentes mais complexos acoplados a dados mutáveis (Dashboard/ActiveWorkoutView).

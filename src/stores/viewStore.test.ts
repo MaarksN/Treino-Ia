@@ -34,7 +34,7 @@ describe('viewStore', () => {
     useViewStore.getState().initializeView(VIEWS.DASHBOARD);
     
     // Act (attempt to re-initialize with different view)
-    useViewStore.getState().initializeView(VIEWS.SETTINGS);
+    useViewStore.getState().initializeView(VIEWS.HOME);
     
     // Assert
     const updatedState = useViewStore.getState();
@@ -43,11 +43,11 @@ describe('viewStore', () => {
 
   it('forces a view change via setView regardless of initialization state', () => {
     // Act
-    useViewStore.getState().setView(VIEWS.SETTINGS);
+    useViewStore.getState().setView(VIEWS.SOCIAL);
     
     // Assert
     const updatedState = useViewStore.getState();
     expect(updatedState.initialized).toBe(true);
-    expect(updatedState.view).toBe(VIEWS.SETTINGS);
+    expect(updatedState.view).toBe(VIEWS.SOCIAL);
   });
 });

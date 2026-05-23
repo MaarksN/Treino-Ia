@@ -48,6 +48,7 @@ Acesso e manipulação direta da instância Zustand (`useAppStore.getState()`), 
 - `src/stores/viewStore.test.ts` (4 testes: inicialização, alteração de views)
 - `src/stores/useAppStore.test.ts` (3 testes: estado inicial limpo, setters primários de primitivos, setters complexos de arrays/objetos)
 - Uma refatoração (correção de TypeScript na interface do `ThemeSelector.test.tsx` herdada da Sprint 07) foi realizada para destrancar a pipeline typecheck antes do teste dos stores.
+- Correção complementar: `viewStore.test.ts` usa somente chaves existentes em `VIEWS` (`HOME` e `SOCIAL`) para manter `typecheck` verde sem criar rotas falsas.
 
 ---
 
@@ -56,7 +57,7 @@ Acesso e manipulação direta da instância Zustand (`useAppStore.getState()`), 
 ```
 npx vitest run src/stores/useAppStore.test.ts src/stores/viewStore.test.ts
 ```
-**Resultado:** 7 testes em 2 arquivos PASS (1.93s).
+**Resultado:** 7 testes em 2 arquivos PASS (2.29s).
 
 ---
 
@@ -64,13 +65,13 @@ npx vitest run src/stores/useAppStore.test.ts src/stores/viewStore.test.ts
 
 | Comando | Resultado |
 |---|---|
-| `git diff --check` | ✅ PASS |
+| `git diff --check` | ✅ PASS (sem erros de whitespace; avisos LF/CRLF do Git no Windows) |
 | `npm run lint` | ✅ PASS |
-| `npm run typecheck` | ✅ PASS (após fix de TS) |
-| `npm test` | ✅ 160 files, 618 tests PASS (+2 files, +7 tests) |
+| `npm run typecheck` | ✅ PASS (após correção de constantes de view no teste) |
+| `npm test` | ✅ 160 files, 618 tests PASS (+2 files, +7 tests, 160.71s) |
 | `npm run build` | ✅ PASS |
-| `npm run test:e2e` | ✅ 16/16 PASS (30.2s) |
-| `npm run test:coverage` | ✅ PASS — todos limiares mantidos e crescidos |
+| `npm run test:e2e` | ✅ 16/16 PASS (26.8s) |
+| `npm run test:coverage` | ✅ PASS — todos limiares mantidos (261.49s) |
 
 ---
 
@@ -78,10 +79,10 @@ npx vitest run src/stores/useAppStore.test.ts src/stores/viewStore.test.ts
 
 | Métrica | Sprint 07 | Sprint 08 | Delta | Threshold | Passou? |
 |---|---:|---:|---:|---:|---|
-| Statements | 26.89% | 27.03% | +0.14% | 25.00% | ✅ Sim |
+| Statements | 26.89% | 27.02% | +0.13% | 25.00% | ✅ Sim |
 | Branches | 23.29% | 23.32% | +0.03% | 20.00% | ✅ Sim |
-| Functions | 26.92% | 27.24% | +0.32% | 25.00% | ✅ Sim |
-| Lines | 26.72% | 26.85% | +0.13% | 25.00% | ✅ Sim |
+| Functions | 26.92% | 27.21% | +0.29% | 25.00% | ✅ Sim |
+| Lines | 26.72% | 26.84% | +0.12% | 25.00% | ✅ Sim |
 
 ---
 
