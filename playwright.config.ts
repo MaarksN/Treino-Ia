@@ -1,5 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const webServerHost = process.env.CI ? '127.0.0.1' : 'localhost';
+const webServerPort = 4173;
+const webServerUrl = `http://${webServerHost}:${webServerPort}`;
+
 /**
  * Playwright configuration — Controlled Technical Sprint 02.
  * Minimal smoke E2E: app loads, root renders, no critical console errors.
@@ -12,7 +16,7 @@ export default defineConfig({
   workers: 1,
   reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
   use: {
-    baseURL: 'http://localhost:4173',
+    baseURL: webServerUrl,
     headless: true,
     screenshot: 'only-on-failure',
     video: 'off',
@@ -24,10 +28,10 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run preview -- --port 4173',
-    url: 'http://localhost:4173',
+    command: `npm run preview -- --host ${webServerHost} --port ${webServerPort}`,
+    url: webServerUrl,
     reuseExistingServer: !process.env.CI,
-    timeout: 60_000,
+    timeout: process.env.CI ? 120_000 : 60_000,
     env: {
       VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL ?? 'https://example.supabase.co',
       VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY ?? 'ci-placeholder-anon-key',

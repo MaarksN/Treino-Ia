@@ -134,6 +134,10 @@ jobs:
         if: steps.e2e.outputs.available == 'true'
         run: npx playwright install --with-deps chromium
 
+      - name: Build app for Playwright preview
+        if: steps.e2e.outputs.available == 'true'
+        run: npm run build
+
       - name: Browser E2E
         if: steps.e2e.outputs.available == 'true'
         run: npm run test:e2e
