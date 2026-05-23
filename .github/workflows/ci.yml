@@ -130,6 +130,10 @@ jobs:
             echo "available=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Build for E2E
+        if: steps.e2e.outputs.available == 'true'
+        run: npm run build
+
       - name: Install Playwright Chromium
         if: steps.e2e.outputs.available == 'true'
         run: npx playwright install --with-deps chromium
