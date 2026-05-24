@@ -73,17 +73,14 @@ function clampNumber(value: unknown, min: number, max: number, fallback: number)
   return Math.min(max, Math.max(min, Math.round(numeric)));
 }
 
+import { getJSON, setJSON } from '../utils/storage';
+
 function readLocal<T>(key: string, fallback: T): T {
-  try {
-    const data = localStorage.getItem(key);
-    return data ? JSON.parse(data) as T : fallback;
-  } catch {
-    return fallback;
-  }
+  return getJSON(key, fallback);
 }
 
 function writeLocal<T>(key: string, value: T) {
-  localStorage.setItem(key, JSON.stringify(value));
+  setJSON(key, value);
 }
 
 async function getCloudUser() {
