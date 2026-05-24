@@ -16,6 +16,7 @@ const rawEnv = {
   VITE_GEMINI_PROXY_URL: import.meta.env.VITE_GEMINI_PROXY_URL,
   VITE_SENTRY_DSN: import.meta.env.VITE_SENTRY_DSN,
   VITE_POSTHOG_KEY: import.meta.env.VITE_POSTHOG_KEY,
+  VITE_POSTHOG_HOST: import.meta.env.VITE_POSTHOG_HOST,
 };
 
 const schema = z.object({
@@ -27,6 +28,7 @@ const schema = z.object({
   VITE_GEMINI_PROXY_URL: z.string().url().optional(),
   VITE_SENTRY_DSN: z.string().optional(),
   VITE_POSTHOG_KEY: z.string().optional(),
+  VITE_POSTHOG_HOST: z.string().url().optional(),
 });
 
 const parsed = schema.safeParse(rawEnv);
@@ -45,12 +47,6 @@ if (isProduction) {
   }
 }
 
-if (isProduction) {
-  if (!parsed.data.VITE_SUPABASE_URL || !parsed.data.VITE_SUPABASE_ANON_KEY) {
-    throw new Error('Missing required Supabase environment variables in production.');
-  }
-}
-
 export const env = {
   supabaseUrl: parsed.data.VITE_SUPABASE_URL,
   supabaseAnonKey: parsed.data.VITE_SUPABASE_ANON_KEY,
@@ -58,6 +54,7 @@ export const env = {
   geminiProxyUrl: parsed.data.VITE_GEMINI_PROXY_URL,
   sentryDsn: parsed.data.VITE_SENTRY_DSN,
   posthogKey: parsed.data.VITE_POSTHOG_KEY,
+  posthogHost: parsed.data.VITE_POSTHOG_HOST ?? 'https://app.posthog.com',
   appEnv,
   isProduction,
   isDevelopment: !isProduction,

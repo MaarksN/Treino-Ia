@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { Dumbbell } from 'lucide-react';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import {
   getCurrentAppRoute,
   replaceUnknownAppRoute,
@@ -87,14 +88,16 @@ export default function App() {
   }, []);
 
   return (
-    <Suspense fallback={<LoadingShell />}>
-      {showOnboarding && (
-        <OnboardingTour
-          onComplete={handleCompleteOnboarding}
-          onSkip={handleCompleteOnboarding}
-        />
-      )}
-      <Dashboard />
-    </Suspense>
+    <ErrorBoundary section="App">
+      <Suspense fallback={<LoadingShell />}>
+        {showOnboarding && (
+          <OnboardingTour
+            onComplete={handleCompleteOnboarding}
+            onSkip={handleCompleteOnboarding}
+          />
+        )}
+        <Dashboard />
+      </Suspense>
+    </ErrorBoundary>
   );
 }
