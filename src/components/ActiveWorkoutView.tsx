@@ -1,8 +1,12 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, CheckCircle2, Video, X } from 'lucide-react';
 import { Exercise, WorkoutDay, WorkoutHistoryRecord, WorkoutPlan } from '../types';
 import { RestTimer } from './RestTimer';
 import { SetTracker } from './SetTracker';
+import { useFeatureFlag } from '../hooks/useFeatureFlag';
+import { useProgressionSuggestion } from '../hooks/useProgressionSuggestion';
+import { ProgressionSuggestionCard } from './ProgressionSuggestionCard';
+import { useApplyProgressionSuggestion } from '../hooks/useApplyProgressionSuggestion';
 
 type DayModeProps = {
   day: WorkoutDay;
@@ -89,6 +93,25 @@ export function ActiveWorkoutView(props: Props) {
 
     return null;
   }, [current, workoutHistory]);
+
+  const smartProgressionEnabled = useFeatureFlag('smart_progression_engine');
+
+  const progressionSuggestion = useProgressionSuggestion(
+    current?.ex.id ?? '',
+    current?.ex.name ?? '',
+    current?.ex.muscleGroup
+  );
+
+  const handleApplyLoad = useCallback((newLoad: number) => {
+    if (!current) return;
+    persistExercise({ ...current.ex, actualWeight: newLoad });
+  }, [current]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const {
+    acceptSuggestion,
+    rejectSuggestion,
+    isDismissed: progressionDismissed,
+  } = useApplyProgressionSuggestion(progressionSuggestion, handleApplyLoad);
 
   useEffect(() => {
     if (!current || !voiceEnabled) return;
@@ -208,6 +231,14 @@ export function ActiveWorkoutView(props: Props) {
           <div className="mb-6 p-3 bg-brand-neon/10 border-2 border-brand-neon/30 text-xs font-mono text-brand-light/80">
             Ultima vez: {previousData.actualWeight ? `${previousData.actualWeight}kg` : '-'} x {previousData.actualReps || '-'}
           </div>
+        )}
+
+        {smartProgressionEnabled && progressionSuggestion && !progressionDismissed && (
+          <ProgressionSuggestionCard
+            suggestion={progressionSuggestion}
+            onAccept={acceptSuggestion}
+            onDismiss={rejectSuggestion}
+          />
         )}
 
         {current.ex.notes && (

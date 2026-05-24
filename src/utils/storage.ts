@@ -23,20 +23,56 @@ function canUseStorage() {
   return typeof window !== 'undefined' && Boolean(window.localStorage);
 }
 
+import { CURRENT_STORAGE_VERSION, StorageEnvelope } from './storageSchema';
+import { migrateStorage } from './migrations';
+
+let hasMigrated = false;
+
+function ensureMigration() {
+  if (typeof window === 'undefined') return;
+  if (!hasMigrated) {
+    migrateStorage();
+    hasMigrated = true;
+  }
+}
+
 export function getJSON<T>(key: string, fallback: T): T {
+  ensureMigration();
   if (!canUseStorage()) return fallback;
 
   try {
     const raw = window.localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
+    if (!raw) return fallback;
+
+    const parsed = JSON.parse(raw);
+
+    // Suporte para nova estrutura com envelope
+    if (parsed && typeof parsed === 'object' && 'version' in parsed && 'data' in parsed) {
+      return (parsed as StorageEnvelope<T>).data;
+    }
+
+    // Suporte legado
+    return parsed as T;
   } catch {
     return fallback;
   }
 }
 
 export function setJSON<T>(key: string, value: T) {
+  ensureMigration();
   if (!canUseStorage()) return;
-  window.localStorage.setItem(key, JSON.stringify(value));
+
+  const envelope: StorageEnvelope<T> = {
+    version: CURRENT_STORAGE_VERSION,
+    updatedAt: new Date().toISOString(),
+    data: value,
+  };
+
+  try {
+    window.localStorage.setItem(key, JSON.stringify(envelope));
+  } catch (error) {
+    console.warn(`Erro ao salvar no localStorage [${key}]:`, error);
+  }
 }
 
 export function updateWorkoutStreak(): WorkoutStreak {

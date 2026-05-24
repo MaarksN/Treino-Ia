@@ -265,6 +265,12 @@ function buildAdaptiveRecommendation(profile: UserProfile, history: WorkoutSessi
     ? completedLogs.reduce((sum, exercise) => sum + getExerciseRpe(exercise), 0) / completedLogs.length
     : 0;
 
+  // Se tivermos histórico suficiente (mais de 1 sessão), podemos usar dados mais ricos de progressão.
+  // Porém, o motor individual foca em exercícios específicos. Aqui retornamos um resumo adaptativo global.
+  if (history.length >= 2 && completionRate >= 0.8 && avgRpe > 0 && avgRpe <= 8) {
+    return 'Ajuste inteligente: Seu histórico mostra consistência nas últimas sessões. O motor de progressão ajustará as cargas dos seus principais exercícios para o próximo treino.';
+  }
+
   if (completionRate < 0.75) {
     return 'Ajuste automático: reduza 1 exercício do próximo treino ou mantenha a carga até completar pelo menos 75% do plano.';
   }

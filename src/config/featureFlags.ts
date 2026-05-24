@@ -8,7 +8,11 @@ export type FeatureFlagKey =
   | 'block17.security'
   | 'block18.education'
   | 'block19.aiPersonalization'
-  | 'block20.devops';
+  | 'block20.devops'
+  | 'smart_progression_engine'
+  | 'react_query_server_state'
+  | 'posthog_analytics'
+  | 'typed_router';
 
 export type FeatureFlagMap = Record<FeatureFlagKey, boolean>;
 
@@ -25,6 +29,10 @@ export const DEFAULT_FEATURE_FLAGS: FeatureFlagMap = {
   'block18.education': true,
   'block19.aiPersonalization': true,
   'block20.devops': true,
+  'smart_progression_engine': true,
+  'react_query_server_state': false,
+  'posthog_analytics': false,
+  'typed_router': false,
 };
 
 function hasStorage() {
