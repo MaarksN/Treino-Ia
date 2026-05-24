@@ -52,6 +52,16 @@ interface AppState {
   setShowOnboarding: (show: boolean) => void;
 }
 
+function safeLocalGet(key: string): string | null {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
 export const useAppStore = create<AppState>((set) => ({
   user: null,
   profile: null,
@@ -81,8 +91,8 @@ export const useAppStore = create<AppState>((set) => ({
   setDarkMode: (darkMode) => set({ darkMode }),
   language: 'PT',
   setLanguage: (language) => set({ language }),
-  voiceEnabled: localStorage.getItem('@TreinoApp:voiceEnabled') === 'true',
+  voiceEnabled: safeLocalGet('@TreinoApp:voiceEnabled') === 'true',
   setVoiceEnabled: (voiceEnabled) => set({ voiceEnabled }),
-  showOnboarding: !localStorage.getItem('@TreinoApp:onboarding'),
+  showOnboarding: !safeLocalGet('@TreinoApp:onboarding'),
   setShowOnboarding: (showOnboarding) => set({ showOnboarding }),
 }));
