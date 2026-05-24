@@ -28,7 +28,11 @@ export const DEFAULT_FEATURE_FLAGS: FeatureFlagMap = {
 };
 
 function hasStorage() {
-  return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+  try {
+    return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+  } catch {
+    return false;
+  }
 }
 
 export function loadFeatureFlags(): FeatureFlagMap {
@@ -49,7 +53,10 @@ export function loadFeatureFlags(): FeatureFlagMap {
 
 export function saveFeatureFlags(flags: FeatureFlagMap) {
   if (!hasStorage()) return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(flags));
+
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(flags));
+  } catch {}
 }
 
 export function setFeatureFlag(key: FeatureFlagKey, enabled: boolean): FeatureFlagMap {

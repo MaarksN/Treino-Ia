@@ -23,6 +23,7 @@ import {
 import { CurrentPlanConsistencyHelper } from '../services/data/currentPlanConsistency';
 import { calculateTrainingPlan } from '../rules/iaEngine';
 import { BottomNav } from '../components/BottomNav';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import { ImportWorkoutView } from '../components/ImportWorkoutView';
 import { NutritionLifestyleHub } from '../components/NutritionLifestyleHub';
 import { AdvancedSocialHub } from '../components/AdvancedSocial/AdvancedSocialHub';
@@ -508,17 +509,19 @@ export default function Dashboard() {
     const day = plan.days[activeDayIndex];
 
     return (
-      <ActiveWorkout
-        day={day}
-        activeDraft={activeDraft}
-        activeFeedback={activeFeedback}
-        saving={saving}
-        onCancel={cancelActiveWorkout}
-        onUpdateDraft={updateDraft}
-        onUpdateDraftSet={updateDraftSet}
-        onFeedbackChange={setActiveFeedback}
-        onFinishWorkout={finishActiveWorkout}
-      />
+      <ErrorBoundary section="ActiveWorkout">
+        <ActiveWorkout
+          day={day}
+          activeDraft={activeDraft}
+          activeFeedback={activeFeedback}
+          saving={saving}
+          onCancel={cancelActiveWorkout}
+          onUpdateDraft={updateDraft}
+          onUpdateDraftSet={updateDraftSet}
+          onFeedbackChange={setActiveFeedback}
+          onFinishWorkout={finishActiveWorkout}
+        />
+      </ErrorBoundary>
     );
   }
 
@@ -705,11 +708,15 @@ export default function Dashboard() {
             </section>
 
             <div id="dashboard-nutrition" className="scroll-mt-24">
-              <NutritionLifestyleHub profile={profile} plan={plan} history={history} />
+              <ErrorBoundary section="NutritionLifestyleHub">
+                <NutritionLifestyleHub profile={profile} plan={plan} history={history} />
+              </ErrorBoundary>
             </div>
 
             <div id="dashboard-advanced-social" className="scroll-mt-24">
-              <AdvancedSocialHub profile={profile} />
+              <ErrorBoundary section="AdvancedSocialHub">
+                <AdvancedSocialHub profile={profile} />
+              </ErrorBoundary>
             </div>
 
             <WeeklyPlan
@@ -779,7 +786,9 @@ export default function Dashboard() {
               <LongevitySignalPanel history={history} />
               <div className="grid gap-6 md:grid-cols-2">
                 <FormCheckerPreviewPanel />
-                <WebXRPreviewPanel />
+                <ErrorBoundary section="WebXRPreviewPanel">
+                  <WebXRPreviewPanel />
+                </ErrorBoundary>
               </div>
             </section>
 
@@ -788,7 +797,9 @@ export default function Dashboard() {
             <TrainingReportPanel history={history} />
 
             <div id="dashboard-monetization" className="scroll-mt-24">
-              <MonetizationHub />
+              <ErrorBoundary section="MonetizationHub">
+                <MonetizationHub />
+              </ErrorBoundary>
             </div>
           </>
         ) : !showStarterRegistration ? (
