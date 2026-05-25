@@ -275,6 +275,7 @@ export const ActiveWorkout = memo(function ActiveWorkout({
                 <label className="flex items-center gap-3 cursor-pointer bg-brand-dark/50 px-4 py-2 rounded-full border border-brand-light/10">
                   <span className="font-mono text-xs uppercase tracking-widest text-brand-light">Concluir Exercício</span>
                   <input
+                    data-testid={`exercise-completed-${eIdx}`}
                     type="checkbox"
                     checked={exercise.completed}
                     onChange={event => {
@@ -305,6 +306,7 @@ export const ActiveWorkout = memo(function ActiveWorkout({
                         <td className="py-3 px-2 text-brand-light">{sIdx + 1}</td>
                         <td className="py-3 px-2">
                           <input
+                            data-testid={`set-weight-${eIdx}-${sIdx}`}
                             value={set.weight}
                             onChange={event => onUpdateDraftSet(eIdx, sIdx, { weight: event.target.value })}
                             inputMode="decimal"
@@ -335,6 +337,7 @@ export const ActiveWorkout = memo(function ActiveWorkout({
                         </td>
                         <td className="py-3 px-2">
                           <input
+                            data-testid={`set-reps-${eIdx}-${sIdx}`}
                             value={set.reps}
                             onChange={event => onUpdateDraftSet(eIdx, sIdx, { reps: event.target.value })}
                             inputMode="numeric"
@@ -345,6 +348,7 @@ export const ActiveWorkout = memo(function ActiveWorkout({
                         <td className="py-3 px-2 relative">
                           <div className="flex items-center gap-1">
                             <input
+                              data-testid={`set-rpe-${eIdx}-${sIdx}`}
                               value={set.rpe}
                               onChange={event => onUpdateDraftSet(eIdx, sIdx, { rpe: event.target.value })}
                               inputMode="decimal"
@@ -394,6 +398,7 @@ export const ActiveWorkout = memo(function ActiveWorkout({
                         <td className="py-3 px-2 text-center">
                           <label className="relative inline-flex cursor-pointer items-center justify-center">
                             <input
+                              data-testid={`set-completed-${eIdx}-${sIdx}`}
                               type="checkbox"
                               checked={set.completed}
                               onChange={e => handleSetCompletion(eIdx, sIdx, exercise, e.target.checked)}
@@ -456,11 +461,12 @@ export const ActiveWorkout = memo(function ActiveWorkout({
           </label>
           <button
             type="button"
+            data-testid="finish-workout-button"
             onClick={onFinishWorkout}
             disabled={saving}
             className={`mt-5 w-full rounded-[24px] border-2 px-6 py-4 font-display text-3xl uppercase tracking-widest shadow-[0_0_30px_rgba(25,167,255,0.4)] backdrop-blur-md transition-transform hover:scale-[1.01] disabled:opacity-60 ${primaryActionClass}`}
           >
-            {saving ? 'Salvando...' : 'Finalizar e ajustar plano'}
+            {saving ? 'Salvando...' : 'Finalizar treino'}
           </button>
         </section>
       </div>

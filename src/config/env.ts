@@ -19,16 +19,33 @@ const rawEnv = {
   VITE_POSTHOG_HOST: import.meta.env.VITE_POSTHOG_HOST,
 };
 
+const optionalEnvString = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess(value => (value === '' ? undefined : value), schema.optional());
+
+function isAbsoluteUrlOrRootRelativePath(value: string) {
+  if (value.startsWith('/')) return true;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 const schema = z.object({
-  VITE_SUPABASE_URL: z.string().url().optional(),
-  VITE_SUPABASE_ANON_KEY: z.string().min(1).optional(),
-  VITE_ENV: z.string().optional(),
-  MODE: z.string().optional(),
-  GEMINI_API_KEY: z.string().optional(),
-  VITE_GEMINI_PROXY_URL: z.string().url().optional(),
-  VITE_SENTRY_DSN: z.string().optional(),
-  VITE_POSTHOG_KEY: z.string().optional(),
-  VITE_POSTHOG_HOST: z.string().url().optional(),
+  VITE_SUPABASE_URL: optionalEnvString(z.string().url()),
+  VITE_SUPABASE_ANON_KEY: optionalEnvString(z.string().min(1)),
+  VITE_ENV: optionalEnvString(z.string()),
+  MODE: optionalEnvString(z.string()),
+  GEMINI_API_KEY: optionalEnvString(z.string()),
+  VITE_GEMINI_PROXY_URL: optionalEnvString(
+    z.string().min(1).refine(isAbsoluteUrlOrRootRelativePath, {
+      message: 'Must be an absolute http(s) URL or a root-relative path starting with /',
+    }),
+  ),
+  VITE_SENTRY_DSN: optionalEnvString(z.string()),
+  VITE_POSTHOG_KEY: optionalEnvString(z.string()),
+  VITE_POSTHOG_HOST: optionalEnvString(z.string().url()),
 });
 
 const parsed = schema.safeParse(rawEnv);

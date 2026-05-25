@@ -35,7 +35,11 @@ export const AnamnesisForm = memo(function AnamnesisForm({
   onSubmit,
 }: AnamnesisFormProps) {
   return (
-    <form onSubmit={onSubmit} className="mb-8 rounded-[28px] border-4 border-brand-neon bg-brand-gray p-6 shadow-brutal-neon md:p-8">
+    <form
+      data-testid="anamnesis-form"
+      onSubmit={onSubmit}
+      className="mb-8 rounded-[28px] border-4 border-brand-neon bg-brand-gray p-6 shadow-brutal-neon md:p-8"
+    >
       <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.35em] text-brand-neon">Anamnese</p>
@@ -43,6 +47,7 @@ export const AnamnesisForm = memo(function AnamnesisForm({
         </div>
         <button
           type="submit"
+          data-testid="anamnesis-submit"
           disabled={saving}
           className="rounded-[24px] border-2 border-brand-neon bg-brand-neon px-6 py-3 font-mono text-xs uppercase tracking-widest text-brand-dark disabled:opacity-60"
         >
@@ -55,6 +60,7 @@ export const AnamnesisForm = memo(function AnamnesisForm({
         <label>
           <span className={labelClass}>Nome</span>
           <input
+            data-testid="anamnesis-name"
             value={profile.name}
             onChange={event => onChange({ ...profile, name: event.target.value })}
             className={fieldClass}
@@ -65,6 +71,7 @@ export const AnamnesisForm = memo(function AnamnesisForm({
         <label>
           <span className={labelClass}>Objetivo</span>
           <select
+            data-testid="anamnesis-goal"
             value={profile.goal}
             onChange={event => onChange({ ...profile, goal: event.target.value })}
             className={fieldClass}
@@ -102,6 +109,7 @@ export const AnamnesisForm = memo(function AnamnesisForm({
         <label>
           <span className={labelClass}>Dias por semana</span>
           <input
+            data-testid="anamnesis-days"
             type="number"
             min={1}
             max={6}
@@ -114,6 +122,7 @@ export const AnamnesisForm = memo(function AnamnesisForm({
         <label>
           <span className={labelClass}>Tempo por treino (min)</span>
           <input
+            data-testid="anamnesis-duration"
             type="number"
             min={20}
             max={120}
