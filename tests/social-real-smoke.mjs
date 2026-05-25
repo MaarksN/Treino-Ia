@@ -4,9 +4,14 @@ import { createClient } from '@supabase/supabase-js';
 const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const smokeEmailDomain = process.env.SOCIAL_SMOKE_EMAIL_DOMAIN || 'example.com';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
+}
+
+function smokeEmail(prefix, suffix) {
+  return `${prefix}-${suffix}@${smokeEmailDomain}`;
 }
 
 function isPlaceholder() {
@@ -59,7 +64,7 @@ async function main() {
     return;
   }
 
-  const suffix = Date.now();
+  const suffix = process.env.SOCIAL_SMOKE_SUFFIX || Date.now();
   const password = `Smoke-${suffix}-Aa1!`;
   const service = serviceRoleKey
     ? createClient(url, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } })
@@ -69,7 +74,7 @@ async function main() {
 
   try {
     const coach = await signUpAndProfile(
-      `coach-${suffix}@example.com`,
+      smokeEmail('coach', suffix),
       password,
       `coach_${suffix}`,
       `Coach ${suffix}`,
@@ -78,7 +83,7 @@ async function main() {
     createdUserIds.push(coach.userId);
 
     const athlete = await signUpAndProfile(
-      `athlete-${suffix}@example.com`,
+      smokeEmail('athlete', suffix),
       password,
       `athlete_${suffix}`,
       `Athlete ${suffix}`,
