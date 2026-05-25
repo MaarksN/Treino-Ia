@@ -28,10 +28,10 @@ export default defineConfig({
       // Thresholds set ~1-2% below baseline to allow rounding tolerance.
       // Increase by +5% increments in future sprints as coverage improves.
       thresholds: {
-        statements: 27.3,
-        branches: 23.2,
-        functions: 27.7,
-        lines: 27.2,
+        statements: 29,
+        branches: 24.8,
+        functions: 29,
+        lines: 29,
       },
     },
   },
