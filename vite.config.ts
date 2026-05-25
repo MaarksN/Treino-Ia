@@ -5,6 +5,16 @@ import path from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
 import {defineConfig} from 'vite';
 
+const manualChunkGroups = [
+  { name: 'react', packages: ['react', 'react-dom'] },
+  { name: 'sentry', packages: ['@sentry/react'] },
+  { name: 'query', packages: ['@tanstack/react-query'] },
+  { name: 'icons', packages: ['lucide-react'] },
+  { name: 'charts', packages: ['recharts'] },
+  { name: 'markdown', packages: ['react-markdown'] },
+  { name: 'supabase', packages: ['@supabase/supabase-js'] },
+];
+
 export default defineConfig(({ mode }) => {
   const analyzeBundle = mode === 'analyze' || process.env.ANALYZE === 'true';
 
@@ -41,14 +51,13 @@ export default defineConfig(({ mode }) => {
       sourcemap: 'hidden' as const,
       rollupOptions: {
         output: {
-          manualChunks: {
-            react: ['react', 'react-dom'],
-            sentry: ['@sentry/react'],
-            query: ['@tanstack/react-query'],
-            icons: ['lucide-react'],
-            charts: ['recharts'],
-            markdown: ['react-markdown'],
-            supabase: ['@supabase/supabase-js'],
+          manualChunks(id) {
+            const normalizedId = id.replace(/\\/g, '/');
+            const group = manualChunkGroups.find(({ packages }) =>
+              packages.some((packageName) => normalizedId.includes(`/node_modules/${packageName}/`)),
+            );
+
+            return group?.name;
           },
         },
       },
