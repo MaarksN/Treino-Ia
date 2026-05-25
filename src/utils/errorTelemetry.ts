@@ -4,6 +4,7 @@ import {
   redactObservabilityString,
   redactObservabilityUrl,
 } from '../services/observability/observabilityRedaction';
+import { trackEvent } from './analytics';
 
 export interface ErrorTelemetryEvent {
   id: string;
@@ -63,6 +64,10 @@ export function captureError(
 
   const events = loadErrorTelemetry();
   saveErrorTelemetry([...events, event]);
+  trackEvent('critical_error_captured', {
+    source: event.source,
+    hasStack: Boolean(event.stack),
+  });
 
   return event;
 }

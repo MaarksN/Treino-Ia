@@ -1,13 +1,15 @@
 import { type FormEvent, lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
-import { HardwareCapabilitiesPanel } from './Dashboard/components/HardwareCapabilitiesPanel';
 import {
   Activity,
   Brain,
+  CheckCircle2,
   Dumbbell,
   Gauge,
   History,
+  MinusCircle,
   Target,
   Timer,
+  XCircle,
   UserRound,
 } from 'lucide-react';
 import {
@@ -21,12 +23,13 @@ import {
   WorkoutSession,
 } from '../services/database';
 import { CurrentPlanConsistencyHelper } from '../services/data/currentPlanConsistency';
+import {
+  aiRecommendationRepository,
+  type AiRecommendationRecord,
+} from '../services/data/aiRecommendationRepository';
 import { calculateTrainingPlan } from '../rules/iaEngine';
 import { BottomNav } from '../components/BottomNav';
 import { ErrorBoundary } from '../components/ErrorBoundary';
-import { ImportWorkoutView } from '../components/ImportWorkoutView';
-import { NutritionLifestyleHub } from '../components/NutritionLifestyleHub';
-import { AdvancedSocialHub } from '../components/AdvancedSocial/AdvancedSocialHub';
 import { Skeleton } from '../components/ui/Skeleton';
 import { type User as StarterUser } from '../types';
 import {
@@ -51,6 +54,7 @@ import {
 import { triggerHapticFeedback } from '../services/hapticFeedback';
 import { type WorkoutImportFileDraft } from '../services/workoutImportPipeline';
 import { getCriticalContrastClass } from '../utils/accessibilityContrast';
+import { trackEvent } from '../utils/analytics';
 import {
   CloudPanel,
   AnamnesisForm,
@@ -63,32 +67,9 @@ import {
   ActiveWorkout,
   DashboardSkeleton,
   PlanGenerationProgress,
-  TrainingReportPanel,
-  MonetizationHub,
 } from './Dashboard/components';
 import { buildGamificationRetentionState } from './Dashboard/services/gamificationRetentionEngine';
-import { BiohackingWidget } from './Dashboard/components/BiohackingWidget';
-import { RemoteGamifiedPanel } from './Dashboard/components/RemoteGamified';
 import { buildRemoteGamifiedState } from './Dashboard/services/remoteGamifiedEngine';
-import { CalmModePanel } from '../components/wellness/CalmModePanel';
-import { EcoLiftingPanel } from '../components/sustainability/EcoLiftingPanel';
-import { BossFightCancellationPreview } from '../components/monetization/BossFightCancellationPreview';
-import { PartnerTokenPreview } from '../components/partners/PartnerTokenPreview';
-import { TimeTravelProgressViewer } from '../components/reports/TimeTravelProgressViewer';
-import { PainCheckinPanel } from '../components/recovery/PainCheckinPanel';
-import { AdaptivePathwaysPanel } from '../components/accessibility/AdaptivePathwaysPanel';
-import { HighContrastModeToggle } from '../components/accessibility/HighContrastModeToggle';
-import { ScreenReaderSupportPanel } from '../components/accessibility/ScreenReaderSupportPanel';
-import { PlainLanguagePanel } from '../components/accessibility/PlainLanguagePanel';
-import { AdaptiveProtocolsPanel } from '../components/accessibility/AdaptiveProtocolsPanel';
-import { ThemeCustomizationPanel } from '../components/premium/ThemeCustomizationPanel';
-import { PictureInPicturePanel } from '../components/media/PictureInPicturePanel';
-import { WorkoutImportPanel } from '../components/media/WorkoutImportPanel';
-import { FormCheckerPreviewPanel } from '../components/ai/FormCheckerPreviewPanel';
-import { EquipmentReplanPanel } from '../components/ai/EquipmentReplanPanel';
-import { PantryPlannerPanel } from '../components/Nutrition/PantryPlannerPanel';
-import { LongevitySignalPanel } from '../components/wellness/LongevitySignalPanel';
-import { WebXRPreviewPanel } from '../components/xr/WebXRPreviewPanel';
 
 const PLAN_GENERATION_FEEDBACK_MS = 750;
 const primaryActionClass = getCriticalContrastClass('primaryAction');
@@ -97,9 +78,164 @@ const warningStatusClass = getCriticalContrastClass('warningStatus');
 const RegistrationForm = lazy(() =>
   import('../components/RegistrationForm').then(module => ({ default: module.RegistrationForm })),
 );
+const ImportWorkoutView = lazy(() =>
+  import('../components/ImportWorkoutView').then(module => ({ default: module.ImportWorkoutView })),
+);
+const NutritionLifestyleHub = lazy(() =>
+  import('../components/NutritionLifestyleHub').then(module => ({ default: module.NutritionLifestyleHub })),
+);
+const AdvancedSocialHub = lazy(() =>
+  import('../components/AdvancedSocial/AdvancedSocialHub').then(module => ({ default: module.AdvancedSocialHub })),
+);
+const BiohackingWidget = lazy(() =>
+  import('./Dashboard/components/BiohackingWidget').then(module => ({ default: module.BiohackingWidget })),
+);
+const RemoteGamifiedPanel = lazy(() =>
+  import('./Dashboard/components/RemoteGamified').then(module => ({ default: module.RemoteGamifiedPanel })),
+);
+const CalmModePanel = lazy(() =>
+  import('../components/wellness/CalmModePanel').then(module => ({ default: module.CalmModePanel })),
+);
+const EcoLiftingPanel = lazy(() =>
+  import('../components/sustainability/EcoLiftingPanel').then(module => ({ default: module.EcoLiftingPanel })),
+);
+const BossFightCancellationPreview = lazy(() =>
+  import('../components/monetization/BossFightCancellationPreview').then(module => ({ default: module.BossFightCancellationPreview })),
+);
+const PartnerTokenPreview = lazy(() =>
+  import('../components/partners/PartnerTokenPreview').then(module => ({ default: module.PartnerTokenPreview })),
+);
+const TimeTravelProgressViewer = lazy(() =>
+  import('../components/reports/TimeTravelProgressViewer').then(module => ({ default: module.TimeTravelProgressViewer })),
+);
+const PainCheckinPanel = lazy(() =>
+  import('../components/recovery/PainCheckinPanel').then(module => ({ default: module.PainCheckinPanel })),
+);
+const AdaptivePathwaysPanel = lazy(() =>
+  import('../components/accessibility/AdaptivePathwaysPanel').then(module => ({ default: module.AdaptivePathwaysPanel })),
+);
+const HighContrastModeToggle = lazy(() =>
+  import('../components/accessibility/HighContrastModeToggle').then(module => ({ default: module.HighContrastModeToggle })),
+);
+const ScreenReaderSupportPanel = lazy(() =>
+  import('../components/accessibility/ScreenReaderSupportPanel').then(module => ({ default: module.ScreenReaderSupportPanel })),
+);
+const PlainLanguagePanel = lazy(() =>
+  import('../components/accessibility/PlainLanguagePanel').then(module => ({ default: module.PlainLanguagePanel })),
+);
+const AdaptiveProtocolsPanel = lazy(() =>
+  import('../components/accessibility/AdaptiveProtocolsPanel').then(module => ({ default: module.AdaptiveProtocolsPanel })),
+);
+const ThemeCustomizationPanel = lazy(() =>
+  import('../components/premium/ThemeCustomizationPanel').then(module => ({ default: module.ThemeCustomizationPanel })),
+);
+const PictureInPicturePanel = lazy(() =>
+  import('../components/media/PictureInPicturePanel').then(module => ({ default: module.PictureInPicturePanel })),
+);
+const WorkoutImportPanel = lazy(() =>
+  import('../components/media/WorkoutImportPanel').then(module => ({ default: module.WorkoutImportPanel })),
+);
+const FormCheckerPreviewPanel = lazy(() =>
+  import('../components/ai/FormCheckerPreviewPanel').then(module => ({ default: module.FormCheckerPreviewPanel })),
+);
+const EquipmentReplanPanel = lazy(() =>
+  import('../components/ai/EquipmentReplanPanel').then(module => ({ default: module.EquipmentReplanPanel })),
+);
+const PantryPlannerPanel = lazy(() =>
+  import('../components/Nutrition/PantryPlannerPanel').then(module => ({ default: module.PantryPlannerPanel })),
+);
+const LongevitySignalPanel = lazy(() =>
+  import('../components/wellness/LongevitySignalPanel').then(module => ({ default: module.LongevitySignalPanel })),
+);
+const WebXRPreviewPanel = lazy(() =>
+  import('../components/xr/WebXRPreviewPanel').then(module => ({ default: module.WebXRPreviewPanel })),
+);
+const TrainingReportPanel = lazy(() =>
+  import('./Dashboard/components/TrainingReportPanel').then(module => ({ default: module.TrainingReportPanel })),
+);
+const MonetizationHub = lazy(() =>
+  import('./Dashboard/components/monetization/MonetizationHub').then(module => ({ default: module.MonetizationHub })),
+);
 
 function wait(ms: number) {
   return new Promise<void>(resolve => setTimeout(resolve, ms));
+}
+
+function LazyPanelFallback() {
+  return <Skeleton lines={3} />;
+}
+
+interface PendingAiRecommendationCardProps {
+  recommendation: AiRecommendationRecord;
+  saving: boolean;
+  onAccept: () => void;
+  onReject: () => void;
+  onDismiss: () => void;
+}
+
+function PendingAiRecommendationCard({
+  recommendation,
+  saving,
+  onAccept,
+  onReject,
+  onDismiss,
+}: PendingAiRecommendationCardProps) {
+  return (
+    <section
+      data-testid="pending-ai-recommendation-card"
+      className="mb-8 rounded-[28px] border-4 border-brand-neon bg-brand-dark p-6 shadow-brutal-neon md:p-8"
+    >
+      <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+        <div className="max-w-3xl">
+          <p className="font-mono text-xs uppercase tracking-[0.35em] text-brand-neon">
+            Sugestao pendente da IA
+          </p>
+          <h2 className="mt-2 font-display text-4xl uppercase text-brand-light md:text-5xl">
+            Revisar antes de aplicar
+          </h2>
+          <p className="mt-4 font-mono text-sm leading-7 text-brand-light/80">
+            {recommendation.reason}
+          </p>
+          <p className="mt-3 font-mono text-xs uppercase tracking-widest text-brand-muted">
+            Plano atual: {recommendation.payload.currentPlan.planName} | Sugerido: {recommendation.payload.proposedPlan.planName}
+          </p>
+        </div>
+
+        <div className="grid min-w-56 gap-3">
+          <button
+            type="button"
+            data-testid="ai-recommendation-accept"
+            disabled={saving}
+            onClick={onAccept}
+            className="rounded-[22px] border-2 border-brand-neon bg-brand-neon px-5 py-3 font-mono text-xs font-black uppercase tracking-widest text-brand-dark transition-transform hover:scale-[1.02] disabled:opacity-60"
+          >
+            <CheckCircle2 className="mr-2 inline h-4 w-4" />
+            Aceitar sugestao
+          </button>
+          <button
+            type="button"
+            data-testid="ai-recommendation-reject"
+            disabled={saving}
+            onClick={onReject}
+            className="rounded-[22px] border-2 border-brand-magenta bg-brand-magenta/15 px-5 py-3 font-mono text-xs font-bold uppercase tracking-widest text-brand-light transition-colors hover:bg-brand-magenta/25 disabled:opacity-60"
+          >
+            <XCircle className="mr-2 inline h-4 w-4" />
+            Rejeitar
+          </button>
+          <button
+            type="button"
+            data-testid="ai-recommendation-dismiss"
+            disabled={saving}
+            onClick={onDismiss}
+            className="rounded-[22px] border-2 border-brand-light/20 bg-brand-gray px-5 py-3 font-mono text-xs font-bold uppercase tracking-widest text-brand-light transition-colors hover:border-brand-light/50 disabled:opacity-60"
+          >
+            <MinusCircle className="mr-2 inline h-4 w-4" />
+            Manter atual
+          </button>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 
@@ -126,6 +262,7 @@ export default function Dashboard() {
   const [authLoading, setAuthLoading] = useState(false);
   const [showWorkoutImport, setShowWorkoutImport] = useState(false);
   const [workoutImportLoading, setWorkoutImportLoading] = useState(false);
+  const [pendingRecommendation, setPendingRecommendation] = useState<AiRecommendationRecord | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -150,6 +287,7 @@ export default function Dashboard() {
         setShowAnamnesis(Boolean(starterUser));
         setProfile(null);
         setPlan(null);
+        setPendingRecommendation(null);
         return;
       }
 
@@ -169,6 +307,7 @@ export default function Dashboard() {
       setSelectedDayIndex(0);
       setShowStarterRegistration(false);
       setShowAnamnesis(false);
+      setPendingRecommendation(await aiRecommendationRepository.getLatestPendingPlanRecommendation());
     } catch {
       setError('Não consegui carregar os dados. Verifique a configuração local ou Supabase.');
     } finally {
@@ -234,6 +373,11 @@ export default function Dashboard() {
       setShowAnamnesis(false);
       setNotice('Anamnese salva e plano semanal recalculado.');
       setPersistence(await DatabaseService.getPersistenceStatus());
+      trackEvent('anamnesis_completed', {
+        goal: updatedProfile.goal,
+        level: updatedProfile.level,
+        daysPerWeek: updatedProfile.daysPerWeek,
+      });
     } catch {
       setError('Não consegui salvar a anamnese agora.');
     } finally {
@@ -391,6 +535,11 @@ export default function Dashboard() {
     setActiveDraft(createActiveDraft(day, history));
     setActiveFeedback('');
     setNotice('');
+    trackEvent('workout_started', {
+      planId: plan.id,
+      dayId: day.id,
+      focus: day.focus,
+    });
     void triggerHapticFeedback('selection');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [history, plan]);
@@ -402,6 +551,13 @@ export default function Dashboard() {
   }, []);
 
   const updateDraftSet = useCallback((exerciseIndex: number, setIndex: number, patch: Partial<ActiveExerciseDraft['sets'][0]>) => {
+    if (patch.completed === true) {
+      trackEvent('set_logged', {
+        exerciseIndex,
+        setIndex,
+      });
+    }
+
     setActiveDraft(current => current.map((item, i) => {
       if (i !== exerciseIndex) return item;
       const newSets = [...item.sets];
@@ -447,14 +603,29 @@ export default function Dashboard() {
       const finalHistory = [completedSession, ...history].slice(0, 50);
 
       await DatabaseService.saveWorkoutSession(completedSession);
-      const res = await CurrentPlanConsistencyHelper.setCurrentPlan(adjustedPlan);
-      if (res.status === 'local_fallback') setNotice('Plano salvo localmente. Aguardando sincronização.');
+      const recommendation = await aiRecommendationRepository.createPendingPlanRecommendation({
+        currentPlan: plan,
+        proposedPlan: adjustedPlan,
+        reason: adjustedPlan.nextRecommendation,
+        legacySourceSessionId: completedSession.id,
+      });
 
       setHistory(finalHistory);
-      setPlan(adjustedPlan);
+      setPendingRecommendation(recommendation);
       setActiveDayIndex(null);
       setActiveDraft([]);
-      setNotice(`Treino finalizado. ${adjustedPlan.nextRecommendation}`);
+      setNotice('Treino finalizado. A IA gerou uma sugestao pendente para voce revisar.');
+      trackEvent('workout_completed', {
+        planId: plan.id,
+        dayId: day.id,
+        totalVolume,
+        completedExercises,
+        totalExercises: logs.length,
+      });
+      trackEvent('ai_suggestion_generated', {
+        recommendationId: recommendation.id,
+        sourceSessionId: completedSession.id,
+      });
       void triggerHapticFeedback('success');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch {
@@ -463,6 +634,82 @@ export default function Dashboard() {
       setSaving(false);
     }
   }, [activeDayIndex, activeDraft, activeFeedback, history, plan, profile]);
+
+  const acceptPendingRecommendation = useCallback(async () => {
+    if (!pendingRecommendation) return;
+
+    setSaving(true);
+    setError('');
+    setNotice('');
+
+    try {
+      const proposedPlan = pendingRecommendation.payload.proposedPlan;
+      const res = await CurrentPlanConsistencyHelper.setCurrentPlan(proposedPlan);
+      if (res.status === 'failed') {
+        throw new Error(res.error);
+      }
+
+      const applied = await aiRecommendationRepository.markApplied(pendingRecommendation, proposedPlan);
+      setPlan(proposedPlan);
+      setPendingRecommendation(null);
+      setSelectedDayIndex(0);
+      setNotice(
+        res.status === 'local_fallback'
+          ? 'Sugestao aplicada localmente. Aguardando sincronizacao.'
+          : 'Sugestao aceita e plano atualizado.',
+      );
+      trackEvent('ai_suggestion_accepted', {
+        recommendationId: applied.id,
+        planId: proposedPlan.id,
+      });
+    } catch {
+      setError('Nao consegui aplicar a sugestao agora.');
+    } finally {
+      setSaving(false);
+    }
+  }, [pendingRecommendation]);
+
+  const rejectPendingRecommendation = useCallback(async () => {
+    if (!pendingRecommendation) return;
+
+    setSaving(true);
+    setError('');
+    setNotice('');
+
+    try {
+      const rejected = await aiRecommendationRepository.reject(pendingRecommendation);
+      setPendingRecommendation(null);
+      setNotice('Sugestao rejeitada. Seu plano atual foi mantido.');
+      trackEvent('ai_suggestion_rejected', {
+        recommendationId: rejected.id,
+      });
+    } catch {
+      setError('Nao consegui rejeitar a sugestao agora.');
+    } finally {
+      setSaving(false);
+    }
+  }, [pendingRecommendation]);
+
+  const dismissPendingRecommendation = useCallback(async () => {
+    if (!pendingRecommendation) return;
+
+    setSaving(true);
+    setError('');
+    setNotice('');
+
+    try {
+      const dismissed = await aiRecommendationRepository.dismiss(pendingRecommendation);
+      setPendingRecommendation(null);
+      setNotice('Plano atual mantido. A sugestao foi arquivada.');
+      trackEvent('ai_suggestion_dismissed', {
+        recommendationId: dismissed.id,
+      });
+    } catch {
+      setError('Nao consegui arquivar a sugestao agora.');
+    } finally {
+      setSaving(false);
+    }
+  }, [pendingRecommendation]);
 
   const handleAuth = useCallback(async (mode: 'signin' | 'signup') => {
     setAuthLoading(true);
@@ -595,11 +842,13 @@ export default function Dashboard() {
         )}
 
         {showWorkoutImport && profile && plan && (
-          <ImportWorkoutView
-            isLoading={workoutImportLoading}
-            onImport={handleWorkoutImport}
-            onCancel={() => setShowWorkoutImport(false)}
-          />
+          <Suspense fallback={<LazyPanelFallback />}>
+            <ImportWorkoutView
+              isLoading={workoutImportLoading}
+              onImport={handleWorkoutImport}
+              onCancel={() => setShowWorkoutImport(false)}
+            />
+          </Suspense>
         )}
 
         {showStarterRegistration && !profile ? (
@@ -686,7 +935,9 @@ export default function Dashboard() {
 
             {remoteGamifiedState && (
               <div id="dashboard-remote-gamified" className="scroll-mt-24">
-                <RemoteGamifiedPanel state={remoteGamifiedState} />
+                <Suspense fallback={<LazyPanelFallback />}>
+                  <RemoteGamifiedPanel state={remoteGamifiedState} />
+                </Suspense>
               </div>
             )}
 
@@ -707,15 +958,29 @@ export default function Dashboard() {
               </div>
             </section>
 
+            {pendingRecommendation && (
+              <PendingAiRecommendationCard
+                recommendation={pendingRecommendation}
+                saving={saving}
+                onAccept={acceptPendingRecommendation}
+                onReject={rejectPendingRecommendation}
+                onDismiss={dismissPendingRecommendation}
+              />
+            )}
+
             <div id="dashboard-nutrition" className="scroll-mt-24">
               <ErrorBoundary section="NutritionLifestyleHub">
-                <NutritionLifestyleHub profile={profile} plan={plan} history={history} />
+                <Suspense fallback={<LazyPanelFallback />}>
+                  <NutritionLifestyleHub profile={profile} plan={plan} history={history} />
+                </Suspense>
               </ErrorBoundary>
             </div>
 
             <div id="dashboard-advanced-social" className="scroll-mt-24">
               <ErrorBoundary section="AdvancedSocialHub">
-                <AdvancedSocialHub profile={profile} />
+                <Suspense fallback={<LazyPanelFallback />}>
+                  <AdvancedSocialHub profile={profile} />
+                </Suspense>
               </ErrorBoundary>
             </div>
 
@@ -730,7 +995,9 @@ export default function Dashboard() {
               onUpdateExerciseNotes={updateSelectedExerciseNotes}
             />
 
-            <BiohackingWidget />
+            <Suspense fallback={<LazyPanelFallback />}>
+              <BiohackingWidget />
+            </Suspense>
             <RecoveryReadinessSection history={history} />
 
             <section className="mb-8 space-y-6">
@@ -738,13 +1005,15 @@ export default function Dashboard() {
                 <h2 className="font-display text-4xl uppercase text-brand-light">Bem-estar, Sustentabilidade & Retrospectiva</h2>
                 <p className="mt-2 font-mono text-sm text-brand-light/70">Itens estratégicos 96 a 100 integrados.</p>
               </div>
-              <CalmModePanel />
-              <EcoLiftingPanel history={history} />
-              <div className="grid gap-6 md:grid-cols-2">
-                <BossFightCancellationPreview />
-                <PartnerTokenPreview />
-              </div>
-              <TimeTravelProgressViewer history={history} />
+              <Suspense fallback={<LazyPanelFallback />}>
+                <CalmModePanel />
+                <EcoLiftingPanel history={history} />
+                <div className="grid gap-6 md:grid-cols-2">
+                  <BossFightCancellationPreview />
+                  <PartnerTokenPreview />
+                </div>
+                <TimeTravelProgressViewer history={history} />
+              </Suspense>
             </section>
 
             <section id="dashboard-accessibility" className="mb-8 scroll-mt-24 space-y-6">
@@ -752,14 +1021,16 @@ export default function Dashboard() {
                 <h2 className="font-display text-4xl uppercase text-brand-light">Acessibilidade &amp; Bem-estar</h2>
                 <p className="mt-2 font-mono text-sm text-brand-light/70">Itens estratégicos 32, 91, 92, 93 e 95 integrados.</p>
               </div>
-              <PainCheckinPanel />
-              <AdaptivePathwaysPanel />
-              <div className="grid gap-6 md:grid-cols-2">
-                <HighContrastModeToggle />
-                <PlainLanguagePanel />
-              </div>
-              <ScreenReaderSupportPanel />
-              <AdaptiveProtocolsPanel />
+              <Suspense fallback={<LazyPanelFallback />}>
+                <PainCheckinPanel />
+                <AdaptivePathwaysPanel />
+                <div className="grid gap-6 md:grid-cols-2">
+                  <HighContrastModeToggle />
+                  <PlainLanguagePanel />
+                </div>
+                <ScreenReaderSupportPanel />
+                <AdaptiveProtocolsPanel />
+              </Suspense>
             </section>
 
             <section className="mb-8 space-y-6">
@@ -767,11 +1038,13 @@ export default function Dashboard() {
                 <h2 className="font-display text-4xl uppercase text-brand-light">Dados, Premium UX &amp; Mídia</h2>
                 <p className="mt-2 font-mono text-sm text-brand-light/70">Itens estratégicos 08, 18, 19 e 28 integrados.</p>
               </div>
-              <div className="grid gap-6 md:grid-cols-2">
-                <ThemeCustomizationPanel />
-                <PictureInPicturePanel />
-              </div>
-              <WorkoutImportPanel />
+              <Suspense fallback={<LazyPanelFallback />}>
+                <div className="grid gap-6 md:grid-cols-2">
+                  <ThemeCustomizationPanel />
+                  <PictureInPicturePanel />
+                </div>
+                <WorkoutImportPanel />
+              </Suspense>
             </section>
 
             <section className="mb-8 space-y-6">
@@ -779,26 +1052,32 @@ export default function Dashboard() {
                 <h2 className="font-display text-4xl uppercase text-brand-light">IA, Hábitos &amp; Tecnologias Futuras</h2>
                 <p className="mt-2 font-mono text-sm text-brand-light/70">Itens estratégicos 51, 58, 59, 60 e 67 integrados.</p>
               </div>
-              <div className="grid gap-6 md:grid-cols-2">
-                <EquipmentReplanPanel />
-                <PantryPlannerPanel />
-              </div>
-              <LongevitySignalPanel history={history} />
-              <div className="grid gap-6 md:grid-cols-2">
-                <FormCheckerPreviewPanel />
-                <ErrorBoundary section="WebXRPreviewPanel">
-                  <WebXRPreviewPanel />
-                </ErrorBoundary>
-              </div>
+              <Suspense fallback={<LazyPanelFallback />}>
+                <div className="grid gap-6 md:grid-cols-2">
+                  <EquipmentReplanPanel />
+                  <PantryPlannerPanel />
+                </div>
+                <LongevitySignalPanel history={history} />
+                <div className="grid gap-6 md:grid-cols-2">
+                  <FormCheckerPreviewPanel />
+                  <ErrorBoundary section="WebXRPreviewPanel">
+                    <WebXRPreviewPanel />
+                  </ErrorBoundary>
+                </div>
+              </Suspense>
             </section>
 
             <HistoryPanel history={history} />
 
-            <TrainingReportPanel history={history} />
+            <Suspense fallback={<LazyPanelFallback />}>
+              <TrainingReportPanel history={history} />
+            </Suspense>
 
             <div id="dashboard-monetization" className="scroll-mt-24">
               <ErrorBoundary section="MonetizationHub">
-                <MonetizationHub />
+                <Suspense fallback={<LazyPanelFallback />}>
+                  <MonetizationHub />
+                </Suspense>
               </ErrorBoundary>
             </div>
           </>

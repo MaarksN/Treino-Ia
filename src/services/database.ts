@@ -7,6 +7,7 @@ import {
   readTrainingProfileJson,
   readWorkoutSessionJson,
 } from './trainingReadModels';
+import { workoutSessionRepository } from './data/workoutSessionRepository';
 
 import type {
   ExerciseIntensityTechnique,
@@ -251,6 +252,13 @@ export const DatabaseService = {
         .upsert(buildWorkoutHistoryUpsert(userId, session), { onConflict: 'user_id,id' });
 
       if (error) throw error;
+
+      try {
+        await workoutSessionRepository.saveCompletedSession(session);
+      } catch (e) {
+        console.error('Relational dual-write failed', e);
+      }
+
       return true;
     });
 
