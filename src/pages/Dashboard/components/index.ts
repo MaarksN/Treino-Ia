@@ -8,5 +8,3 @@ export * from './ActiveWorkout';
 export * from './RecoveryReadinessSection';
 export * from './DashboardSkeleton';
 export * from './PlanGenerationProgress';
-export * from './TrainingReportPanel';
-export * from './monetization/MonetizationHub';
