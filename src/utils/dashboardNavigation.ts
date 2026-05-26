@@ -1,26 +1,62 @@
-export type DashboardSectionId = 'overview' | 'nutrition' | 'plan' | 'history' | 'reports';
+import type { AppRouteId } from '../navigation/appRouter';
+
+export type DashboardSectionId = 'overview' | 'plan' | 'history' | 'account' | 'nutrition';
 
 export interface DashboardSection {
   id: DashboardSectionId;
   label: string;
-  icon: 'home' | 'nutrition' | 'workout' | 'history' | 'report';
+  icon: 'home' | 'nutrition' | 'workout' | 'history' | 'profile';
   targetId: string;
+  routeId: AppRouteId;
 }
 
 export const DASHBOARD_MOBILE_SECTIONS: DashboardSection[] = [
-  { id: 'overview', label: 'Inicio', icon: 'home', targetId: 'dashboard-overview' },
-  { id: 'nutrition', label: 'Nutri', icon: 'nutrition', targetId: 'dashboard-nutrition' },
-  { id: 'plan', label: 'Plano', icon: 'workout', targetId: 'dashboard-plan' },
-  { id: 'history', label: 'Historico', icon: 'history', targetId: 'dashboard-history' },
-  { id: 'reports', label: 'Relatorio', icon: 'report', targetId: 'dashboard-reports' },
+  {
+    id: 'overview',
+    label: 'Inicio',
+    icon: 'home',
+    targetId: 'dashboard-overview',
+    routeId: 'today',
+  },
+  { id: 'plan', label: 'Plano', icon: 'workout', targetId: 'dashboard-plan', routeId: 'plan' },
+  {
+    id: 'history',
+    label: 'Historico',
+    icon: 'history',
+    targetId: 'dashboard-history',
+    routeId: 'history',
+  },
+  {
+    id: 'account',
+    label: 'Conta',
+    icon: 'profile',
+    targetId: 'dashboard-account',
+    routeId: 'account',
+  },
 ];
 
-export function getDashboardMobileSections(hasTrainingData: boolean) {
-  return hasTrainingData
-    ? DASHBOARD_MOBILE_SECTIONS
-    : DASHBOARD_MOBILE_SECTIONS.slice(0, 1);
+const NUTRITION_SECTION: DashboardSection = {
+  id: 'nutrition',
+  label: 'Nutri',
+  icon: 'nutrition',
+  targetId: 'dashboard-nutrition',
+  routeId: 'nutrition',
+};
+
+export function getDashboardMobileSections(
+  hasTrainingData: boolean,
+  options: { nutritionEnabled?: boolean } = {},
+) {
+  if (!hasTrainingData) return DASHBOARD_MOBILE_SECTIONS.slice(0, 1);
+  if (!options.nutritionEnabled) return DASHBOARD_MOBILE_SECTIONS;
+
+  return [DASHBOARD_MOBILE_SECTIONS[0], NUTRITION_SECTION, ...DASHBOARD_MOBILE_SECTIONS.slice(1)];
 }
 
 export function getDashboardSectionByTarget(targetId: string) {
-  return DASHBOARD_MOBILE_SECTIONS.find(section => section.targetId === targetId) ?? DASHBOARD_MOBILE_SECTIONS[0];
+  return (
+    [...DASHBOARD_MOBILE_SECTIONS, NUTRITION_SECTION].find(
+      (section) => section.targetId === targetId,
+    ) ?? DASHBOARD_MOBILE_SECTIONS[0]
+  );
 }

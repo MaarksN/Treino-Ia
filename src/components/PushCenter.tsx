@@ -65,7 +65,7 @@ export function PushCenter() {
     await showLocalNotification('Treino App', {
       body: 'Voce treinou segunda e quarta. Hoje e um bom dia para manter a sequencia.',
       data: {
-        url: '/?view=workout',
+        url: '/treino/ativo',
       },
     });
     setPermission('Notification' in window ? Notification.permission : 'denied');

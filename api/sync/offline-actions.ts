@@ -46,7 +46,7 @@ function parseOfflineAction(body: Record<string, unknown>): {
 
 export default async function handler(request: Request) {
   if (request.method !== 'POST') {
-    return json({ error: 'Method not allowed' }, 405);
+    return json({ error: 'Method not allowed' }, 405, request);
   }
 
   try {
@@ -78,8 +78,8 @@ export default async function handler(request: Request) {
       throw new Error(`Failed to persist offline action: ${error.message}`);
     }
 
-    return json({ ok: true, synced: true, actionId: action.id });
+    return json({ ok: true, synced: true, actionId: action.id }, 200, request);
   } catch (error) {
-    return handleApiError(error);
+    return handleApiError(error, request);
   }
 }

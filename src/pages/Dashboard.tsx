@@ -1,17 +1,5 @@
 import { type FormEvent, lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  Activity,
-  Brain,
-  CheckCircle2,
-  Dumbbell,
-  Gauge,
-  History,
-  MinusCircle,
-  Target,
-  Timer,
-  XCircle,
-  UserRound,
-} from 'lucide-react';
+import { Dumbbell, UserRound } from 'lucide-react';
 import {
   createDefaultProfile,
   DatabaseService,
@@ -32,13 +20,19 @@ import { BottomNav } from '../components/BottomNav';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { Skeleton } from '../components/ui/Skeleton';
 import { type User as StarterUser } from '../types';
+import { getDashboardMobileSections, type DashboardSectionId } from '../utils/dashboardNavigation';
 import {
-  getDashboardMobileSections,
-  type DashboardSectionId,
-} from '../utils/dashboardNavigation';
-import { getCurrentAppRoute, pushAppRoute } from '../navigation/appRouter';
+  getAppRouteTargetId,
+  getCurrentAppRoute,
+  pushAppRoute,
+  subscribeToAppRoute,
+} from '../navigation/appRouter';
+import { isProductFeatureVisible } from '../config/featureFlags';
 import { ActiveExerciseDraft } from './Dashboard/types';
-import { buildWorkoutExerciseLog, calculateWorkoutTonnage } from './Dashboard/services/activeWorkoutEngine';
+import {
+  buildWorkoutExerciseLog,
+  calculateWorkoutTonnage,
+} from './Dashboard/services/activeWorkoutEngine';
 import {
   createActiveDraft,
   createDashboardSessionId,
@@ -54,19 +48,19 @@ import {
 import { triggerHapticFeedback } from '../services/hapticFeedback';
 import { type WorkoutImportFileDraft } from '../services/workoutImportPipeline';
 import { getCriticalContrastClass } from '../utils/accessibilityContrast';
-import { trackEvent } from '../utils/analytics';
+import { trackDay7Return, trackEvent, trackEventOnce } from '../utils/analytics';
+import { captureError } from '../utils/errorTelemetry';
 import {
-  CloudPanel,
   AnamnesisForm,
-  MetricCard,
-  MetricPanel,
-  GamificationRetentionPanel,
-  RecoveryReadinessSection,
   WeeklyPlan,
   HistoryPanel,
   ActiveWorkout,
   DashboardSkeleton,
   PlanGenerationProgress,
+  PendingAiRecommendationCard,
+  AccountSection,
+  CoreOverview,
+  DashboardBetaPanels,
 } from './Dashboard/components';
 import { buildGamificationRetentionState } from './Dashboard/services/gamificationRetentionEngine';
 import { buildRemoteGamifiedState } from './Dashboard/services/remoteGamifiedEngine';
@@ -76,168 +70,26 @@ const primaryActionClass = getCriticalContrastClass('primaryAction');
 const positiveStatusClass = getCriticalContrastClass('positiveStatus');
 const warningStatusClass = getCriticalContrastClass('warningStatus');
 const RegistrationForm = lazy(() =>
-  import('../components/RegistrationForm').then(module => ({ default: module.RegistrationForm })),
+  import('../components/RegistrationForm').then((module) => ({ default: module.RegistrationForm })),
 );
 const ImportWorkoutView = lazy(() =>
-  import('../components/ImportWorkoutView').then(module => ({ default: module.ImportWorkoutView })),
-);
-const NutritionLifestyleHub = lazy(() =>
-  import('../components/NutritionLifestyleHub').then(module => ({ default: module.NutritionLifestyleHub })),
-);
-const AdvancedSocialHub = lazy(() =>
-  import('../components/AdvancedSocial/AdvancedSocialHub').then(module => ({ default: module.AdvancedSocialHub })),
-);
-const BiohackingWidget = lazy(() =>
-  import('./Dashboard/components/BiohackingWidget').then(module => ({ default: module.BiohackingWidget })),
-);
-const RemoteGamifiedPanel = lazy(() =>
-  import('./Dashboard/components/RemoteGamified').then(module => ({ default: module.RemoteGamifiedPanel })),
-);
-const CalmModePanel = lazy(() =>
-  import('../components/wellness/CalmModePanel').then(module => ({ default: module.CalmModePanel })),
-);
-const EcoLiftingPanel = lazy(() =>
-  import('../components/sustainability/EcoLiftingPanel').then(module => ({ default: module.EcoLiftingPanel })),
-);
-const BossFightCancellationPreview = lazy(() =>
-  import('../components/monetization/BossFightCancellationPreview').then(module => ({ default: module.BossFightCancellationPreview })),
-);
-const PartnerTokenPreview = lazy(() =>
-  import('../components/partners/PartnerTokenPreview').then(module => ({ default: module.PartnerTokenPreview })),
-);
-const TimeTravelProgressViewer = lazy(() =>
-  import('../components/reports/TimeTravelProgressViewer').then(module => ({ default: module.TimeTravelProgressViewer })),
-);
-const PainCheckinPanel = lazy(() =>
-  import('../components/recovery/PainCheckinPanel').then(module => ({ default: module.PainCheckinPanel })),
-);
-const AdaptivePathwaysPanel = lazy(() =>
-  import('../components/accessibility/AdaptivePathwaysPanel').then(module => ({ default: module.AdaptivePathwaysPanel })),
-);
-const HighContrastModeToggle = lazy(() =>
-  import('../components/accessibility/HighContrastModeToggle').then(module => ({ default: module.HighContrastModeToggle })),
-);
-const ScreenReaderSupportPanel = lazy(() =>
-  import('../components/accessibility/ScreenReaderSupportPanel').then(module => ({ default: module.ScreenReaderSupportPanel })),
-);
-const PlainLanguagePanel = lazy(() =>
-  import('../components/accessibility/PlainLanguagePanel').then(module => ({ default: module.PlainLanguagePanel })),
-);
-const AdaptiveProtocolsPanel = lazy(() =>
-  import('../components/accessibility/AdaptiveProtocolsPanel').then(module => ({ default: module.AdaptiveProtocolsPanel })),
-);
-const ThemeCustomizationPanel = lazy(() =>
-  import('../components/premium/ThemeCustomizationPanel').then(module => ({ default: module.ThemeCustomizationPanel })),
-);
-const PictureInPicturePanel = lazy(() =>
-  import('../components/media/PictureInPicturePanel').then(module => ({ default: module.PictureInPicturePanel })),
-);
-const WorkoutImportPanel = lazy(() =>
-  import('../components/media/WorkoutImportPanel').then(module => ({ default: module.WorkoutImportPanel })),
-);
-const FormCheckerPreviewPanel = lazy(() =>
-  import('../components/ai/FormCheckerPreviewPanel').then(module => ({ default: module.FormCheckerPreviewPanel })),
-);
-const EquipmentReplanPanel = lazy(() =>
-  import('../components/ai/EquipmentReplanPanel').then(module => ({ default: module.EquipmentReplanPanel })),
-);
-const PantryPlannerPanel = lazy(() =>
-  import('../components/Nutrition/PantryPlannerPanel').then(module => ({ default: module.PantryPlannerPanel })),
-);
-const LongevitySignalPanel = lazy(() =>
-  import('../components/wellness/LongevitySignalPanel').then(module => ({ default: module.LongevitySignalPanel })),
-);
-const WebXRPreviewPanel = lazy(() =>
-  import('../components/xr/WebXRPreviewPanel').then(module => ({ default: module.WebXRPreviewPanel })),
+  import('../components/ImportWorkoutView').then((module) => ({
+    default: module.ImportWorkoutView,
+  })),
 );
 const TrainingReportPanel = lazy(() =>
-  import('./Dashboard/components/TrainingReportPanel').then(module => ({ default: module.TrainingReportPanel })),
-);
-const MonetizationHub = lazy(() =>
-  import('./Dashboard/components/monetization/MonetizationHub').then(module => ({ default: module.MonetizationHub })),
+  import('./Dashboard/components/TrainingReportPanel').then((module) => ({
+    default: module.TrainingReportPanel,
+  })),
 );
 
 function wait(ms: number) {
-  return new Promise<void>(resolve => setTimeout(resolve, ms));
+  return new Promise<void>((resolve) => setTimeout(resolve, ms));
 }
 
 function LazyPanelFallback() {
   return <Skeleton lines={3} />;
 }
-
-interface PendingAiRecommendationCardProps {
-  recommendation: AiRecommendationRecord;
-  saving: boolean;
-  onAccept: () => void;
-  onReject: () => void;
-  onDismiss: () => void;
-}
-
-function PendingAiRecommendationCard({
-  recommendation,
-  saving,
-  onAccept,
-  onReject,
-  onDismiss,
-}: PendingAiRecommendationCardProps) {
-  return (
-    <section
-      data-testid="pending-ai-recommendation-card"
-      className="mb-8 rounded-[28px] border-4 border-brand-neon bg-brand-dark p-6 shadow-brutal-neon md:p-8"
-    >
-      <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
-        <div className="max-w-3xl">
-          <p className="font-mono text-xs uppercase tracking-[0.35em] text-brand-neon">
-            Sugestao pendente da IA
-          </p>
-          <h2 className="mt-2 font-display text-4xl uppercase text-brand-light md:text-5xl">
-            Revisar antes de aplicar
-          </h2>
-          <p className="mt-4 font-mono text-sm leading-7 text-brand-light/80">
-            {recommendation.reason}
-          </p>
-          <p className="mt-3 font-mono text-xs uppercase tracking-widest text-brand-muted">
-            Plano atual: {recommendation.payload.currentPlan.planName} | Sugerido: {recommendation.payload.proposedPlan.planName}
-          </p>
-        </div>
-
-        <div className="grid min-w-56 gap-3">
-          <button
-            type="button"
-            data-testid="ai-recommendation-accept"
-            disabled={saving}
-            onClick={onAccept}
-            className="rounded-[22px] border-2 border-brand-neon bg-brand-neon px-5 py-3 font-mono text-xs font-black uppercase tracking-widest text-brand-dark transition-transform hover:scale-[1.02] disabled:opacity-60"
-          >
-            <CheckCircle2 className="mr-2 inline h-4 w-4" />
-            Aceitar sugestao
-          </button>
-          <button
-            type="button"
-            data-testid="ai-recommendation-reject"
-            disabled={saving}
-            onClick={onReject}
-            className="rounded-[22px] border-2 border-brand-magenta bg-brand-magenta/15 px-5 py-3 font-mono text-xs font-bold uppercase tracking-widest text-brand-light transition-colors hover:bg-brand-magenta/25 disabled:opacity-60"
-          >
-            <XCircle className="mr-2 inline h-4 w-4" />
-            Rejeitar
-          </button>
-          <button
-            type="button"
-            data-testid="ai-recommendation-dismiss"
-            disabled={saving}
-            onClick={onDismiss}
-            className="rounded-[22px] border-2 border-brand-light/20 bg-brand-gray px-5 py-3 font-mono text-xs font-bold uppercase tracking-widest text-brand-light transition-colors hover:border-brand-light/50 disabled:opacity-60"
-          >
-            <MinusCircle className="mr-2 inline h-4 w-4" />
-            Manter atual
-          </button>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 
 export default function Dashboard() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -251,7 +103,10 @@ export default function Dashboard() {
   const [activeDayIndex, setActiveDayIndex] = useState<number | null>(null);
   const [activeDraft, setActiveDraft] = useState<ActiveExerciseDraft[]>([]);
   const [activeFeedback, setActiveFeedback] = useState('');
-  const [generationProgress, setGenerationProgress] = useState<{ profile: UserProfile; plan: TrainingPlan } | null>(null);
+  const [generationProgress, setGenerationProgress] = useState<{
+    profile: UserProfile;
+    plan: TrainingPlan;
+  } | null>(null);
   const [activeSection, setActiveSection] = useState<DashboardSectionId>('overview');
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
@@ -262,7 +117,32 @@ export default function Dashboard() {
   const [authLoading, setAuthLoading] = useState(false);
   const [showWorkoutImport, setShowWorkoutImport] = useState(false);
   const [workoutImportLoading, setWorkoutImportLoading] = useState(false);
-  const [pendingRecommendation, setPendingRecommendation] = useState<AiRecommendationRecord | null>(null);
+  const [pendingRecommendation, setPendingRecommendation] = useState<AiRecommendationRecord | null>(
+    null,
+  );
+  const [route, setRoute] = useState(() => getCurrentAppRoute());
+
+  const surface = useMemo(
+    () => ({
+      nutritionSimple: isProductFeatureVisible('nutrition.simple'),
+      recoverySimple: isProductFeatureVisible('recovery.simple'),
+      workoutImportManual: isProductFeatureVisible('workoutImport.manual'),
+      social: isProductFeatureVisible('social'),
+      advancedGamification: isProductFeatureVisible('gamification.advanced'),
+      advancedWellness: isProductFeatureVisible('advancedWellness'),
+      advancedAccessibility: isProductFeatureVisible('advancedAccessibility'),
+      premiumUx: isProductFeatureVisible('premiumUx'),
+      advancedAi: isProductFeatureVisible('advancedAi'),
+      mediaEnhancements: isProductFeatureVisible('mediaEnhancements'),
+      cameraFormCheck: isProductFeatureVisible('cameraFormCheck'),
+      webxr: isProductFeatureVisible('webxr'),
+      partnerTokens: isProductFeatureVisible('partnerTokens'),
+      nutritionPhotoAnalysis: isProductFeatureVisible('nutrition.photoAnalysis'),
+      marketplace: isProductFeatureVisible('marketplace'),
+      premiumIntegrations: isProductFeatureVisible('premiumIntegrations'),
+    }),
+    [],
+  );
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -272,12 +152,16 @@ export default function Dashboard() {
       const status = await DatabaseService.getPersistenceStatus();
       const storedProfile = await DatabaseService.getProfile();
       const storedHistory = await DatabaseService.getWorkoutHistory();
+      const starterUser = readStarterUser() as (StarterUser & { createdAt?: number }) | null;
 
       setPersistence(status);
       setHistory(storedHistory);
+      trackDay7Return(starterUser?.createdAt, {
+        hasProfile: Boolean(storedProfile),
+        historyCount: storedHistory.length,
+      });
 
       if (!storedProfile) {
-        const starterUser = readStarterUser();
         setFormProfile({
           ...createDefaultProfile(),
           name: starterUser?.name?.trim() || 'Atleta',
@@ -298,7 +182,8 @@ export default function Dashboard() {
 
       if (!storedPlan?.days?.length) {
         const res = await CurrentPlanConsistencyHelper.setCurrentPlan(currentPlan);
-      if (res.status === 'local_fallback') setNotice('Plano salvo localmente. Aguardando sincronização.');
+        if (res.status === 'local_fallback')
+          setNotice('Plano salvo localmente. Aguardando sincronização.');
       }
 
       setProfile(storedProfile);
@@ -307,7 +192,9 @@ export default function Dashboard() {
       setSelectedDayIndex(0);
       setShowStarterRegistration(false);
       setShowAnamnesis(false);
-      setPendingRecommendation(await aiRecommendationRepository.getLatestPendingPlanRecommendation());
+      setPendingRecommendation(
+        await aiRecommendationRepository.getLatestPendingPlanRecommendation(),
+      );
     } catch {
       setError('Não consegui carregar os dados. Verifique a configuração local ou Supabase.');
     } finally {
@@ -320,8 +207,11 @@ export default function Dashboard() {
     [plan, selectedDayIndex],
   );
   const mobileSections = useMemo(
-    () => getDashboardMobileSections(Boolean(profile && plan)),
-    [profile, plan]
+    () =>
+      getDashboardMobileSections(Boolean(profile && plan), {
+        nutritionEnabled: surface.nutritionSimple,
+      }),
+    [profile, plan, surface.nutritionSimple],
   );
 
   const completionSummary = useMemo(() => {
@@ -330,61 +220,83 @@ export default function Dashboard() {
     return `${history.length} sessões | ${Math.round(totalVolume).toLocaleString('pt-BR')} kg de volume`;
   }, [history]);
 
-  const gamificationRetention = useMemo(() => (
-    profile ? buildGamificationRetentionState(profile, history) : null
-  ), [profile, history]);
+  const gamificationRetention = useMemo(
+    () =>
+      surface.advancedGamification && profile
+        ? buildGamificationRetentionState(profile, history)
+        : null,
+    [profile, history, surface.advancedGamification],
+  );
 
-  const remoteGamifiedState = useMemo(() => (
-    profile ? buildRemoteGamifiedState(profile, history) : null
-  ), [profile, history]);
+  const remoteGamifiedState = useMemo(
+    () =>
+      surface.advancedGamification && profile ? buildRemoteGamifiedState(profile, history) : null,
+    [profile, history, surface.advancedGamification],
+  );
 
   useEffect(() => {
     void loadData();
   }, [loadData]);
 
-  const handleProfileSubmit = useCallback(async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setSaving(true);
-    setError('');
-    setNotice('');
+  useEffect(() => subscribeToAppRoute(setRoute), []);
 
-    const validation = validateDashboardProfileInput(formProfile);
-    if (!validation.success) {
-      setError(validation.message);
-      setSaving(false);
-      return;
-    }
+  const handleProfileSubmit = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      setSaving(true);
+      setError('');
+      setNotice('');
 
-    try {
-      const updatedProfile = validation.data;
-      const startedAt = Date.now();
-      const nextPlan = calculateTrainingPlan(updatedProfile, history);
-      setGenerationProgress({ profile: updatedProfile, plan: nextPlan });
+      const validation = validateDashboardProfileInput(formProfile);
+      if (!validation.success) {
+        setError(validation.message);
+        setSaving(false);
+        return;
+      }
 
-      await DatabaseService.saveProfile(updatedProfile);
-      const res = await CurrentPlanConsistencyHelper.setCurrentPlan(nextPlan);
-      if (res.status === 'local_fallback') setNotice('Plano salvo localmente. Aguardando sincronização.');
-      await wait(Math.max(0, PLAN_GENERATION_FEEDBACK_MS - (Date.now() - startedAt)));
+      const isFirstPlan = !profile || !plan;
 
-      setProfile(updatedProfile);
-      setFormProfile(updatedProfile);
-      setPlan(nextPlan);
-      setSelectedDayIndex(0);
-      setShowAnamnesis(false);
-      setNotice('Anamnese salva e plano semanal recalculado.');
-      setPersistence(await DatabaseService.getPersistenceStatus());
-      trackEvent('anamnesis_completed', {
-        goal: updatedProfile.goal,
-        level: updatedProfile.level,
-        daysPerWeek: updatedProfile.daysPerWeek,
-      });
-    } catch {
-      setError('Não consegui salvar a anamnese agora.');
-    } finally {
-      setGenerationProgress(null);
-      setSaving(false);
-    }
-  }, [formProfile, history]);
+      try {
+        const updatedProfile = validation.data;
+        const startedAt = Date.now();
+        const nextPlan = calculateTrainingPlan(updatedProfile, history);
+        setGenerationProgress({ profile: updatedProfile, plan: nextPlan });
+
+        await DatabaseService.saveProfile(updatedProfile);
+        const res = await CurrentPlanConsistencyHelper.setCurrentPlan(nextPlan);
+        if (res.status === 'local_fallback')
+          setNotice('Plano salvo localmente. Aguardando sincronização.');
+        await wait(Math.max(0, PLAN_GENERATION_FEEDBACK_MS - (Date.now() - startedAt)));
+
+        setProfile(updatedProfile);
+        setFormProfile(updatedProfile);
+        setPlan(nextPlan);
+        setSelectedDayIndex(0);
+        setShowAnamnesis(false);
+        setNotice('Anamnese salva e plano semanal recalculado.');
+        setPersistence(await DatabaseService.getPersistenceStatus());
+        trackEvent('anamnesis_completed', {
+          goal: updatedProfile.goal,
+          level: updatedProfile.level,
+          daysPerWeek: updatedProfile.daysPerWeek,
+        });
+        if (isFirstPlan) {
+          trackEventOnce('first_plan_created', {
+            planId: nextPlan.id,
+            daysPerWeek: updatedProfile.daysPerWeek,
+            source: 'anamnesis_submit',
+          });
+        }
+      } catch (saveError) {
+        captureError(saveError, 'Dashboard.saveAnamnesis');
+        setError('Não consegui salvar a anamnese agora.');
+      } finally {
+        setGenerationProgress(null);
+        setSaving(false);
+      }
+    },
+    [formProfile, history, plan, profile],
+  );
 
   const handleStarterRegister = useCallback((starterUser: StarterUser) => {
     const persistedStarterUser = persistStarterUser(starterUser);
@@ -399,6 +311,10 @@ export default function Dashboard() {
     setShowAnamnesis(true);
     setNotice('');
     setError('');
+    trackEventOnce('registration_completed', {
+      method: 'starter_local',
+      hasEmail: Boolean(persistedStarterUser.email),
+    });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
@@ -415,7 +331,8 @@ export default function Dashboard() {
       setGenerationProgress({ profile: updatedProfile, plan: nextPlan });
 
       const res = await CurrentPlanConsistencyHelper.setCurrentPlan(nextPlan);
-      if (res.status === 'local_fallback') setNotice('Plano salvo localmente. Aguardando sincronização.');
+      if (res.status === 'local_fallback')
+        setNotice('Plano salvo localmente. Aguardando sincronização.');
       await wait(Math.max(0, PLAN_GENERATION_FEEDBACK_MS - (Date.now() - startedAt)));
 
       setPlan(nextPlan);
@@ -436,38 +353,45 @@ export default function Dashboard() {
 
     try {
       const res = await CurrentPlanConsistencyHelper.setCurrentPlan(nextPlan);
-      if (res.status === 'local_fallback') setNotice('Plano salvo localmente. Aguardando sincronização.');
+      if (res.status === 'local_fallback')
+        setNotice('Plano salvo localmente. Aguardando sincronização.');
     } catch {
       setError('Alteração aplicada na tela, mas não consegui salvar o plano agora.');
     }
   }, []);
 
-  const moveSelectedExercise = useCallback((fromIndex: number, toIndex: number) => {
-    if (!plan) return;
-    const nextPlan = reorderExercisesInDay(plan, selectedDayIndex, fromIndex, toIndex);
-    if (nextPlan === plan) return;
-    void persistEditedPlan(nextPlan, 'Ordem dos exercícios atualizada.');
-  }, [persistEditedPlan, plan, selectedDayIndex]);
+  const moveSelectedExercise = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      if (!plan) return;
+      const nextPlan = reorderExercisesInDay(plan, selectedDayIndex, fromIndex, toIndex);
+      if (nextPlan === plan) return;
+      void persistEditedPlan(nextPlan, 'Ordem dos exercícios atualizada.');
+    },
+    [persistEditedPlan, plan, selectedDayIndex],
+  );
 
-  const updateSelectedExerciseTechnique = useCallback((
-    exerciseIndex: number,
-    technique: ExerciseIntensityTechnique,
-  ) => {
-    if (!plan) return;
-    const nextPlan = updateExerciseTechnique(plan, selectedDayIndex, exerciseIndex, technique);
-    void persistEditedPlan(nextPlan, 'Técnica do exercício atualizada.');
-  }, [persistEditedPlan, plan, selectedDayIndex]);
+  const updateSelectedExerciseTechnique = useCallback(
+    (exerciseIndex: number, technique: ExerciseIntensityTechnique) => {
+      if (!plan) return;
+      const nextPlan = updateExerciseTechnique(plan, selectedDayIndex, exerciseIndex, technique);
+      void persistEditedPlan(nextPlan, 'Técnica do exercício atualizada.');
+    },
+    [persistEditedPlan, plan, selectedDayIndex],
+  );
 
-  const updateSelectedExerciseNotes = useCallback((exerciseIndex: number, notes: string) => {
-    if (!plan) return;
-    const nextPlan = updateExerciseNotes(plan, selectedDayIndex, exerciseIndex, notes);
-    setPlan(nextPlan);
-    setNotice('');
-    setError('');
-    void CurrentPlanConsistencyHelper.setCurrentPlan(nextPlan).catch(() => {
-      setError('Nota aplicada na tela, mas não consegui salvar o plano agora.');
-    });
-  }, [plan, selectedDayIndex]);
+  const updateSelectedExerciseNotes = useCallback(
+    (exerciseIndex: number, notes: string) => {
+      if (!plan) return;
+      const nextPlan = updateExerciseNotes(plan, selectedDayIndex, exerciseIndex, notes);
+      setPlan(nextPlan);
+      setNotice('');
+      setError('');
+      void CurrentPlanConsistencyHelper.setCurrentPlan(nextPlan).catch(() => {
+        setError('Nota aplicada na tela, mas não consegui salvar o plano agora.');
+      });
+    },
+    [plan, selectedDayIndex],
+  );
 
   const handleWorkoutImport = useCallback(async (draft: WorkoutImportFileDraft) => {
     setWorkoutImportLoading(true);
@@ -481,7 +405,7 @@ export default function Dashboard() {
       }
 
       setNotice(
-        `Arquivo ${draft.fileName} preparado com crop ${draft.crop.width}% x ${draft.crop.height}%. OCR não executado neste lote.`,
+        `Arquivo ${draft.fileName} preparado localmente com crop ${draft.crop.width}% x ${draft.crop.height}%.`,
       );
       setShowWorkoutImport(false);
     } finally {
@@ -489,27 +413,39 @@ export default function Dashboard() {
     }
   }, []);
 
-  const handleMobileNavChange = useCallback((id: string) => {
-    const section = mobileSections.find(item => item.id === id);
-    if (!section) return;
-    setActiveSection(section.id);
-    pushAppRoute(section.id === 'nutrition' ? 'nutrition' : 'dashboard');
-    document.getElementById(section.targetId)?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start',
-    });
-  }, [mobileSections]);
+  const handleMobileNavChange = useCallback(
+    (id: string) => {
+      const section = mobileSections.find((item) => item.id === id);
+      if (!section) return;
+      setActiveSection(section.id);
+      pushAppRoute(section.routeId);
+      document.getElementById(section.targetId)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    },
+    [mobileSections],
+  );
 
   useEffect(() => {
     if (!profile || !plan) return;
 
-    if (getCurrentAppRoute().id === 'nutrition') {
+    if (route.id === 'nutrition' && !surface.nutritionSimple) {
+      setNotice('Nutricao esta em beta e nao esta habilitada para este usuario.');
+      pushAppRoute('today');
+      return;
+    }
+
+    const routeTargetId = getAppRouteTargetId(route.id);
+    const routeSection = mobileSections.find((section) => section.targetId === routeTargetId);
+
+    if (routeSection) {
       window.setTimeout(() => {
-        document.getElementById('dashboard-nutrition')?.scrollIntoView({
+        document.getElementById(routeSection.targetId)?.scrollIntoView({
           behavior: 'smooth',
           block: 'start',
         });
-        setActiveSection('nutrition');
+        setActiveSection(routeSection.id);
       }, 0);
     }
 
@@ -526,47 +462,70 @@ export default function Dashboard() {
     handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [mobileSections, plan, profile]);
+  }, [mobileSections, plan, profile, route.id, surface.nutritionSimple]);
 
-  const startActiveWorkout = useCallback((dayIndex: number) => {
-    if (!plan) return;
-    const day = plan.days[dayIndex];
-    setActiveDayIndex(dayIndex);
-    setActiveDraft(createActiveDraft(day, history));
-    setActiveFeedback('');
-    setNotice('');
-    trackEvent('workout_started', {
-      planId: plan.id,
-      dayId: day.id,
-      focus: day.focus,
-    });
-    void triggerHapticFeedback('selection');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [history, plan]);
+  const startActiveWorkout = useCallback(
+    (dayIndex: number, options: { syncRoute?: boolean } = {}) => {
+      if (!plan) return;
+      const day = plan.days[dayIndex];
+      setActiveDayIndex(dayIndex);
+      setActiveDraft(createActiveDraft(day, history));
+      setActiveFeedback('');
+      setNotice('');
+      if (options.syncRoute !== false) {
+        pushAppRoute('active-workout');
+      }
+      trackEvent('workout_started', {
+        planId: plan.id,
+        dayId: day.id,
+        focus: day.focus,
+      });
+      if (history.length === 0) {
+        trackEventOnce('first_workout_started', {
+          planId: plan.id,
+          dayId: day.id,
+          focus: day.focus,
+        });
+      }
+      void triggerHapticFeedback('selection');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    [history, plan],
+  );
+
+  useEffect(() => {
+    if (!profile || !plan || route.id !== 'active-workout' || activeDayIndex !== null) return;
+    startActiveWorkout(selectedDayIndex, { syncRoute: false });
+  }, [activeDayIndex, plan, profile, route.id, selectedDayIndex, startActiveWorkout]);
 
   const updateDraft = useCallback((index: number, patch: Partial<ActiveExerciseDraft>) => {
-    setActiveDraft(current => current.map((item, itemIndex) => (
-      itemIndex === index ? { ...item, ...patch } : item
-    )));
+    setActiveDraft((current) =>
+      current.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)),
+    );
   }, []);
 
-  const updateDraftSet = useCallback((exerciseIndex: number, setIndex: number, patch: Partial<ActiveExerciseDraft['sets'][0]>) => {
-    if (patch.completed === true) {
-      trackEvent('set_logged', {
-        exerciseIndex,
-        setIndex,
-      });
-    }
+  const updateDraftSet = useCallback(
+    (exerciseIndex: number, setIndex: number, patch: Partial<ActiveExerciseDraft['sets'][0]>) => {
+      if (patch.completed === true) {
+        trackEvent('set_logged', {
+          exerciseIndex,
+          setIndex,
+        });
+      }
 
-    setActiveDraft(current => current.map((item, i) => {
-      if (i !== exerciseIndex) return item;
-      const newSets = [...item.sets];
-      newSets[setIndex] = { ...newSets[setIndex], ...patch };
-      // Se um set foi concluído, avaliar se o exercício inteiro foi
-      const allSetsCompleted = newSets.every(s => s.completed);
-      return { ...item, sets: newSets, completed: allSetsCompleted };
-    }));
-  }, []);
+      setActiveDraft((current) =>
+        current.map((item, i) => {
+          if (i !== exerciseIndex) return item;
+          const newSets = [...item.sets];
+          newSets[setIndex] = { ...newSets[setIndex], ...patch };
+          // Se um set foi concluído, avaliar se o exercício inteiro foi
+          const allSetsCompleted = newSets.every((s) => s.completed);
+          return { ...item, sets: newSets, completed: allSetsCompleted };
+        }),
+      );
+    },
+    [],
+  );
 
   const finishActiveWorkout = useCallback(async () => {
     if (!profile || !plan || activeDayIndex === null) return;
@@ -576,8 +535,10 @@ export default function Dashboard() {
 
     try {
       const day = plan.days[activeDayIndex];
-      const logs: WorkoutExerciseLog[] = activeDraft.map(exercise => buildWorkoutExerciseLog(exercise));
-      const completedExercises = logs.filter(exercise => exercise.completed).length;
+      const logs: WorkoutExerciseLog[] = activeDraft.map((exercise) =>
+        buildWorkoutExerciseLog(exercise),
+      );
+      const completedExercises = logs.filter((exercise) => exercise.completed).length;
       const totalVolume = calculateWorkoutTonnage(activeDraft).completedTonnage;
       const session: WorkoutSession = {
         id: createDashboardSessionId(),
@@ -594,27 +555,43 @@ export default function Dashboard() {
         nextRecommendation: '',
         exercises: logs,
       };
-      const nextHistory = [session, ...history].slice(0, 50);
+      const nextHistory = [session, ...history.filter(item => item.id !== session.id)].slice(0, 50);
       const adjustedPlan = calculateTrainingPlan(profile, nextHistory);
       const completedSession = {
         ...session,
         nextRecommendation: adjustedPlan.nextRecommendation,
       };
-      const finalHistory = [completedSession, ...history].slice(0, 50);
+      const finalHistory = [completedSession, ...history.filter(item => item.id !== completedSession.id)].slice(0, 50);
 
-      await DatabaseService.saveWorkoutSession(completedSession);
-      const recommendation = await aiRecommendationRepository.createPendingPlanRecommendation({
-        currentPlan: plan,
-        proposedPlan: adjustedPlan,
-        reason: adjustedPlan.nextRecommendation,
-        legacySourceSessionId: completedSession.id,
-      });
+      const saveResult = await DatabaseService.saveWorkoutSessionWithStatus(completedSession);
+      let recommendation: AiRecommendationRecord | null = null;
+      try {
+        recommendation = await aiRecommendationRepository.createPendingPlanRecommendation({
+          currentPlan: plan,
+          proposedPlan: adjustedPlan,
+          reason: adjustedPlan.nextRecommendation,
+          legacySourceSessionId: completedSession.id,
+        });
+      } catch (recommendationError) {
+        trackEvent('ai_error', {
+          operation: 'create_pending_plan_recommendation',
+          source: 'finish_active_workout',
+        });
+        captureError(recommendationError, 'Dashboard.createPendingAiRecommendation');
+      }
 
       setHistory(finalHistory);
       setPendingRecommendation(recommendation);
       setActiveDayIndex(null);
       setActiveDraft([]);
-      setNotice('Treino finalizado. A IA gerou uma sugestao pendente para voce revisar.');
+      const saveMessage = 'warning' in saveResult && saveResult.warning
+        ? `${saveResult.message} ${saveResult.warning}`
+        : saveResult.message;
+      setNotice(
+        recommendation
+          ? `${saveMessage} A IA gerou uma sugestao pendente para voce revisar.`
+          : `${saveMessage} Nao consegui gerar a sugestao da IA agora; seu historico foi mantido.`,
+      );
       trackEvent('workout_completed', {
         planId: plan.id,
         dayId: day.id,
@@ -622,13 +599,30 @@ export default function Dashboard() {
         completedExercises,
         totalExercises: logs.length,
       });
-      trackEvent('ai_suggestion_generated', {
-        recommendationId: recommendation.id,
-        sourceSessionId: completedSession.id,
-      });
+      if (history.length === 0) {
+        trackEventOnce('first_workout_completed', {
+          planId: plan.id,
+          dayId: day.id,
+          totalVolume,
+          completedExercises,
+          totalExercises: logs.length,
+        });
+      }
+      if (recommendation) {
+        trackEvent('ai_suggestion_generated', {
+          recommendationId: recommendation.id,
+          sourceSessionId: completedSession.id,
+        });
+      }
+      pushAppRoute('history');
       void triggerHapticFeedback('success');
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch {
+    } catch (saveError) {
+      trackEvent('workout_save_failed', {
+        planId: plan.id,
+        dayId: plan.days[activeDayIndex]?.id,
+      });
+      captureError(saveError, 'Dashboard.finishActiveWorkout');
       setError('Não consegui finalizar o treino agora.');
     } finally {
       setSaving(false);
@@ -649,7 +643,10 @@ export default function Dashboard() {
         throw new Error(res.error);
       }
 
-      const applied = await aiRecommendationRepository.markApplied(pendingRecommendation, proposedPlan);
+      const applied = await aiRecommendationRepository.markApplied(
+        pendingRecommendation,
+        proposedPlan,
+      );
       setPlan(proposedPlan);
       setPendingRecommendation(null);
       setSelectedDayIndex(0);
@@ -711,27 +708,38 @@ export default function Dashboard() {
     }
   }, [pendingRecommendation]);
 
-  const handleAuth = useCallback(async (mode: 'signin' | 'signup') => {
-    setAuthLoading(true);
-    setError('');
-    setNotice('');
+  const handleAuth = useCallback(
+    async (mode: 'signin' | 'signup') => {
+      setAuthLoading(true);
+      setError('');
+      setNotice('');
 
-    try {
-      if (mode === 'signup') {
-        await DatabaseService.signUp(authEmail, authPassword);
-        setNotice('Conta criada. Se o Supabase exigir confirmação, verifique seu e-mail antes de entrar.');
-      } else {
-        await DatabaseService.signIn(authEmail, authPassword);
-        await DatabaseService.migrateLocalToCloud();
-        setNotice('Nuvem conectada. Dados locais migrados quando disponíveis.');
+      try {
+        if (mode === 'signup') {
+          await DatabaseService.signUp(authEmail, authPassword);
+          setNotice(
+            'Conta criada. Se o Supabase exigir confirmação, verifique seu e-mail antes de entrar.',
+          );
+          trackEvent('registration_completed', {
+            method: 'supabase_signup',
+          });
+        } else {
+          await DatabaseService.signIn(authEmail, authPassword);
+          await DatabaseService.migrateLocalToCloud();
+          setNotice('Nuvem conectada. Dados locais migrados quando disponíveis.');
+        }
+        await loadData();
+      } catch (authError) {
+        captureError(authError, `Dashboard.${mode}`);
+        setError(
+          authError instanceof Error ? authError.message : 'Falha na autenticação Supabase.',
+        );
+      } finally {
+        setAuthLoading(false);
       }
-      await loadData();
-    } catch (authError) {
-      setError(authError instanceof Error ? authError.message : 'Falha na autenticação Supabase.');
-    } finally {
-      setAuthLoading(false);
-    }
-  }, [authEmail, authPassword, loadData]);
+    },
+    [authEmail, authPassword, loadData],
+  );
 
   const handleSignIn = useCallback(() => {
     void handleAuth('signin');
@@ -746,7 +754,10 @@ export default function Dashboard() {
     await loadData();
   }, [loadData]);
 
-  const cancelActiveWorkout = useCallback(() => setActiveDayIndex(null), []);
+  const cancelActiveWorkout = useCallback(() => {
+    setActiveDayIndex(null);
+    pushAppRoute('plan');
+  }, []);
 
   if (loading) {
     return <DashboardSkeleton />;
@@ -767,6 +778,8 @@ export default function Dashboard() {
           onUpdateDraftSet={updateDraftSet}
           onFeedbackChange={setActiveFeedback}
           onFinishWorkout={finishActiveWorkout}
+          showCameraFeedback={surface.cameraFormCheck}
+          showMediaEnhancements={surface.mediaEnhancements}
         />
       </ErrorBoundary>
     );
@@ -782,7 +795,7 @@ export default function Dashboard() {
             </div>
             <div>
               <p className="font-mono text-xs uppercase tracking-[0.35em] text-brand-magenta">
-                Plataforma inteligente
+                Beta privado
               </p>
               <h1 className="font-display text-6xl uppercase leading-none tracking-widest text-brand-light text-shadow-neon md:text-7xl">
                 Treino <span className="block text-brand-neon">Inteligente</span>
@@ -795,7 +808,7 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={() => {
-                  setShowAnamnesis(value => !value);
+                  setShowAnamnesis((value) => !value);
                   if (profile) setFormProfile(profile);
                 }}
                 className={`rounded-full border-2 px-5 py-3 font-mono text-xs uppercase tracking-widest shadow-brutal-neon ${primaryActionClass}`}
@@ -813,10 +826,10 @@ export default function Dashboard() {
                 {saving ? 'Recalculando' : 'Recalcular plano'}
               </button>
             )}
-            {profile && plan && (
+            {surface.workoutImportManual && profile && plan && (
               <button
                 type="button"
-                onClick={() => setShowWorkoutImport(value => !value)}
+                onClick={() => setShowWorkoutImport((value) => !value)}
                 className="rounded-full border-2 border-brand-light/20 bg-brand-gray px-5 py-3 font-mono text-xs uppercase tracking-widest text-brand-light transition-colors hover:border-brand-magenta hover:text-brand-magenta"
               >
                 Importar ficha
@@ -826,9 +839,11 @@ export default function Dashboard() {
         </header>
 
         {(notice || error) && (
-          <div className={`mb-6 rounded-[24px] border-2 p-4 font-mono text-sm ${
-            error ? warningStatusClass : positiveStatusClass
-          }`}>
+          <div
+            className={`mb-6 rounded-[24px] border-2 p-4 font-mono text-sm ${
+              error ? warningStatusClass : positiveStatusClass
+            }`}
+          >
             {error || notice}
           </div>
         )}
@@ -841,7 +856,7 @@ export default function Dashboard() {
           />
         )}
 
-        {showWorkoutImport && profile && plan && (
+        {surface.workoutImportManual && showWorkoutImport && profile && plan && (
           <Suspense fallback={<LazyPanelFallback />}>
             <ImportWorkoutView
               isLoading={workoutImportLoading}
@@ -855,19 +870,20 @@ export default function Dashboard() {
           <Suspense fallback={<Skeleton lines={2} />}>
             <RegistrationForm onRegister={handleStarterRegister} />
           </Suspense>
-        ) : (
-          <CloudPanel
+        ) : !profile || !plan ? (
+          <AccountSection
             persistence={persistence}
             email={authEmail}
             password={authPassword}
             loading={authLoading}
+            billingEnabled={false}
             onEmailChange={setAuthEmail}
             onPasswordChange={setAuthPassword}
             onSignIn={handleSignIn}
             onSignUp={handleSignUp}
             onSignOut={handleSignOut}
           />
-        )}
+        ) : null}
 
         {!showStarterRegistration && showAnamnesis && (
           <AnamnesisForm
@@ -880,109 +896,17 @@ export default function Dashboard() {
 
         {profile && plan ? (
           <>
-            <section id="dashboard-overview" className="mb-8 grid gap-6 scroll-mt-24 lg:grid-cols-[1.35fr_0.65fr]">
-              <div className="relative overflow-hidden rounded-[28px] border-4 border-brand-light bg-brand-gray p-6 shadow-[8px_8px_0_var(--color-brand-light)] md:p-10">
-                <div className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full bg-brand-neon/10 blur-3xl" />
-                <div className="relative z-10">
-                  <p className="mb-3 font-mono text-xs uppercase tracking-[0.35em] text-brand-neon">
-                    Bem-vindo de volta
-                  </p>
-                  <h2 className="font-display text-7xl uppercase leading-none tracking-tight text-brand-light md:text-8xl">
-                    {profile.name}
-                  </h2>
-                  {gamificationRetention && (
-                    <div className="mt-4 inline-flex max-w-full flex-wrap items-center gap-2 border-2 border-brand-neon bg-brand-neon px-3 py-2 font-mono text-xs uppercase tracking-widest text-brand-dark shadow-brutal-neon">
-                      <span>Nivel {gamificationRetention.profileTitle.level}</span>
-                      <span className="h-1 w-1 rounded-full bg-brand-dark" />
-                      <span>{gamificationRetention.profileTitle.title}</span>
-                    </div>
-                  )}
-                  <p className="mt-5 max-w-3xl font-mono text-sm leading-7 text-brand-light/75">
-                    {plan.goalDescription} Divisão semanal: {plan.weeklySplit}.
-                  </p>
-
-                  <div className="mt-8 grid gap-4 sm:grid-cols-3">
-                    <MetricCard icon={<Gauge />} label="Dias por semana" value={String(profile.daysPerWeek).padStart(2, '0')} tone="neon" />
-                    <MetricCard icon={<Timer />} label="Minutos por treino" value={`${profile.timePerWorkout}`} tone="magenta" />
-                    <MetricCard icon={<History />} label="Histórico" value={String(history.length).padStart(2, '0')} tone="light" />
-                  </div>
-                </div>
-              </div>
-
-              <aside className="rounded-[28px] border-4 border-brand-neon bg-brand-dark p-6 shadow-brutal-neon">
-                <p className="font-mono text-xs uppercase tracking-[0.3em] text-brand-muted">Anamnese ativa</p>
-                <h3 className="font-display text-4xl uppercase text-brand-light">{profile.goal}</h3>
-                <div className="mt-5 space-y-3 font-mono text-sm text-brand-light/80">
-                  <p><span className="text-brand-muted">Nível:</span> {profile.level}</p>
-                  <p><span className="text-brand-muted">Equipamento:</span> {profile.equipment}</p>
-                  <p><span className="text-brand-muted">Lesões:</span> {profile.injuries}</p>
-                  <p><span className="text-brand-muted">Resumo:</span> {completionSummary}</p>
-                </div>
-              </aside>
-            </section>
-
-            <section className="mb-8 grid gap-5 md:grid-cols-3">
-              <MetricPanel icon={<Activity />} title="Volume" value={plan.volume} tone="neon" />
-              <MetricPanel icon={<Target />} title="Frequência" value={plan.frequency} tone="magenta" />
-              <MetricPanel icon={<Brain />} title="Foco" value={plan.focus} tone="light" />
-            </section>
-
-            {gamificationRetention && (
-              <div id="dashboard-gamification" className="scroll-mt-24">
-                <GamificationRetentionPanel state={gamificationRetention} />
-              </div>
-            )}
-
-            {remoteGamifiedState && (
-              <div id="dashboard-remote-gamified" className="scroll-mt-24">
-                <Suspense fallback={<LazyPanelFallback />}>
-                  <RemoteGamifiedPanel state={remoteGamifiedState} />
-                </Suspense>
-              </div>
-            )}
-
-            <section className="mb-8 rounded-[28px] border-4 border-brand-magenta bg-brand-gray p-6 shadow-brutal-magenta md:p-8">
-              <div className="flex flex-col gap-5 md:flex-row md:items-start">
-                <div className="rounded-[24px] border-2 border-brand-magenta bg-brand-magenta p-4 text-brand-light shadow-brutal-magenta">
-                  <Brain className="h-8 w-8" />
-                </div>
-                <div>
-                  <p className="font-mono text-xs uppercase tracking-[0.35em] text-brand-magenta">Próxima recomendação</p>
-                  <h2 className="mt-2 font-display text-4xl uppercase text-brand-light md:text-5xl">
-                    Ajuste automático da IA
-                  </h2>
-                  <p className="mt-4 max-w-4xl font-mono text-sm leading-7 text-brand-light/80 md:text-base">
-                    {plan.nextRecommendation}
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            {pendingRecommendation && (
-              <PendingAiRecommendationCard
-                recommendation={pendingRecommendation}
-                saving={saving}
-                onAccept={acceptPendingRecommendation}
-                onReject={rejectPendingRecommendation}
-                onDismiss={dismissPendingRecommendation}
-              />
-            )}
-
-            <div id="dashboard-nutrition" className="scroll-mt-24">
-              <ErrorBoundary section="NutritionLifestyleHub">
-                <Suspense fallback={<LazyPanelFallback />}>
-                  <NutritionLifestyleHub profile={profile} plan={plan} history={history} />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-
-            <div id="dashboard-advanced-social" className="scroll-mt-24">
-              <ErrorBoundary section="AdvancedSocialHub">
-                <Suspense fallback={<LazyPanelFallback />}>
-                  <AdvancedSocialHub profile={profile} />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
+            <CoreOverview
+              profile={profile}
+              plan={plan}
+              historyCount={history.length}
+              completionSummary={completionSummary}
+              selectedDay={selectedDay}
+              selectedDayIndex={selectedDayIndex}
+              primaryActionClass={primaryActionClass}
+              onStartWorkout={startActiveWorkout}
+              profileTitle={gamificationRetention?.profileTitle}
+            />
 
             <WeeklyPlan
               plan={plan}
@@ -995,91 +919,58 @@ export default function Dashboard() {
               onUpdateExerciseNotes={updateSelectedExerciseNotes}
             />
 
-            <Suspense fallback={<LazyPanelFallback />}>
-              <BiohackingWidget />
-            </Suspense>
-            <RecoveryReadinessSection history={history} />
-
-            <section className="mb-8 space-y-6">
-              <div className="border-b-2 border-brand-light/10 pb-4">
-                <h2 className="font-display text-4xl uppercase text-brand-light">Bem-estar, Sustentabilidade & Retrospectiva</h2>
-                <p className="mt-2 font-mono text-sm text-brand-light/70">Itens estratégicos 96 a 100 integrados.</p>
-              </div>
-              <Suspense fallback={<LazyPanelFallback />}>
-                <CalmModePanel />
-                <EcoLiftingPanel history={history} />
-                <div className="grid gap-6 md:grid-cols-2">
-                  <BossFightCancellationPreview />
-                  <PartnerTokenPreview />
-                </div>
-                <TimeTravelProgressViewer history={history} />
-              </Suspense>
-            </section>
-
-            <section id="dashboard-accessibility" className="mb-8 scroll-mt-24 space-y-6">
-              <div className="border-b-2 border-brand-light/10 pb-4">
-                <h2 className="font-display text-4xl uppercase text-brand-light">Acessibilidade &amp; Bem-estar</h2>
-                <p className="mt-2 font-mono text-sm text-brand-light/70">Itens estratégicos 32, 91, 92, 93 e 95 integrados.</p>
-              </div>
-              <Suspense fallback={<LazyPanelFallback />}>
-                <PainCheckinPanel />
-                <AdaptivePathwaysPanel />
-                <div className="grid gap-6 md:grid-cols-2">
-                  <HighContrastModeToggle />
-                  <PlainLanguagePanel />
-                </div>
-                <ScreenReaderSupportPanel />
-                <AdaptiveProtocolsPanel />
-              </Suspense>
-            </section>
-
-            <section className="mb-8 space-y-6">
-              <div className="border-b-2 border-brand-light/10 pb-4">
-                <h2 className="font-display text-4xl uppercase text-brand-light">Dados, Premium UX &amp; Mídia</h2>
-                <p className="mt-2 font-mono text-sm text-brand-light/70">Itens estratégicos 08, 18, 19 e 28 integrados.</p>
-              </div>
-              <Suspense fallback={<LazyPanelFallback />}>
-                <div className="grid gap-6 md:grid-cols-2">
-                  <ThemeCustomizationPanel />
-                  <PictureInPicturePanel />
-                </div>
-                <WorkoutImportPanel />
-              </Suspense>
-            </section>
-
-            <section className="mb-8 space-y-6">
-              <div className="border-b-2 border-brand-light/10 pb-4">
-                <h2 className="font-display text-4xl uppercase text-brand-light">IA, Hábitos &amp; Tecnologias Futuras</h2>
-                <p className="mt-2 font-mono text-sm text-brand-light/70">Itens estratégicos 51, 58, 59, 60 e 67 integrados.</p>
-              </div>
-              <Suspense fallback={<LazyPanelFallback />}>
-                <div className="grid gap-6 md:grid-cols-2">
-                  <EquipmentReplanPanel />
-                  <PantryPlannerPanel />
-                </div>
-                <LongevitySignalPanel history={history} />
-                <div className="grid gap-6 md:grid-cols-2">
-                  <FormCheckerPreviewPanel />
-                  <ErrorBoundary section="WebXRPreviewPanel">
-                    <WebXRPreviewPanel />
-                  </ErrorBoundary>
-                </div>
-              </Suspense>
-            </section>
-
             <HistoryPanel history={history} />
 
             <Suspense fallback={<LazyPanelFallback />}>
               <TrainingReportPanel history={history} />
             </Suspense>
 
-            <div id="dashboard-monetization" className="scroll-mt-24">
-              <ErrorBoundary section="MonetizationHub">
-                <Suspense fallback={<LazyPanelFallback />}>
-                  <MonetizationHub />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
+            {pendingRecommendation && (
+              <PendingAiRecommendationCard
+                recommendation={pendingRecommendation}
+                saving={saving}
+                onAccept={acceptPendingRecommendation}
+                onReject={rejectPendingRecommendation}
+                onDismiss={dismissPendingRecommendation}
+              />
+            )}
+
+            <DashboardBetaPanels
+              profile={profile}
+              plan={plan}
+              history={history}
+              gamificationRetention={gamificationRetention}
+              remoteGamifiedState={remoteGamifiedState}
+              flags={{
+                nutrition: surface.nutritionSimple,
+                recovery: surface.recoverySimple,
+                workoutImport: surface.workoutImportManual,
+                social: surface.social,
+                advancedGamification: surface.advancedGamification,
+                advancedWellness: surface.advancedWellness,
+                accessibility: surface.advancedAccessibility,
+                advancedAi: surface.advancedAi,
+                premiumUx: surface.premiumUx,
+                mediaEnhancements: surface.mediaEnhancements,
+                cameraFormCheck: surface.cameraFormCheck,
+                webxr: surface.webxr,
+                premiumIntegrations: surface.premiumIntegrations,
+                partnerTokens: surface.partnerTokens,
+              }}
+            />
+
+            <AccountSection
+              persistence={persistence}
+              email={authEmail}
+              password={authPassword}
+              loading={authLoading}
+              billingEnabled={surface.marketplace}
+              onEmailChange={setAuthEmail}
+              onPasswordChange={setAuthPassword}
+              onSignIn={handleSignIn}
+              onSignUp={handleSignUp}
+              onSignOut={handleSignOut}
+            />
           </>
         ) : !showStarterRegistration ? (
           <section className="rounded-[28px] border-4 border-brand-neon bg-brand-gray p-8 text-center shadow-brutal-neon">

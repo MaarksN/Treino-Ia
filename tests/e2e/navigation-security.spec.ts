@@ -5,7 +5,7 @@ import { collectCriticalErrors } from './helpers/console';
  * Navigation & Security E2E — Controlled Technical Sprint 04.
  *
  * Verifies:
- *   1. App responds to known routes (/, /?view=nutrition).
+ *   1. App responds to known routes (/, /hoje, /plano, /treino/ativo, /historico, /conta).
  *   2. Unknown routes are redirected to root.
  *   3. Page source does not contain leaked secrets or credentials.
  *   4. PWA meta tags are present (manifest, theme-color, apple meta).
@@ -41,16 +41,24 @@ test.describe('Navigation & routing', () => {
     expect(errors).toEqual([]);
   });
 
-  test('unknown path redirects to root', async ({ page }) => {
+  test('core routes load directly', async ({ page }) => {
+    for (const route of ['/hoje', '/plano', '/treino/ativo', '/historico', '/conta', '/assinatura']) {
+      const response = await page.goto(route);
+      expect(response?.status()).toBe(200);
+      await expect(page.locator('#root')).toBeVisible({ timeout: 10_000 });
+    }
+  });
+
+  test('unknown path redirects to the canonical today route', async ({ page }) => {
     await page.goto('/some-unknown-path-xyz');
 
     // App should still render (unknown route is replaced)
     const root = page.locator('#root');
     await expect(root).toBeVisible({ timeout: 10_000 });
 
-    // URL should be rewritten to /
+    // URL should be rewritten to the canonical today route
     await page.waitForTimeout(1_000);
-    expect(new URL(page.url()).pathname).toBe('/');
+    expect(new URL(page.url()).pathname).toBe('/hoje');
   });
 });
 

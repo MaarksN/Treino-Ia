@@ -3,7 +3,6 @@ import { handleApiError, HttpError, json } from '../../_lib/http';
 import { sanitizeRedirectTarget } from '../../_lib/oauthRedirect';
 import { encryptOAuthToken } from '../../_lib/oauthTokenCrypto';
 import { getSupabaseAdmin } from '../../_lib/server-supabase';
-import { normalizeRedirectTo } from '../../_lib/redirectAllowlist';
 import { assertOAuthTokenStorageAllowed, buildOAuthTokenStorageWarning, redactOAuthTokenPayload } from '../../_lib/oauthTokenSecurity';
 
 export const config = {
@@ -101,8 +100,8 @@ function buildRedirect(url: string, params: Record<string, string>): Response {
 }
 
 export default async function handler(request: Request) {
-  if (request.method === 'OPTIONS') return json({ ok: true });
-  if (request.method !== 'GET') return json({ error: 'Method not allowed' }, 405);
+  if (request.method === 'OPTIONS') return json({ ok: true }, 200, request);
+  if (request.method !== 'GET') return json({ error: 'Method not allowed' }, 405, request);
 
   try {
     const url = new URL(request.url);
@@ -206,7 +205,7 @@ export default async function handler(request: Request) {
 
     return buildRedirect(redirectTo, { health_provider: provider, health_status: 'connected' });
   } catch (error) {
-    return handleApiError(error);
+    return handleApiError(error, request);
   }
 }
 

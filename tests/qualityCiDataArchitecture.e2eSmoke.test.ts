@@ -26,7 +26,7 @@ describe('quality and data architecture E2E smoke', () => {
   });
 
   it('deep links to nutrition and persists a local training cycle without external services', async () => {
-    window.history.replaceState({}, '', '/?view=nutrition');
+    window.history.replaceState({}, '', '/nutricao');
     expect(parseAppRoute(window.location).id).toBe('nutrition');
 
     const profile = {
@@ -73,6 +73,10 @@ describe('quality and data architecture E2E smoke', () => {
     await DatabaseService.saveProfile(profile);
     await DatabaseService.saveCurrentPlan(plan);
     await DatabaseService.saveWorkoutSession(session);
+    await DatabaseService.saveWorkoutSession({
+      ...session,
+      feedback: 'Atualizado sem duplicar.',
+    });
 
     await expect(DatabaseService.getProfile()).resolves.toMatchObject({
       id: profile.id,
@@ -82,6 +86,11 @@ describe('quality and data architecture E2E smoke', () => {
       id: plan.id,
       planName: plan.planName,
     });
-    await expect(DatabaseService.getWorkoutHistory()).resolves.toEqual([session]);
+    await expect(DatabaseService.getWorkoutHistory()).resolves.toEqual([
+      {
+        ...session,
+        feedback: 'Atualizado sem duplicar.',
+      },
+    ]);
   });
 });

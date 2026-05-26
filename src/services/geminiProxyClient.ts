@@ -1,10 +1,7 @@
 import { Schema } from '../types/geminiSchema';
-import {
-  createGeminiCacheKey,
-  readGeminiCache,
-  writeGeminiCache,
-} from './geminiCache';
+import { createGeminiCacheKey, readGeminiCache, writeGeminiCache } from './geminiCache';
 import { supabase } from './supabaseClient';
+import { trackEvent } from '../utils/analytics';
 
 interface GeminiGenerateContentRequest {
   model: string;
@@ -32,12 +29,8 @@ function normalizeContents(contents: unknown): unknown {
   }
 
   if (Array.isArray(contents)) {
-    const alreadyFormatted = contents.some(item => {
-      return Boolean(
-        item &&
-        typeof item === 'object' &&
-        ('role' in item || 'parts' in item)
-      );
+    const alreadyFormatted = contents.some((item) => {
+      return Boolean(item && typeof item === 'object' && ('role' in item || 'parts' in item));
     });
 
     if (alreadyFormatted) return contents;
@@ -45,7 +38,7 @@ function normalizeContents(contents: unknown): unknown {
     return [
       {
         role: 'user',
-        parts: contents.map(item => typeof item === 'string' ? { text: item } : item),
+        parts: contents.map((item) => (typeof item === 'string' ? { text: item } : item)),
       },
     ];
   }
@@ -65,73 +58,85 @@ function normalizeSystemInstruction(systemInstruction?: string | Record<string, 
   return systemInstruction;
 }
 
-export async function generateGeminiContent(request: GeminiGenerateContentRequest): Promise<{ text: string }> {
-  const normalizedContents = normalizeContents(request.contents);
-  const normalizedSystemInstruction = normalizeSystemInstruction(request.config?.systemInstruction);
-  const generationConfig = request.config
-    ? {
-        responseMimeType: request.config.responseMimeType,
-        responseSchema: request.config.responseSchema,
-      }
-    : undefined;
-  const cacheKey = createGeminiCacheKey({
-    model: request.model,
-    contents: normalizedContents,
-    systemInstruction: normalizedSystemInstruction,
-    generationConfig,
-  });
-
-  const { data, error } = await supabase.auth.getSession();
-
-  if (error || !data.session?.access_token) {
-    throw new Error('Faça login para usar recursos de IA.');
-  }
-
-  if (cacheKey) {
-    const cachedText = readGeminiCache(cacheKey);
-    if (cachedText) return { text: cachedText };
-  }
-
-  const response = await fetch('/api/gemini-proxy', {
-    method: 'POST',
-    headers: {
-      authorization: `Bearer ${data.session.access_token}`,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
+export async function generateGeminiContent(
+  request: GeminiGenerateContentRequest,
+): Promise<{ text: string }> {
+  try {
+    const normalizedContents = normalizeContents(request.contents);
+    const normalizedSystemInstruction = normalizeSystemInstruction(
+      request.config?.systemInstruction,
+    );
+    const generationConfig = request.config
+      ? {
+          responseMimeType: request.config.responseMimeType,
+          responseSchema: request.config.responseSchema,
+        }
+      : undefined;
+    const cacheKey = createGeminiCacheKey({
+      model: request.model,
       contents: normalizedContents,
       systemInstruction: normalizedSystemInstruction,
       generationConfig,
-    }),
-  });
+    });
 
-  const bodyText = await response.text();
+    const { data, error } = await supabase.auth.getSession();
 
-  if (!response.ok) {
-    try {
-      const body = JSON.parse(bodyText) as { error?: string };
-      throw new Error(body.error || 'Falha ao chamar proxy Gemini.');
-    } catch (parseError) {
-      if (parseError instanceof Error && parseError.message !== 'Unexpected end of JSON input') {
-        throw parseError;
-      }
-      throw new Error(bodyText || 'Falha ao chamar proxy Gemini.');
+    if (error || !data.session?.access_token) {
+      throw new Error('Faça login para usar recursos de IA.');
     }
+
+    if (cacheKey) {
+      const cachedText = readGeminiCache(cacheKey);
+      if (cachedText) return { text: cachedText };
+    }
+
+    const response = await fetch('/api/gemini-proxy', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${data.session.access_token}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: normalizedContents,
+        systemInstruction: normalizedSystemInstruction,
+        generationConfig,
+      }),
+    });
+
+    const bodyText = await response.text();
+
+    if (!response.ok) {
+      try {
+        const body = JSON.parse(bodyText) as { error?: string };
+        throw new Error(body.error || 'Falha ao chamar proxy Gemini.');
+      } catch (parseError) {
+        if (parseError instanceof Error && parseError.message !== 'Unexpected end of JSON input') {
+          throw parseError;
+        }
+        throw new Error(bodyText || 'Falha ao chamar proxy Gemini.');
+      }
+    }
+
+    const parsed = JSON.parse(bodyText) as GeminiApiResponse;
+    const text = parsed.candidates?.[0]?.content?.parts
+      ?.map((part) => part.text ?? '')
+      .join('')
+      .trim();
+
+    if (!text) {
+      throw new Error('Gemini não retornou texto utilizável.');
+    }
+
+    if (cacheKey) writeGeminiCache(cacheKey, text);
+
+    return { text };
+  } catch (error) {
+    trackEvent('ai_error', {
+      operation: 'gemini_proxy_generate_content',
+      errorName: error instanceof Error ? error.name : 'UnknownError',
+    });
+    throw error;
   }
-
-  const parsed = JSON.parse(bodyText) as GeminiApiResponse;
-  const text = parsed.candidates?.[0]?.content?.parts
-    ?.map(part => part.text ?? '')
-    .join('')
-    .trim();
-
-  if (!text) {
-    throw new Error('Gemini não retornou texto utilizável.');
-  }
-
-  if (cacheKey) writeGeminiCache(cacheKey, text);
-
-  return { text };
 }
 
 export function createGeminiProxyClient() {
@@ -141,4 +146,3 @@ export function createGeminiProxyClient() {
     },
   };
 }
-

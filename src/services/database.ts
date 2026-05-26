@@ -9,22 +9,110 @@ import {
 } from './trainingReadModels';
 import { workoutSessionRepository } from './data/workoutSessionRepository';
 
-import type {
-  ExerciseIntensityTechnique,
-  PersistenceStatus,
-  TrainingLevel,
-  TrainingPlan,
-  UserProfile,
-  WorkoutSession,
-} from './database/database.types';
+export type TrainingLevel = 'iniciante' | 'intermediario' | 'avancado';
+export type ExerciseIntensityTechnique = 'normal' | 'superset' | 'dropset';
 
-export type * from './database/database.types';
+export interface UserProfile {
+  id: string;
+  name: string;
+  level: TrainingLevel;
+  goal: string;
+  daysPerWeek: number;
+  timePerWorkout: number;
+  injuries: string;
+  equipment: string;
+  updatedAt?: number;
+}
+
+export interface ExercisePrescription {
+  id: string;
+  name: string;
+  muscleGroup: string;
+  sets: number;
+  reps: string;
+  rest: string;
+  notes: string;
+  intensityTechnique?: ExerciseIntensityTechnique;
+  supersetGroupId?: string;
+}
+
+export interface WorkoutDayPlan {
+  id: string;
+  dayName: string;
+  focus: string;
+  exercises: ExercisePrescription[];
+}
+
+export interface TrainingPlan {
+  id: string;
+  createdAt: number;
+  planName: string;
+  goalDescription: string;
+  volume: string;
+  frequency: string;
+  focus: string;
+  weeklySplit: string;
+  aiRecommendation: string;
+  nextRecommendation: string;
+  days: WorkoutDayPlan[];
+}
+
+export interface ExerciseSet {
+  weight: number;
+  reps: number;
+  rpe: number;
+}
+
+export interface WorkoutExerciseLog {
+  exerciseId: string;
+  name: string;
+  targetSets: number;
+  targetReps: string;
+  targetRest: string;
+  completed: boolean;
+  sets?: ExerciseSet[];
+  exerciseNote?: string;
+  intensityTechnique?: ExerciseIntensityTechnique;
+  supersetGroupId?: string;
+  actualWeight?: number;
+  actualReps?: number;
+  rpe?: number;
+}
+
+export interface WorkoutSession {
+  id: string;
+  planId: string;
+  dayId: string;
+  dayName: string;
+  focus: string;
+  completedAt: number;
+  durationMinutes: number;
+  totalVolume: number;
+  completedExercises: number;
+  totalExercises: number;
+  feedback: string;
+  nextRecommendation: string;
+  exercises: WorkoutExerciseLog[];
+}
+
+export interface PersistenceStatus {
+  mode: 'supabase' | 'local';
+  configured: boolean;
+  authenticated: boolean;
+  email: string | null;
+  message: string;
+}
 
 const STORAGE_KEYS = {
   profile: '@TreinoIA:profile',
   plan: '@TreinoIA:currentPlan',
   history: '@TreinoIA:history',
 };
+
+export type WorkoutSessionSaveResult =
+  | { status: 'supabase'; saved: true; message: string; warning?: string }
+  | { status: 'local_fallback'; saved: true; message: string; error?: string }
+  | { status: 'failed'; saved: false; message: string; error: string };
 
 const validLevels: TrainingLevel[] = ['iniciante', 'intermediario', 'avancado'];
 
@@ -82,6 +170,13 @@ function readLocal<T>(key: string, fallback: T): T {
 
 function writeLocal<T>(key: string, value: T) {
   setJSON(key, value);
+}
+
+function upsertLocalWorkoutSession(session: WorkoutSession): WorkoutSession[] {
+  const history = readLocal<WorkoutSession[]>(STORAGE_KEYS.history, []);
+  const nextHistory = [session, ...history.filter(item => item.id !== session.id)].slice(0, 50);
+  writeLocal(STORAGE_KEYS.history, nextHistory);
+  return nextHistory;
 }
 
 async function getCloudUser() {
@@ -245,28 +340,63 @@ export const DatabaseService = {
     return readLocal<TrainingPlan | null>(STORAGE_KEYS.plan, null);
   },
 
-  saveWorkoutSession: async (session: WorkoutSession): Promise<boolean> => {
-    const cloudSaved = await tryCloud(async userId => {
-      const { error } = await supabase
-        .from('training_workout_history_records')
-        .upsert(buildWorkoutHistoryUpsert(userId, session), { onConflict: 'user_id,id' });
+  saveWorkoutSessionWithStatus: async (session: WorkoutSession): Promise<WorkoutSessionSaveResult> => {
+    const persistenceStatus = await DatabaseService.getPersistenceStatus();
 
-      if (error) throw error;
-
+    if (persistenceStatus.mode === 'supabase') {
       try {
-        await workoutSessionRepository.saveCompletedSession(session);
-      } catch (e) {
-        console.error('Relational dual-write failed', e);
+        const userId = await getCloudUserId();
+        if (!userId) {
+          throw new Error('Usuário não autenticado no Supabase.');
+        }
+
+        const { error } = await supabase
+          .from('training_workout_history_records')
+          .upsert(buildWorkoutHistoryUpsert(userId, session), { onConflict: 'user_id,id' });
+
+        if (error) throw error;
+
+        const relationalSessionId = await workoutSessionRepository.saveCompletedSession(session);
+
+        return relationalSessionId
+          ? {
+              status: 'supabase',
+              saved: true,
+              message: 'Treino salvo na nuvem.',
+            }
+          : {
+              status: 'supabase',
+              saved: true,
+              message: 'Treino salvo na nuvem.',
+              warning: 'Os detalhes relacionais ficaram pendentes para nova sincronização.',
+            };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Falha ao salvar no Supabase.';
+        upsertLocalWorkoutSession(session);
+
+        return {
+          status: 'local_fallback',
+          saved: true,
+          message: 'Falha ao salvar na nuvem. O treino ficou guardado localmente para sincronizar depois.',
+          error: message,
+        };
       }
+    }
 
-      return true;
-    });
+    upsertLocalWorkoutSession(session);
 
-    if (cloudSaved) return true;
+    return {
+      status: 'local_fallback',
+      saved: true,
+      message: persistenceStatus.configured
+        ? 'Entre na conta para sincronizar. O treino foi guardado localmente por enquanto.'
+        : 'Supabase não configurado. O treino foi guardado localmente neste navegador.',
+    };
+  },
 
-    const history = readLocal<WorkoutSession[]>(STORAGE_KEYS.history, []);
-    writeLocal(STORAGE_KEYS.history, [session, ...history].slice(0, 50));
-    return true;
+  saveWorkoutSession: async (session: WorkoutSession): Promise<boolean> => {
+    const result = await DatabaseService.saveWorkoutSessionWithStatus(session);
+    return result.saved;
   },
 
   getWorkoutHistory: async (): Promise<WorkoutSession[]> => {

@@ -5,9 +5,16 @@ export const config = {
   runtime: 'nodejs',
 };
 
+type GamificationProfileRow = {
+  active_title?: string | null;
+  season_xp?: number | null;
+  season_level?: number | null;
+  elite_pass_active?: boolean | null;
+};
+
 export default async function handler(request: Request) {
-  if (request.method === 'OPTIONS') return json({ ok: true });
-  if (request.method !== 'GET') return json({ error: 'Method not allowed' }, 405);
+  if (request.method === 'OPTIONS') return json({ ok: true }, 200, request);
+  if (request.method !== 'GET') return json({ error: 'Method not allowed' }, 405, request);
 
   try {
     const user = await requireSupabaseUser(request);
@@ -22,6 +29,8 @@ export default async function handler(request: Request) {
     if (profileError) {
       throw new Error(`Failed to load gamification profile: ${profileError.message}`);
     }
+
+    const profileRow = (profile ?? {}) as GamificationProfileRow;
 
     const { data: events, error: eventsError } = await supabase
       .from('gamification_ledger')
@@ -44,8 +53,8 @@ export default async function handler(request: Request) {
         cosmetics: [],
         season: null,
         clan: null,
-        avatar: { archetype: 'rookie', equippedTitle: profile.active_title },
-      });
+        avatar: { archetype: 'rookie', equippedTitle: profileRow.active_title ?? null },
+      }, 200, request);
     }
 
     const mockMissions = [
@@ -55,7 +64,7 @@ export default async function handler(request: Request) {
     ];
 
     const mockCosmetics = [
-      { id: 'c1', type: 'title', name: 'Aprendiz', description: 'Iniciando a jornada.', emoji: '🌱', rarity: 'common', price: 0, unlocked: true, equipped: profile.active_title === 'Aprendiz' },
+      { id: 'c1', type: 'title', name: 'Aprendiz', description: 'Iniciando a jornada.', emoji: '🌱', rarity: 'common', price: 0, unlocked: true, equipped: profileRow.active_title === 'Aprendiz' },
       { id: 'c2', type: 'title', name: 'Monstro', description: 'Ninguém segura.', emoji: '🦍', rarity: 'epic', price: 50, unlocked: false },
       { id: 'c3', type: 'avatar_skin', name: 'Guerreiro de Aço', description: 'A armadura brilha.', emoji: '🛡️', rarity: 'rare', price: 300, unlocked: false },
     ];
@@ -66,9 +75,9 @@ export default async function handler(request: Request) {
       theme: 'Origens',
       startsAt: Date.now() - 86400000 * 10,
       endsAt: Date.now() + 86400000 * 20,
-      seasonXp: profile.season_xp,
-      seasonLevel: profile.season_level,
-      eliteActive: profile.elite_pass_active,
+      seasonXp: profileRow.season_xp ?? 0,
+      seasonLevel: profileRow.season_level ?? 1,
+      eliteActive: profileRow.elite_pass_active ?? false,
       rewards: [
         { level: 1, freeReward: { label: '50 Moedas', coins: 50 }, eliteReward: { label: 'Título VIP', cosmeticId: 'c2' }, claimedFree: false, claimedElite: false },
         { level: 2, freeReward: { label: 'Skin Básica', cosmeticId: 'c3' }, eliteReward: { label: '100 Moedas', coins: 100 }, claimedFree: false, claimedElite: false },
@@ -86,7 +95,7 @@ export default async function handler(request: Request) {
 
     const mockAvatar = {
       archetype: 'warrior',
-      equippedTitle: profile.active_title,
+      equippedTitle: profileRow.active_title ?? null,
     };
 
     return json({
@@ -98,8 +107,8 @@ export default async function handler(request: Request) {
       clan: mockClan,
       avatar: mockAvatar,
       dataMode: 'mock_dev_only',
-    });
+    }, 200, request);
   } catch (error) {
-    return handleApiError(error);
+    return handleApiError(error, request);
   }
 }

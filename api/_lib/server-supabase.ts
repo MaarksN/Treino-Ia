@@ -1,9 +1,10 @@
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
+import type { Database } from '../../src/services/database/database.types';
 import { getBearerToken, HttpError, requireEnv } from './http';
 
-let adminClient: SupabaseClient | null = null;
+let adminClient: SupabaseClient<Database> | null = null;
 
-export function getSupabaseAdmin(): SupabaseClient {
+export function getSupabaseAdmin(): SupabaseClient<Database> {
   if (adminClient) return adminClient;
 
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -17,7 +18,7 @@ export function getSupabaseAdmin(): SupabaseClient {
     throw new HttpError(500, 'SUPABASE_SERVICE_ROLE_KEY is not configured');
   }
 
-  adminClient = createClient(supabaseUrl, serviceRoleKey, {
+  adminClient = createClient<Database>(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,

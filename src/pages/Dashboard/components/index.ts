@@ -8,3 +8,7 @@ export * from './ActiveWorkout';
 export * from './RecoveryReadinessSection';
 export * from './DashboardSkeleton';
 export * from './PlanGenerationProgress';
+export * from './PendingAiRecommendationCard';
+export * from './CoreOverview';
+export * from './AccountSection';
+export * from './DashboardBetaPanels';

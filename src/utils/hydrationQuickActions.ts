@@ -36,12 +36,11 @@ export function parseHydrationQuickAddUrl(url: string): HydrationQuickAddDetail 
 export function buildHydrationQuickAddUrl(amountMl: number, source = 'pwa-shortcut') {
   const amount = clampAmount(amountMl) ?? 250;
   const params = new URLSearchParams({
-    view: 'nutrition',
     [HYDRATION_QUICK_ADD_PARAM]: String(amount),
     source,
   });
 
-  return `/?${params.toString()}`;
+  return `/nutricao?${params.toString()}`;
 }
 
 export function createQuickHydrationEntry(detail: HydrationQuickAddDetail): HydrationEntry {

@@ -7,7 +7,7 @@ import {
 
 describe('hydrationQuickActions', () => {
   it('parses valid quick-add hydration urls', () => {
-    const detail = parseHydrationQuickAddUrl('/?view=nutrition&quickHydrationMl=350&source=notification');
+    const detail = parseHydrationQuickAddUrl('/nutricao?quickHydrationMl=350&source=notification');
 
     expect(detail).toEqual({
       amountMl: 350,
@@ -26,6 +26,6 @@ describe('hydrationQuickActions', () => {
 
     expect(url).toContain(`${HYDRATION_QUICK_ADD_PARAM}=500`);
     expect(url).toContain('source=shortcut');
-    expect(url).toContain('view=nutrition');
+    expect(url).toContain('/nutricao?');
   });
 });

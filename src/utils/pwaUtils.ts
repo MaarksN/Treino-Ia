@@ -77,7 +77,7 @@ export async function showHydrationReminderNotification(totalMl: number, goalMl:
     body: `Você bebeu ${totalMl}ml de ${goalMl}ml hoje.`,
     data: {
       type: 'HYDRATION_REMINDER',
-      url: '/?view=nutrition',
+      url: '/nutricao',
     },
     actions: [
       { action: 'hydrate-250', title: '+250ml' },

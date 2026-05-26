@@ -16,6 +16,7 @@ const eq = vi.fn();
 const select = vi.fn();
 const insert = vi.fn();
 const upsert = vi.fn();
+const deleteRows = vi.fn();
 
 vi.mock('../supabaseClient', () => ({
   supabase: {
@@ -29,6 +30,7 @@ function chain(overrides: Record<string, unknown> = {}) {
   const query = {
     insert,
     upsert,
+    delete: deleteRows,
     select,
     single,
     maybeSingle,
@@ -40,6 +42,7 @@ function chain(overrides: Record<string, unknown> = {}) {
 
   insert.mockReturnValue(query);
   upsert.mockReturnValue(query);
+  deleteRows.mockReturnValue(query);
   select.mockReturnValue(query);
   eq.mockReturnValue(query);
   order.mockReturnValue(query);
@@ -172,5 +175,6 @@ describe('workoutSessionRepository', () => {
     expect(supabase.from).toHaveBeenCalledWith('exercise_logs');
     expect(supabase.from).toHaveBeenCalledWith('set_logs');
     expect(supabase.from).toHaveBeenCalledWith('personal_records');
+    expect(deleteRows).toHaveBeenCalled();
   });
 });

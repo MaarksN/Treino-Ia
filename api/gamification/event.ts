@@ -51,8 +51,8 @@ async function ensureUniqueSourceEvent(supabase: ReturnType<typeof getSupabaseAd
 }
 
 export default async function handler(request: Request) {
-  if (request.method === 'OPTIONS') return json({ ok: true });
-  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+  if (request.method === 'OPTIONS') return json({ ok: true }, 200, request);
+  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405, request);
 
   try {
     const user = await requireSupabaseUser(request);
@@ -75,10 +75,10 @@ export default async function handler(request: Request) {
     if (currentError) throw new Error(`Failed to load gamification profile: ${currentError.message}`);
 
     if ((eventType === 'checkin' || eventType === 'daily_checkin') && isSameUtcDay(current.last_checkin_at)) {
-      return json({ skipped: true, reason: 'Check-in already recorded today' });
+      return json({ skipped: true, reason: 'Check-in already recorded today' }, 200, request);
     }
     if (eventType === 'login' && isSameUtcDay(current.last_login_at)) {
-      return json({ skipped: true, reason: 'Login already recorded today' });
+      return json({ skipped: true, reason: 'Login already recorded today' }, 200, request);
     }
 
     if (eventType === 'checkin' || eventType === 'daily_checkin' || eventType === 'login') {
@@ -99,7 +99,7 @@ export default async function handler(request: Request) {
         .maybeSingle();
       if (missionError) throw new Error(`Failed to load mission: ${missionError.message}`);
       if (!mission) throw new HttpError(404, 'Mission not found.');
-      if (mission.status === 'claimed') return json({ skipped: true, reason: 'Mission already claimed' });
+      if (mission.status === 'claimed') return json({ skipped: true, reason: 'Mission already claimed' }, 200, request);
       if (mission.status !== 'completed') throw new HttpError(400, 'Mission is not completed yet');
 
       const { error: updateMissionError } = await supabase
@@ -115,7 +115,7 @@ export default async function handler(request: Request) {
         p_metadata: { origin: 'api', eventType, missionId, idempotencyKey },
       });
       if (eventError) throw new Error(`Failed to apply gamification event: ${eventError.message}`);
-      return json({ profile });
+      return json({ profile }, 200, request);
     }
 
     if (eventType === 'cosmetic_purchased') {
@@ -128,7 +128,7 @@ export default async function handler(request: Request) {
       const { data: existingCosmetic, error: existingError } = await supabase
         .from('gamification_cosmetics').select('cosmetic_id').eq('user_id', user.id).eq('cosmetic_id', cosmeticId).maybeSingle();
       if (existingError) throw new Error(`Failed to verify cosmetic ownership: ${existingError.message}`);
-      if (existingCosmetic) return json({ skipped: true, reason: 'Cosmetic already unlocked' });
+      if (existingCosmetic) return json({ skipped: true, reason: 'Cosmetic already unlocked' }, 200, request);
 
       const idempotencyKey = await ensureUniqueSourceEvent(supabase, user.id, eventType, cosmeticId);
 
@@ -142,7 +142,7 @@ export default async function handler(request: Request) {
         p_metadata: { origin: 'api', eventType, cosmeticId, cost, idempotencyKey },
       });
       if (eventError) throw new Error(`Failed to apply gamification event: ${eventError.message}`);
-      return json({ profile });
+      return json({ profile }, 200, request);
     }
 
     let resolvedSourceId = sourceId;
@@ -165,7 +165,7 @@ export default async function handler(request: Request) {
     if (eventError) throw new Error(`Failed to apply gamification event: ${eventError.message}`);
 
     const patch = eventType === 'login' ? { last_login_at: new Date().toISOString(), login_streak: isYesterdayUtc(current.last_login_at) ? Number(current.login_streak ?? 0) + 1 : 1 } : (eventType === 'checkin' || eventType === 'daily_checkin') ? { last_checkin_at: new Date().toISOString() } : null;
-    if (!patch) return json({ profile });
+    if (!patch) return json({ profile }, 200, request);
 
     const { data: updated, error: updateError } = await supabase
       .from('gamification_profiles')
@@ -174,8 +174,8 @@ export default async function handler(request: Request) {
       .select('*')
       .single();
     if (updateError) throw new Error(`Failed to update gamification profile: ${updateError.message}`);
-    return json({ profile: updated ?? profile });
+    return json({ profile: updated ?? profile }, 200, request);
   } catch (error) {
-    return handleApiError(error);
+    return handleApiError(error, request);
   }
 }

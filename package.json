@@ -23,6 +23,7 @@
     "coverage": "npm run test:coverage",
     "schema:drift": "vitest run tests/schemaDrift.test.ts",
     "smoke:supabase:social": "node tests/social-real-smoke.mjs",
+    "smoke:sprint3": "node scripts/smoke-sprint3-integrations.mjs",
     "test:a11y": "playwright test tests/e2e/accessibility.spec.ts",
     "analyze": "vite build --mode analyze",
     "validate": "npm run typecheck && npm run test && npm run build"

@@ -1,5 +1,8 @@
 export type AppRoute =
-  | 'dashboard'
+  | 'today'
+  | 'plan'
+  | 'history'
+  | 'account'
   | 'nutrition'
   | 'social'
   | 'coach'
@@ -7,12 +10,16 @@ export type AppRoute =
   | 'active-workout';
 
 export const routes = {
+  today: '/hoje',
+  plan: '/plano',
+  history: '/historico',
+  account: '/conta',
   dashboard: '/dashboard',
-  nutrition: '/nutrition',
+  nutrition: '/nutricao',
   social: '/social',
   coach: '/coach',
   profile: '/profile',
-  activeWorkout: '/workout/active',
+  activeWorkout: '/treino/ativo',
 } as const;
 
 export function buildRoute(route: keyof typeof routes): string {

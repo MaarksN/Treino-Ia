@@ -17,7 +17,6 @@ import {
 import { PricingTable } from './PricingTable';
 import { CancelRetention } from './billing/CancelRetention';
 import { InvoiceHistory } from './billing/InvoiceHistory';
-import { InvoiceRecord } from '../types/billing';
 
 export function BillingCenter() {
   const [entitlement, setEntitlement] = useState<BillingEntitlementSummary | null>(null);
@@ -74,24 +73,6 @@ export function BillingCenter() {
   const trialEndsAt = entitlement?.subscription?.trial_ends_at
     ? new Date(entitlement.subscription.trial_ends_at)
     : null;
-
-  // dataMode: 'mock_dev_only'
-  const mockInvoices: InvoiceRecord[] = [
-    {
-      id: 'inv_1',
-      date: new Date().toISOString(),
-      amount: plan.monthlyPrice,
-      status: 'paid',
-      downloadUrl: '#',
-    },
-    {
-      id: 'inv_2',
-      date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      amount: plan.monthlyPrice,
-      status: 'paid',
-      downloadUrl: '#',
-    }
-  ];
 
   return (
     <div className="min-h-screen bg-brand-dark text-white p-6">
@@ -260,7 +241,7 @@ export function BillingCenter() {
 
         {entitlement?.isPremium && (
           <section className="mt-8">
-             <InvoiceHistory invoices={mockInvoices} />
+             <InvoiceHistory invoices={[]} />
           </section>
         )}
       </main>
@@ -271,11 +252,6 @@ export function BillingCenter() {
           onConfirmCancel={() => {
             setShowCancelModal(false);
             openPortal();
-          }}
-          onAcceptOffer={() => {
-            setShowCancelModal(false);
-            // dataMode: 'mock_dev_only'
-            setMessage('Cupom de 1 mês grátis aplicado (Simulado).');
           }}
         />
       )}

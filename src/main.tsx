@@ -13,6 +13,7 @@ if (env.sentryDsn) {
   Sentry.init({
     dsn: env.sentryDsn,
     environment: env.appEnv,
+    release: env.sentryRelease,
     tracesSampleRate: env.isProduction ? 0.1 : 1.0,
     enabled: env.isProduction || Boolean(env.sentryDsn),
     integrations: [

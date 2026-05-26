@@ -7,8 +7,8 @@ export const config = {
 };
 
 export default async function handler(request: Request) {
-  if (request.method === 'OPTIONS') return json({ ok: true });
-  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+  if (request.method === 'OPTIONS') return json({ ok: true }, 200, request);
+  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405, request);
 
   try {
     const signature = request.headers.get('stripe-signature');
@@ -34,7 +34,7 @@ export default async function handler(request: Request) {
 
     const isNew = await recordStripeWebhookEvent(event);
     if (!isNew) {
-      return json({ received: true, ignored: true }); // already processed
+      return json({ received: true, ignored: true }, 200, request); // already processed
     }
 
     switch (event.type) {
@@ -57,8 +57,8 @@ export default async function handler(request: Request) {
         break;
     }
 
-    return json({ received: true });
+    return json({ received: true }, 200, request);
   } catch (error) {
-    return handleApiError(error);
+    return handleApiError(error, request);
   }
 }

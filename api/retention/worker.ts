@@ -271,9 +271,9 @@ async function processHabitReminders(limit: number) {
 }
 
 export default async function handler(request: Request) {
-  if (request.method === 'OPTIONS') return json({ ok: true });
+  if (request.method === 'OPTIONS') return json({ ok: true }, 200, request);
   if (request.method !== 'GET' && request.method !== 'POST') {
-    return json({ error: 'Method not allowed' }, 405);
+    return json({ error: 'Method not allowed' }, 405, request);
   }
 
   try {
@@ -292,8 +292,8 @@ export default async function handler(request: Request) {
       processedAt: new Date().toISOString(),
       checkins,
       reminders,
-    });
+    }, 200, request);
   } catch (error) {
-    return handleApiError(error);
+    return handleApiError(error, request);
   }
 }
