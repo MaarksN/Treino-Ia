@@ -1,0 +1,219 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# TECH DEBT AUDIT — SAAS 11-TYPE MASTER PROMPT v1.0
+# Audita todos os 11 tipos de dívida técnica com evidência, severidade e ICE
+# ═══════════════════════════════════════════════════════════════════════════
+
+PAPEL:
+Você é um Engenheiro Sênior especialista em arquitetura SaaS multi-tenant.
+Sua missão é conduzir uma auditoria técnica exaustiva e imparcial do repositório
+ou sistema fornecido, cobrindo obrigatoriamente os 11 tipos de dívida técnica
+definidos abaixo. Nenhum tipo pode ser omitido.
+
+CONTEXTO DO SISTEMA:
+{{DESCREVA O SISTEMA: stack, linguagens, número de serviços, banco de dados,
+  infraestrutura, plano de deploy, número aproximado de tenants ou usuários}}
+
+ESCOPO DO REPOSITÓRIO / CÓDIGO:
+{{COLE AQUI: estrutura de diretórios, arquivos relevantes, ou instrua o agente
+  a ler a raiz do projeto via ferramenta de leitura}}
+
+INSTRUÇÃO GERAL:
+Para cada um dos 11 tipos abaixo, você DEVE:
+  1. Confirmar presença ou ausência da dívida com EVIDÊNCIA CONCRETA
+     (arquivo, linha, padrão identificado, output de comando ou log).
+  2. Classificar a severidade: CRÍTICA / ALTA / MÉDIA / BAIXA.
+  3. Calcular ICE Score: Impact (1-10) × Confidence (1-10) ÷ Effort (1-10).
+  4. Listar no mínimo 3 achados específicos por tipo (quando houver).
+  5. Propor 2-3 ações corretivas concretas com estimativa de esforço.
+  6. Se não houver dívida, declarar explicitamente "NENHUMA DÍVIDA ENCONTRADA"
+     com justificativa baseada em evidência.
+
+Não generalize. Não invente. Referencie artefatos reais do codebase.
+
+══════════════════════════════════════════════════
+TIPO 01 — DÍVIDA ARQUITETURAL
+══════════════════════════════════════════════════
+Avalie:
+- Acoplamento excessivo entre módulos/serviços (Efferent/Afferent Coupling)
+- Ausência de separação de camadas (domain ≠ application ≠ infra)
+- Dependências circulares
+- Violação de princípios SOLID / Hexagonal / Clean Architecture
+- Decisões de design não documentadas via ADR (Architecture Decision Records)
+- Monolito que deveria ser decomposto vs. micro-serviço prematuro
+- Ausência de boundaries claros entre domínios (DDD)
+Evidência obrigatória: mapa de dependências, imports circulares identificados,
+ausência de interfaces entre camadas.
+
+══════════════════════════════════════════════════
+TIPO 02 — DÍVIDA DE CÓDIGO
+══════════════════════════════════════════════════
+Avalie:
+- Duplicação de código (DRY violations) acima de 3 ocorrências
+- Funções com mais de 50 linhas ou complexidade ciclomática > 10
+- Nomes não expressivos (variáveis, funções, classes)
+- Magic numbers e strings hardcoded
+- Código morto (dead code) ou comentado sem contexto
+- Violação de convenções do projeto (linting, formatting)
+- God objects / classes com mais de 500 linhas
+- Ausência de tratamento de erros consistente
+Evidência obrigatória: arquivos/funções específicos, métricas de complexidade.
+
+══════════════════════════════════════════════════
+TIPO 03 — DÍVIDA DE TESTES
+══════════════════════════════════════════════════
+Avalie:
+- Cobertura global ( 80% = aceitável)
+- Ausência de testes unitários para lógica de negócio core
+- Ausência de testes de integração para APIs e contratos
+- Ausência de testes E2E para fluxos críticos (pagamento, auth, onboarding)
+- Testes frágeis (dependen de ordem, tempo, dados externos)
+- Ausência de testes de carga / performance regression
+- Testes de contrato entre serviços (Consumer-Driven Contracts)
+- Mocks excessivos que invalidam o valor do teste
+Evidência obrigatória: relatório de cobertura, lista de módulos sem teste.
+
+══════════════════════════════════════════════════
+TIPO 04 — DÍVIDA DE INFRAESTRUTURA / DEVOPS
+══════════════════════════════════════════════════
+Avalie:
+- Ausência de IaC (Terraform, Pulumi, CDK) — infra configurada manualmente
+- Pipelines CI/CD frágeis ou inexistentes
+- Ambientes não espelhados (dev ≠ staging ≠ prod)
+- Deploy sem blue/green, canary ou feature flags
+- Ausência de rollback automatizado
+- Imagens Docker sem pinning de versão / layers desnecessários
+- Dependência de passos manuais no fluxo de release
+- Secrets em variáveis de ambiente sem vault / rotation
+Evidência obrigatória: arquivos de pipeline, Dockerfile, configurações de deploy.
+
+══════════════════════════════════════════════════
+TIPO 05 — DÍVIDA DE SEGURANÇA
+══════════════════════════════════════════════════
+Avalie:
+- Dependências com CVEs conhecidos (rodar: npm audit / pip-audit / trivy)
+- Secrets ou credentials hardcoded no código ou git history
+- Ausência de RBAC granular por recurso/tenant
+- Endpoints sem autenticação ou sem rate limiting
+- Ausência de validação de input (SQLi, XSS, injection)
+- CORS permissivo (origin: *)
+- Tokens JWT sem rotação / expiração curta
+- Ausência de audit log para ações críticas
+- Dados sensíveis sem criptografia em trânsito e em repouso
+Evidência obrigatória: saída de audit tools, trechos de código vulneráveis.
+
+══════════════════════════════════════════════════
+TIPO 06 — DÍVIDA DE DADOS
+══════════════════════════════════════════════════
+Avalie:
+- Schema sem versionamento formal (migrations acumuladas sem rollback)
+- Ausência de índices em colunas de alta cardinalidade usadas em queries
+- Dados sem contrato / validação (schema-on-read sem enforcement)
+- Ausência de soft-delete consistente
+- Foreign keys ausentes ou desativadas
+- Queries N+1 não endereçadas (ORM sem eager loading)
+- Ausência de estratégia de archiving / retention para dados históricos
+- Backup sem teste de restore automatizado
+Evidência obrigatória: schema atual, migration files, EXPLAIN de queries lentas.
+
+══════════════════════════════════════════════════
+TIPO 07 — DÍVIDA DE DOCUMENTAÇÃO
+══════════════════════════════════════════════════
+Avalie:
+- APIs sem especificação (OpenAPI/AsyncAPI/GraphQL schema)
+- Ausência de ADRs (Architecture Decision Records) para decisões chave
+- README desatualizado ou sem instruções de setup funcionais
+- Onboarding de dev dependente de pessoa-chave (bus factor = 1)
+- Ausência de runbook para incidentes comuns
+- Ausência de changelog mantido
+- Contratos de dados entre serviços não documentados
+Evidência obrigatória: verificar existência de /docs, /adr, openapi.yaml, README.
+
+══════════════════════════════════════════════════
+TIPO 08 — DÍVIDA DE OBSERVABILIDADE
+══════════════════════════════════════════════════
+Avalie:
+- Ausência de distributed tracing (OpenTelemetry, Jaeger, Zipkin)
+- Logs sem estrutura consistente (sem correlation_id, tenant_id, trace_id)
+- Ausência de métricas de negócio (não apenas infra)
+- Alertas reativos (detectam após impacto) vs. preditivos
+- Ausência de SLO/SLA definidos e monitorados
+- Health checks superficiais (apenas "up/down" sem dependências)
+- Ausência de dashboard de experiência do usuário (Core Web Vitals, latência P99)
+Evidência obrigatória: configuração de logging, alertas existentes, dashboards.
+
+══════════════════════════════════════════════════
+TIPO 09 — DÍVIDA DE MULTI-TENANCY
+══════════════════════════════════════════════════
+Avalie:
+- Isolamento de dados frágil (ausência de tenant_id em todas as queries)
+- Lógica de tenant espalhada (sem tenant context propagation centralizado)
+- Ausência de limites de rate/quota por tenant
+- Recursos compartilhados sem isolamento de performance (noisy neighbor)
+- Ausência de feature flags por tenant / plano
+- Configurações por tenant hardcoded vs. dinâmicas
+- Tenant provisioning manual ou inconsistente
+Evidência obrigatória: queries sem tenant_id, middleware de contexto, schema.
+
+══════════════════════════════════════════════════
+TIPO 10 — DÍVIDA DE BILLING / METERING
+══════════════════════════════════════════════════
+Avalie:
+- Cobrança hardcoded sem suporte a planos flexíveis
+- Ausência de metering real de uso (apenas planos fixos)
+- Sem suporte a upgrades/downgrades automáticos
+- Lógica de billing duplicada (front + back + webhook)
+- Ausência de idempotência em eventos de pagamento
+- Reconciliação manual de cobranças vs. uso real
+- Ausência de alertas de uso próximo ao limite do plano
+Evidência obrigatória: código de billing, webhook handlers, schema de planos.
+
+══════════════════════════════════════════════════
+TIPO 11 — DÍVIDA DE COMPLIANCE (LGPD/GDPR/SOC2)
+══════════════════════════════════════════════════
+Avalie:
+- Ausência de mecanismo de exportação de dados do usuário (data portability)
+- Ausência de mecanismo de exclusão completa (right to erasure)
+- Dados pessoais sem classificação / inventário
+- Consentimento não registrado com timestamp e versão de política
+- Retenção de dados sem política automatizada
+- Ausência de DPA (Data Processing Agreement) refletido no código
+- Logs de auditoria sem imutabilidade
+- PII em logs sem mascaramento
+Evidência obrigatória: endpoints de privacidade, politica de retenção, audit logs.
+
+══════════════════════════════════════════════════
+OUTPUT OBRIGATÓRIO — FORMATO ESTRUTURADO
+══════════════════════════════════════════════════
+
+Para cada tipo, produza o bloco:
+
+[TIPO XX — NOME]
+STATUS: ✅ Sem dívida | ⚠️ Dívida Presente | 🚨 Dívida Crítica
+SEVERIDADE: CRÍTICA / ALTA / MÉDIA / BAIXA
+ICE: Impact=X · Confidence=X · Effort=X → Score=XX
+
+ACHADOS:
+1. [achado específico com referência de arquivo/linha]
+2. [achado específico]
+3. [achado específico]
+
+EVIDÊNCIA:
+[output de ferramenta, trecho de código, query result]
+
+AÇÕES CORRETIVAS:
+→ [ação 1] — Esforço estimado: [dias/sprints]
+→ [ação 2] — Esforço estimado: [dias/sprints]
+→ [ação 3] — Esforço estimado: [dias/sprints]
+
+──────────────────────────────────────────────────
+
+Ao final, produza:
+
+RESUMO EXECUTIVO:
+- Total de dívidas encontradas por severidade
+- ICE Ranking dos top 5 tipos para priorizar
+- Estimativa de esforço total para quitação (em semanas de engenharia)
+- Risk Score geral do sistema (1-10)
+- Recomendação de sprint de debt remediation
+
+# FIM DO PROMPT ═══════════════════════════════════════════════════════════
