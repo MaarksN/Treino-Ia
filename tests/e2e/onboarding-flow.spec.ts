@@ -21,9 +21,12 @@ import { collectCriticalErrors } from './helpers/console';
 
 test.describe('Onboarding flow', () => {
   test.beforeEach(async ({ page }) => {
-    // Clear localStorage to simulate first visit
-    await page.goto('/');
-    await page.evaluate(() => localStorage.clear());
+    await page.addInitScript(() => {
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+      } catch {}
+    });
   });
 
   test('tour is visible on first visit and can complete all steps', async ({ page }) => {
@@ -35,7 +38,7 @@ test.describe('Onboarding flow', () => {
     await expect(tourOverlay).toBeVisible({ timeout: 10_000 });
 
     // First step title
-    await expect(page.getByText('Bem-vindo ao Treino App')).toBeVisible();
+    await expect(page.getByText('Bem-vindo ao Treino IA')).toBeVisible();
 
     // Navigate through steps 1-6 via "Próximo" button
     for (let i = 0; i < 6; i++) {
@@ -91,10 +94,10 @@ test.describe('Onboarding flow', () => {
 
     // Go to step 2
     await page.getByRole('button', { name: /Próximo/i }).click();
-    await expect(page.getByText('IA Personalizada')).toBeVisible();
+    await expect(page.getByText('Anamnese objetiva')).toBeVisible();
 
     // Go back to step 1
     await page.getByRole('button', { name: /Anterior/i }).click();
-    await expect(page.getByText('Bem-vindo ao Treino App')).toBeVisible();
+    await expect(page.getByText('Bem-vindo ao Treino IA')).toBeVisible();
   });
 });

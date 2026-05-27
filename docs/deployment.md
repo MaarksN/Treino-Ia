@@ -24,6 +24,43 @@ Configurar a partir de `.env.example`:
 4. Configurar webhook Stripe para `/api/stripe/webhook` com assinatura válida.
 5. Validar health checks e smoke tests pós-deploy com `SPRINT3_SMOKE_STRICT=true npm run smoke:sprint3`.
 
+## Preview/staging para beta privado
+
+Use o workflow manual `Vercel Preview` antes de qualquer convite beta. Ele publica um deploy de preview, fixa `VITE_FEATURE_AUDIENCE=user`, roda gates locais (`typecheck`, `lint`, `test`), executa `npm run preflight:sprint3` e valida `SPRINT3_SMOKE_STRICT=true npm run smoke:sprint3` contra a URL gerada.
+
+Secrets obrigatorios no GitHub Actions:
+
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
+- `SUPABASE_URL` ou `VITE_SUPABASE_URL`
+- `SUPABASE_ANON_KEY` ou `VITE_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_TEST_ACCESS_TOKEN`
+- `VITE_SENTRY_DSN`
+- `SENTRY_AUTH_TOKEN`
+- `SENTRY_ORG`
+- `SENTRY_PROJECT`
+- `GEMINI_API_KEY`
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_PRICE_PRO_MONTHLY`
+- `STRIPE_PRICE_PRO_YEARLY`
+- `STRIPE_PRICE_COACH_MONTHLY`
+- `STRIPE_PRICE_COACH_YEARLY`
+- `STRIPE_PRICE_ELITE_MONTHLY`
+- `STRIPE_PRICE_ELITE_YEARLY`
+
+Vars opcionais no GitHub Actions:
+
+- `VITE_GEMINI_PROXY_URL` (padrao `/api/gemini-proxy`)
+- `STRIPE_SMOKE_PLAN_ID` (padrao `pro`)
+- `STRIPE_SMOKE_INTERVAL` (padrao `month`)
+- `GEMINI_SMOKE_EXPECT_SUCCESS` (padrao `false`)
+- `OAUTH_TOKEN_SECURITY_MODE` (padrao `plaintext_blocked`)
+
+Nao use o workflow `Vercel Deploy` para validar beta privado: ele publica producao (`--prod`) e deve ficar reservado para go-live/rollback aprovado.
+
 ## Critérios de go-live MVP privado
 
 - Build/typecheck/tests verdes.
@@ -45,3 +82,5 @@ Configurar a partir de `.env.example`:
 - Stripe validado somente se billing estiver habilitado.
 
 Checklist operacional detalhado: [Beta privado monitorado](./private-beta.md).
+
+Registro local da Sprint 3: [validacao local em 2026-05-27](./sprint3-local-validation-2026-05-27.md).

@@ -26,7 +26,7 @@ export function HistoryPanel({ history }: { history: WorkoutSession[] }) {
         <EmptyState
           icon={<History className="h-10 w-10" />}
           title="Nenhum treino finalizado"
-          description="Inicie um dia do plano para alimentar o motor adaptativo e começar a preencher seu histórico."
+          description="Comece um treino do plano para registrar sua primeira sessão e acompanhar sua evolução."
         />
       ) : (
         <div className="space-y-3">

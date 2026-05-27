@@ -438,18 +438,31 @@ export default function Dashboard() {
 
     const routeTargetId = getAppRouteTargetId(route.id);
     const routeSection = mobileSections.find((section) => section.targetId === routeTargetId);
+    const routeScrollTimeouts: number[] = [];
 
     if (routeSection) {
-      window.setTimeout(() => {
-        document.getElementById(routeSection.targetId)?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start',
-        });
+      const scrollToRouteSection = (behavior: ScrollBehavior) => {
+        const target = document.getElementById(routeSection.targetId);
+        if (!target) return;
+
+        target.scrollIntoView({ behavior, block: 'start' });
         setActiveSection(routeSection.id);
-      }, 0);
+      };
+
+      routeScrollTimeouts.push(window.setTimeout(() => scrollToRouteSection('smooth'), 0));
+      routeScrollTimeouts.push(window.setTimeout(() => scrollToRouteSection('auto'), 800));
     }
 
     const handleScroll = () => {
+      const lastSection = mobileSections[mobileSections.length - 1];
+      const reachedPageEnd =
+        window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 8;
+
+      if (reachedPageEnd && lastSection) {
+        setActiveSection(lastSection.id);
+        return;
+      }
+
       const current = mobileSections.reduce<DashboardSectionId>((active, section) => {
         const element = document.getElementById(section.targetId);
         if (!element) return active;
@@ -461,7 +474,10 @@ export default function Dashboard() {
 
     handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      routeScrollTimeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, [mobileSections, plan, profile, route.id, surface.nutritionSimple]);
 
   const startActiveWorkout = useCallback(
