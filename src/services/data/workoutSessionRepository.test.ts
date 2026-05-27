@@ -177,4 +177,20 @@ describe('workoutSessionRepository', () => {
     expect(supabase.from).toHaveBeenCalledWith('personal_records');
     expect(deleteRows).toHaveBeenCalled();
   });
+
+  it('retries completed session saves without duplicating relational details', async () => {
+    await workoutSessionRepository.saveCompletedSession(makeSession());
+
+    expect(upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user_id: 'user-id-123',
+        legacy_session_id: 'legacy-session-1',
+      }),
+      { onConflict: 'user_id,legacy_session_id' },
+    );
+    expect(deleteRows).toHaveBeenCalledTimes(2);
+    expect(deleteRows.mock.invocationCallOrder[1]).toBeLessThan(
+      insert.mock.invocationCallOrder[0],
+    );
+  });
 });
