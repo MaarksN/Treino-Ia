@@ -19,9 +19,10 @@ Configurar a partir de `.env.example`:
 ## Passos
 
 1. Aplicar migrations no Supabase (`supabase db push` ou pipeline equivalente).
-2. Publicar frontend/API na Vercel.
-3. Configurar webhook Stripe para `/api/stripe/webhook` com assinatura válida.
-4. Validar health checks e smoke tests pós-deploy com `npm run smoke:sprint3`.
+2. Rodar `npm run preflight:sprint3` no ambiente de staging/CI com as variáveis reais carregadas.
+3. Publicar frontend/API na Vercel.
+4. Configurar webhook Stripe para `/api/stripe/webhook` com assinatura válida.
+5. Validar health checks e smoke tests pós-deploy com `SPRINT3_SMOKE_STRICT=true npm run smoke:sprint3`.
 
 ## Critérios de go-live MVP privado
 

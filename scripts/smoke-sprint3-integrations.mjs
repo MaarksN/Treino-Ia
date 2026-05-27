@@ -7,6 +7,13 @@ const required = (name) => {
 };
 
 const optional = (name, fallback = '') => process.env[name] || fallback;
+const strictSmoke = optional('SPRINT3_SMOKE_STRICT') === 'true';
+
+function skipOrFail(label, reason) {
+  const message = `${label}: ${reason}`;
+  if (strictSmoke) throw new Error(message);
+  console.log(`SKIP ${message}`);
+}
 
 async function requestJson(url, options = {}) {
   const response = await fetch(url, options);
@@ -84,7 +91,7 @@ async function smokeGemini(appUrl, token) {
   assertStatus('Gemini unauthenticated request blocked', unauth.response.status, 401);
 
   if (!token) {
-    console.log('SKIP gemini-authenticated: SUPABASE_TEST_ACCESS_TOKEN missing');
+    skipOrFail('gemini-authenticated', 'SUPABASE_TEST_ACCESS_TOKEN missing');
     return;
   }
 
@@ -108,7 +115,7 @@ async function smokeGemini(appUrl, token) {
 
 async function smokeStripe(appUrl, token) {
   if (!token) {
-    console.log('SKIP stripe-checkout: SUPABASE_TEST_ACCESS_TOKEN missing');
+    skipOrFail('stripe-checkout', 'SUPABASE_TEST_ACCESS_TOKEN missing');
     return;
   }
 
@@ -149,7 +156,7 @@ async function main() {
   const token = optional('SUPABASE_TEST_ACCESS_TOKEN');
 
   if (!appUrl) {
-    console.log('SKIP deployed-api-smoke: STAGING_APP_URL missing');
+    skipOrFail('deployed-api-smoke', 'STAGING_APP_URL missing');
     return;
   }
 
