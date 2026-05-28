@@ -5,7 +5,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     testTimeout: 15000,
-    setupFiles: ['./src/test/setup.ts'],
+    setupFiles: ['./vitest.setup.js', './src/test/setup.ts'],
     include: ['tests/**/*.test.ts', 'src/**/*.test.ts', 'src/**/*.test.tsx', 'api/**/*.test.ts'],
     exclude: ['tests/e2e/**', 'node_modules/**'],
     restoreMocks: true,
