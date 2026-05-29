@@ -22,3 +22,7 @@
 - Nutrição
 - Recovery
 - Integrações
+
+## Rollback de migrations
+
+O processo operacional fica em `docs/database-migration-rollback.md`. Novas migrations devem declarar como reverter, ou justificar explicitamente quando a operacao for irreversivel.

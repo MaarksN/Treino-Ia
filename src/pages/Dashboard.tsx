@@ -7,7 +7,6 @@ import {
   PersistenceStatus,
   TrainingPlan,
   UserProfile,
-  WorkoutExerciseLog,
   WorkoutSession,
 } from '../services/database';
 import { CurrentPlanConsistencyHelper } from '../services/data/currentPlanConsistency';
@@ -30,12 +29,7 @@ import {
 import { isProductFeatureVisible } from '../config/featureFlags';
 import { ActiveExerciseDraft } from './Dashboard/types';
 import {
-  buildWorkoutExerciseLog,
-  calculateWorkoutTonnage,
-} from './Dashboard/services/activeWorkoutEngine';
-import {
   createActiveDraft,
-  createDashboardSessionId,
   persistStarterUser,
   readStarterUser,
 } from './Dashboard/services/dashboardSession';
@@ -45,6 +39,7 @@ import {
   updateExerciseNotes,
   updateExerciseTechnique,
 } from './Dashboard/services/workoutAuthoring';
+import { buildCompletedDashboardWorkout } from './Dashboard/services/dashboardWorkoutCompletion';
 import { triggerHapticFeedback } from '../services/hapticFeedback';
 import { type WorkoutImportFileDraft } from '../services/workoutImportPipeline';
 import { getCriticalContrastClass } from '../utils/accessibilityContrast';
@@ -550,34 +545,22 @@ export default function Dashboard() {
     setError('');
 
     try {
-      const day = plan.days[activeDayIndex];
-      const logs: WorkoutExerciseLog[] = activeDraft.map((exercise) =>
-        buildWorkoutExerciseLog(exercise),
-      );
-      const completedExercises = logs.filter((exercise) => exercise.completed).length;
-      const totalVolume = calculateWorkoutTonnage(activeDraft).completedTonnage;
-      const session: WorkoutSession = {
-        id: createDashboardSessionId(),
-        planId: plan.id,
-        dayId: day.id,
-        dayName: day.dayName,
-        focus: day.focus,
-        completedAt: Date.now(),
-        durationMinutes: profile.timePerWorkout,
-        totalVolume,
+      const {
+        adjustedPlan,
         completedExercises,
-        totalExercises: logs.length,
-        feedback: activeFeedback.trim(),
-        nextRecommendation: '',
-        exercises: logs,
-      };
-      const nextHistory = [session, ...history.filter(item => item.id !== session.id)].slice(0, 50);
-      const adjustedPlan = calculateTrainingPlan(profile, nextHistory);
-      const completedSession = {
-        ...session,
-        nextRecommendation: adjustedPlan.nextRecommendation,
-      };
-      const finalHistory = [completedSession, ...history.filter(item => item.id !== completedSession.id)].slice(0, 50);
+        completedSession,
+        day,
+        finalHistory,
+        totalExercises,
+        totalVolume,
+      } = buildCompletedDashboardWorkout({
+        activeDayIndex,
+        activeDraft,
+        activeFeedback,
+        history,
+        plan,
+        profile,
+      });
 
       const saveResult = await DatabaseService.saveWorkoutSessionWithStatus(completedSession);
       let recommendation: AiRecommendationRecord | null = null;
@@ -613,7 +596,7 @@ export default function Dashboard() {
         dayId: day.id,
         totalVolume,
         completedExercises,
-        totalExercises: logs.length,
+        totalExercises,
       });
       if (history.length === 0) {
         trackEventOnce('first_workout_completed', {
@@ -621,7 +604,7 @@ export default function Dashboard() {
           dayId: day.id,
           totalVolume,
           completedExercises,
-          totalExercises: logs.length,
+          totalExercises,
         });
       }
       if (recommendation) {

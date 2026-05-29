@@ -45,6 +45,7 @@ function parseOfflineAction(body: Record<string, unknown>): {
 }
 
 export default async function handler(request: Request) {
+  if (request.method === 'OPTIONS') return json({ ok: true }, 200, request);
   if (request.method !== 'POST') {
     return json({ error: 'Method not allowed' }, 405, request);
   }

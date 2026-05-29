@@ -1,6 +1,7 @@
 import { handleApiError, json, getBearerToken } from '../_lib/http';
 import { getSupabaseAdmin } from '../_lib/server-supabase';
 import { getServerEntitlement } from '../_lib/billing-entitlements';
+import { checkRateLimit } from '../_lib/distributedRateLimit';
 
 export const config = {
   runtime: 'nodejs',
@@ -19,6 +20,11 @@ export default async function handler(request: Request) {
       return json({ error: 'Unauthorized' }, 401, request);
     }
     const userId = authData.user.id;
+    const rateLimit = await checkRateLimit(userId, 5, 60 * 60 * 1000, 'compliance_export');
+
+    if (!rateLimit.allowed) {
+      return json({ error: 'Too many compliance export requests.', resetAt: rateLimit.resetAt }, 429, request);
+    }
 
     // Fetch data for portability
     const [

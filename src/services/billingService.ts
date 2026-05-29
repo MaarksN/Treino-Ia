@@ -1,6 +1,7 @@
 import { BillingInterval, BillingTier } from '../types/billing';
 import { supabase } from './supabaseClient';
 import { trackEvent } from '../utils/analytics';
+import { apiFetch } from '../utils/apiFetch';
 
 export interface BillingUsageSummary {
   aiRequestsThisMonth: number;
@@ -67,7 +68,7 @@ async function parseApiResponse<T>(response: Response, operation: string): Promi
 export async function fetchBillingEntitlement(): Promise<BillingEntitlementSummary> {
   const operation = 'fetch_billing_entitlement';
   const token = await getAccessToken(operation);
-  const response = await fetch('/api/billing/entitlement', {
+  const response = await apiFetch('/api/billing/entitlement', {
     headers: {
       authorization: `Bearer ${token}`,
     },
@@ -79,7 +80,7 @@ export async function fetchBillingEntitlement(): Promise<BillingEntitlementSumma
 export async function createCheckoutSession(planId: BillingTier, interval: BillingInterval) {
   const operation = 'create_checkout_session';
   const token = await getAccessToken(operation);
-  const response = await fetch('/api/stripe/create-checkout-session', {
+  const response = await apiFetch('/api/stripe/create-checkout-session', {
     method: 'POST',
     headers: {
       authorization: `Bearer ${token}`,
@@ -94,7 +95,7 @@ export async function createCheckoutSession(planId: BillingTier, interval: Billi
 export async function createBillingPortalSession() {
   const operation = 'create_billing_portal_session';
   const token = await getAccessToken(operation);
-  const response = await fetch('/api/stripe/create-portal-session', {
+  const response = await apiFetch('/api/stripe/create-portal-session', {
     method: 'POST',
     headers: {
       authorization: `Bearer ${token}`,

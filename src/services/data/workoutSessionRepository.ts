@@ -1,5 +1,5 @@
 import { getCurrentUserId, isSupabaseConfigured, supabase } from '../supabaseClient';
-import type { WorkoutExerciseLog, WorkoutSession } from '../database';
+import type { WorkoutExerciseLog, WorkoutSession } from '../trainingTypes';
 
 export interface RelationalSession {
   id?: string;

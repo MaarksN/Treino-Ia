@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getTrustedRequestOrigin, handleApiError, json, readJsonObject } from './http';
+import { getCorrelationId, getTrustedRequestOrigin, handleApiError, json, readJsonObject } from './http';
 
 describe('http helpers', () => {
   afterEach(() => {
@@ -15,6 +15,7 @@ describe('http helpers', () => {
     expect(response.status).toBe(500);
     expect(body.error).toBe('Internal server error');
     expect(body.requestId).toEqual(expect.any(String));
+    expect(body.correlationId).toBe(body.requestId);
     expect(JSON.stringify(body)).not.toContain('secret');
     expect(consoleSpy).toHaveBeenCalled();
   });
@@ -45,6 +46,15 @@ describe('http helpers', () => {
     expect(blocked.headers.get('access-control-allow-origin')).toBeNull();
   });
 
+  it('keeps correlation ids allowed when a route customizes CORS headers', () => {
+    const response = json({ ok: true }, 200, new Request('https://api.treinoia.example/api/test'), {
+      headers: 'authorization, content-type',
+    });
+
+    expect(response.headers.get('access-control-allow-headers')).toContain('x-correlation-id');
+    expect(response.headers.get('access-control-expose-headers')).toBe('x-correlation-id');
+  });
+
   it('uses a trusted origin for redirects instead of raw request origin', () => {
     vi.stubEnv('APP_URL', 'https://staging.treinoia.example');
 
@@ -53,5 +63,18 @@ describe('http helpers', () => {
     });
 
     expect(getTrustedRequestOrigin(request)).toBe('https://staging.treinoia.example');
+  });
+
+  it('propagates a trusted correlation id through headers and error bodies', async () => {
+    const request = new Request('https://api.treinoia.example/api/test', {
+      headers: { 'x-correlation-id': 'checkout-flow:test-1234' },
+    });
+
+    const response = handleApiError(new Error('failed'), request);
+    const body = await response.json();
+
+    expect(getCorrelationId(request)).toBe('checkout-flow:test-1234');
+    expect(response.headers.get('x-correlation-id')).toBe('checkout-flow:test-1234');
+    expect(body.correlationId).toBe('checkout-flow:test-1234');
   });
 });

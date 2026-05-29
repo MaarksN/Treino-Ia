@@ -52,14 +52,16 @@ export async function checkRateLimit(
   userId: string,
   limit: number,
   windowMs: number,
+  scope = 'gemini',
 ): Promise<RateLimitResult> {
   const redis = getRedisClient();
+  const normalizedScope = scope.replace(/[^a-z0-9:_-]/gi, '_').slice(0, 64) || 'default';
 
   if (!redis) {
-    return memRateLimit(`rate:${userId}`, limit, windowMs);
+    return memRateLimit(`rate:${normalizedScope}:${userId}`, limit, windowMs);
   }
 
-  const key = `rate:gemini:${userId}`;
+  const key = `rate:${normalizedScope}:${userId}`;
   const windowSec = Math.ceil(windowMs / 1000);
   const now = Date.now();
 
@@ -78,6 +80,6 @@ export async function checkRateLimit(
     return { allowed: count <= limit, remaining, resetAt };
   } catch (error) {
     console.warn('[rate-limit] Upstash failed, falling back to memory', error);
-    return memRateLimit(`rate:${userId}`, limit, windowMs);
+    return memRateLimit(`rate:${normalizedScope}:${userId}`, limit, windowMs);
   }
 }

@@ -2,6 +2,7 @@ import { Schema } from '../types/geminiSchema';
 import { createGeminiCacheKey, readGeminiCache, writeGeminiCache } from './geminiCache';
 import { supabase } from './supabaseClient';
 import { trackEvent } from '../utils/analytics';
+import { apiFetch } from '../utils/apiFetch';
 
 interface GeminiGenerateContentRequest {
   model: string;
@@ -90,7 +91,7 @@ export async function generateGeminiContent(
       if (cachedText) return { text: cachedText };
     }
 
-    const response = await fetch('/api/gemini-proxy', {
+    const response = await apiFetch('/api/gemini-proxy', {
       method: 'POST',
       headers: {
         authorization: `Bearer ${data.session.access_token}`,

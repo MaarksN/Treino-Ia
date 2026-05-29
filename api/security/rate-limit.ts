@@ -1,17 +1,15 @@
+import { json } from '../_lib/http';
+
 export const config = {
   runtime: 'edge',
 };
 
 const buckets = new Map<string, number[]>();
 
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'content-type': 'application/json; charset=utf-8' },
-  });
-}
-
 export default async function handler(request: Request) {
+  if (request.method === 'OPTIONS') return json({ ok: true }, 200, request);
+  if (request.method !== 'GET') return json({ error: 'Method not allowed' }, 405, request);
+
   const now = Date.now();
   const ip =
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
@@ -23,11 +21,11 @@ export default async function handler(request: Request) {
   const hits = (buckets.get(key) || []).filter(hit => now - hit < windowMs);
 
   if (hits.length >= limit) {
-    return json({ allowed: false, remaining: 0, resetAt: hits[0] + windowMs }, 429);
+    return json({ allowed: false, remaining: 0, resetAt: hits[0] + windowMs }, 429, request);
   }
 
   hits.push(now);
   buckets.set(key, hits);
 
-  return json({ allowed: true, remaining: limit - hits.length, resetAt: hits[0] + windowMs });
+  return json({ allowed: true, remaining: limit - hits.length, resetAt: hits[0] + windowMs }, 200, request);
 }

@@ -38,6 +38,14 @@ vi.mock('../../_lib/billing-entitlements', () => ({
   getServerEntitlement: vi.fn().mockResolvedValue(null),
 }));
 
+vi.mock('../../_lib/distributedRateLimit', () => ({
+  checkRateLimit: vi.fn().mockResolvedValue({
+    allowed: true,
+    remaining: 4,
+    resetAt: Date.now() + 60_000,
+  }),
+}));
+
 vi.mock('../../_lib/stripe-client', () => ({
   getStripeClient: vi.fn(() => ({
     subscriptions: {

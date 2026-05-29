@@ -2,6 +2,7 @@ import { handleApiError, json, getBearerToken } from '../_lib/http';
 import { getSupabaseAdmin } from '../_lib/server-supabase';
 import { getServerEntitlement } from '../_lib/billing-entitlements';
 import { getStripeClient } from '../_lib/stripe-client';
+import { checkRateLimit } from '../_lib/distributedRateLimit';
 
 export const config = {
   runtime: 'nodejs',
@@ -20,6 +21,11 @@ export default async function handler(request: Request) {
       return json({ error: 'Unauthorized' }, 401, request);
     }
     const userId = authData.user.id;
+    const rateLimit = await checkRateLimit(userId, 2, 60 * 60 * 1000, 'compliance_erasure');
+
+    if (!rateLimit.allowed) {
+      return json({ error: 'Too many compliance erasure requests.', resetAt: rateLimit.resetAt }, 429, request);
+    }
 
     // First try cancelling stripe subscription if it exists
     try {

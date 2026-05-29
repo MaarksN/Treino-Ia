@@ -8,6 +8,7 @@ export const config = {
 const SUPPORTED_JOBS = new Set(['pdf_export', 'quarterly_ai_report', 'nutrition_report']);
 
 export default async function handler(request: Request) {
+  if (request.method === 'OPTIONS') return json({ ok: true }, 200, request);
   if (request.method !== 'POST') {
     return json({ error: 'Method not allowed' }, 405, request);
   }

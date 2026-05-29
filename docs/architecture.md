@@ -15,11 +15,13 @@ A base do produto segue arquitetura **frontend SPA + API serverless + Supabase**
 3. Segredos nunca no client (`STRIPE_SECRET_KEY`, `GEMINI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, etc.).
 4. APIs sensíveis derivam usuário da sessão/token e não do body.
 5. Falhas de provider externo devem retornar `dataMode: "not_configured"`.
+6. Chamadas client -> `/api/*` devem usar `apiFetch` para propagar `X-Correlation-ID`.
 
 ## Camadas
 - `src/components/*`: UI modular por domínio.
 - `src/services/*`: regras de negócio client-side sem autoridade de segurança.
 - `src/utils/*`: validações, regras determinísticas e utilitários.
+- `src/services/trainingTypes.ts`: contratos de treino sem dependencia de persistencia, para evitar ciclos entre services e repositories.
 - `api/_lib/*`: autenticação, erro HTTP, validação e integrações server-side.
 - `api/*`: handlers por domínio (billing, stripe, gamification, health, ia).
 - `supabase/migrations/*`: evolução de schema + RLS versionada.

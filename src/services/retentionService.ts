@@ -33,6 +33,7 @@ import {
   normalizeIsoDate,
   validateReminderSchedule,
 } from '../utils/retentionUtils';
+import { apiFetch } from '../utils/apiFetch';
 
 type SupabaseErrorLike = { message?: string; details?: string; hint?: string; code?: string } | null | undefined;
 
@@ -695,7 +696,7 @@ export async function startHealthOAuth(provider: Extract<IntegrationProvider, 'g
   expiresInSeconds: number;
 }> {
   const token = await getAccessToken();
-  const response = await fetch('/api/health/oauth/start', {
+  const response = await apiFetch('/api/health/oauth/start', {
     method: 'POST',
     headers: {
       authorization: `Bearer ${token}`,
@@ -716,7 +717,7 @@ export async function syncNativeHealthProvider(input: {
   scopes?: string[];
 }): Promise<{ ok: boolean; dataMode: string; job: unknown }> {
   const token = await getAccessToken();
-  const response = await fetch('/api/health/sync', {
+  const response = await apiFetch('/api/health/sync', {
     method: 'POST',
     headers: {
       authorization: `Bearer ${token}`,

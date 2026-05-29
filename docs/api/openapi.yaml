@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Treino IA Public API
   version: 0.1.0
-  description: API contracts for billing, AI proxy, offline sync, health integrations, telemetry, and webhooks.
+  description: API contracts for billing, AI proxy, compliance, offline sync, gamification, health integrations, telemetry, and webhooks. All API responses expose X-Correlation-ID for support and incident triage.
 servers:
   - url: https://example.vercel.app
     description: Production
@@ -127,6 +127,76 @@ paths:
       responses:
         "200":
           description: Events stored.
+  /api/compliance/export:
+    post:
+      summary: Export all portable user data for LGPD/GDPR data portability.
+      responses:
+        "200":
+          description: Aggregated JSON export for the authenticated user.
+        "401":
+          description: Missing or invalid Supabase session.
+  /api/compliance/erasure:
+    post:
+      summary: Cancel connected billing and physically erase the authenticated user.
+      responses:
+        "200":
+          description: User data deletion was orchestrated.
+        "401":
+          description: Missing or invalid Supabase session.
+        "500":
+          description: Physical deletion failed.
+  /api/gamification/state:
+    get:
+      summary: Load server-side gamification profile, ledger, missions, cosmetics, season, clan, and avatar state.
+      responses:
+        "200":
+          description: Gamification state.
+        "401":
+          description: Missing or invalid Supabase session.
+  /api/gamification/event:
+    post:
+      summary: Apply an idempotent gamification event.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [eventType]
+              properties:
+                eventType:
+                  type: string
+                  enum:
+                    - login
+                    - checkin
+                    - daily_checkin
+                    - workout_completed
+                    - mission_claimed
+                    - cosmetic_purchased
+                    - loot_box_opened
+                    - season_reward_claimed
+                    - clan_joined
+                    - clan_contribution
+                sourceId:
+                  type: string
+                cost:
+                  type: number
+      responses:
+        "200":
+          description: Event applied or safely skipped.
+        "400":
+          description: Invalid event payload.
+        "409":
+          description: Duplicate or conflicting event.
+  /api/security/rate-limit:
+    get:
+      summary: Lightweight per-IP rate limit probe for security smoke tests.
+      security: []
+      responses:
+        "200":
+          description: Request is allowed.
+        "429":
+          description: Rate limit exceeded.
   /api/jobs/create:
     post:
       summary: Queue a heavier background job such as PDF export or AI report generation.
@@ -147,17 +217,24 @@ paths:
         "202":
           description: Job queued.
   /api/health/oauth/start:
-    get:
+    post:
       summary: Start OAuth for supported health providers.
-      parameters:
-        - in: query
-          name: provider
-          schema:
-            type: string
-            enum: [google_fit, fitbit, strava]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [provider]
+              properties:
+                provider:
+                  type: string
+                  enum: [google_fit, fitbit, strava]
+                redirectTo:
+                  type: string
       responses:
-        "302":
-          description: Redirect to provider authorization.
+        "200":
+          description: Provider authorization URL and expiration.
   /api/health/oauth/callback:
     get:
       summary: Health provider OAuth callback.
@@ -170,9 +247,41 @@ paths:
       responses:
         "200":
           description: Sync job created.
+  /api/retention/worker:
+    get:
+      summary: Process scheduled retention check-ins and habit reminders.
+      security:
+        - cronSecret: []
+      responses:
+        "200":
+          description: Retention jobs processed.
+        "401":
+          description: Invalid worker secret.
+    post:
+      summary: Process scheduled retention check-ins and habit reminders.
+      security:
+        - cronSecret: []
+      responses:
+        "200":
+          description: Retention jobs processed.
+        "401":
+          description: Invalid worker secret.
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: Supabase JWT
+    cronSecret:
+      type: http
+      scheme: bearer
+      bearerFormat: RETENTION_WORKER_SECRET
+  parameters:
+    CorrelationId:
+      in: header
+      name: X-Correlation-ID
+      required: false
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 128

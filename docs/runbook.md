@@ -15,6 +15,22 @@
 2. Reprocessar evento idempotente se necessário.
 3. Conferir `api/billing/entitlement` e fonte de verdade no banco.
 
+## Incidente: Stripe webhook falhando
+
+1. Confirmar `STRIPE_WEBHOOK_SECRET`, `STRIPE_SECRET_KEY` e logs do endpoint `/api/stripe/webhook`.
+2. Localizar o evento no Stripe Dashboard e comparar com o registro idempotente salvo pelo backend.
+3. Se o evento ainda nao foi persistido, reprocessar pelo Stripe usando o mesmo `event.id`.
+4. Se houve processamento parcial, corrigir o estado no banco antes de reentregar o evento.
+5. Validar `/api/billing/entitlement` para o usuario afetado e anexar o `X-Correlation-ID` aos logs do incidente.
+
+## Incidente: sync offline travado
+
+1. Confirmar se o cliente esta gerando `X-Idempotency-Key` e `X-Correlation-ID`.
+2. Verificar `/api/sync/offline-actions` para erros 401, 409 ou 5xx no periodo reportado.
+3. Conferir se a fila local marcou a acao como `failed` e quantas tentativas foram feitas.
+4. Reprocessar apenas a acao idempotente afetada; nao apagar a fila inteira sem exportar o payload.
+5. Se a API aceitou a acao, limpar somente itens `synced` e manter falhas para nova tentativa.
+
 ## Incidente: falha no provedor IA
 
 1. Confirmar env de `GEMINI_API_KEY`.
@@ -46,3 +62,10 @@
 2. Confirmar se a sessao existe no Supabase ou fallback local.
 3. Se salvou sem recomendacao, manter o historico e reprocessar a recomendacao manualmente somente apos validar dados.
 4. Se perdeu dados, pausar convites e acionar rollback.
+
+## SLOs iniciais
+
+- API autenticada: 99,5% de respostas abaixo de 2s em janelas semanais.
+- Gemini proxy: 99% de respostas controladas abaixo de 30s, incluindo fallback de erro 502.
+- Billing entitlement: 99,9% de disponibilidade, pois bloqueia acesso premium.
+- Compliance export/erasure: 99% de sucesso em ate 60s, com falhas revisadas manualmente no mesmo dia util.

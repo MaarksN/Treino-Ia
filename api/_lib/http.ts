@@ -13,10 +13,15 @@ export class HttpError extends Error {
 interface CorsOptions {
   methods?: string;
   headers?: string;
+  correlationId?: string;
 }
 
 const DEFAULT_CORS_METHODS = 'GET, POST, OPTIONS';
-const DEFAULT_CORS_HEADERS = 'authorization, content-type, stripe-signature, x-csrf-token';
+const CORRELATION_ID_HEADER = 'x-correlation-id';
+const DEFAULT_CORS_HEADERS = `authorization, content-type, stripe-signature, x-csrf-token, ${CORRELATION_ID_HEADER}`;
+const DEFAULT_EXPOSED_HEADERS = CORRELATION_ID_HEADER;
+const CORRELATION_ID_PATTERN = /^[a-zA-Z0-9._:-]{8,128}$/;
+const requestCorrelationIds = new WeakMap<Request, string>();
 
 function splitOrigins(value?: string): string[] {
   return (value ?? '')
@@ -102,6 +107,27 @@ function appendVary(headers: Headers, value: string) {
   headers.set('vary', Array.from(values).join(', '));
 }
 
+function appendHeaderList(value: string, required: string): string {
+  const values = new Set(value.split(',').map(item => item.trim()).filter(Boolean));
+  values.add(required);
+  return Array.from(values).join(', ');
+}
+
+export function getCorrelationId(request?: Request): string {
+  if (!request) return crypto.randomUUID();
+
+  const cached = requestCorrelationIds.get(request);
+  if (cached) return cached;
+
+  const incoming = request.headers.get(CORRELATION_ID_HEADER)?.trim();
+  const correlationId = incoming && CORRELATION_ID_PATTERN.test(incoming)
+    ? incoming
+    : crypto.randomUUID();
+
+  requestCorrelationIds.set(request, correlationId);
+  return correlationId;
+}
+
 export function applyCorsHeaders(
   response: Response,
   request?: Request,
@@ -114,7 +140,12 @@ export function applyCorsHeaders(
   }
 
   response.headers.set('access-control-allow-methods', options.methods ?? DEFAULT_CORS_METHODS);
-  response.headers.set('access-control-allow-headers', options.headers ?? DEFAULT_CORS_HEADERS);
+  response.headers.set(
+    'access-control-allow-headers',
+    options.headers ? appendHeaderList(options.headers, CORRELATION_ID_HEADER) : DEFAULT_CORS_HEADERS,
+  );
+  response.headers.set('access-control-expose-headers', DEFAULT_EXPOSED_HEADERS);
+  response.headers.set(CORRELATION_ID_HEADER, options.correlationId ?? getCorrelationId(request));
   appendVary(response.headers, 'Origin, Authorization');
 
   return response;
@@ -193,30 +224,40 @@ export async function readJsonObject(
 }
 
 export function handleApiError(error: unknown, request?: Request) {
+  const correlationId = getCorrelationId(request);
+
   if (error instanceof HttpError) {
     if (error.status === 500) {
-      const requestId = crypto.randomUUID();
       console.error('API HttpError', {
-        requestId,
+        correlationId,
         error: redactSensitiveData({
           name: error.name,
           message: error.message,
           stack: error.stack,
         }),
       });
-      return json({ error: 'Internal server error', requestId }, 500, request);
+      return json(
+        { error: 'Internal server error', requestId: correlationId, correlationId },
+        500,
+        request,
+        { correlationId },
+      );
     }
 
-    return json({ error: error.message }, error.status, request);
+    return json({ error: error.message, correlationId }, error.status, request, { correlationId });
   }
 
-  const requestId = crypto.randomUUID();
   console.error('API unexpected error', {
-    requestId,
+    correlationId,
     error: redactSensitiveData(error instanceof Error
       ? { name: error.name, message: error.message, stack: error.stack }
       : error),
   });
 
-  return json({ error: 'Internal server error', requestId }, 500, request);
+  return json(
+    { error: 'Internal server error', requestId: correlationId, correlationId },
+    500,
+    request,
+    { correlationId },
+  );
 }
