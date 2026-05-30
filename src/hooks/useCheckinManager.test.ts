@@ -154,6 +154,10 @@ describe('useCheckinManager', () => {
       expect(setAllCheckins).toHaveBeenCalledWith([checkin]);
     });
 
+    act(() => {
+      // Any state updates that happen after render
+    });
+
     expect(mocks.getTodayCheckinFromList).toHaveBeenCalledWith([checkin]);
     expect(useAppStore.getState().todayCheckin).toEqual(checkin);
     expect(result.current.healthDataMode).toBe('mock_dev_only');
