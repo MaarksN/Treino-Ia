@@ -26,6 +26,11 @@ describe('gamificationService', () => {
     } as Awaited<ReturnType<typeof supabase.auth.getSession>>);
   });
 
+  function getFetchHeaders(fetchMock: ReturnType<typeof vi.fn>, callIndex = 0): Headers {
+    const init = fetchMock.mock.calls[callIndex]?.[1] as RequestInit | undefined;
+    return new Headers(init?.headers);
+  }
+
   it('carrega estado de gamificação pelo backend autenticado', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       Response.json({
@@ -49,11 +54,9 @@ describe('gamificationService', () => {
 
     const state = await fetchGamificationState();
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/gamification/state', {
-      headers: {
-        authorization: 'Bearer supabase-token',
-      },
-    });
+    expect(fetchMock).toHaveBeenCalledWith('/api/gamification/state', expect.any(Object));
+    const headers = getFetchHeaders(fetchMock);
+    expect(headers.get('authorization')).toBe('Bearer supabase-token');
     expect(state.profile.level).toBe(1);
   });
 
@@ -81,12 +84,11 @@ describe('gamificationService', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('/api/gamification/event', expect.objectContaining({
       method: 'POST',
-      headers: expect.objectContaining({
-        authorization: 'Bearer supabase-token',
-        'content-type': 'application/json',
-      }),
       body: JSON.stringify({ eventType: 'checkin' }),
     }));
+    const headers = getFetchHeaders(fetchMock);
+    expect(headers.get('authorization')).toBe('Bearer supabase-token');
+    expect(headers.get('content-type')).toBe('application/json');
     expect(result.profile?.xp).toBe(80);
   });
 

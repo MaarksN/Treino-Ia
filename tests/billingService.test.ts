@@ -26,6 +26,11 @@ describe('billingService', () => {
     } as Awaited<ReturnType<typeof supabase.auth.getSession>>);
   });
 
+  function getFetchHeaders(fetchMock: ReturnType<typeof vi.fn>, callIndex = 0): Headers {
+    const init = fetchMock.mock.calls[callIndex]?.[1] as RequestInit | undefined;
+    return new Headers(init?.headers);
+  }
+
   it('busca entitlement com token Supabase', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       Response.json({
@@ -46,11 +51,9 @@ describe('billingService', () => {
 
     const entitlement = await fetchBillingEntitlement();
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/billing/entitlement', {
-      headers: {
-        authorization: 'Bearer supabase-token',
-      },
-    });
+    expect(fetchMock).toHaveBeenCalledWith('/api/billing/entitlement', expect.any(Object));
+    const headers = getFetchHeaders(fetchMock);
+    expect(headers.get('authorization')).toBe('Bearer supabase-token');
     expect(entitlement.planId).toBe('free');
   });
 
@@ -67,12 +70,11 @@ describe('billingService', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('/api/stripe/create-checkout-session', expect.objectContaining({
       method: 'POST',
-      headers: expect.objectContaining({
-        authorization: 'Bearer supabase-token',
-        'content-type': 'application/json',
-      }),
       body: JSON.stringify({ planId: 'pro', interval: 'month' }),
     }));
+    const headers = getFetchHeaders(fetchMock);
+    expect(headers.get('authorization')).toBe('Bearer supabase-token');
+    expect(headers.get('content-type')).toBe('application/json');
     expect(session.checkoutUrl).toContain('checkout.stripe.com');
   });
 

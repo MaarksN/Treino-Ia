@@ -25,6 +25,11 @@ describe('geminiService', () => {
     } as Awaited<ReturnType<typeof supabase.auth.getSession>>);
   });
 
+  function getFetchHeaders(fetchMock: ReturnType<typeof vi.fn>, callIndex = 0): Headers {
+    const init = fetchMock.mock.calls[callIndex]?.[1] as RequestInit | undefined;
+    return new Headers(init?.headers);
+  }
+
   it('gera treino chamando o proxy Gemini autenticado', async () => {
     const aiPlan = {
       planName: 'Plano real via IA',
@@ -85,10 +90,9 @@ describe('geminiService', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('/api/gemini-proxy', expect.objectContaining({
       method: 'POST',
-      headers: expect.objectContaining({
-        authorization: 'Bearer supabase-token',
-      }),
     }));
+    const headers = getFetchHeaders(fetchMock);
+    expect(headers.get('authorization')).toBe('Bearer supabase-token');
     expect(plan.planName).toBe(aiPlan.planName);
     expect(plan.days[0].exercises[0].name).toBe('Supino Reto');
   });

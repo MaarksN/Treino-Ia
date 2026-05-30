@@ -4,6 +4,7 @@ node_modules_broken_*/
 build/
 dist/
 coverage/
+android/local.properties
 playwright-report/
 test-results/
 .cache/ms-playwright/
