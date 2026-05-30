@@ -296,7 +296,9 @@ describe('useWorkoutManager', () => {
     });
     const { result } = setupWorkoutManager();
 
-    expect(() => result.current.saveLocalDashboardSnapshot([analyticsEntry], nextStreak, [checkin])).not.toThrow();
+    act(() => {
+      expect(() => result.current.saveLocalDashboardSnapshot([analyticsEntry], nextStreak, [checkin])).not.toThrow();
+    });
 
     expect(mocks.captureError).toHaveBeenCalledWith(snapshotError, 'App.saveLocalDashboardSnapshot');
   });

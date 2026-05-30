@@ -2,6 +2,37 @@ import { describe, it, expect, vi } from 'vitest';
 import { retroSoundService } from '../../src/pages/Dashboard/services/socialContent/retroSoundService';
 
 describe('retroSoundService', () => {
+  beforeEach(() => {
+    // Mock window.AudioContext and window.webkitAudioContext
+    class MockAudioContext {
+      destination = {};
+      currentTime = 0;
+      createOscillator() {
+        return {
+          type: '',
+          frequency: {
+            setValueAtTime: vi.fn(),
+            exponentialRampToValueAtTime: vi.fn(),
+          },
+          connect: vi.fn(),
+          start: vi.fn(),
+          stop: vi.fn(),
+        };
+      }
+      createGain() {
+        return {
+          gain: { setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() },
+          connect: vi.fn(),
+        };
+      }
+    }
+
+    // @ts-ignore
+    window.AudioContext = MockAudioContext;
+    // @ts-ignore
+    window.webkitAudioContext = MockAudioContext;
+  });
+
   it('initializes as muted', () => {
     expect(retroSoundService.getMuted()).toBe(true);
   });
