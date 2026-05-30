@@ -46,11 +46,11 @@ describe('billingService', () => {
 
     const entitlement = await fetchBillingEntitlement();
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/billing/entitlement', {
-      headers: {
-        authorization: 'Bearer supabase-token',
-      },
-    });
+    expect(fetchMock).toHaveBeenCalledWith('/api/billing/entitlement', expect.objectContaining({
+      headers: expect.anything(),
+    }));
+    const callArgs = fetchMock.mock.calls[0][1];
+    expect(new Headers(callArgs.headers).get('authorization')).toBe('Bearer supabase-token');
     expect(entitlement.planId).toBe('free');
   });
 
@@ -67,12 +67,12 @@ describe('billingService', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('/api/stripe/create-checkout-session', expect.objectContaining({
       method: 'POST',
-      headers: expect.objectContaining({
-        authorization: 'Bearer supabase-token',
-        'content-type': 'application/json',
-      }),
       body: JSON.stringify({ planId: 'pro', interval: 'month' }),
     }));
+    const callArgs = fetchMock.mock.calls[0][1];
+    const headers = new Headers(callArgs.headers);
+    expect(headers.get('authorization')).toBe('Bearer supabase-token');
+    expect(headers.get('content-type')).toBe('application/json');
     expect(session.checkoutUrl).toContain('checkout.stripe.com');
   });
 

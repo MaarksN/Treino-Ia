@@ -85,10 +85,9 @@ describe('geminiService', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('/api/gemini-proxy', expect.objectContaining({
       method: 'POST',
-      headers: expect.objectContaining({
-        authorization: 'Bearer supabase-token',
-      }),
     }));
+    const callArgs = fetchMock.mock.calls[0][1];
+    expect(new Headers(callArgs.headers).get('authorization')).toBe('Bearer supabase-token');
     expect(plan.planName).toBe(aiPlan.planName);
     expect(plan.days[0].exercises[0].name).toBe('Supino Reto');
   });
