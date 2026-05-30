@@ -1,5 +1,5 @@
 import { getCurrentUserId, isSupabaseConfigured, supabase } from '../supabaseClient';
-import type { WorkoutExerciseLog, WorkoutSession } from '../database';
+import type { WorkoutExerciseLog, WorkoutSession } from '../trainingTypes';
 
 export interface RelationalSession {
   id?: string;
@@ -229,12 +229,41 @@ export const workoutSessionRepository = {
     }
   },
 
+  async deleteSessionDetails(sessionId: string): Promise<void> {
+    if (!isSupabaseConfigured) return;
+
+    const userId = await getCurrentUserId();
+    const { error: prError } = await supabase
+      .from('personal_records')
+      .delete()
+      .eq('user_id', userId)
+      .eq('source_session_id', sessionId);
+
+    if (prError) {
+      console.error('Error deleting previous personal records', prError);
+      throw prError;
+    }
+
+    const { error: exerciseError } = await supabase
+      .from('exercise_logs')
+      .delete()
+      .eq('user_id', userId)
+      .eq('session_id', sessionId);
+
+    if (exerciseError) {
+      console.error('Error deleting previous exercise logs', exerciseError);
+      throw exerciseError;
+    }
+  },
+
   async saveCompletedSession(session: WorkoutSession): Promise<string | null> {
     if (!isSupabaseConfigured) return null;
 
     const userId = await getCurrentUserId();
     const sessionId = await this.createSession(buildRelationalSession(session));
     if (!sessionId) return null;
+
+    await this.deleteSessionDetails(sessionId);
 
     for (const [exerciseIndex, exercise] of session.exercises.entries()) {
       const bestSet = getBestCompletedSet(exercise);
@@ -307,6 +336,6 @@ export const workoutSessionRepository = {
       return [];
     }
 
-    return ((data ?? []) as RelationalWorkoutRow[]).map(mapRelationalRow);
+    return ((data ?? []) as unknown as RelationalWorkoutRow[]).map(mapRelationalRow);
   },
 };

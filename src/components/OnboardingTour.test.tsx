@@ -31,8 +31,8 @@ describe('OnboardingTour', () => {
   it('renders the first step with welcome title', () => {
     render(<OnboardingTour onComplete={onComplete} onSkip={onSkip} />);
 
-    expect(screen.getByText('Bem-vindo ao Treino App 💪')).toBeInTheDocument();
-    expect(screen.getByText(/plataforma mais completa/i)).toBeInTheDocument();
+    expect(screen.getByText('Bem-vindo ao Treino IA')).toBeInTheDocument();
+    expect(screen.getByText(/saber o que treinar hoje/i)).toBeInTheDocument();
   });
 
   it('advances to next step when clicking "Próximo"', () => {
@@ -40,7 +40,7 @@ describe('OnboardingTour', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /próximo/i }));
 
-    expect(screen.getByText('IA Personalizada')).toBeInTheDocument();
+    expect(screen.getByText('Anamnese objetiva')).toBeInTheDocument();
   });
 
   it('goes back to previous step when clicking "Anterior"', () => {
@@ -48,11 +48,11 @@ describe('OnboardingTour', () => {
 
     // Go forward
     fireEvent.click(screen.getByRole('button', { name: /próximo/i }));
-    expect(screen.getByText('IA Personalizada')).toBeInTheDocument();
+    expect(screen.getByText('Anamnese objetiva')).toBeInTheDocument();
 
     // Go back
     fireEvent.click(screen.getByRole('button', { name: /anterior/i }));
-    expect(screen.getByText('Bem-vindo ao Treino App 💪')).toBeInTheDocument();
+    expect(screen.getByText('Bem-vindo ao Treino IA')).toBeInTheDocument();
   });
 
   it('shows "Começar" button on the last step', () => {

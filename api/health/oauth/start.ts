@@ -2,7 +2,6 @@ import { randomBytes } from 'node:crypto';
 import { handleApiError, HttpError, json, readJsonObject } from '../../_lib/http';
 import { sanitizeRedirectTarget } from '../../_lib/oauthRedirect';
 import { getSupabaseAdmin, requireSupabaseUser } from '../../_lib/server-supabase';
-import { normalizeRedirectTo } from '../../_lib/redirectAllowlist';
 
 export const config = {
   runtime: 'nodejs',
@@ -66,8 +65,8 @@ function buildAuthUrl(provider: OAuthProvider, clientId: string, redirectUri: st
 }
 
 export default async function handler(request: Request) {
-  if (request.method === 'OPTIONS') return json({ ok: true });
-  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+  if (request.method === 'OPTIONS') return json({ ok: true }, 200, request);
+  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405, request);
 
   try {
     const user = await requireSupabaseUser(request);
@@ -106,8 +105,8 @@ export default async function handler(request: Request) {
       dataMode: 'oauth',
       authUrl: buildAuthUrl(provider, clientId, redirectUri, state),
       expiresInSeconds: 600,
-    });
+    }, 200, request);
   } catch (error) {
-    return handleApiError(error);
+    return handleApiError(error, request);
   }
 }

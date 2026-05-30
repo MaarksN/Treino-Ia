@@ -1,0 +1,765 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Prompts de Sprints - Finalizacao Treino IA</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f7f9;
+        --surface: #ffffff;
+        --surface-2: #eef2f6;
+        --text: #15181d;
+        --muted: #596171;
+        --border: #d8dee8;
+        --accent: #176b87;
+        --accent-2: #d9563b;
+        --code: #10151c;
+        --code-text: #f4f7fb;
+        --shadow: 0 12px 32px rgba(21, 24, 29, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        line-height: 1.55;
+      }
+
+      header {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .wrap {
+        width: min(1120px, calc(100% - 32px));
+        margin: 0 auto;
+      }
+
+      .hero {
+        padding: 44px 0 30px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        line-height: 1.12;
+        letter-spacing: 0;
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 860px;
+        font-size: clamp(2rem, 4vw, 3.25rem);
+      }
+
+      .subtitle {
+        max-width: 820px;
+        margin: 16px 0 0;
+        color: var(--muted);
+        font-size: 1.08rem;
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 22px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        padding: 6px 11px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--surface-2);
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      main {
+        padding: 26px 0 56px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 260px minmax(0, 1fr);
+        gap: 24px;
+        align-items: start;
+      }
+
+      nav {
+        position: sticky;
+        top: 16px;
+        padding: 18px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+
+      nav h2 {
+        margin: 0 0 12px;
+        font-size: 1rem;
+      }
+
+      nav a {
+        display: block;
+        padding: 9px 0;
+        color: var(--accent);
+        text-decoration: none;
+        border-top: 1px solid var(--border);
+        font-size: 0.96rem;
+      }
+
+      nav a:first-of-type {
+        border-top: 0;
+      }
+
+      section {
+        margin-bottom: 24px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .section-head {
+        padding: 22px 24px 18px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .section-head h2 {
+        margin: 0;
+        font-size: 1.45rem;
+      }
+
+      .section-head p {
+        margin: 8px 0 0;
+        color: var(--muted);
+      }
+
+      .body {
+        padding: 22px 24px 24px;
+      }
+
+      .note {
+        margin: 0 0 16px;
+        padding: 14px 16px;
+        border-left: 4px solid var(--accent);
+        background: #edf7fa;
+        color: #173947;
+      }
+
+      .warning {
+        border-left-color: var(--accent-2);
+        background: #fff0ec;
+        color: #542014;
+      }
+
+      pre {
+        margin: 0;
+        padding: 18px;
+        border-radius: 8px;
+        overflow: auto;
+        white-space: pre-wrap;
+        background: var(--code);
+        color: var(--code-text);
+        font-size: 0.93rem;
+        line-height: 1.52;
+      }
+
+      code {
+        font-family:
+          "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      }
+
+      .prompt-label {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .prompt-label h3 {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      button {
+        min-height: 36px;
+        padding: 7px 12px;
+        border: 1px solid var(--accent);
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        cursor: pointer;
+        font: inherit;
+        font-size: 0.9rem;
+      }
+
+      button:focus-visible,
+      a:focus-visible {
+        outline: 3px solid #88c8d8;
+        outline-offset: 2px;
+      }
+
+      .checklist {
+        display: grid;
+        gap: 8px;
+        margin: 16px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .checklist li {
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: #fbfcfd;
+      }
+
+      footer {
+        padding: 26px 0 42px;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      @media (max-width: 820px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        nav {
+          position: static;
+        }
+
+        .section-head,
+        .body {
+          padding-left: 18px;
+          padding-right: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap hero">
+        <h1>Prompts de Sprints para Finalizar o Treino IA</h1>
+        <p class="subtitle">
+          Use estes prompts separadamente, em ordem. Cada sprint foi desenhado
+          para cortar ruido, solidificar o core e so depois reabrir blocos
+          avancados com seguranca.
+        </p>
+        <div class="meta" aria-label="Resumo">
+          <span class="pill">Produto: Treino IA</span>
+          <span class="pill">Modo: beta privado primeiro</span>
+          <span class="pill">Foco: treino semanal real</span>
+          <span class="pill">Regra: sem feature nova durante hardening</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="wrap grid">
+      <nav aria-label="Navegacao dos prompts">
+        <h2>Prompts</h2>
+        <a href="#prompt-mestre">Prompt mestre</a>
+        <a href="#sprint-1">Sprint 1 - Limpeza de superficie</a>
+        <a href="#sprint-2">Sprint 2 - Core solido</a>
+        <a href="#sprint-3">Sprint 3 - Producao real</a>
+        <a href="#sprint-4">Sprint 4 - Beta privado</a>
+        <a href="#criterios">Criterios finais</a>
+      </nav>
+
+      <div>
+        <section id="prompt-mestre">
+          <div class="section-head">
+            <h2>Prompt Mestre</h2>
+            <p>
+              Cole este antes de qualquer sprint quando quiser alinhar o agente
+              com a estrategia geral do produto.
+            </p>
+          </div>
+          <div class="body">
+            <p class="note">
+              Objetivo: manter o agente focado no core e impedir que ele tente
+              expandir escopo enquanto a plataforma ainda esta sendo finalizada.
+            </p>
+            <div class="prompt-label">
+              <h3>Prompt copiavel</h3>
+              <button type="button" data-copy="master">Copiar</button>
+            </div>
+            <pre id="master"><code>Voce esta trabalhando no projeto Treino IA. A prioridade absoluta agora e finalizar o produto core para beta privado, nao adicionar novas features.
+
+Contexto do produto:
+- O produto deve ajudar o usuario a saber exatamente o que treinar hoje, executar o treino, registrar series/cargas/repeticoes, acompanhar historico e receber uma recomendacao simples de IA.
+- A plataforma possui muitos blocos avancados, previews, mocks, fallbacks e modulos experimentais.
+- O objetivo agora e cortar ruido da experiencia principal, solidificar o core e deixar blocos avancados escondidos atras de feature flags, beta, internal ou off.
+
+Regras de trabalho:
+- Nao remova codigo avancado sem necessidade; esconda ou isole primeiro.
+- Nao crie features novas.
+- Nao prometa na UI algo que ainda depende de mock, fallback, placeholder ou integracao nao validada.
+- Preserve os testes existentes.
+- Sempre rode validacoes relevantes ao final.
+- Se encontrar divida tecnica relacionada ao sprint, corrija quando for pequeno e seguro; se for grande, documente como item de follow-up.
+
+Definicao de core:
+1. Cadastro/login.
+2. Anamnese.
+3. Geracao ou edicao de plano.
+4. Treino de hoje.
+5. Execucao do treino.
+6. Registro de series, cargas e repeticoes.
+7. Historico e evolucao.
+8. Recomendacao simples da IA.
+9. Assinatura/limites de uso, se estiver habilitado.
+
+Antes de implementar, leia os arquivos relevantes do repositorio e respeite os padroes existentes. Depois implemente, valide e entregue um resumo objetivo do que mudou, quais comandos passaram e quais riscos sobraram.</code></pre>
+          </div>
+        </section>
+
+        <section id="sprint-1">
+          <div class="section-head">
+            <h2>Sprint 1 - Limpeza de Superficie</h2>
+            <p>
+              Esconder ruido, previews e blocos avancados da experiencia
+              principal sem apagar trabalho ja feito.
+            </p>
+          </div>
+          <div class="body">
+            <p class="note">
+              Resultado esperado: usuario comum passa a enxergar um produto
+              menor, mais claro e centrado no treino de hoje.
+            </p>
+            <div class="prompt-label">
+              <h3>Prompt copiavel</h3>
+              <button type="button" data-copy="sprint1">Copiar</button>
+            </div>
+            <pre id="sprint1"><code>Execute a Sprint 1 do Treino IA: limpeza de superficie e corte de ruido.
+
+Objetivo:
+Transformar a experiencia principal em uma interface focada no core de treino, escondendo modulos avancados, previews, mocks, placeholders e fallbacks que ainda nao devem aparecer para usuario final.
+
+Tarefas:
+1. Mapear onde a UI mostra blocos avancados como social, wearables, OCR, camera/form check, marketplace, gamificacao avancada, integracoes premium, nutricao avancada, recuperacao avancada e hubs de plataforma.
+2. Criar ou consolidar um arquivo de feature flags com estes estados:
+   - core: aparece para usuario final.
+   - beta: aparece apenas para usuarios beta ou flag habilitada.
+   - internal: aparece apenas para admin/dev.
+   - off: nao aparece na UI.
+3. Classificar as features atuais:
+   - Core: treino ativo, plano, anamnese, historico, recomendacao IA simples, billing se ja estiver habilitado.
+   - Beta: nutricao simples, recuperacao simples, recursos quase prontos.
+   - Internal: social, wearables, marketplace, gamificacao avancada, hubs operacionais.
+   - Off: OCR, camera/form check e qualquer promessa sem backend real.
+4. Atualizar navegacao, dashboard, cards e atalhos visiveis para respeitarem as flags.
+5. Remover da experiencia principal textos que prometem capacidades nao finalizadas.
+6. Garantir que o usuario comum veja primeiro:
+   - Treino de hoje.
+   - Botao para comecar treino.
+   - Plano atual.
+   - Historico/evolucao.
+   - Recomendacao de IA quando disponivel.
+
+Arquivos provaveis para investigar:
+- src/pages/Dashboard.tsx
+- src/data/platformBlocks.ts
+- src/features/strategic-items/strategicItems.registry.ts
+- src/navigation/appRouter.ts
+- src/navigation/routes.ts
+- componentes relacionados a hubs, blocos de plataforma e cards avancados.
+
+Restricoes:
+- Nao delete modulos grandes sem necessidade.
+- Prefira esconder por flag e deixar o codigo avancado isolado.
+- Nao introduza dependencia nova sem necessidade.
+- Nao quebre testes existentes.
+
+Criterios de aceite:
+- Usuario final nao ve mais features em estado mock, placeholder, internal ou off.
+- Dashboard fica visualmente focado no fluxo de treino.
+- Feature flags sao simples de entender e alterar.
+- Testes relevantes passam.
+- O resumo final lista o que ficou core, beta, internal e off.</code></pre>
+            <ul class="checklist" aria-label="Checklist da Sprint 1">
+              <li>Feature flags criadas ou consolidadas.</li>
+              <li>Modulos preview escondidos da UI principal.</li>
+              <li>Dashboard focado no treino de hoje.</li>
+              <li>Nenhuma promessa falsa na interface.</li>
+            </ul>
+          </div>
+        </section>
+
+        <section id="sprint-2">
+          <div class="section-head">
+            <h2>Sprint 2 - Core Solido</h2>
+            <p>
+              Separar responsabilidades, finalizar rotas reais e tornar o ciclo
+              de treino confiavel.
+            </p>
+          </div>
+          <div class="body">
+            <p class="note">
+              Resultado esperado: o core fica facil de navegar, testar e manter.
+            </p>
+            <div class="prompt-label">
+              <h3>Prompt copiavel</h3>
+              <button type="button" data-copy="sprint2">Copiar</button>
+            </div>
+            <pre id="sprint2"><code>Execute a Sprint 2 do Treino IA: core solido.
+
+Objetivo:
+Transformar o fluxo principal de treino em uma experiencia robusta, com rotas claras, componentes menores e persistencia confiavel.
+
+Tarefas:
+1. Auditar src/pages/Dashboard.tsx e identificar responsabilidades misturadas:
+   - estado de perfil;
+   - plano;
+   - treino ativo;
+   - historico;
+   - recomendacao IA;
+   - navegacao;
+   - persistencia;
+   - importacao/recuperacao de dados.
+2. Propor e implementar uma divisao conservadora em componentes/paginas menores, respeitando os padroes existentes.
+3. Finalizar ou substituir o placeholder de roteamento, garantindo que as rotas principais funcionem:
+   - inicio/hoje;
+   - plano;
+   - treino ativo;
+   - historico;
+   - conta/assinatura;
+   - nutricao apenas se estiver beta e escondida corretamente.
+4. Escolher um fluxo canonico de treino ativo e remover duplicidade visual da experiencia principal.
+5. Corrigir atalhos PWA/deep links que apontem para views inexistentes ou nao reconhecidas.
+6. Revisar persistencia do treino:
+   - Supabase deve ser fonte de verdade em producao;
+   - localStorage deve ser cache/fallback explicito, nao sucesso silencioso;
+   - falhas de salvar treino precisam aparecer para o usuario;
+   - retries nao devem duplicar sessoes, exercicios ou series.
+7. Adicionar ou ajustar testes para o fluxo critico:
+   - usuario chega ao treino de hoje;
+   - inicia treino;
+   - registra series;
+   - finaliza treino;
+   - historico reflete o treino;
+   - recomendacao IA aparece ou falha de modo controlado.
+
+Arquivos provaveis para investigar:
+- src/pages/Dashboard.tsx
+- src/router.tsx
+- src/navigation/appRouter.ts
+- src/navigation/routes.ts
+- src/components/WorkoutDashboard.tsx
+- src/pages/Dashboard/components/*
+- src/services/database.ts
+- src/services/data/workoutSessionRepository.ts
+- tests/e2e/workout-cycle.spec.ts
+
+Restricoes:
+- Evite refatoracao cosmetica ampla.
+- Nao mude o comportamento do core sem teste.
+- Nao remova fallback offline antes de criar uma experiencia explicita para erro/offline.
+
+Criterios de aceite:
+- O dashboard deixa de ser o unico arquivo dono do produto inteiro.
+- Rotas principais funcionam diretamente.
+- Fluxo de treino passa em E2E.
+- Persistencia critica nao falha silenciosamente.
+- Nao ha duplicacao obvia em retries do mesmo treino.</code></pre>
+            <ul class="checklist" aria-label="Checklist da Sprint 2">
+              <li>Dashboard dividido em partes menores.</li>
+              <li>Roteamento real para telas principais.</li>
+              <li>Fluxo de treino canonico escolhido.</li>
+              <li>Persistencia de treino mais confiavel.</li>
+            </ul>
+          </div>
+        </section>
+
+        <section id="sprint-3">
+          <div class="section-head">
+            <h2>Sprint 3 - Producao Real</h2>
+            <p>
+              Validar integracoes externas, ambiente staging, seguranca e
+              observabilidade.
+            </p>
+          </div>
+          <div class="body">
+            <p class="note warning">
+              Este sprint exige credenciais e ambientes reais. Nao marque como
+              concluido usando apenas mocks locais.
+            </p>
+            <div class="prompt-label">
+              <h3>Prompt copiavel</h3>
+              <button type="button" data-copy="sprint3">Copiar</button>
+            </div>
+            <pre id="sprint3"><code>Execute a Sprint 3 do Treino IA: producao real e validacao de integracoes.
+
+Objetivo:
+Comprovar que o core funciona fora do ambiente local, com Supabase staging, Stripe sandbox, Gemini real, Sentry e configuracoes de seguranca validadas.
+
+Tarefas:
+1. Supabase staging:
+   - aplicar migrations em um projeto staging;
+   - rodar verificacao de schema drift;
+   - rodar advisors de seguranca e performance;
+   - validar RLS das tabelas criticas;
+   - gerar tipos TypeScript reais do Supabase;
+   - conectar o client tipado ao codigo sem quebrar testes.
+2. Stripe sandbox:
+   - executar fluxo real de checkout;
+   - validar portal de cliente;
+   - disparar webhook via Stripe CLI ou ambiente sandbox;
+   - confirmar idempotencia de webhook;
+   - confirmar atualizacao de entitlement no banco.
+3. Gemini:
+   - validar chamada real pelo proxy autenticado;
+   - testar usuario sem sessao;
+   - testar limite/rate limit;
+   - testar erro de quota ou chave ausente;
+   - garantir que o frontend mostra erro controlado.
+4. Sentry/observabilidade:
+   - validar DSN em preview/staging;
+   - confirmar captura de erro real controlado;
+   - confirmar sourcemaps/release quando configurado;
+   - definir alerta minimo para erro de API e erro de render.
+5. Variaveis de ambiente:
+   - revisar .env.example;
+   - adicionar variaveis ausentes;
+   - separar publicas VITE_* de segredos server-side;
+   - documentar HEALTH_OAUTH_TOKEN_ENCRYPTION_KEY, OAUTH_TOKEN_SECURITY_MODE e allowlist de origem se aplicavel.
+6. CORS e seguranca:
+   - revisar APIs que usam origin wildcard;
+   - centralizar allowlist quando fizer sentido;
+   - garantir que endpoints sensiveis exigem auth, assinatura ou segredo.
+
+Arquivos provaveis para investigar:
+- .env.example
+- api/_lib/http.ts
+- api/gemini-proxy.ts
+- api/stripe/*
+- api/billing/*
+- api/health/oauth/*
+- api/telemetry/errors.ts
+- api/retention/worker.ts
+- src/config/env.ts
+- src/main.tsx
+- supabase/migrations/*
+
+Restricoes:
+- Nao declarar integracao como pronta sem smoke real.
+- Nao expor segredo em client bundle.
+- Nao enfraquecer RLS para fazer teste passar.
+- Se faltarem credenciais, documente exatamente o que falta e deixe scripts/checklists prontos.
+
+Criterios de aceite:
+- Supabase staging validado.
+- Stripe sandbox validado de ponta a ponta.
+- Gemini real validado com sucesso e falhas controladas.
+- Sentry captura erro em staging/preview.
+- Variaveis de ambiente documentadas.
+- APIs sensiveis com origem/auth revisadas.</code></pre>
+            <ul class="checklist" aria-label="Checklist da Sprint 3">
+              <li>Supabase staging e RLS validados.</li>
+              <li>Stripe sandbox funcionando.</li>
+              <li>Gemini real testado pelo proxy.</li>
+              <li>Sentry e env docs conferidos.</li>
+            </ul>
+          </div>
+        </section>
+
+        <section id="sprint-4">
+          <div class="section-head">
+            <h2>Sprint 4 - Beta Privado</h2>
+            <p>
+              Colocar poucos usuarios reais no core, medir ativacao e estabilizar
+              sem abrir novas frentes.
+            </p>
+          </div>
+          <div class="body">
+            <p class="note">
+              Resultado esperado: produto testado por gente real, com dados de
+              ativacao, erros monitorados e plano claro de correcao.
+            </p>
+            <div class="prompt-label">
+              <h3>Prompt copiavel</h3>
+              <button type="button" data-copy="sprint4">Copiar</button>
+            </div>
+            <pre id="sprint4"><code>Execute a Sprint 4 do Treino IA: beta privado monitorado.
+
+Objetivo:
+Preparar e operar um beta privado pequeno, medindo se usuarios reais conseguem completar o ciclo principal de treino sem suporte manual constante.
+
+Tarefas:
+1. Definir escopo do beta:
+   - 5 a 20 usuarios;
+   - apenas core habilitado;
+   - beta/internal/off escondidos para usuario comum;
+   - canal claro de suporte e feedback.
+2. Criar checklist de release:
+   - build de producao passou;
+   - lint/typecheck/test/e2e passaram;
+   - migrations aplicadas;
+   - rollback documentado;
+   - variaveis de ambiente conferidas;
+   - Sentry ativo;
+   - Stripe/Gemini/Supabase validados.
+3. Instrumentar metricas minimas:
+   - cadastro concluido;
+   - anamnese concluida;
+   - primeiro plano criado;
+   - primeiro treino iniciado;
+   - primeiro treino finalizado;
+   - retorno em 7 dias;
+   - falhas ao salvar treino;
+   - erros de IA/billing.
+4. Revisar experiencia de suporte:
+   - mensagens de erro compreensiveis;
+   - estados vazios claros;
+   - modo offline ou falha de rede explicito;
+   - contato/suporte visivel se existir.
+5. Criar rotina de acompanhamento:
+   - revisar Sentry diariamente;
+   - revisar funil de ativacao;
+   - coletar feedback qualitativo;
+   - priorizar bugs que impedem treino;
+   - congelar novas features durante o beta.
+6. Preparar decisao pos-beta:
+   - criterios para continuar beta;
+   - criterios para abrir para mais usuarios;
+   - criterios para bloquear release;
+   - lista dos blocos avancados que podem voltar primeiro.
+
+Arquivos provaveis para investigar:
+- docs/runbook.md
+- docs/deployment.md
+- docs/privacy.md
+- docs/disaster-recovery.md
+- src/utils/analytics.ts
+- src/services/observability/*
+- src/main.tsx
+- tests/e2e/*
+- lighthouserc.json
+- playwright.config.ts
+
+Restricoes:
+- Nao adicionar feature nova durante beta.
+- Nao reabrir blocos avancados ate o core provar retencao e estabilidade.
+- Nao ignorar erros de dados, login, treino ou pagamento.
+
+Criterios de aceite:
+- Checklist de release beta concluido.
+- Metricas minimas registradas.
+- Erros criticos monitorados.
+- Caminho de rollback conhecido.
+- Relatorio pos-beta com decisoes objetivas.</code></pre>
+            <ul class="checklist" aria-label="Checklist da Sprint 4">
+              <li>Beta com poucos usuarios e core fechado.</li>
+              <li>Metricas de ativacao instrumentadas.</li>
+              <li>Monitoramento e suporte preparados.</li>
+              <li>Congelamento real de novas features.</li>
+            </ul>
+          </div>
+        </section>
+
+        <section id="criterios">
+          <div class="section-head">
+            <h2>Criterios Finais</h2>
+            <p>
+              Use estes criterios para decidir se a plataforma pode sair do beta
+              privado para uma abertura maior.
+            </p>
+          </div>
+          <div class="body">
+            <div class="prompt-label">
+              <h3>Checklist copiavel</h3>
+              <button type="button" data-copy="finalCriteria">Copiar</button>
+            </div>
+            <pre id="finalCriteria"><code>A plataforma Treino IA so deve abrir alem do beta privado quando:
+
+1. O usuario consegue completar o ciclo principal sem ajuda:
+   - cadastro;
+   - anamnese;
+   - plano;
+   - treino de hoje;
+   - execucao;
+   - historico;
+   - recomendacao.
+
+2. Dados criticos estao seguros:
+   - Supabase e fonte de verdade;
+   - RLS validado;
+   - migrations aplicadas em staging/producao;
+   - retries nao duplicam treino;
+   - falhas de salvar aparecem para o usuario.
+
+3. Integracoes reais foram testadas:
+   - Stripe sandbox/producao controlada;
+   - Gemini proxy autenticado;
+   - Sentry capturando erros;
+   - variaveis de ambiente revisadas.
+
+4. Qualidade minima esta protegida:
+   - lint passa;
+   - typecheck passa;
+   - testes unitarios passam;
+   - E2E core passa;
+   - mobile viewport validado;
+   - bundle/performance dentro do aceitavel.
+
+5. Escopo esta sob controle:
+   - preview nao aparece como produto final;
+   - beta/internal/off respeitados;
+   - docs refletem o estado real;
+   - novas features continuam congeladas ate estabilidade comprovada.</code></pre>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="wrap">
+      Criado para orientar a finalizacao do Treino IA com foco no core,
+      validacao real e beta privado controlado.
+    </footer>
+
+    <script>
+      const buttons = document.querySelectorAll("[data-copy]");
+
+      buttons.forEach((button) => {
+        button.addEventListener("click", async () => {
+          const id = button.getAttribute("data-copy");
+          const target = document.getElementById(id);
+          if (!target) return;
+
+          const text = target.innerText.trim();
+          try {
+            await navigator.clipboard.writeText(text);
+            const previous = button.textContent;
+            button.textContent = "Copiado";
+            window.setTimeout(() => {
+              button.textContent = previous;
+            }, 1400);
+          } catch {
+            const range = document.createRange();
+            range.selectNodeContents(target);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

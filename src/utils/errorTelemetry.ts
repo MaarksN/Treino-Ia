@@ -5,6 +5,7 @@ import {
   redactObservabilityUrl,
 } from '../services/observability/observabilityRedaction';
 import { trackEvent } from './analytics';
+import { apiFetch } from './apiFetch';
 
 export interface ErrorTelemetryEvent {
   id: string;
@@ -114,7 +115,7 @@ export async function flushErrorTelemetry(endpoint = '/api/telemetry/errors'): P
 
   const sanitizedEvents = events.slice(-MAX_FLUSH_EVENTS).map(sanitizeTelemetryEvent);
 
-  const response = await fetch(endpoint, {
+  const response = await apiFetch(endpoint, {
     method: 'POST',
     headers,
     body: JSON.stringify({ events: sanitizedEvents }),

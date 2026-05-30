@@ -6,14 +6,19 @@ import {
 } from './dashboardNavigation';
 
 describe('dashboard mobile navigation', () => {
-  it('exposes all real dashboard sections when training data exists', () => {
-    expect(getDashboardMobileSections(true).map(section => section.id)).toEqual([
+  it('exposes only core dashboard sections when training data exists', () => {
+    expect(getDashboardMobileSections(true).map((section) => section.id)).toEqual([
       'overview',
-      'nutrition',
       'plan',
       'history',
-      'reports',
+      'account',
     ]);
+  });
+
+  it('adds nutrition only when the beta flag is enabled by the caller', () => {
+    expect(
+      getDashboardMobileSections(true, { nutritionEnabled: true }).map((section) => section.id),
+    ).toEqual(['overview', 'nutrition', 'plan', 'history', 'account']);
   });
 
   it('keeps navigation minimal before the dashboard has training data', () => {
@@ -22,6 +27,8 @@ describe('dashboard mobile navigation', () => {
 
   it('resolves unknown targets to the overview section', () => {
     expect(getDashboardSectionByTarget('dashboard-history').id).toBe('history');
+    expect(getDashboardSectionByTarget('dashboard-account').id).toBe('account');
+    expect(getDashboardSectionByTarget('dashboard-nutrition').id).toBe('nutrition');
     expect(getDashboardSectionByTarget('missing-section').id).toBe('overview');
   });
 });

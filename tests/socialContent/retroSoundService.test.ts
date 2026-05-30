@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import { retroSoundService } from '../../src/pages/Dashboard/services/socialContent/retroSoundService';
 
 describe('retroSoundService', () => {

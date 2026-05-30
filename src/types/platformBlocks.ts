@@ -1,3 +1,5 @@
+import { type ProductSurfaceStatus } from '../config/featureFlags';
+
 export type PlatformBlockId =
   | 'bloco-11'
   | 'bloco-12'
@@ -32,5 +34,6 @@ export interface PlatformBlockDefinition {
   objective: string;
   layers: string[];
   featureFlag: string;
+  surfaceStatus: ProductSurfaceStatus;
   features: PlatformFeature[];
 }

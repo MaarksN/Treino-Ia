@@ -1,7 +1,7 @@
 {
   "name": "Treino App Premium",
   "short_name": "TreinoApp",
-  "description": "Plataforma premium de treino, IA, biometria, periodizacao e performance.",
+  "description": "Treino do dia, plano semanal, historico e recomendacao simples da IA.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -29,7 +29,7 @@
       "name": "Treino de hoje",
       "short_name": "Treino",
       "description": "Abrir o treino do dia",
-      "url": "/?view=workout",
+      "url": "/treino/ativo",
       "icons": [
         {
           "src": "/icons/icon-192.png",
@@ -39,10 +39,10 @@
       ]
     },
     {
-      "name": "Check-in",
-      "short_name": "Check-in",
-      "description": "Registrar sono, energia e recuperacao",
-      "url": "/?view=checkin",
+      "name": "Plano",
+      "short_name": "Plano",
+      "description": "Abrir o plano semanal",
+      "url": "/plano",
       "icons": [
         {
           "src": "/icons/icon-192.png",
@@ -52,10 +52,10 @@
       ]
     },
     {
-      "name": "Nutricao",
-      "short_name": "Macros",
-      "description": "Abrir diario alimentar, macros e hidratacao",
-      "url": "/?view=nutrition",
+      "name": "Historico",
+      "short_name": "Historico",
+      "description": "Abrir sessoes finalizadas",
+      "url": "/historico",
       "icons": [
         {
           "src": "/icons/icon-192.png",
@@ -65,10 +65,10 @@
       ]
     },
     {
-      "name": "Adicionar agua",
-      "short_name": "+250ml",
-      "description": "Registrar 250ml de agua no diario de hidratacao",
-      "url": "/?view=nutrition&quickHydrationMl=250&source=shortcut",
+      "name": "Conta",
+      "short_name": "Conta",
+      "description": "Abrir conta e assinatura",
+      "url": "/conta",
       "icons": [
         {
           "src": "/icons/icon-192.png",

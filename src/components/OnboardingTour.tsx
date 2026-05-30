@@ -3,38 +3,38 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 const STEPS = [
   {
-    title: 'Bem-vindo ao Treino App 💪',
-    description: 'A plataforma mais completa de treino inteligente. Vamos te mostrar o que você pode fazer aqui.',
+    title: 'Bem-vindo ao Treino IA',
+    description: 'Um fluxo direto para saber o que treinar hoje, executar o treino e acompanhar sua evolução.',
     emoji: '🏋️',
   },
   {
-    title: 'IA Personalizada',
-    description: 'O Gemini AI cria seu plano de treino completo baseado no seu perfil, objetivo e disponibilidade. Cada plano é único.',
+    title: 'Anamnese objetiva',
+    description: 'Informe objetivo, nível, dias disponíveis, tempo por treino, equipamentos e limitações.',
     emoji: '🤖',
   },
   {
-    title: 'Check-in Diário',
-    description: 'Registre sono, estresse, energia e dor muscular. A IA calcula seu índice de prontidão e ajusta a intensidade do treino.',
+    title: 'Plano atual',
+    description: 'O app gera um plano inicial com divisão semanal, exercícios, séries, repetições e descanso.',
     emoji: '📊',
   },
   {
     title: 'Modo Treino Ativo',
-    description: 'Acompanhe cada série em tempo real, com timer de descanso automático, registro de carga/RPE e voz para guiar o treino.',
+    description: 'Acompanhe o treino do dia, registre carga, repetições, RPE e marque as séries concluídas.',
     emoji: '⏱️',
   },
   {
-    title: 'Analytics Completo',
-    description: 'Gráficos de volume, heatmap de consistência, radar muscular e histórico detalhado de todas as sessões.',
+    title: 'Histórico e evolução',
+    description: 'Cada treino finalizado alimenta seu histórico, volume total e resumo de evolução.',
     emoji: '📈',
   },
   {
-    title: 'APEX Coach',
-    description: 'Converse com seu coach de IA a qualquer hora. Perguntas sobre treino, nutrição e recovery respondidas por especialista.',
+    title: 'Recomendação simples',
+    description: 'Quando houver dados suficientes, você recebe um próximo ajuste simples para o plano.',
     emoji: '🎯',
   },
   {
     title: 'Pronto para começar!',
-    description: 'Complete o questionário de anamnese e deixe a IA criar o plano perfeito para você.',
+    description: 'Complete a anamnese e vá direto para o treino de hoje.',
     emoji: '🚀',
   },
 ];

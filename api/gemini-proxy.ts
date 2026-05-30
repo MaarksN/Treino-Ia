@@ -2,7 +2,7 @@ import { pruneBoundedTtlCache, setBoundedTtlCacheEntry } from './_lib/boundedTtl
 import { getServerEntitlement, incrementUsageCounter } from './_lib/billing-entitlements';
 import { checkRateLimit } from './_lib/distributedRateLimit';
 import { fetchWithTimeout } from './_lib/fetchWithTimeout';
-import { handleApiError, HttpError, json, requireEnv } from './_lib/http';
+import { applyCorsHeaders, handleApiError, HttpError, json, requireEnv } from './_lib/http';
 import { isTransientFetchError, retryWithBackoff, shouldRetryGeminiStatus } from './_lib/retryPolicy';
 import { requireSupabaseUser } from './_lib/server-supabase';
 
@@ -21,6 +21,10 @@ const MAX_REQUEST_BYTES = 120_000;
 const GEMINI_TIMEOUT_MS = 25_000;
 const GEMINI_MAX_RETRIES = 2;
 const GEMINI_RETRY_BASE_DELAY_MS = 300;
+const GEMINI_CORS_OPTIONS = {
+  methods: 'POST, OPTIONS',
+  headers: 'authorization, content-type, x-csrf-token',
+};
 
 interface CachedGeminiResponse {
   body: string;
@@ -31,45 +35,12 @@ interface CachedGeminiResponse {
 
 const responseCache = new Map<string, CachedGeminiResponse>();
 
-const ALLOWED_ORIGINS = new Set([
-  process.env.APP_URL,
-  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
-  process.env.NODE_ENV !== 'production' ? 'http://localhost:3000' : undefined,
-  process.env.NODE_ENV !== 'production' ? 'http://localhost:4173' : undefined,
-].filter(Boolean) as string[]);
-
-function resolveAllowedOrigin(request: Request): string {
-  const origin = request.headers.get('origin') ?? '';
-  if (ALLOWED_ORIGINS.has(origin)) return origin;
-
-  if (process.env.NODE_ENV !== 'production') {
-    try {
-      const parsedOrigin = new URL(origin);
-      if (parsedOrigin.protocol === 'http:' && parsedOrigin.hostname === 'localhost') {
-        return origin;
-      }
-    } catch {}
-  }
-
-  return process.env.APP_URL ?? '';
-}
-
 function cors(body: unknown, status = 200, request?: Request) {
-  const response = json(body, status);
-  const origin = request ? resolveAllowedOrigin(request) : (process.env.APP_URL ?? '');
-  response.headers.set('access-control-allow-origin', origin);
-  response.headers.set('access-control-allow-methods', 'POST, OPTIONS');
-  response.headers.set('access-control-allow-headers', 'authorization, content-type, x-csrf-token');
-  response.headers.set('vary', 'Origin');
-  return response;
+  return json(body, status, request, GEMINI_CORS_OPTIONS);
 }
 
 function withCorsHeaders(response: Response, request: Request) {
-  response.headers.set('access-control-allow-origin', resolveAllowedOrigin(request));
-  response.headers.set('access-control-allow-methods', 'POST, OPTIONS');
-  response.headers.set('access-control-allow-headers', 'authorization, content-type, x-csrf-token');
-  response.headers.set('vary', 'Origin');
-  return response;
+  return applyCorsHeaders(response, request, GEMINI_CORS_OPTIONS);
 }
 
 function isCacheableGeminiBody(bodyText: string) {
@@ -118,8 +89,8 @@ export default async function handler(request: Request) {
   if (request.method !== 'POST') return cors({ error: 'Method not allowed' }, 405, request);
 
   try {
-    const apiKey = requireEnv('GEMINI_API_KEY');
     const user = await requireSupabaseUser(request);
+    const apiKey = requireEnv('GEMINI_API_KEY');
     const entitlement = await getServerEntitlement(user.id);
     const hasUnlimitedAi = entitlement.entitlements.includes('ai.unlimited');
 
@@ -210,7 +181,7 @@ export default async function handler(request: Request) {
       },
     }), request);
   } catch (error) {
-    const response = handleApiError(error);
+    const response = handleApiError(error, request);
     return withCorsHeaders(response, request);
   }
 }

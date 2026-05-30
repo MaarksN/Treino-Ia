@@ -19,6 +19,7 @@ export const PLATFORM_BLOCKS: PlatformBlockDefinition[] = [
     objective: 'Base comercial com planos, trial, paywall, billing, faturas, cupons e proxy seguro de IA.',
     layers: ['Pricing', 'Paywall', 'Entitlements', 'Billing', 'Stripe webhooks'],
     featureFlag: 'block11.monetization',
+    surfaceStatus: 'core',
     features: [
       feature(1, 'Estrutura de planos Free / Pro / Coach / Elite', 'MVP / Base', 'type', 'active'),
       feature(2, 'Paywall com checkout seguro', 'MVP / Base', 'service', 'active'),
@@ -50,6 +51,7 @@ export const PLATFORM_BLOCKS: PlatformBlockDefinition[] = [
     objective: 'Experiencia app-like com instalacao, offline, gestos, haptics, timer e mobile navigation.',
     layers: ['PWA', 'Offline', 'Mobile first', 'Gestos', 'Performance visual'],
     featureFlag: 'block12.pwaMobile',
+    surfaceStatus: 'core',
     features: [
       feature(1, 'Web App Manifest', 'MVP / Base', 'docs', 'active'),
       feature(2, 'Service Worker com cache offline', 'MVP / Base', 'service', 'active'),
@@ -81,6 +83,7 @@ export const PLATFORM_BLOCKS: PlatformBlockDefinition[] = [
     objective: 'Camada nutricional com TDEE, macros, diario alimentar, IA, hidratacao e score diario.',
     layers: ['Metabolismo', 'Diario alimentar', 'IA nutricional', 'Foto', 'Relatorios'],
     featureFlag: 'block13.nutrition',
+    surfaceStatus: 'beta',
     features: [
       feature(1, 'Calculadora de TDEE', 'MVP / Base', 'service', 'active'),
       feature(2, 'Metas de macros', 'MVP / Base', 'service', 'active'),
@@ -112,6 +115,7 @@ export const PLATFORM_BLOCKS: PlatformBlockDefinition[] = [
     objective: 'Readiness e recovery com sono, DOMS, humor, estresse, deload e recomendacoes de treino.',
     layers: ['Sono', 'Recovery score', 'DOMS', 'Overtraining', 'IA de recuperacao'],
     featureFlag: 'block14.recovery',
+    surfaceStatus: 'beta',
     features: [
       feature(1, 'Registro diario de sono', 'MVP / Base', 'ui', 'active'),
       feature(2, 'Score de recuperacao', 'MVP / Base', 'service', 'active'),
@@ -143,6 +147,7 @@ export const PLATFORM_BLOCKS: PlatformBlockDefinition[] = [
     objective: 'Conectar Apple Health, Google Fit, Garmin, Fitbit, BLE, Strava, Calendar, webhooks e Supabase.',
     layers: ['Health data', 'BLE', 'Import/export', 'APIs', 'Cloud sync'],
     featureFlag: 'block15.integrations',
+    surfaceStatus: 'internal',
     features: [
       feature(1, 'Apple Health', 'Premium / V2'),
       feature(2, 'Google Fit / Health Connect', 'Premium / V2'),
@@ -174,6 +179,7 @@ export const PLATFORM_BLOCKS: PlatformBlockDefinition[] = [
     objective: 'WCAG, idiomas, teclado, alto contraste, fonte ajustavel, inclusao visual e motora.',
     layers: ['i18n', 'WCAG', 'Visual', 'Motor', 'Conteudo adaptado'],
     featureFlag: 'block16.accessibility',
+    surfaceStatus: 'internal',
     features: [
       feature(1, 'PT-BR padronizado', 'MVP / Base', 'docs', 'active'),
       feature(2, 'EN-US', 'Premium / V2', 'type'),
@@ -205,6 +211,7 @@ export const PLATFORM_BLOCKS: PlatformBlockDefinition[] = [
     objective: 'Auth, proxy Gemini, rate limit, LGPD, cookies, exportacao/exclusao de dados, auditoria e CSP.',
     layers: ['Auth', 'API protection', 'Privacidade', 'Auditoria', 'Operacao'],
     featureFlag: 'block17.security',
+    surfaceStatus: 'core',
     features: [
       feature(1, 'Supabase Auth email/senha', 'MVP / Base', 'service', 'fallback'),
       feature(2, 'Google OAuth2', 'Premium / V2'),
@@ -236,6 +243,7 @@ export const PLATFORM_BLOCKS: PlatformBlockDefinition[] = [
     objective: 'Biblioteca de exercicios, cursos, artigos, glossario, quiz, calculadoras e referencias.',
     layers: ['Exercicios', 'Cursos', 'Calculadoras', 'Protocolos', 'Ciencia'],
     featureFlag: 'block18.education',
+    surfaceStatus: 'internal',
     features: [
       feature(1, 'Biblioteca de exercicios', 'MVP / Base', 'ui', 'active'),
       feature(2, 'Filtros por musculo/equipamento/nivel', 'MVP / Base', 'ui', 'active'),
@@ -267,6 +275,7 @@ export const PLATFORM_BLOCKS: PlatformBlockDefinition[] = [
     objective: 'Coach IA com personas, memoria, overload, platô, lesoes, voz, video, forecast e relatórios.',
     layers: ['Personas', 'Memoria', 'Adaptacao', 'Multimodal', 'Forecast'],
     featureFlag: 'block19.aiPersonalization',
+    surfaceStatus: 'internal',
     features: [
       feature(1, 'Personas de coach IA', 'MVP / Base', 'ui', 'active'),
       feature(2, 'Memoria de 6 meses', 'Premium / V2', 'service', 'active'),
@@ -298,6 +307,7 @@ export const PLATFORM_BLOCKS: PlatformBlockDefinition[] = [
     objective: 'Preparar producao com CI/CD, Vercel, Supabase, observabilidade, testes, flags e disaster recovery.',
     layers: ['Deploy', 'Backend', 'Observabilidade', 'Qualidade', 'Escala'],
     featureFlag: 'block20.devops',
+    surfaceStatus: 'internal',
     features: [
       feature(1, 'CI/CD Vercel via GitHub Actions', 'MVP / Base', 'docs', 'active'),
       feature(2, 'Variaveis seguras', 'MVP / Base', 'docs', 'active'),

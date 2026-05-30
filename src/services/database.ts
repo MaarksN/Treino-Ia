@@ -8,23 +8,30 @@ import {
   readWorkoutSessionJson,
 } from './trainingReadModels';
 import { workoutSessionRepository } from './data/workoutSessionRepository';
-
-import type {
+import type { PersistenceStatus, TrainingLevel, TrainingPlan, UserProfile, WorkoutSession } from './trainingTypes';
+export type {
   ExerciseIntensityTechnique,
+  ExercisePrescription,
+  ExerciseSet,
   PersistenceStatus,
   TrainingLevel,
   TrainingPlan,
   UserProfile,
+  WorkoutDayPlan,
+  WorkoutExerciseLog,
   WorkoutSession,
-} from './database/database.types';
-
-export type * from './database/database.types';
+} from './trainingTypes';
 
 const STORAGE_KEYS = {
   profile: '@TreinoIA:profile',
   plan: '@TreinoIA:currentPlan',
   history: '@TreinoIA:history',
 };
+
+export type WorkoutSessionSaveResult =
+  | { status: 'supabase'; saved: true; message: string; warning?: string }
+  | { status: 'local_fallback'; saved: true; message: string; error?: string }
+  | { status: 'failed'; saved: false; message: string; error: string };
 
 const validLevels: TrainingLevel[] = ['iniciante', 'intermediario', 'avancado'];
 
@@ -82,6 +89,13 @@ function readLocal<T>(key: string, fallback: T): T {
 
 function writeLocal<T>(key: string, value: T) {
   setJSON(key, value);
+}
+
+function upsertLocalWorkoutSession(session: WorkoutSession): WorkoutSession[] {
+  const history = readLocal<WorkoutSession[]>(STORAGE_KEYS.history, []);
+  const nextHistory = [session, ...history.filter(item => item.id !== session.id)].slice(0, 50);
+  writeLocal(STORAGE_KEYS.history, nextHistory);
+  return nextHistory;
 }
 
 async function getCloudUser() {
@@ -245,28 +259,63 @@ export const DatabaseService = {
     return readLocal<TrainingPlan | null>(STORAGE_KEYS.plan, null);
   },
 
-  saveWorkoutSession: async (session: WorkoutSession): Promise<boolean> => {
-    const cloudSaved = await tryCloud(async userId => {
-      const { error } = await supabase
-        .from('training_workout_history_records')
-        .upsert(buildWorkoutHistoryUpsert(userId, session), { onConflict: 'user_id,id' });
+  saveWorkoutSessionWithStatus: async (session: WorkoutSession): Promise<WorkoutSessionSaveResult> => {
+    const persistenceStatus = await DatabaseService.getPersistenceStatus();
 
-      if (error) throw error;
-
+    if (persistenceStatus.mode === 'supabase') {
       try {
-        await workoutSessionRepository.saveCompletedSession(session);
-      } catch (e) {
-        console.error('Relational dual-write failed', e);
+        const userId = await getCloudUserId();
+        if (!userId) {
+          throw new Error('Usuário não autenticado no Supabase.');
+        }
+
+        const { error } = await supabase
+          .from('training_workout_history_records')
+          .upsert(buildWorkoutHistoryUpsert(userId, session), { onConflict: 'user_id,id' });
+
+        if (error) throw error;
+
+        const relationalSessionId = await workoutSessionRepository.saveCompletedSession(session);
+
+        return relationalSessionId
+          ? {
+              status: 'supabase',
+              saved: true,
+              message: 'Treino salvo na nuvem.',
+            }
+          : {
+              status: 'supabase',
+              saved: true,
+              message: 'Treino salvo na nuvem.',
+              warning: 'Os detalhes relacionais ficaram pendentes para nova sincronização.',
+            };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Falha ao salvar no Supabase.';
+        upsertLocalWorkoutSession(session);
+
+        return {
+          status: 'local_fallback',
+          saved: true,
+          message: 'Falha ao salvar na nuvem. O treino ficou guardado localmente para sincronizar depois.',
+          error: message,
+        };
       }
+    }
 
-      return true;
-    });
+    upsertLocalWorkoutSession(session);
 
-    if (cloudSaved) return true;
+    return {
+      status: 'local_fallback',
+      saved: true,
+      message: persistenceStatus.configured
+        ? 'Entre na conta para sincronizar. O treino foi guardado localmente por enquanto.'
+        : 'Supabase não configurado. O treino foi guardado localmente neste navegador.',
+    };
+  },
 
-    const history = readLocal<WorkoutSession[]>(STORAGE_KEYS.history, []);
-    writeLocal(STORAGE_KEYS.history, [session, ...history].slice(0, 50));
-    return true;
+  saveWorkoutSession: async (session: WorkoutSession): Promise<boolean> => {
+    const result = await DatabaseService.saveWorkoutSessionWithStatus(session);
+    return result.saved;
   },
 
   getWorkoutHistory: async (): Promise<WorkoutSession[]> => {

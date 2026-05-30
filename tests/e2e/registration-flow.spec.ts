@@ -20,11 +20,12 @@ import { collectCriticalErrors } from './helpers/console';
 
 test.describe('Registration flow', () => {
   test.beforeEach(async ({ page }) => {
-    // Clear state and skip onboarding
-    await page.goto('/');
-    await page.evaluate(() => {
-      localStorage.clear();
-      localStorage.setItem('@TreinoApp:onboarding', 'true');
+    await page.addInitScript(() => {
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+        localStorage.setItem('@TreinoApp:onboarding', 'true');
+      } catch {}
     });
   });
 
@@ -78,14 +79,14 @@ test.describe('Registration flow', () => {
   test('registration form does not appear on return visit with existing starter user', async ({
     page,
   }) => {
-    // Simulate existing starter user
-    await page.goto('/');
-    await page.evaluate(() => {
-      localStorage.setItem('@TreinoApp:onboarding', 'true');
-      localStorage.setItem(
-        '@TreinoIA:starterUser',
-        JSON.stringify({ name: 'Returning User', email: 'return@test.com', createdAt: Date.now() }),
-      );
+    await page.addInitScript(() => {
+      try {
+        localStorage.setItem('@TreinoApp:onboarding', 'true');
+        localStorage.setItem(
+          '@TreinoIA:starterUser',
+          JSON.stringify({ name: 'Returning User', email: 'return@test.com', createdAt: Date.now() }),
+        );
+      } catch {}
     });
 
     await page.goto('/');

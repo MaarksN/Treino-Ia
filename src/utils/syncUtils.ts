@@ -4,6 +4,7 @@ import {
   updateOfflineAction,
 } from './offlineQueue';
 import { supabase } from '../services/supabaseClient';
+import { apiFetch } from './apiFetch';
 
 export interface DashboardSnapshot {
   id: string;
@@ -95,7 +96,7 @@ export async function syncOfflineQueue(options?: {
 
   for (const action of pending) {
     try {
-      const response = await fetch(endpoint, {
+      const response = await apiFetch(endpoint, {
         method: 'POST',
         headers: await getSyncHeaders(action.id),
         body: JSON.stringify(action),

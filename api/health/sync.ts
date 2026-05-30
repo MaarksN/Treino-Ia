@@ -20,8 +20,8 @@ function getDataMode(provider: Provider): 'native' | 'oauth' | 'csv' | 'ble' {
 }
 
 export default async function handler(request: Request) {
-  if (request.method === 'OPTIONS') return json({ ok: true });
-  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+  if (request.method === 'OPTIONS') return json({ ok: true }, 200, request);
+  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405, request);
 
   try {
     const user = await requireSupabaseUser(request);
@@ -97,8 +97,8 @@ export default async function handler(request: Request) {
       ok: true,
       dataMode,
       job,
-    });
+    }, 200, request);
   } catch (error) {
-    return handleApiError(error);
+    return handleApiError(error, request);
   }
 }

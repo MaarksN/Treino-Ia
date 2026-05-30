@@ -26,6 +26,14 @@ export default defineConfig(({ mode }) => {
         org: process.env.SENTRY_ORG ?? '',
         project: process.env.SENTRY_PROJECT ?? 'treino-ia',
         authToken: process.env.SENTRY_AUTH_TOKEN,
+        release: process.env.SENTRY_RELEASE
+          ? {
+              name: process.env.SENTRY_RELEASE,
+              deploy: {
+                env: process.env.SENTRY_DEPLOY_ENV ?? process.env.VITE_ENV ?? mode,
+              },
+            }
+          : undefined,
       }) : []),
       ...(analyzeBundle ? [visualizer({
         filename: 'dist/bundle-stats.html',

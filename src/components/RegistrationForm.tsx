@@ -49,7 +49,7 @@ export function RegistrationForm({ onRegister }: Props) {
           <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
         </label>
         <h1 className="font-display font-black text-6xl sm:text-7xl tracking-normal uppercase text-brand-light mb-2 text-shadow-neon text-stroke-black leading-none">INICIAR</h1>
-        <p className="text-brand-magenta font-mono font-bold text-sm">Crie seu perfil para gerar treinos brutais com IA.</p>
+        <p className="text-brand-magenta font-mono font-bold text-sm">Crie seu perfil para montar seu plano e começar o treino de hoje.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">

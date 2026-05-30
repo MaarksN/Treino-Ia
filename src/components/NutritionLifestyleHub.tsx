@@ -24,9 +24,17 @@ interface Props {
   profile: UserProfile;
   plan: TrainingPlan;
   history: WorkoutSession[];
+  showAdvanced?: boolean;
+  showPhotoAnalysis?: boolean;
 }
 
-export function NutritionLifestyleHub({ profile, plan, history }: Props) {
+export function NutritionLifestyleHub({
+  profile,
+  plan,
+  history,
+  showAdvanced = false,
+  showPhotoAnalysis = false,
+}: Props) {
   const [fatigue, setFatigue] = useState(3);
   const [bodyWeightKg, setBodyWeightKg] = useState(75);
   const [hydrationVersion, setHydrationVersion] = useState(0);
@@ -117,8 +125,8 @@ export function NutritionLifestyleHub({ profile, plan, history }: Props) {
     <section className="mb-8 rounded-[28px] border-4 border-brand-neon bg-brand-gray p-6 shadow-brutal-neon md:p-8">
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.35em] text-brand-neon">Lote 05</p>
-          <h2 className="mt-2 font-display text-5xl uppercase text-brand-light">Nutrição e lifestyle</h2>
+          <p className="font-mono text-xs uppercase tracking-[0.35em] text-brand-neon">Nutrição beta</p>
+          <h2 className="mt-2 font-display text-5xl uppercase text-brand-light">Macros e hidratação</h2>
           <p className="mt-3 max-w-3xl font-mono text-sm leading-7 text-brand-light/75">
             {plan.planName} usa {profile.daysPerWeek} dias por semana; último treino: {latestSession ? latestSession.dayName : 'sem sessão finalizada'}.
           </p>
@@ -194,7 +202,7 @@ export function NutritionLifestyleHub({ profile, plan, history }: Props) {
           <div className="rounded-[24px] border-2 border-brand-light/10 bg-brand-dark p-5">
             <div className="mb-4 flex items-center gap-3">
               <Utensils className="h-5 w-5 text-brand-neon" />
-              <h3 className="font-display text-2xl uppercase text-brand-light">Receitas e mercado</h3>
+              <h3 className="font-display text-2xl uppercase text-brand-light">Sugestões simples</h3>
             </div>
 
             <div className="mb-4 grid grid-cols-4 gap-2 text-center">
@@ -232,39 +240,41 @@ export function NutritionLifestyleHub({ profile, plan, history }: Props) {
             </div>
           </div>
 
-          <div className="rounded-[24px] border-2 border-brand-light/10 bg-brand-dark p-5">
-            <div className="mb-4 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <Camera className="h-5 w-5 text-brand-neon" />
-                <h3 className="font-display text-2xl uppercase text-brand-light">Scan de refeição</h3>
+          {showPhotoAnalysis && (
+            <div className="rounded-[24px] border-2 border-brand-light/10 bg-brand-dark p-5">
+              <div className="mb-4 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <Camera className="h-5 w-5 text-brand-neon" />
+                  <h3 className="font-display text-2xl uppercase text-brand-light">Scan de refeição</h3>
+                </div>
+                <input
+                  ref={photoRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={event => event.target.files?.[0] && handlePhotoAnalysis(event.target.files[0])}
+                />
+                <button
+                  type="button"
+                  onClick={() => photoRef.current?.click()}
+                  disabled={photoLoading}
+                  className="inline-flex items-center gap-2 rounded-full border-2 border-brand-neon bg-brand-neon px-4 py-2 font-mono text-xs uppercase tracking-widest text-brand-dark disabled:opacity-60"
+                >
+                  {photoLoading ? <Loader className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                  Analisar
+                </button>
               </div>
-              <input
-                ref={photoRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="hidden"
-                onChange={event => event.target.files?.[0] && handlePhotoAnalysis(event.target.files[0])}
-              />
-              <button
-                type="button"
-                onClick={() => photoRef.current?.click()}
-                disabled={photoLoading}
-                className="inline-flex items-center gap-2 rounded-full border-2 border-brand-neon bg-brand-neon px-4 py-2 font-mono text-xs uppercase tracking-widest text-brand-dark disabled:opacity-60"
-              >
-                {photoLoading ? <Loader className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
-                Analisar
-              </button>
-            </div>
 
-            {scanInsight && (
-              <div className="mb-3 border border-brand-neon/30 bg-brand-neon/10 p-4">
-                <p className="font-mono text-xs uppercase tracking-widest text-brand-neon">Veredito {scanInsight.verdict}</p>
-                <p className="mt-2 text-sm text-brand-light/85">{scanInsight.message} {scanInsight.nextAction}</p>
-              </div>
-            )}
-            {scanText && <p className="whitespace-pre-wrap font-mono text-sm leading-6 text-brand-light/75">{scanText}</p>}
-          </div>
+              {scanInsight && (
+                <div className="mb-3 border border-brand-neon/30 bg-brand-neon/10 p-4">
+                  <p className="font-mono text-xs uppercase tracking-widest text-brand-neon">Veredito {scanInsight.verdict}</p>
+                  <p className="mt-2 text-sm text-brand-light/85">{scanInsight.message} {scanInsight.nextAction}</p>
+                </div>
+              )}
+              {scanText && <p className="whitespace-pre-wrap font-mono text-sm leading-6 text-brand-light/75">{scanText}</p>}
+            </div>
+          )}
         </div>
 
         <aside className="space-y-5">
@@ -288,15 +298,19 @@ export function NutritionLifestyleHub({ profile, plan, history }: Props) {
           </div>
 
           <HydrationTracker weightKg={bodyWeightKg} workoutMinutes={profile.timePerWorkout} />
-          <HormonalCycleTracker />
+          {showAdvanced && <HormonalCycleTracker />}
         </aside>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 mt-6">
-        <MicrobiotaWidget dailyFiberGrams={(macros.calories / 1000) * 14} calories={macros.calories} />
-        <HydrationManualScanner />
-      </div>
-      <PeriodicTable />
+      {showAdvanced && (
+        <>
+          <div className="grid gap-6 md:grid-cols-2 mt-6">
+            <MicrobiotaWidget dailyFiberGrams={(macros.calories / 1000) * 14} calories={macros.calories} />
+            <HydrationManualScanner />
+          </div>
+          <PeriodicTable />
+        </>
+      )}
     </section>
   );
 }

@@ -1,5 +1,6 @@
 import { ensureSafeDataMode } from '../utils/dataMode';
 import { supabase } from './supabaseClient';
+import { apiFetch } from '../utils/apiFetch';
 
 export interface ServerGamificationProfile {
   user_id: string;
@@ -140,7 +141,7 @@ async function parseApiResponse<T>(response: Response): Promise<T> {
 
 export async function fetchGamificationState(): Promise<ServerGamificationState> {
   const token = await getAccessToken();
-  const response = await fetch('/api/gamification/state', {
+  const response = await apiFetch('/api/gamification/state', {
     headers: {
       authorization: `Bearer ${token}`,
     },
@@ -154,7 +155,7 @@ export async function recordGamificationEvent(
   sourceId?: string,
 ) {
   const token = await getAccessToken();
-  const response = await fetch('/api/gamification/event', {
+  const response = await apiFetch('/api/gamification/event', {
     method: 'POST',
     headers: {
       authorization: `Bearer ${token}`,

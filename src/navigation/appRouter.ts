@@ -1,15 +1,70 @@
-export type AppRouteId = 'dashboard' | 'nutrition';
+export type AppRouteId = 'today' | 'plan' | 'active-workout' | 'history' | 'account' | 'nutrition';
 
 export interface AppRoute {
   id: AppRouteId;
   pathname: string;
   search: string;
+  targetId: string;
   isKnownPath: boolean;
 }
 
 type LocationLike = Pick<Location, 'pathname' | 'search' | 'hash'>;
 
-const DASHBOARD_PATHS = new Set(['', '/', '/dashboard']);
+const ROUTE_PATHS: Record<AppRouteId, string> = {
+  today: '/hoje',
+  plan: '/plano',
+  'active-workout': '/treino/ativo',
+  history: '/historico',
+  account: '/conta',
+  nutrition: '/nutricao',
+};
+
+const ROUTE_TARGETS: Record<AppRouteId, string> = {
+  today: 'dashboard-overview',
+  plan: 'dashboard-plan',
+  'active-workout': 'dashboard-plan',
+  history: 'dashboard-history',
+  account: 'dashboard-account',
+  nutrition: 'dashboard-nutrition',
+};
+
+const PATH_TO_ROUTE = new Map<string, AppRouteId>([
+  ['', 'today'],
+  ['/', 'today'],
+  ['/dashboard', 'today'],
+  ['/hoje', 'today'],
+  ['/inicio', 'today'],
+  ['/plano', 'plan'],
+  ['/treino/ativo', 'active-workout'],
+  ['/workout/active', 'active-workout'],
+  ['/historico', 'history'],
+  ['/conta', 'account'],
+  ['/assinatura', 'account'],
+  ['/nutricao', 'nutrition'],
+  ['/nutrition', 'nutrition'],
+]);
+
+const LEGACY_VIEW_TO_ROUTE = new Map<string, AppRouteId>([
+  ['dashboard', 'today'],
+  ['home', 'today'],
+  ['inicio', 'today'],
+  ['today', 'today'],
+  ['hoje', 'today'],
+  ['checkin', 'today'],
+  ['plan', 'plan'],
+  ['plano', 'plan'],
+  ['workout', 'active-workout'],
+  ['active-workout', 'active-workout'],
+  ['treino', 'active-workout'],
+  ['history', 'history'],
+  ['historico', 'history'],
+  ['profile', 'account'],
+  ['conta', 'account'],
+  ['subscription', 'account'],
+  ['assinatura', 'account'],
+  ['nutrition', 'nutrition'],
+  ['nutricao', 'nutrition'],
+]);
 
 function normalizePathname(pathname: string): string {
   if (!pathname || pathname === '/') return '/';
@@ -17,26 +72,36 @@ function normalizePathname(pathname: string): string {
 }
 
 export function isKnownDashboardPath(pathname: string): boolean {
-  return DASHBOARD_PATHS.has(normalizePathname(pathname));
+  return PATH_TO_ROUTE.has(normalizePathname(pathname));
+}
+
+function parseLegacyView(location: LocationLike): AppRouteId | null {
+  const params = new URLSearchParams(location.search);
+  const view = params.get('view') || location.hash.replace(/^#/, '');
+  if (!view) return null;
+  return LEGACY_VIEW_TO_ROUTE.get(view.toLowerCase()) ?? null;
 }
 
 export function parseAppRoute(location: LocationLike): AppRoute {
   const pathname = normalizePathname(location.pathname);
-  const params = new URLSearchParams(location.search);
-  const section = params.get('view') || location.hash.replace(/^#/, '');
-  const isNutrition = section === 'nutrition';
+  const routeId = parseLegacyView(location) ?? PATH_TO_ROUTE.get(pathname) ?? 'today';
+  const isKnownPath = isKnownDashboardPath(pathname);
 
   return {
-    id: isNutrition ? 'nutrition' : 'dashboard',
+    id: routeId,
     pathname,
-    search: isNutrition ? '?view=nutrition' : '',
-    isKnownPath: isKnownDashboardPath(pathname),
+    search: location.search,
+    targetId: ROUTE_TARGETS[routeId],
+    isKnownPath,
   };
 }
 
 export function buildAppRouteHref(routeId: AppRouteId): string {
-  if (routeId === 'nutrition') return '/?view=nutrition';
-  return '/';
+  return ROUTE_PATHS[routeId];
+}
+
+export function getAppRouteTargetId(routeId: AppRouteId): string {
+  return ROUTE_TARGETS[routeId];
 }
 
 export function getCurrentAppRoute(win: Window = window): AppRoute {

@@ -11,6 +11,7 @@ describe('platform block registry', () => {
       expect(block.number).toBeLessThanOrEqual(20);
       expect(block.features).toHaveLength(20);
       expect(block.featureFlag in DEFAULT_FEATURE_FLAGS).toBe(true);
+      expect(['core', 'beta', 'internal', 'off']).toContain(block.surfaceStatus);
 
       const ids = new Set(block.features.map(feature => feature.id));
       expect(ids.size).toBe(20);
@@ -22,5 +23,19 @@ describe('platform block registry', () => {
       expect(coverage.total).toBe(20);
       expect(coverage.active + coverage.fallback + coverage.roadmap).toBeLessThanOrEqual(20);
     }
+  });
+
+  it('classifies platform blocks for the private beta surface', () => {
+    const statuses = Object.fromEntries(PLATFORM_BLOCKS.map(block => [block.id, block.surfaceStatus]));
+
+    expect(statuses).toMatchObject({
+      'bloco-11': 'core',
+      'bloco-12': 'core',
+      'bloco-13': 'beta',
+      'bloco-14': 'beta',
+      'bloco-15': 'internal',
+      'bloco-19': 'internal',
+      'bloco-20': 'internal',
+    });
   });
 });

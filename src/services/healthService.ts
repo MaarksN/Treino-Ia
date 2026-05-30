@@ -522,9 +522,11 @@ export async function loadNutritionState(): Promise<HealthResult<NutritionState>
   assertNoError(mealResponse.error, 'Falha ao carregar refeições.');
   assertNoError(foodResponse.error, 'Falha ao carregar favoritos.');
 
+  const macroRow = macroResponse.data as Record<string, unknown> | null;
+
   return supabaseResult({
-    macros: mapMacros(macroResponse.data as Record<string, unknown> | null),
-    planText: macroResponse.data?.plan_text ? String(macroResponse.data.plan_text) : '',
+    macros: mapMacros(macroRow),
+    planText: macroRow?.plan_text ? String(macroRow.plan_text) : '',
     meals: (mealResponse.data ?? []).map(row => mapMeal(row as Record<string, unknown>)),
     favoriteFoods: (foodResponse.data ?? []).map(row => mapFavoriteFood(row as Record<string, unknown>)),
   });

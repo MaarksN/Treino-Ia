@@ -115,7 +115,7 @@ self.addEventListener('notificationclick', event => {
 
   const quickHydration = getHydrationAmountFromAction(event.action);
   const url = quickHydration
-    ? `/?view=nutrition&quickHydrationMl=${quickHydration}&source=notification`
+    ? `/nutricao?quickHydrationMl=${quickHydration}&source=notification`
     : event.notification.data?.url || '/';
 
   event.waitUntil(

@@ -113,8 +113,9 @@ async function getTelemetryUserId(request: Request): Promise<string | null> {
 }
 
 export default async function handler(request: Request) {
+  if (request.method === 'OPTIONS') return json({ ok: true }, 200, request);
   if (request.method !== 'POST') {
-    return json({ error: 'Method not allowed' }, 405);
+    return json({ error: 'Method not allowed' }, 405, request);
   }
 
   try {
@@ -142,7 +143,7 @@ export default async function handler(request: Request) {
     });
 
     if (!rows.length) {
-      return json({ ok: true, stored: 0 });
+      return json({ ok: true, stored: 0 }, 200, request);
     }
 
     const supabase = getSupabaseAdmin();
@@ -154,8 +155,8 @@ export default async function handler(request: Request) {
       throw new Error('Failed to store telemetry.');
     }
 
-    return json({ ok: true, stored: rows.length });
+    return json({ ok: true, stored: rows.length }, 200, request);
   } catch (error) {
-    return handleApiError(error);
+    return handleApiError(error, request);
   }
 }

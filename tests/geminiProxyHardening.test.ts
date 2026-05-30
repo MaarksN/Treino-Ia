@@ -69,4 +69,20 @@ describe('gemini proxy hardening', () => {
     expect(response.status).toBe(400);
     expect(body.error).toBe('Gemini request was rejected.');
   });
+
+  it('rejects unauthenticated users before checking provider credentials', async () => {
+    delete process.env.GEMINI_API_KEY;
+    const { HttpError } = await import('../api/_lib/http');
+    const serverSupabase = await import('../api/_lib/server-supabase');
+    vi.mocked(serverSupabase.requireSupabaseUser).mockRejectedValueOnce(
+      new HttpError(401, 'Invalid or expired Supabase session'),
+    );
+
+    const { default: handler } = await import('../api/gemini-proxy');
+    const response = await handler(geminiRequest());
+    const body = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(body.error).toBe('Invalid or expired Supabase session');
+  });
 });

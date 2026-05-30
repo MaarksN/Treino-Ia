@@ -434,15 +434,20 @@ export async function createGroup(input: {
     .single();
 
   assertNoError(error);
+  if (!data || typeof data !== 'object' || !('id' in data)) {
+    throw new Error('Falha ao criar grupo de treino.');
+  }
+
+  const group = data as TrainingGroup;
 
   const { error: memberError } = await supabase.from('training_group_members').insert({
-    group_id: data.id,
+    group_id: group.id,
     user_id: userId,
     role: 'owner',
   });
   assertNoError(memberError);
 
-  return data as TrainingGroup;
+  return group;
 }
 
 export async function joinGroupByInvite(inviteCode: string): Promise<void> {

@@ -182,7 +182,7 @@ export const WeeklyPlan = memo(function WeeklyPlan({
         {selectedDay && (
           <button
             type="button"
-            data-testid="start-workout-button"
+            data-testid="start-workout-button-plan"
             onClick={() => onStartWorkout(selectedDayIndex)}
             className={`rounded-[24px] border-2 px-6 py-3 font-mono text-xs uppercase tracking-widest shadow-brutal-neon transition-transform hover:scale-105 active:scale-95 ${primaryActionClass}`}
           >

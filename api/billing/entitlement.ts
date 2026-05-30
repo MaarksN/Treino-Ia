@@ -8,8 +8,8 @@ export const config = {
 };
 
 export default async function handler(request: Request) {
-  if (request.method === 'OPTIONS') return json({ ok: true });
-  if (request.method !== 'GET') return json({ error: 'Method not allowed' }, 405);
+  if (request.method === 'OPTIONS') return json({ ok: true }, 200, request);
+  if (request.method !== 'GET') return json({ error: 'Method not allowed' }, 405, request);
 
   try {
     const user = await requireSupabaseUser(request);
@@ -29,11 +29,11 @@ export default async function handler(request: Request) {
            bestStreak: 0,
          },
          dataMode: 'not_configured'
-       });
+       }, 200, request);
     }
 
     const entitlement = await getServerEntitlement(user.id);
-    return json(entitlement);
+    return json(entitlement, 200, request);
   } catch (error) {
     if ((error as any).status === 500 && (error as any).message?.includes('not configured')) {
         return json({
@@ -49,8 +49,8 @@ export default async function handler(request: Request) {
              bestStreak: 0,
            },
            dataMode: 'not_configured'
-        });
+        }, 200, request);
     }
-    return handleApiError(error);
+    return handleApiError(error, request);
   }
 }
