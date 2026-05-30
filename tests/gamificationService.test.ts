@@ -49,11 +49,11 @@ describe('gamificationService', () => {
 
     const state = await fetchGamificationState();
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/gamification/state', {
-      headers: {
-        authorization: 'Bearer supabase-token',
-      },
-    });
+    expect(fetchMock).toHaveBeenCalledWith('/api/gamification/state', expect.objectContaining({
+      headers: expect.anything(),
+    }));
+    const callArgs = fetchMock.mock.calls[0][1];
+    expect(new Headers(callArgs.headers).get('authorization')).toBe('Bearer supabase-token');
     expect(state.profile.level).toBe(1);
   });
 
@@ -81,12 +81,12 @@ describe('gamificationService', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('/api/gamification/event', expect.objectContaining({
       method: 'POST',
-      headers: expect.objectContaining({
-        authorization: 'Bearer supabase-token',
-        'content-type': 'application/json',
-      }),
       body: JSON.stringify({ eventType: 'checkin' }),
     }));
+    const callArgs = fetchMock.mock.calls[0][1];
+    const headers = new Headers(callArgs.headers);
+    expect(headers.get('authorization')).toBe('Bearer supabase-token');
+    expect(headers.get('content-type')).toBe('application/json');
     expect(result.profile?.xp).toBe(80);
   });
 
