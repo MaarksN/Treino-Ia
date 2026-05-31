@@ -1,4 +1,5 @@
 import { handleApiError, HttpError, json, readJsonObject } from '../_lib/http';
+import { JSON_BODY_LIMITS } from '../_lib/requestLimits';
 import { getSupabaseAdmin, requireSupabaseUser } from '../_lib/server-supabase';
 
 export const config = {
@@ -25,7 +26,7 @@ export default async function handler(request: Request) {
 
   try {
     const user = await requireSupabaseUser(request);
-    const body = await readJsonObject(request);
+    const body = await readJsonObject(request, { maxBytes: JSON_BODY_LIMITS.healthSync });
     const provider = String(body.provider || '');
 
     if (!isProvider(provider)) {

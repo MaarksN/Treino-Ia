@@ -74,6 +74,24 @@ describe('gamification event API', () => {
     expect(res.status).toBe(400);
   });
 
+  it('rejects oversized gamification payloads before touching Supabase tables', async () => {
+    const { mock } = createSupabaseMock();
+    getSupabaseAdmin.mockReturnValue(mock);
+    const { default: handler } = await import('../api/gamification/event');
+    const req = new Request('http://localhost/api/gamification/event', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ eventType: 'login', metadata: 'x'.repeat(21_000) }),
+    });
+
+    const res = await handler(req);
+    const body = await res.json();
+
+    expect(res.status).toBe(413);
+    expect(body.error).toBe('Request body is too large');
+    expect(mock.from).not.toHaveBeenCalled();
+  });
+
   it('enforces mission claim idempotency when already claimed', async () => {
     const { mock, missionsBuilder } = createSupabaseMock();
     missionsBuilder.maybeSingle.mockResolvedValue({ data: { id: 'm1', status: 'claimed', xp_reward: 30, coin_reward: 5 }, error: null });

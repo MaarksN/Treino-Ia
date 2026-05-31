@@ -66,6 +66,27 @@ describe('billing API handlers hardening', () => {
     expect(res.status).toBe(401);
   });
 
+  it('rejects oversized checkout payloads before creating Stripe sessions', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+    const mod = await import('../api/_lib/server-supabase');
+    const stripe = await import('../api/_lib/stripe-client');
+    vi.mocked(mod.requireSupabaseUser).mockResolvedValueOnce({ id: 'user-1', email: 'u@test.com' } as any);
+
+    const { default: handler } = await import('../api/stripe/create-checkout-session');
+    const req = new Request('http://localhost/api/stripe/create-checkout-session', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ planId: 'pro', interval: 'month', padding: 'x'.repeat(8_500) }),
+    });
+
+    const res = await handler(req);
+    const body = await res.json();
+
+    expect(res.status).toBe(413);
+    expect(body.error).toBe('Request body is too large');
+    expect(stripe.getStripeClient).not.toHaveBeenCalled();
+  });
+
   it('rejects portal without authenticated user', async () => {
     process.env.STRIPE_SECRET_KEY = 'sk_test_123';
     const mod = await import('../api/_lib/server-supabase');

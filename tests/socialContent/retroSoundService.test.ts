@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { retroSoundService } from '../../src/pages/Dashboard/services/socialContent/retroSoundService';
 
 describe('retroSoundService', () => {
@@ -27,9 +27,9 @@ describe('retroSoundService', () => {
       }
     }
 
-    // @ts-ignore
+    // @ts-expect-error jsdom does not expose AudioContext in this test environment.
     window.AudioContext = MockAudioContext;
-    // @ts-ignore
+    // @ts-expect-error webkitAudioContext is a browser-specific alias.
     window.webkitAudioContext = MockAudioContext;
   });
 
