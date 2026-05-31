@@ -2,11 +2,22 @@ import { CookieConsentState } from '../types/security';
 import { logAuditEvent } from './auditLogService';
 
 const COOKIE_KEY = '@TreinoApp:cookie-consent';
+export const PRIVACY_POLICY_VERSION = '2026-05-31';
 
 export function loadCookieConsent(): CookieConsentState {
   try {
     const raw = localStorage.getItem(COOKIE_KEY);
-    if (raw) return JSON.parse(raw) as CookieConsentState;
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<CookieConsentState>;
+      return {
+        necessary: true,
+        analytics: Boolean(parsed.analytics),
+        personalization: parsed.personalization ?? true,
+        marketing: Boolean(parsed.marketing),
+        policyVersion: parsed.policyVersion ?? PRIVACY_POLICY_VERSION,
+        updatedAt: parsed.updatedAt ?? new Date().toISOString(),
+      };
+    }
   } catch {
     // fallback below
   }
@@ -16,14 +27,16 @@ export function loadCookieConsent(): CookieConsentState {
     analytics: false,
     personalization: true,
     marketing: false,
+    policyVersion: PRIVACY_POLICY_VERSION,
     updatedAt: new Date().toISOString(),
   };
 }
 
-export function saveCookieConsent(consent: Omit<CookieConsentState, 'necessary' | 'updatedAt'>) {
+export function saveCookieConsent(consent: Omit<CookieConsentState, 'necessary' | 'updatedAt' | 'policyVersion'>) {
   const next: CookieConsentState = {
     necessary: true,
     ...consent,
+    policyVersion: PRIVACY_POLICY_VERSION,
     updatedAt: new Date().toISOString(),
   };
 

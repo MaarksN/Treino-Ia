@@ -83,6 +83,13 @@ describe('Compliance APIs (TIPO 11 - LGPD)', () => {
       expect(res.body).toHaveProperty('exported_at');
       expect(res.body).toHaveProperty('profile');
       expect(res.body).toHaveProperty('ai_audits');
+      expect(res.body).toHaveProperty('meals');
+      expect(res.body).toHaveProperty('hydration_entries');
+      expect(res.body).toHaveProperty('billing_invoices');
+      expect(res.body).toHaveProperty('social_posts');
+      expect(mockSupabaseAdmin.from).toHaveBeenCalledWith('nutrition_meal_entries');
+      expect(mockSupabaseAdmin.from).toHaveBeenCalledWith('billing_invoice_receipts');
+      expect(mockSupabaseAdmin.from).toHaveBeenCalledWith('social_posts');
     });
   });
 

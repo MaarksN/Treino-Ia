@@ -11,6 +11,7 @@ export interface CookieConsentState {
   analytics: boolean;
   personalization: boolean;
   marketing: boolean;
+  policyVersion: string;
   updatedAt: string;
 }
 

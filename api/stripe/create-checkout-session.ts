@@ -2,6 +2,7 @@ import { getTrustedRequestOrigin, handleApiError, json, readJsonObject, HttpErro
 import { requireSupabaseUser } from '../_lib/server-supabase';
 import { BILLING_PROVIDER_NOT_CONFIGURED, getStripeClient } from '../_lib/stripe-client';
 import { resolveCheckoutPlan } from '../_lib/billing';
+import { JSON_BODY_LIMITS } from '../_lib/requestLimits';
 
 export const config = {
   runtime: 'nodejs',
@@ -17,7 +18,7 @@ export default async function handler(request: Request) {
     }
 
     const user = await requireSupabaseUser(request);
-    const body = await readJsonObject(request);
+    const body = await readJsonObject(request, { maxBytes: JSON_BODY_LIMITS.billingCheckout });
     const checkoutPlan = resolveCheckoutPlan(body.planId, body.interval);
 
     if (!checkoutPlan.planId || !checkoutPlan.interval) {

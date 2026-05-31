@@ -1,6 +1,7 @@
 import { handleApiError, HttpError, json, readJsonObject } from '../_lib/http';
 import { getSupabaseAdmin, requireSupabaseUser } from '../_lib/server-supabase';
 import { buildIdempotencyKey, getDailyPeriod, normalizeEventKey } from '../_lib/idempotency';
+import { JSON_BODY_LIMITS } from '../_lib/requestLimits';
 
 export const config = {
   runtime: 'nodejs',
@@ -56,7 +57,7 @@ export default async function handler(request: Request) {
 
   try {
     const user = await requireSupabaseUser(request);
-    const body = await readJsonObject(request);
+    const body = await readJsonObject(request, { maxBytes: JSON_BODY_LIMITS.gamificationEvent });
     const eventType = typeof body.eventType === 'string' ? body.eventType : '';
     const sourceId = typeof body.sourceId === 'string' ? body.sourceId.trim() : null;
     const reward = EVENT_REWARDS[eventType];
