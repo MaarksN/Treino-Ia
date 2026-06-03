@@ -23,4 +23,11 @@ describe('CI workflow', () => {
     expect(workflow).toContain("if: steps.e2e.outputs.available == 'true'");
     expect(workflow).toContain('run: npm run test:e2e');
   });
+
+  it('runs browser E2E in a Playwright image with preinstalled Chromium', () => {
+    expect(workflow).toContain('image: mcr.microsoft.com/playwright:v1.60.0-noble');
+    expect(workflow).toContain('PLAYWRIGHT_BROWSERS_PATH: /ms-playwright');
+    expect(workflow).toContain('Verify Playwright Chromium');
+    expect(workflow).not.toContain('npx playwright install --with-deps chromium');
+  });
 });

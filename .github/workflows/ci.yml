@@ -8,7 +8,7 @@ on:
       - master
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
   lint:
@@ -96,6 +96,8 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.60.0-noble
     timeout-minutes: 20
     needs:
       - lint
@@ -106,6 +108,7 @@ jobs:
       VITE_SUPABASE_URL: https://example.supabase.co
       VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key
       VITE_ENV: test
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -130,13 +133,9 @@ jobs:
             echo "available=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Build for E2E
+      - name: Verify Playwright Chromium
         if: steps.e2e.outputs.available == 'true'
-        run: npm run build
-
-      - name: Install Playwright Chromium
-        if: steps.e2e.outputs.available == 'true'
-        run: npx playwright install --with-deps chromium
+        run: npx playwright --version
 
       - name: Build app for Playwright preview
         if: steps.e2e.outputs.available == 'true'
