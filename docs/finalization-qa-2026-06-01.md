@@ -81,3 +81,9 @@ Esta lista separa o que esta **pronto localmente** do que ainda precisa de evide
 5. **Provar o ciclo de valor**: com usuario staging, concluir cadastro/login, anamnese, plano, treino, historico e recomendacao de IA simples; anexar evidencia do fluxo.
 6. **Fechar governanca**: confirmar LGPD/privacidade, suporte, funil, alertas, rollback, disaster recovery e owners operacionais.
 7. **Reavaliar GO/NO-GO**: somente promover para GO se todos os bloqueios acima tiverem evidencia positiva e reproduzivel.
+
+## Correcoes iniciadas em 2026-06-03
+
+- O job `e2e` do CI foi alterado para usar a imagem oficial `mcr.microsoft.com/playwright:v1.60.0-noble`, que ja inclui browsers Playwright preinstalados, reduzindo dependencia do download em tempo de execucao que havia retornado `403 Forbidden`.
+- O CI agora define `PLAYWRIGHT_BROWSERS_PATH=/ms-playwright` para apontar explicitamente para o cache de browsers da imagem e substitui a etapa de instalacao por uma verificacao de versao do Playwright antes de executar o build e a suite E2E.
+- A validacao automatizada do workflow foi atualizada para impedir a volta de `npx playwright install --with-deps chromium` no job E2E enquanto o ambiente depender da imagem preinstalada.
