@@ -56,6 +56,16 @@
 2. Conferir `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_RELEASE` e `SENTRY_DEPLOY_ENV` no build.
 3. Gerar erro controlado em staging e confirmar evento com release e sourcemap.
 
+## Validacao DT-001: preflight e smoke real de staging
+
+1. Confirmar que os secrets obrigatorios do workflow `Vercel Preview` existem por nome no GitHub Actions, sem imprimir valores.
+2. Nao iniciar preview se algum secret obrigatorio estiver ausente; o workflow falha cedo na etapa `Validate required secrets`.
+3. Executar o workflow manual `Vercel Preview` contra o ref desejado.
+4. Validar que o log de deploy registrou uma `Preview URL` HTTPS da Vercel.
+5. Confirmar no mesmo run que `npm run preflight:sprint3` terminou com `PASS sprint3 preflight`.
+6. Confirmar no mesmo run que `SPRINT3_SMOKE_STRICT=true npm run smoke:sprint3` passou com `PASS supabase-rls`, `PASS gemini` e `PASS stripe`.
+7. Registrar somente a URL publica de preview, IDs dos jobs/runs e status PASS/FAIL/BLOCKED; nunca copiar tokens, keys, JWTs, service role ou headers de autorizacao para docs, issues ou PRs.
+
 ## Incidente: falha ao salvar treino
 
 1. Verificar eventos `workout_save_failed` e erros Sentry no horario do usuario.
