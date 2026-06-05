@@ -1,4 +1,4 @@
-import { handleApiError, json, getBearerToken } from '../_lib/http';
+import { guardApiMethod, handleApiError, json, getBearerToken } from '../_lib/http';
 import { getSupabaseAdmin } from '../_lib/server-supabase';
 import { getServerEntitlement } from '../_lib/billing-entitlements';
 import { getStripeClient } from '../_lib/stripe-client';
@@ -9,8 +9,8 @@ export const config = {
 };
 
 export default async function handler(request: Request) {
-  if (request.method === 'OPTIONS') return json({ ok: true }, 200, request);
-  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405, request);
+  const methodResponse = guardApiMethod(request, 'POST');
+  if (methodResponse) return methodResponse;
 
   try {
     const token = getBearerToken(request);

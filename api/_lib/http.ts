@@ -182,6 +182,12 @@ export function json(body: unknown, status = 200, request?: Request, corsOptions
   return applyCorsHeaders(response, request, corsOptions);
 }
 
+export function guardApiMethod(request: Request, allowedMethod: string): Response | null {
+  if (request.method === 'OPTIONS') return json({ ok: true }, 200, request);
+  if (request.method !== allowedMethod) return json({ error: 'Method not allowed' }, 405, request);
+  return null;
+}
+
 export function requireEnv(name: string): string {
   const value = process.env[name];
 

@@ -8,7 +8,30 @@ vi.mock('../api/_lib/server-supabase', () => ({
 
 vi.mock('../api/_lib/stripe-client', () => ({
   BILLING_PROVIDER_NOT_CONFIGURED: 'BILLING_PROVIDER_NOT_CONFIGURED',
+  assertBillingProviderConfigured: vi.fn(() => {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw Object.assign(new Error('BILLING_PROVIDER_NOT_CONFIGURED'), { status: 503 });
+    }
+  }),
+  billingProviderNotConfiguredResponse: vi.fn(
+    () =>
+      new Response(
+        JSON.stringify({
+          error: 'BILLING_PROVIDER_NOT_CONFIGURED',
+          dataMode: 'not_configured',
+        }),
+        {
+          status: 503,
+          headers: { 'content-type': 'application/json; charset=utf-8' },
+        },
+      ),
+  ),
   getStripeClient: vi.fn(),
+  isBillingProviderConfigured: vi.fn(() => Boolean(process.env.STRIPE_SECRET_KEY)),
+  isBillingProviderNotConfiguredError: vi.fn(
+    (error: unknown) =>
+      (error as { message?: unknown })?.message === 'BILLING_PROVIDER_NOT_CONFIGURED',
+  ),
 }));
 
 describe('billing API handlers hardening', () => {

@@ -7,39 +7,27 @@ import {
   WorkoutHistoryRecord,
   WorkoutPlan,
 } from '../types';
+import { safeReadJson } from './storageUtils';
 
 const HISTORY_KEY = '@TreinoApp:workoutHistory';
 
-function safeRead<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
 export function loadHistory(): WorkoutHistoryEntry[] {
-  return safeRead<WorkoutHistoryEntry[]>(HISTORY_KEY, []);
+  return safeReadJson<WorkoutHistoryEntry[]>(HISTORY_KEY, []);
 }
 
 export function saveHistory(history: WorkoutHistoryEntry[]) {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
 }
 
-function getExerciseVolume(exercise: WorkoutPlan['days'][number]['exercises'][number]) {
-  const setLogVolume = (exercise.setLogs || []).reduce(
-    (sum, log) => sum + (log.weight || 0) * (log.reps || 0),
-    0,
-  );
-
-  if (setLogVolume > 0) return setLogVolume;
-
-  const reps = Number(String(exercise.actualReps || exercise.reps).match(/\d+/)?.[0] || 0);
-  return (exercise.actualWeight || 0) * reps * exercise.sets;
+interface VolumeExercise {
+  setLogs?: Array<{ weight?: number; reps?: number }>;
+  actualReps?: unknown;
+  reps?: unknown;
+  actualWeight?: number;
+  sets: number;
 }
 
-function getLoggedExerciseVolume(exercise: Exercise) {
+function getExerciseVolume(exercise: VolumeExercise) {
   const setLogVolume = (exercise.setLogs || []).reduce(
     (sum, log) => sum + (log.weight || 0) * (log.reps || 0),
     0,
@@ -199,7 +187,7 @@ export function getWeeklyMuscleGroupVolume(
       .forEach((record) => {
         record.exercises.forEach((exercise) => {
           const group = exercise.muscleGroup || record.focus || 'Outros';
-          groups[group] = (groups[group] || 0) + getLoggedExerciseVolume(exercise);
+          groups[group] = (groups[group] || 0) + getExerciseVolume(exercise);
         });
       });
 

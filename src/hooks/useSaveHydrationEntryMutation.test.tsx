@@ -2,8 +2,9 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import type { QueryClient } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { saveHydrationEntry } from '../services/healthService';
+import { createDeferred } from '../test/deferred';
+import { mockHydrationEntry } from '../test/healthFixtures';
 import { createQueryClientWrapper, createTestQueryClient } from '../test/queryClient';
-import type { HydrationEntry } from '../types';
 import { hydrationStateQueryKey } from './useHydrationStateQuery';
 import { useSaveHydrationEntryMutation } from './useSaveHydrationEntryMutation';
 
@@ -12,24 +13,6 @@ vi.mock('../services/healthService', () => ({
 }));
 
 type SaveHydrationEntryResult = Awaited<ReturnType<typeof saveHydrationEntry>>;
-
-function createDeferred<T>() {
-  let resolve!: (value: T) => void;
-  let reject!: (reason?: unknown) => void;
-  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
-    resolve = resolvePromise;
-    reject = rejectPromise;
-  });
-  return { promise, resolve, reject };
-}
-
-const mockEntry: HydrationEntry = {
-  id: 'hydro-1',
-  date: '2026-05-24',
-  time: '14:30',
-  amountMl: 500,
-  type: 'água',
-};
 
 describe('useSaveHydrationEntryMutation', () => {
   let queryClient: QueryClient;
@@ -48,7 +31,7 @@ describe('useSaveHydrationEntryMutation', () => {
 
   it('calls the mocked save service and invalidates hydration state on success', async () => {
     const savedResult: SaveHydrationEntryResult = {
-      data: mockEntry,
+      data: mockHydrationEntry,
       dataMode: 'mock_dev_only',
       warning: 'mocked health storage',
     };
@@ -61,11 +44,11 @@ describe('useSaveHydrationEntryMutation', () => {
 
     let mutationResult: SaveHydrationEntryResult | undefined;
     await act(async () => {
-      mutationResult = await result.current.mutateAsync(mockEntry);
+      mutationResult = await result.current.mutateAsync(mockHydrationEntry);
     });
 
     expect(saveHydrationEntry).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(saveHydrationEntry).mock.calls[0]?.[0]).toEqual(mockEntry);
+    expect(vi.mocked(saveHydrationEntry).mock.calls[0]?.[0]).toEqual(mockHydrationEntry);
     expect(mutationResult).toEqual(savedResult);
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: hydrationStateQueryKey });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -73,7 +56,7 @@ describe('useSaveHydrationEntryMutation', () => {
 
   it('moves through pending state while unresolved', async () => {
     const savedResult: SaveHydrationEntryResult = {
-      data: mockEntry,
+      data: mockHydrationEntry,
       dataMode: 'mock_dev_only',
     };
     const deferred = createDeferred<SaveHydrationEntryResult>();
@@ -85,7 +68,7 @@ describe('useSaveHydrationEntryMutation', () => {
 
     let mutationPromise: Promise<SaveHydrationEntryResult> | undefined;
     act(() => {
-      mutationPromise = result.current.mutateAsync(mockEntry);
+      mutationPromise = result.current.mutateAsync(mockHydrationEntry);
     });
 
     await waitFor(() => expect(saveHydrationEntry).toHaveBeenCalledTimes(1));
@@ -112,7 +95,7 @@ describe('useSaveHydrationEntryMutation', () => {
     let caughtError: unknown;
     await act(async () => {
       try {
-        await result.current.mutateAsync(mockEntry);
+        await result.current.mutateAsync(mockHydrationEntry);
       } catch (caught) {
         caughtError = caught;
       }

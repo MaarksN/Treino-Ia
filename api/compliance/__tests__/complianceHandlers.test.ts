@@ -8,6 +8,11 @@ const mockHandleApiError = vi.fn();
 
 vi.mock('../../_lib/http', () => ({
   getBearerToken: (req: any) => mockGetBearerToken(req),
+  guardApiMethod: (req: any, allowedMethod: string) => {
+    if (req.method === 'OPTIONS') return mockJson({ ok: true }, 200);
+    if (req.method !== allowedMethod) return mockJson({ error: 'Method not allowed' }, 405);
+    return null;
+  },
   json: (body: any, status: number, req: any) => mockJson(body, status),
   handleApiError: (err: any, req: any) => mockHandleApiError(err, req),
 }));

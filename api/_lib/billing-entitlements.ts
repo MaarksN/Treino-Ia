@@ -13,6 +13,27 @@ interface SubscriptionRow {
   cancel_at_period_end: boolean;
 }
 
+export function isBillingSupabaseConfigured(): boolean {
+  return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
+export function getFreeServerEntitlementFallback() {
+  return {
+    planId: 'free',
+    billingStatus: 'free',
+    isPremium: false,
+    entitlements: getEntitlementsForPlan('free'),
+    subscription: null,
+    usage: {
+      aiRequestsThisMonth: 0,
+      exportsThisMonth: 0,
+      prCount: 0,
+      bestStreak: 0,
+    },
+    dataMode: 'not_configured',
+  };
+}
+
 export async function getServerEntitlement(userId: string) {
   const supabase = getSupabaseAdmin();
 

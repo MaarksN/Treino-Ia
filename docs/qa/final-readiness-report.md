@@ -13,7 +13,7 @@ EVIDENCIA: `docs/qa/technical-debt-execution-2026-06-05.md`
 - `npm run test:coverage` passou tecnicamente, mas cobertura global segue baixa: 33.04% statements, 27.94% branches, 31.96% functions, 33.68% lines.
 - `npm run test:e2e` passou com 21/21; `npm run test:a11y` passou com 1/1.
 - Lighthouse CI passou com `npx @lhci/cli@0.15.x autorun --config=./lighthouserc.json`.
-- `jscpd` caiu de 100 para 43 clones apos extracao de helpers dos registries dos blocos; ainda fica acima da meta ideal `<30`.
+- `jscpd` caiu de 100 para 23 clones apos extracao de helpers dos registries dos blocos, API, testes, acessibilidade e Gemini; meta `<30` atendida.
 - `npm run preflight:sprint3`, `SPRINT3_SMOKE_STRICT=true npm run smoke:sprint3`, `npm run smoke:tenant-ab` e `npm run smoke:compliance` continuam BLOCKED por env/secrets ausentes no ambiente local.
 
 Decisao operacional: merge permitido para automacoes/docs/refactors de divida; liberacao de produto segue NO-GO ate staging real passar em modo estrito com secrets fora do repositorio.
@@ -110,7 +110,7 @@ COMMIT FINAL: 878c0404ed96dd1ee609a63ac578970fe6253ddf
 - Gemini proxy com chave real e limites.
 - Sentry release, sourcemaps e alertas.
 - Backup/restore e rollback.
-- Reduzir clones restantes ou aceitar formalmente a baixa duplicacao residual.
+- Manter `jscpd <30` como gate e triar exports suspeitos restantes.
 - Repetir Lighthouse contra staging real apos provisionar env.
 
 ## 9. Criterios para sair do NO-GO
@@ -142,7 +142,7 @@ COMMIT FINAL: 878c0404ed96dd1ee609a63ac578970fe6253ddf
 |     4 | Validar Stripe sandbox            | P1  | M       | checkout/portal/webhook PASS |
 |     5 | Ensaiar backup/restore            | P1  | M       | restore comprovado           |
 |     6 | Elevar cobertura core             | P1  | L       | >=60% core                   |
-|     7 | Reduzir clones restantes          | P3  | M       | jscpd <30 ou aceite formal   |
+|     7 | Triar exports suspeitos           | P3  | M       | Lista revisada sem regressao |
 
 ## 12. Limitacoes desta auditoria
 

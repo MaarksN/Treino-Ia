@@ -4,6 +4,8 @@ import {
   isPlainLanguageEnabled,
   togglePlainLanguage,
 } from '../../services/accessibility/plainLanguageService';
+import { AccessibilityPanelShell } from './AccessibilityPanelShell';
+import { AccessibilitySwitch } from './AccessibilitySwitch';
 
 export function PlainLanguagePanel() {
   const [enabled, setEnabled] = useState(() => isPlainLanguageEnabled());
@@ -24,38 +26,19 @@ export function PlainLanguagePanel() {
     : glossary;
 
   return (
-    <article
-      className="rounded-[28px] border-2 border-brand-light/20 bg-brand-gray p-6"
-      aria-labelledby="plain-language-title"
+    <AccessibilityPanelShell
+      titleId="plain-language-title"
+      title="Linguagem simples"
+      description="Ative para ver explicações mais fáceis dos termos técnicos de treino."
+      footer="O glossário simplifica termos técnicos de treino. Conteúdo médico não é alterado para evitar interpretações imprecisas. Preferências são salvas localmente."
     >
-      <h3 id="plain-language-title" className="font-display text-3xl uppercase text-brand-light">
-        Linguagem simples
-      </h3>
-      <p className="mt-1 font-mono text-xs text-brand-muted">
-        Ative para ver explicações mais fáceis dos termos técnicos de treino.
-      </p>
-
-      <div className="mt-4 flex items-center gap-4">
-        <button
-          type="button"
-          onClick={handleToggle}
-          role="switch"
-          aria-checked={enabled}
-          aria-label={`Linguagem simples: ${enabled ? 'ativada' : 'desativada'}`}
-          className={`relative inline-flex h-8 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-neon focus:ring-offset-2 focus:ring-offset-brand-dark ${
-            enabled ? 'border-brand-neon bg-brand-neon' : 'border-brand-light/30 bg-brand-dark'
-          }`}
-        >
-          <span
-            className={`pointer-events-none inline-block h-6 w-6 rounded-full bg-brand-light shadow-lg transition-transform duration-200 ${
-              enabled ? 'translate-x-6' : 'translate-x-0.5'
-            } mt-[2px]`}
-          />
-        </button>
-        <span className="font-mono text-sm text-brand-light">
-          {enabled ? '📖 Linguagem simples ativada' : '📚 Linguagem técnica'}
-        </span>
-      </div>
+      <AccessibilitySwitch
+        checked={enabled}
+        onToggle={handleToggle}
+        ariaLabel={`Linguagem simples: ${enabled ? 'ativada' : 'desativada'}`}
+        enabledLabel="📖 Linguagem simples ativada"
+        disabledLabel="📚 Linguagem técnica"
+      />
 
       <div className="mt-4">
         <label
@@ -91,11 +74,6 @@ export function PlainLanguagePanel() {
           ))
         )}
       </div>
-
-      <p className="mt-3 font-mono text-[10px] text-brand-muted">
-        O glossário simplifica termos técnicos de treino. Conteúdo médico não é alterado para evitar
-        interpretações imprecisas. Preferências são salvas localmente.
-      </p>
-    </article>
+    </AccessibilityPanelShell>
   );
 }

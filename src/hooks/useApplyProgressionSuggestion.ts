@@ -2,6 +2,17 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useAnalytics } from './useAnalytics';
 import type { ProgressionSuggestion } from '../rules/progressionRules';
 
+function getProgressionAnalyticsPayload(suggestion: ProgressionSuggestion) {
+  return {
+    exerciseId: suggestion.exerciseId,
+    action: suggestion.action,
+    confidence: suggestion.confidence,
+    previousLoad: suggestion.previousLoad,
+    suggestedLoad: suggestion.suggestedLoad,
+    delta: suggestion.delta,
+  };
+}
+
 export function useApplyProgressionSuggestion(
   suggestion: ProgressionSuggestion | null,
   onApplyLoad: (newLoad: number) => void,
@@ -31,14 +42,7 @@ export function useApplyProgressionSuggestion(
     if (trackedViewRef.current === viewKey) return;
     trackedViewRef.current = viewKey;
 
-    track('progression_suggested', {
-      exerciseId: suggestion.exerciseId,
-      action: suggestion.action,
-      confidence: suggestion.confidence,
-      previousLoad: suggestion.previousLoad,
-      suggestedLoad: suggestion.suggestedLoad,
-      delta: suggestion.delta,
-    });
+    track('progression_suggested', getProgressionAnalyticsPayload(suggestion));
   }, [suggestion, isDismissed, track]);
 
   const acceptSuggestion = useCallback(() => {
@@ -46,14 +50,7 @@ export function useApplyProgressionSuggestion(
 
     onApplyLoad(suggestion.suggestedLoad);
 
-    track('progression_accepted', {
-      exerciseId: suggestion.exerciseId,
-      action: suggestion.action,
-      confidence: suggestion.confidence,
-      previousLoad: suggestion.previousLoad,
-      suggestedLoad: suggestion.suggestedLoad,
-      delta: suggestion.delta,
-    });
+    track('progression_accepted', getProgressionAnalyticsPayload(suggestion));
 
     setIsDismissed(true);
   }, [suggestion, onApplyLoad, track]);
@@ -61,14 +58,7 @@ export function useApplyProgressionSuggestion(
   const rejectSuggestion = useCallback(() => {
     if (!suggestion) return;
 
-    track('progression_rejected', {
-      exerciseId: suggestion.exerciseId,
-      action: suggestion.action,
-      confidence: suggestion.confidence,
-      previousLoad: suggestion.previousLoad,
-      suggestedLoad: suggestion.suggestedLoad,
-      delta: suggestion.delta,
-    });
+    track('progression_rejected', getProgressionAnalyticsPayload(suggestion));
 
     setIsDismissed(true);
   }, [suggestion, track]);

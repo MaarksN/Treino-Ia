@@ -2,8 +2,8 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import type { QueryClient } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { saveHydrationGoal } from '../services/healthService';
+import { mockHydrationGoal } from '../test/healthFixtures';
 import { createQueryClientWrapper, createTestQueryClient } from '../test/queryClient';
-import type { HydrationGoal } from '../types';
 import { hydrationStateQueryKey } from './useHydrationStateQuery';
 import { useSaveHydrationGoalMutation } from './useSaveHydrationGoalMutation';
 
@@ -12,11 +12,6 @@ vi.mock('../services/healthService', () => ({
 }));
 
 type SaveHydrationGoalResult = Awaited<ReturnType<typeof saveHydrationGoal>>;
-
-const mockGoal: HydrationGoal = {
-  dailyMl: 3000,
-  remindEveryMinutes: 45,
-};
 
 describe('useSaveHydrationGoalMutation', () => {
   let queryClient: QueryClient;
@@ -35,7 +30,7 @@ describe('useSaveHydrationGoalMutation', () => {
 
   it('calls the mocked save service and invalidates hydration state on success', async () => {
     const savedResult: SaveHydrationGoalResult = {
-      data: mockGoal,
+      data: mockHydrationGoal,
       dataMode: 'mock_dev_only',
     };
     vi.mocked(saveHydrationGoal).mockResolvedValue(savedResult);
@@ -46,7 +41,7 @@ describe('useSaveHydrationGoalMutation', () => {
     });
 
     await act(async () => {
-      await result.current.mutateAsync(mockGoal);
+      await result.current.mutateAsync(mockHydrationGoal);
     });
 
     expect(saveHydrationGoal).toHaveBeenCalledTimes(1);
@@ -66,7 +61,7 @@ describe('useSaveHydrationGoalMutation', () => {
     let caughtError: unknown;
     await act(async () => {
       try {
-        await result.current.mutateAsync(mockGoal);
+        await result.current.mutateAsync(mockHydrationGoal);
       } catch (caught) {
         caughtError = caught;
       }

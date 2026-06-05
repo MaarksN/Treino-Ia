@@ -2,8 +2,9 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import type { QueryClient } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { saveDailyCheckin } from '../services/healthService';
+import { createDeferred } from '../test/deferred';
+import { mockDailyCheckin } from '../test/healthFixtures';
 import { createQueryClientWrapper, createTestQueryClient } from '../test/queryClient';
-import type { DailyCheckin } from '../types';
 import { dailyCheckinsQueryKey } from './useDailyCheckinsQuery';
 import { useSaveDailyCheckinMutation } from './useSaveDailyCheckinMutation';
 
@@ -13,31 +14,6 @@ vi.mock('../services/healthService', () => ({
 }));
 
 type SaveDailyCheckinResult = Awaited<ReturnType<typeof saveDailyCheckin>>;
-
-function createDeferred<T>() {
-  let resolve!: (value: T) => void;
-  let reject!: (reason?: unknown) => void;
-  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
-    resolve = resolvePromise;
-    reject = rejectPromise;
-  });
-
-  return { promise, resolve, reject };
-}
-
-const dailyCheckin: DailyCheckin = {
-  id: 'checkin-1',
-  date: '2026-05-24',
-  sleepHours: 7.5,
-  sleepQuality: 4,
-  stressLevel: 3,
-  sorenessMap: { Pernas: 2 },
-  energyLevel: 8,
-  hydrationGlasses: 9,
-  sleepGoalHours: 8,
-  notes: 'Treino leve',
-  timestamp: 1779600000000,
-};
 
 describe('useSaveDailyCheckinMutation', () => {
   let queryClient: QueryClient;
@@ -55,7 +31,7 @@ describe('useSaveDailyCheckinMutation', () => {
 
   it('calls the mocked save service with the payload and invalidates daily checkins on success', async () => {
     const savedResult: SaveDailyCheckinResult = {
-      data: dailyCheckin,
+      data: mockDailyCheckin,
       dataMode: 'mock_dev_only',
       warning: 'mocked health storage',
     };
@@ -68,11 +44,11 @@ describe('useSaveDailyCheckinMutation', () => {
 
     let mutationResult: SaveDailyCheckinResult | undefined;
     await act(async () => {
-      mutationResult = await result.current.mutateAsync(dailyCheckin);
+      mutationResult = await result.current.mutateAsync(mockDailyCheckin);
     });
 
     expect(saveDailyCheckin).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(saveDailyCheckin).mock.calls[0]?.[0]).toEqual(dailyCheckin);
+    expect(vi.mocked(saveDailyCheckin).mock.calls[0]?.[0]).toEqual(mockDailyCheckin);
     expect(mutationResult).toEqual(savedResult);
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: dailyCheckinsQueryKey });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -81,7 +57,7 @@ describe('useSaveDailyCheckinMutation', () => {
 
   it('moves through pending state while the mocked save service is unresolved', async () => {
     const savedResult: SaveDailyCheckinResult = {
-      data: dailyCheckin,
+      data: mockDailyCheckin,
       dataMode: 'mock_dev_only',
     };
     const deferred = createDeferred<SaveDailyCheckinResult>();
@@ -93,11 +69,11 @@ describe('useSaveDailyCheckinMutation', () => {
 
     let mutationPromise: Promise<SaveDailyCheckinResult> | undefined;
     act(() => {
-      mutationPromise = result.current.mutateAsync(dailyCheckin);
+      mutationPromise = result.current.mutateAsync(mockDailyCheckin);
     });
 
     await waitFor(() => expect(saveDailyCheckin).toHaveBeenCalledTimes(1));
-    expect(vi.mocked(saveDailyCheckin).mock.calls[0]?.[0]).toEqual(dailyCheckin);
+    expect(vi.mocked(saveDailyCheckin).mock.calls[0]?.[0]).toEqual(mockDailyCheckin);
     await waitFor(() => expect(result.current.isPending).toBe(true));
 
     await act(async () => {
@@ -121,7 +97,7 @@ describe('useSaveDailyCheckinMutation', () => {
     let caughtError: unknown;
     await act(async () => {
       try {
-        await result.current.mutateAsync(dailyCheckin);
+        await result.current.mutateAsync(mockDailyCheckin);
       } catch (caught) {
         caughtError = caught;
       }
