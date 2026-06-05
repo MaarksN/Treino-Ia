@@ -10,10 +10,7 @@ export function CancelRetention({ onConfirmCancel, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-brand-gray border border-white/10 rounded-3xl p-6 shadow-2xl relative">
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 text-white/50 hover:text-white"
-        >
+        <button onClick={onClose} className="absolute right-4 top-4 text-white/50 hover:text-white">
           <X size={18} />
         </button>
 

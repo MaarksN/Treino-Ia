@@ -31,7 +31,7 @@ export function RestTimer({ initialSeconds = 90, autoStartKey, onFinish, onVoice
       return undefined;
     }
 
-    const id = window.setInterval(() => setSeconds(value => Math.max(0, value - 1)), 1000);
+    const id = window.setInterval(() => setSeconds((value) => Math.max(0, value - 1)), 1000);
     return () => window.clearInterval(id);
   }, [running, seconds, onFinish, onVoiceAlert]);
 
@@ -51,13 +51,24 @@ export function RestTimer({ initialSeconds = 90, autoStartKey, onFinish, onVoice
         <div className="flex items-center gap-3">
           <Bell size={18} className="text-brand-muted" />
           <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-brand-muted font-bold">Descanso</p>
-            <p className="text-3xl font-black font-mono tabular-nums" style={{ color }}>{display}</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-brand-muted font-bold">
+              Descanso
+            </p>
+            <p className="text-3xl font-black font-mono tabular-nums" style={{ color }}>
+              {display}
+            </p>
           </div>
         </div>
 
         <svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true">
-          <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(174,224,255,0.12)" strokeWidth="4" />
+          <circle
+            cx="26"
+            cy="26"
+            r="22"
+            fill="none"
+            stroke="rgba(174,224,255,0.12)"
+            strokeWidth="4"
+          />
           <circle
             cx="26"
             cy="26"
@@ -68,14 +79,18 @@ export function RestTimer({ initialSeconds = 90, autoStartKey, onFinish, onVoice
             strokeDasharray={`${circumference}`}
             strokeDashoffset={`${circumference * (1 - progress)}`}
             strokeLinecap="round"
-            style={{ transform: 'rotate(-90deg)', transformOrigin: 'center', transition: 'stroke-dashoffset 1s linear' }}
+            style={{
+              transform: 'rotate(-90deg)',
+              transformOrigin: 'center',
+              transition: 'stroke-dashoffset 1s linear',
+            }}
           />
         </svg>
 
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => setRunning(value => !value)}
+            onClick={() => setRunning((value) => !value)}
             aria-label={running ? 'Pausar descanso' : 'Iniciar descanso'}
             title={running ? 'Pausar descanso' : 'Iniciar descanso'}
             className="p-3 bg-brand-neon text-brand-dark border-brutal font-bold hover:scale-105 transition-transform"

@@ -14,7 +14,11 @@ type SpeechRecognitionLike = {
   lang: string;
   onstart: (() => void) | null;
   onend: (() => void) | null;
-  onresult: ((event: { results: { [index: number]: { [index: number]: { transcript: string } } } }) => void) | null;
+  onresult:
+    | ((event: {
+        results: { [index: number]: { [index: number]: { transcript: string } } };
+      }) => void)
+    | null;
   start: () => void;
 };
 
@@ -96,7 +100,8 @@ export function AICoach({ profile, currentPlan, streak }: Props) {
 
   const handleVoice = () => {
     const speechWindow = window as SpeechWindow;
-    const SpeechRecognition = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
+    const SpeechRecognition =
+      speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       setError('Seu navegador não suporta voz para texto.');
       return;
@@ -106,7 +111,7 @@ export function AICoach({ profile, currentPlan, streak }: Props) {
     recognition.lang = 'pt-BR';
     recognition.onstart = () => setListening(true);
     recognition.onend = () => setListening(false);
-    recognition.onresult = event => {
+    recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript;
       setInput(transcript);
     };
@@ -133,7 +138,11 @@ export function AICoach({ profile, currentPlan, streak }: Props) {
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-brand-neon animate-pulse" />
           <span className="text-brand-neon text-xs">Online</span>
-          <button type="button" onClick={clearHistory} className="text-brand-muted text-xs hover:text-white ml-3">
+          <button
+            type="button"
+            onClick={clearHistory}
+            className="text-brand-muted text-xs hover:text-white ml-3"
+          >
             Limpar
           </button>
         </div>
@@ -144,9 +153,11 @@ export function AICoach({ profile, currentPlan, streak }: Props) {
           <div className="text-center py-8">
             <Bot size={48} className="text-brand-muted mx-auto mb-3" />
             <p className="text-white font-bold mb-1">Olá! Sou o APEX Coach.</p>
-            <p className="text-brand-muted text-sm mb-4">Especialista em treino, periodização e performance. Pergunte qualquer coisa.</p>
+            <p className="text-brand-muted text-sm mb-4">
+              Especialista em treino, periodização e performance. Pergunte qualquer coisa.
+            </p>
             <div className="flex flex-wrap gap-2 justify-center">
-              {QUICK_QUESTIONS.map(question => (
+              {QUICK_QUESTIONS.map((question) => (
                 <button
                   key={question}
                   type="button"
@@ -160,19 +171,30 @@ export function AICoach({ profile, currentPlan, streak }: Props) {
           </div>
         )}
 
-        {messages.map(message => (
-          <div key={message.id} className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}>
-            <div className={`w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center ${
-              message.role === 'coach' ? 'bg-brand-neon/20 border border-brand-neon/40' : 'bg-white/10 border border-white/20'
-            }`}
+        {messages.map((message) => (
+          <div
+            key={message.id}
+            className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
+          >
+            <div
+              className={`w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center ${
+                message.role === 'coach'
+                  ? 'bg-brand-neon/20 border border-brand-neon/40'
+                  : 'bg-white/10 border border-white/20'
+              }`}
             >
-              {message.role === 'coach' ? <Bot size={16} className="text-brand-neon" /> : <User size={16} className="text-white" />}
+              {message.role === 'coach' ? (
+                <Bot size={16} className="text-brand-neon" />
+              ) : (
+                <User size={16} className="text-white" />
+              )}
             </div>
-            <div className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
-              message.role === 'user'
-                ? 'bg-brand-neon text-brand-dark font-semibold rounded-tr-sm'
-                : 'bg-brand-dark border border-white/10 text-white/90 rounded-tl-sm'
-            }`}
+            <div
+              className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+                message.role === 'user'
+                  ? 'bg-brand-neon text-brand-dark font-semibold rounded-tr-sm'
+                  : 'bg-brand-dark border border-white/10 text-white/90 rounded-tl-sm'
+              }`}
             >
               {message.content}
             </div>
@@ -186,7 +208,7 @@ export function AICoach({ profile, currentPlan, streak }: Props) {
             </div>
             <div className="bg-brand-dark border border-white/10 px-4 py-3 rounded-2xl rounded-tl-sm">
               <div className="flex gap-1">
-                {[0, 1, 2].map(index => (
+                {[0, 1, 2].map((index) => (
                   <div
                     key={index}
                     className="w-2 h-2 rounded-full bg-brand-neon"
@@ -211,8 +233,8 @@ export function AICoach({ profile, currentPlan, streak }: Props) {
         <div className="flex items-center gap-2 bg-brand-dark border border-white/10 rounded-xl px-4 py-2 focus-within:border-brand-neon/50 transition-all">
           <input
             value={input}
-            onChange={event => setInput(event.target.value)}
-            onKeyDown={event => {
+            onChange={(event) => setInput(event.target.value)}
+            onKeyDown={(event) => {
               if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
                 send();

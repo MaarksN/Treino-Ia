@@ -27,7 +27,7 @@ describe('ProgressionSuggestionCard', () => {
         suggestion={makeSuggestion()}
         onAccept={onAccept}
         onDismiss={onDismiss}
-      />
+      />,
     );
 
     expect(screen.getByTestId('progression-suggestion-card')).toBeTruthy();
@@ -41,7 +41,7 @@ describe('ProgressionSuggestionCard', () => {
         suggestion={makeSuggestion({ previousLoad: 60, suggestedLoad: 62.5, delta: 2.5 })}
         onAccept={vi.fn()}
         onDismiss={vi.fn()}
-      />
+      />,
     );
 
     expect(screen.getByText('60kg')).toBeTruthy();
@@ -60,7 +60,7 @@ describe('ProgressionSuggestionCard', () => {
         })}
         onAccept={vi.fn()}
         onDismiss={vi.fn()}
-      />
+      />,
     );
 
     expect(screen.getByText('75kg')).toBeTruthy();
@@ -75,7 +75,7 @@ describe('ProgressionSuggestionCard', () => {
         suggestion={makeSuggestion()}
         onAccept={onAccept}
         onDismiss={vi.fn()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByTestId('progression-accept-btn'));
@@ -90,7 +90,7 @@ describe('ProgressionSuggestionCard', () => {
         suggestion={makeSuggestion()}
         onAccept={vi.fn()}
         onDismiss={onDismiss}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByTestId('progression-dismiss-btn'));
@@ -103,7 +103,7 @@ describe('ProgressionSuggestionCard', () => {
         suggestion={makeSuggestion({ action: 'insufficient_data' })}
         onAccept={vi.fn()}
         onDismiss={vi.fn()}
-      />
+      />,
     );
 
     expect(container.innerHTML).toBe('');
@@ -115,7 +115,7 @@ describe('ProgressionSuggestionCard', () => {
         suggestion={makeSuggestion({ suggestedLoad: undefined })}
         onAccept={vi.fn()}
         onDismiss={vi.fn()}
-      />
+      />,
     );
 
     expect(container.innerHTML).toBe('');
@@ -131,7 +131,7 @@ describe('ProgressionSuggestionCard', () => {
         })}
         onAccept={vi.fn()}
         onDismiss={vi.fn()}
-      />
+      />,
     );
 
     expect(container.innerHTML).not.toBe('');

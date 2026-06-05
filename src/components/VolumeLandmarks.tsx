@@ -1,10 +1,7 @@
 import React, { useMemo } from 'react';
 import { BarChart3 } from 'lucide-react';
 import { TrainingExercisePerformance } from '../types';
-import {
-  calculateWeeklyMuscleVolumes,
-  classifyVolume,
-} from '../utils/periodizationUtils';
+import { calculateWeeklyMuscleVolumes, classifyVolume } from '../utils/periodizationUtils';
 
 interface Props {
   performances: TrainingExercisePerformance[];
@@ -12,14 +9,9 @@ interface Props {
 
 export function VolumeLandmarks({ performances }: Props) {
   const rows = useMemo(() => {
-    return calculateWeeklyMuscleVolumes(performances).map(item => ({
+    return calculateWeeklyMuscleVolumes(performances).map((item) => ({
       ...item,
-      classification: classifyVolume(
-        item.currentVolume,
-        item.mev,
-        item.mav,
-        item.mrv,
-      ),
+      classification: classifyVolume(item.currentVolume, item.mev, item.mav, item.mrv),
     }));
   }, [performances]);
 
@@ -36,7 +28,7 @@ export function VolumeLandmarks({ performances }: Props) {
       </div>
 
       <div className="space-y-3">
-        {rows.map(row => {
+        {rows.map((row) => {
           const percentage = Math.min(100, Math.round((row.currentVolume / row.mrv) * 100));
 
           return (
@@ -49,16 +41,15 @@ export function VolumeLandmarks({ performances }: Props) {
                   </p>
                 </div>
 
-                <span className={`text-xs rounded-full border px-3 py-1 ${row.classification.className}`}>
+                <span
+                  className={`text-xs rounded-full border px-3 py-1 ${row.classification.className}`}
+                >
                   {row.classification.label}
                 </span>
               </div>
 
               <div className="h-3 rounded-full bg-white/10 overflow-hidden">
-                <div
-                  className="h-full bg-brand-neon"
-                  style={{ width: `${percentage}%` }}
-                />
+                <div className="h-full bg-brand-neon" style={{ width: `${percentage}%` }} />
               </div>
 
               <div className="flex items-center justify-between mt-2 text-xs">
@@ -66,9 +57,7 @@ export function VolumeLandmarks({ performances }: Props) {
                 <strong className="text-white">{row.currentVolume} séries/semana</strong>
               </div>
 
-              <p className="text-xs text-white/60 mt-3">
-                {row.classification.recommendation}
-              </p>
+              <p className="text-xs text-white/60 mt-3">{row.classification.recommendation}</p>
             </div>
           );
         })}

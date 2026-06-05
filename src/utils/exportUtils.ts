@@ -17,13 +17,13 @@ export function generateWorkoutMarkdown(plan: WorkoutPlan): string {
   md += `**Objetivo:** ${plan.goalDescription || '—'}\n`;
   md += `**Estrutura:** ${plan.days.length} dias de treino\n\n`;
 
-  plan.days.forEach(day => {
+  plan.days.forEach((day) => {
     md += `## ${day.dayName} — ${day.focus}\n\n`;
     if (day.warmup) md += `**Aquecimento:** ${day.warmup}\n\n`;
     if (day.estimatedDuration) md += `**Duração estimada:** ${day.estimatedDuration}\n\n`;
     md += '| Exercício | Séries | Reps | Descanso | Observações |\n';
     md += '|-----------|--------|------|----------|-------------|\n';
-    day.exercises.forEach(exercise => {
+    day.exercises.forEach((exercise) => {
       md += `| ${cleanMarkdownCell(exercise.name)} | ${exercise.sets} | ${cleanMarkdownCell(exercise.reps)} | ${cleanMarkdownCell(exercise.rest)} | ${cleanMarkdownCell(exercise.notes || exercise.executionDetails)} |\n`;
     });
     if (day.cooldown) md += `\n**Cooldown:** ${day.cooldown}\n`;
@@ -34,17 +34,30 @@ export function generateWorkoutMarkdown(plan: WorkoutPlan): string {
 }
 
 export function generateHistoryCSV(history: WorkoutHistoryEntry[]): string {
-  const header = ['Data', 'Plano', 'Foco', 'Exercícios', 'Concluídos', 'Volume (kg)', 'Duração (min)', 'Prontidão'].join(',');
-  const rows = history.map(entry => [
-    entry.date,
-    entry.planName,
-    entry.dayFocus,
-    entry.exerciseCount,
-    entry.completedCount,
-    entry.totalVolume,
-    entry.durationMinutes,
-    entry.readinessScore,
-  ].map(csvCell).join(','));
+  const header = [
+    'Data',
+    'Plano',
+    'Foco',
+    'Exercícios',
+    'Concluídos',
+    'Volume (kg)',
+    'Duração (min)',
+    'Prontidão',
+  ].join(',');
+  const rows = history.map((entry) =>
+    [
+      entry.date,
+      entry.planName,
+      entry.dayFocus,
+      entry.exerciseCount,
+      entry.completedCount,
+      entry.totalVolume,
+      entry.durationMinutes,
+      entry.readinessScore,
+    ]
+      .map(csvCell)
+      .join(','),
+  );
 
   return [header, ...rows].join('\n');
 }
@@ -79,7 +92,7 @@ export function restoreFromBackup(backup: Record<string, unknown>) {
 export function buildAppBackup(
   plans: WorkoutPlan[],
   history: WorkoutHistoryEntry[],
-  streak: StreakData
+  streak: StreakData,
 ): Record<string, unknown> {
   return {
     '@TreinoApp:plans': plans,

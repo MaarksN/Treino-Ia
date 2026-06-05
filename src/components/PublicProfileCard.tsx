@@ -13,7 +13,12 @@ interface Props {
   onAuthRequired?: () => void;
 }
 
-export function PublicProfileCard({ profile, showQr = true, canInteract = true, onAuthRequired }: Props) {
+export function PublicProfileCard({
+  profile,
+  showQr = true,
+  canInteract = true,
+  onAuthRequired,
+}: Props) {
   const [status, setStatus] = useState('');
   const publicUrl = createPublicProfileUrl(profile.username);
 
@@ -39,7 +44,11 @@ export function PublicProfileCard({ profile, showQr = true, canInteract = true, 
         <div className="flex items-center gap-4 min-w-0">
           <div className="w-16 h-16 rounded-2xl bg-brand-neon/20 flex items-center justify-center text-2xl shrink-0">
             {profile.avatar_url ? (
-              <img src={profile.avatar_url} alt={profile.display_name} className="w-full h-full object-cover rounded-2xl" />
+              <img
+                src={profile.avatar_url}
+                alt={profile.display_name}
+                className="w-full h-full object-cover rounded-2xl"
+              />
             ) : (
               '💪'
             )}
@@ -82,7 +91,9 @@ export function PublicProfileCard({ profile, showQr = true, canInteract = true, 
       <div className="grid grid-cols-3 gap-3 mt-6">
         <div className="rounded-2xl bg-white/5 p-4">
           <p className="text-xs text-brand-muted">Treinos</p>
-          <strong className="text-xl text-white">{formatSocialNumber(profile.total_workouts)}</strong>
+          <strong className="text-xl text-white">
+            {formatSocialNumber(profile.total_workouts)}
+          </strong>
         </div>
         <div className="rounded-2xl bg-white/5 p-4">
           <p className="text-xs text-brand-muted">Streak</p>
@@ -90,7 +101,9 @@ export function PublicProfileCard({ profile, showQr = true, canInteract = true, 
         </div>
         <div className="rounded-2xl bg-white/5 p-4">
           <p className="text-xs text-brand-muted">Volume</p>
-          <strong className="text-xl text-white">{formatSocialNumber(Number(profile.total_volume))}kg</strong>
+          <strong className="text-xl text-white">
+            {formatSocialNumber(Number(profile.total_volume))}kg
+          </strong>
         </div>
       </div>
 
@@ -102,8 +115,11 @@ export function PublicProfileCard({ profile, showQr = true, canInteract = true, 
 
         <div className="flex flex-wrap gap-2">
           {profile.badges?.length ? (
-            profile.badges.map(badge => (
-              <span key={badge.id} className="rounded-full bg-brand-neon/10 border border-brand-neon/20 px-3 py-1 text-sm text-brand-neon">
+            profile.badges.map((badge) => (
+              <span
+                key={badge.id}
+                className="rounded-full bg-brand-neon/10 border border-brand-neon/20 px-3 py-1 text-sm text-brand-neon"
+              >
                 {badge.emoji} {badge.name}
               </span>
             ))

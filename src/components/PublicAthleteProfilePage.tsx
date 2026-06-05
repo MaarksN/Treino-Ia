@@ -30,7 +30,9 @@ export function PublicAthleteProfilePage() {
           setStatus('Perfil público não encontrado.');
         }
       } catch (error) {
-        setStatus(error instanceof Error ? error.message : 'Não foi possível carregar o perfil público.');
+        setStatus(
+          error instanceof Error ? error.message : 'Não foi possível carregar o perfil público.',
+        );
       } finally {
         setLoading(false);
       }
@@ -72,8 +74,11 @@ export function PublicAthleteProfilePage() {
           <section className="bg-brand-gray rounded-3xl border border-white/10 p-5">
             <h2 className="text-2xl font-black text-white mb-4">Feed público</h2>
             <div className="space-y-3">
-              {posts.map(post => (
-                <article key={post.id} className="rounded-2xl bg-white/5 border border-white/10 p-4">
+              {posts.map((post) => (
+                <article
+                  key={post.id}
+                  className="rounded-2xl bg-white/5 border border-white/10 p-4"
+                >
                   <p className="text-xs text-brand-muted">{timeAgo(post.created_at)}</p>
                   <h3 className="text-lg text-white font-black mt-1">{post.title}</h3>
                   {post.body && <p className="text-sm text-white/75 mt-2">{post.body}</p>}
@@ -84,7 +89,9 @@ export function PublicAthleteProfilePage() {
                   )}
                 </article>
               ))}
-              {posts.length === 0 && <p className="text-brand-muted">Este atleta ainda não publicou conquistas.</p>}
+              {posts.length === 0 && (
+                <p className="text-brand-muted">Este atleta ainda não publicou conquistas.</p>
+              )}
             </div>
           </section>
         </>

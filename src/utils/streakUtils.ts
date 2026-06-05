@@ -1,19 +1,31 @@
 import { StreakData } from '../types';
 
-export function loadStreakFromWorkoutDates(workoutDates: string[], nowIso = new Date().toISOString().slice(0, 10)): StreakData {
+export function loadStreakFromWorkoutDates(
+  workoutDates: string[],
+  nowIso = new Date().toISOString().slice(0, 10),
+): StreakData {
   const uniqueDates = Array.from(new Set(workoutDates)).sort();
   if (!uniqueDates.length) {
-    return { currentStreak: 0, longestStreak: 0, lastWorkoutDate: null, totalWorkouts: 0, workoutDates: [] };
+    return {
+      currentStreak: 0,
+      longestStreak: 0,
+      lastWorkoutDate: null,
+      totalWorkouts: 0,
+      workoutDates: [],
+    };
   }
 
-  const best = uniqueDates.reduce((acc, date, index) => {
-    if (index === 0) return { best: 1, run: 1, prev: date };
-    const prev = new Date(`${acc.prev}T00:00:00`);
-    const current = new Date(`${date}T00:00:00`);
-    const gap = Math.round((current.getTime() - prev.getTime()) / 86400000);
-    const run = gap === 1 ? acc.run + 1 : 1;
-    return { best: Math.max(acc.best, run), run, prev: date };
-  }, { best: 1, run: 1, prev: uniqueDates[0] });
+  const best = uniqueDates.reduce(
+    (acc, date, index) => {
+      if (index === 0) return { best: 1, run: 1, prev: date };
+      const prev = new Date(`${acc.prev}T00:00:00`);
+      const current = new Date(`${date}T00:00:00`);
+      const gap = Math.round((current.getTime() - prev.getTime()) / 86400000);
+      const run = gap === 1 ? acc.run + 1 : 1;
+      return { best: Math.max(acc.best, run), run, prev: date };
+    },
+    { best: 1, run: 1, prev: uniqueDates[0] },
+  );
 
   const currentStreak = (() => {
     let streak = 0;
@@ -36,7 +48,13 @@ export function loadStreakFromWorkoutDates(workoutDates: string[], nowIso = new 
 }
 
 export function loadStreak(): StreakData {
-  return { currentStreak: 0, longestStreak: 0, lastWorkoutDate: null, totalWorkouts: 0, workoutDates: [] };
+  return {
+    currentStreak: 0,
+    longestStreak: 0,
+    lastWorkoutDate: null,
+    totalWorkouts: 0,
+    workoutDates: [],
+  };
 }
 
 export function recordWorkoutForStreak(existing: StreakData, workoutDateIso: string): StreakData {

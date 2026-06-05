@@ -182,7 +182,12 @@ export type SocialReportStatus = 'open' | 'reviewing' | 'actioned' | 'dismissed'
 
 export type SocialModerationStatus = 'visible' | 'under_review' | 'hidden' | 'removed';
 
-export type SocialModerationAction = 'none' | 'hidden' | 'removed' | 'user_warned' | 'user_suspended';
+export type SocialModerationAction =
+  | 'none'
+  | 'hidden'
+  | 'removed'
+  | 'user_warned'
+  | 'user_suspended';
 
 export interface SocialContentReport {
   id: string;

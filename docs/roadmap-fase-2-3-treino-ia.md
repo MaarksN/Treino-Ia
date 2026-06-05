@@ -30,14 +30,14 @@ supabase/migrations/20260511052000_legacy_training_profile_plan_history.sql
 
 Leitura tecnica:
 
-| Area | Ja existe | Lacuna principal |
-|---|---|---|
-| Plano de treino | `calculateTrainingPlan` cria plano por perfil | Plano precisa ser salvo, reusado e ajustado apos sessoes reais |
-| Treino ativo | `ActiveWorkoutView`, `SetTracker`, `RestTimer` | Dashboard principal ainda nao expoe a jornada completa |
-| Series | `SetLog` suporta carga, reps, RPE e falhas | Falta persistencia granular por serie e autopreenchimento robusto |
-| Historico | `DatabaseService.saveWorkoutSession` salva sessoes | Falta normalizar historico para analytics, PRs e IA semanal |
-| IA adaptativa | `aiPersonalizationService` tem contratos e fallbacks | Falta orquestrador de adaptacao semanal aplicado ao plano atual |
-| Supabase | Tabelas de perfil, plano e historico existem | Falta tabela granular de series, PRs e recomendacoes aceitas/rejeitadas |
+| Area            | Ja existe                                            | Lacuna principal                                                        |
+| --------------- | ---------------------------------------------------- | ----------------------------------------------------------------------- |
+| Plano de treino | `calculateTrainingPlan` cria plano por perfil        | Plano precisa ser salvo, reusado e ajustado apos sessoes reais          |
+| Treino ativo    | `ActiveWorkoutView`, `SetTracker`, `RestTimer`       | Dashboard principal ainda nao expoe a jornada completa                  |
+| Series          | `SetLog` suporta carga, reps, RPE e falhas           | Falta persistencia granular por serie e autopreenchimento robusto       |
+| Historico       | `DatabaseService.saveWorkoutSession` salva sessoes   | Falta normalizar historico para analytics, PRs e IA semanal             |
+| IA adaptativa   | `aiPersonalizationService` tem contratos e fallbacks | Falta orquestrador de adaptacao semanal aplicado ao plano atual         |
+| Supabase        | Tabelas de perfil, plano e historico existem         | Falta tabela granular de series, PRs e recomendacoes aceitas/rejeitadas |
 
 ## Principios de entrega
 
@@ -95,13 +95,13 @@ Escopo MVP:
 
 Regras sugeridas:
 
-| Caso | Acao |
-|---|---|
-| Mesmo exercicio e RPE <= 8 | Sugerir mesma carga e +1 rep ou +2,5% de carga |
-| Mesmo exercicio e RPE 8,5-9 | Sugerir repetir carga/reps |
-| RPE >= 9,5 ou falha tecnica | Sugerir manter ou reduzir 2,5%-5% |
+| Caso                         | Acao                                            |
+| ---------------------------- | ----------------------------------------------- |
+| Mesmo exercicio e RPE <= 8   | Sugerir mesma carga e +1 rep ou +2,5% de carga  |
+| Mesmo exercicio e RPE 8,5-9  | Sugerir repetir carga/reps                      |
+| RPE >= 9,5 ou falha tecnica  | Sugerir manter ou reduzir 2,5%-5%               |
 | Dor/falha tecnica recorrente | Sugerir substituicao ou reduzir amplitude/carga |
-| Sem historico | Usar prescricao do plano |
+| Sem historico                | Usar prescricao do plano                        |
 
 Checklist de pronto:
 
@@ -128,14 +128,14 @@ training_plan_revisions
 
 Modelo proposto:
 
-| Tabela | Responsabilidade | Campos chave |
-|---|---|---|
-| `training_workout_sessions` | Uma sessao concluida ou em progresso | `id`, `user_id`, `plan_id`, `day_id`, `started_at`, `completed_at`, `duration_seconds`, `total_volume`, `readiness_score` |
-| `training_workout_exercise_logs` | Um exercicio dentro da sessao | `id`, `session_id`, `exercise_id`, `exercise_name`, `muscle_group`, `target_sets`, `target_reps`, `completed`, `notes` |
-| `training_workout_set_logs` | Cada serie executada | `id`, `exercise_log_id`, `set_number`, `weight`, `reps`, `rpe`, `failed`, `technical_failure`, `completed_at` |
-| `training_personal_records` | PRs derivados ou confirmados | `id`, `user_id`, `exercise_name`, `weight`, `reps`, `estimated_1rm`, `session_id`, `achieved_at` |
-| `training_ai_recommendations` | Recomendacoes apresentadas ao usuario | `id`, `user_id`, `feature`, `recommendation_json`, `status`, `reason`, `created_at` |
-| `training_plan_revisions` | Historico de mudancas no plano | `id`, `user_id`, `plan_id`, `source`, `diff_json`, `applied_at` |
+| Tabela                           | Responsabilidade                      | Campos chave                                                                                                              |
+| -------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `training_workout_sessions`      | Uma sessao concluida ou em progresso  | `id`, `user_id`, `plan_id`, `day_id`, `started_at`, `completed_at`, `duration_seconds`, `total_volume`, `readiness_score` |
+| `training_workout_exercise_logs` | Um exercicio dentro da sessao         | `id`, `session_id`, `exercise_id`, `exercise_name`, `muscle_group`, `target_sets`, `target_reps`, `completed`, `notes`    |
+| `training_workout_set_logs`      | Cada serie executada                  | `id`, `exercise_log_id`, `set_number`, `weight`, `reps`, `rpe`, `failed`, `technical_failure`, `completed_at`             |
+| `training_personal_records`      | PRs derivados ou confirmados          | `id`, `user_id`, `exercise_name`, `weight`, `reps`, `estimated_1rm`, `session_id`, `achieved_at`                          |
+| `training_ai_recommendations`    | Recomendacoes apresentadas ao usuario | `id`, `user_id`, `feature`, `recommendation_json`, `status`, `reason`, `created_at`                                       |
+| `training_plan_revisions`        | Historico de mudancas no plano        | `id`, `user_id`, `plan_id`, `source`, `diff_json`, `applied_at`                                                           |
 
 Politicas RLS:
 
@@ -194,13 +194,13 @@ Fluxo:
 
 Guardrails obrigatorios:
 
-| Sinal | Bloqueio |
-|---|---|
-| Dor ou limitacao | Nao aumentar carga no exercicio afetado |
-| RPE medio >= 9 | Nao aumentar intensidade global |
-| Sono < 6h ou stress alto | Reduzir agressividade |
-| Falha tecnica recorrente | Priorizar tecnica ou troca de exercicio |
-| Aderencia baixa | Reduzir complexidade antes de aumentar volume |
+| Sinal                    | Bloqueio                                      |
+| ------------------------ | --------------------------------------------- |
+| Dor ou limitacao         | Nao aumentar carga no exercicio afetado       |
+| RPE medio >= 9           | Nao aumentar intensidade global               |
+| Sono < 6h ou stress alto | Reduzir agressividade                         |
+| Falha tecnica recorrente | Priorizar tecnica ou troca de exercicio       |
+| Aderencia baixa          | Reduzir complexidade antes de aumentar volume |
 
 Checklist de pronto:
 
@@ -275,14 +275,14 @@ Checklist de pronto:
 
 ## Dependencias tecnicas
 
-| Dependencia | Necessaria para | Status |
-|---|---|---|
-| Supabase Auth | Dados por usuario e RLS | Ja previsto |
-| Supabase DB | Historico, series e revisoes | Parcial |
-| Gemini proxy | Adaptacao IA segura | Ja previsto |
-| Feature flags | Rollout gradual | Ja previsto |
-| Vitest | Regras de progressao e adapters | Ja previsto |
-| PWA/offline | Treino em academia sem conexao | Depois do MVP de treino |
+| Dependencia   | Necessaria para                 | Status                  |
+| ------------- | ------------------------------- | ----------------------- |
+| Supabase Auth | Dados por usuario e RLS         | Ja previsto             |
+| Supabase DB   | Historico, series e revisoes    | Parcial                 |
+| Gemini proxy  | Adaptacao IA segura             | Ja previsto             |
+| Feature flags | Rollout gradual                 | Ja previsto             |
+| Vitest        | Regras de progressao e adapters | Ja previsto             |
+| PWA/offline   | Treino em academia sem conexao  | Depois do MVP de treino |
 
 ## Arquivos novos sugeridos
 
@@ -304,33 +304,33 @@ supabase/migrations/YYYYMMDDHHMMSS_training_execution_core.sql
 ## Feature flags sugeridas
 
 ```ts
-training.activeWorkoutV2
-training.setLevelLogging
-training.historyAndPrs
-training.weeklyAiAdaptation
-training.postWorkoutFeedback
+training.activeWorkoutV2;
+training.setLevelLogging;
+training.historyAndPrs;
+training.weeklyAiAdaptation;
+training.postWorkoutFeedback;
 ```
 
 ## Metricas de produto
 
-| Metrica | Porque importa |
-|---|---|
-| `workout_started` | Mede ativacao do core |
-| `workout_completed` | Mede valor real |
-| `set_logged` | Mede qualidade dos dados |
-| `history_viewed` | Mede retorno ao progresso |
-| `weekly_adaptation_generated` | Mede uso da IA |
-| `weekly_adaptation_accepted` | Mede confianca na IA |
+| Metrica                        | Porque importa              |
+| ------------------------------ | --------------------------- |
+| `workout_started`              | Mede ativacao do core       |
+| `workout_completed`            | Mede valor real             |
+| `set_logged`                   | Mede qualidade dos dados    |
+| `history_viewed`               | Mede retorno ao progresso   |
+| `weekly_adaptation_generated`  | Mede uso da IA              |
+| `weekly_adaptation_accepted`   | Mede confianca na IA        |
 | `post_workout_feedback_viewed` | Mede recompensa apos treino |
 
 ## Riscos e mitigacoes
 
-| Risco | Mitigacao |
-|---|---|
-| IA recomendar excesso | Guardrails deterministicos antes/depois da IA |
-| Dados ruins por friccao | Autopreenchimento e campos opcionais |
-| Supabase indisponivel | Fallback local e fila offline |
-| Schema duplicado | Adapter legado e migration incremental |
+| Risco                    | Mitigacao                                       |
+| ------------------------ | ----------------------------------------------- |
+| IA recomendar excesso    | Guardrails deterministicos antes/depois da IA   |
+| Dados ruins por friccao  | Autopreenchimento e campos opcionais            |
+| Supabase indisponivel    | Fallback local e fila offline                   |
+| Schema duplicado         | Adapter legado e migration incremental          |
 | UX pesada durante treino | Fluxo fullscreen, botoes grandes e minimo texto |
 
 ## Definicao de pronto da Fase 2 + Fase 3

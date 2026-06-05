@@ -60,13 +60,29 @@ describe('jsonbProfileAdapter', () => {
 
   it('checks profile completeness', () => {
     expect(isProfileComplete(null)).toBe(false);
-    expect(isProfileComplete({
-      id: 'p1', name: 'A', level: 'iniciante', goal: 'B',
-      daysPerWeek: 3, timePerWorkout: 30, injuries: '', equipment: '',
-    })).toBe(true);
-    expect(isProfileComplete({
-      id: 'p1', name: '', level: 'iniciante', goal: 'B',
-      daysPerWeek: 3, timePerWorkout: 30, injuries: '', equipment: '',
-    })).toBe(false);
+    expect(
+      isProfileComplete({
+        id: 'p1',
+        name: 'A',
+        level: 'iniciante',
+        goal: 'B',
+        daysPerWeek: 3,
+        timePerWorkout: 30,
+        injuries: '',
+        equipment: '',
+      }),
+    ).toBe(true);
+    expect(
+      isProfileComplete({
+        id: 'p1',
+        name: '',
+        level: 'iniciante',
+        goal: 'B',
+        daysPerWeek: 3,
+        timePerWorkout: 30,
+        injuries: '',
+        equipment: '',
+      }),
+    ).toBe(false);
   });
 });

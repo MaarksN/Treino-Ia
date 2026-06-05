@@ -11,5 +11,9 @@ export function buildWarmupProtocol(muscle: string) {
 }
 
 export function buildCooldownProtocol() {
-  return ['Respiracao nasal por 2 min', 'Alongamento leve dos grupos treinados', 'Caminhada curta para baixar FC'];
+  return [
+    'Respiracao nasal por 2 min',
+    'Alongamento leve dos grupos treinados',
+    'Caminhada curta para baixar FC',
+  ];
 }

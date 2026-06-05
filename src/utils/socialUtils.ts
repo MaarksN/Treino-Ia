@@ -20,7 +20,7 @@ function randomBase36(length: number): string {
     throw new Error('Secure random number generation is not supported in this environment.');
   }
 
-  return Array.from(bytes, value => alphabet[value % alphabet.length]).join('');
+  return Array.from(bytes, (value) => alphabet[value % alphabet.length]).join('');
 }
 
 export function sanitizeSocialText(value: string, maxLength = SOCIAL_TEXT_MAX_LENGTH): string {
@@ -50,13 +50,19 @@ export function validateUsername(value: string): string {
   const username = createUsernameSlug(value);
 
   if (!username) {
-    throw new Error('Username deve ter pelo menos 3 caracteres usando letras, números ou underscore.');
+    throw new Error(
+      'Username deve ter pelo menos 3 caracteres usando letras, números ou underscore.',
+    );
   }
 
   return username;
 }
 
-export function requireSocialText(value: string, fieldLabel: string, maxLength = SOCIAL_TEXT_MAX_LENGTH): string {
+export function requireSocialText(
+  value: string,
+  fieldLabel: string,
+  maxLength = SOCIAL_TEXT_MAX_LENGTH,
+): string {
   const text = sanitizeSocialText(value, maxLength);
 
   if (!text) {
@@ -83,12 +89,16 @@ export function createGroupInviteUrl(inviteCode: string): string {
   return `${getOrigin()}/groups/join/${encodeURIComponent(inviteCode)}`;
 }
 
-export function getInviteCodeFromPath(pathname = typeof window !== 'undefined' ? window.location.pathname : ''): string | null {
+export function getInviteCodeFromPath(
+  pathname = typeof window !== 'undefined' ? window.location.pathname : '',
+): string | null {
   const match = pathname.match(/^\/groups\/join\/([^/]+)/);
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-export function getUsernameFromPath(pathname = typeof window !== 'undefined' ? window.location.pathname : ''): string | null {
+export function getUsernameFromPath(
+  pathname = typeof window !== 'undefined' ? window.location.pathname : '',
+): string | null {
   const match = pathname.match(/^\/u\/([^/]+)/);
   return match ? decodeURIComponent(match[1]) : null;
 }

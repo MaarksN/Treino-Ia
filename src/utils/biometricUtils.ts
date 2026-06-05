@@ -21,7 +21,11 @@ export function saveHydrationEntry(entry: HydrationEntry) {
 
 export function loadHydrationGoal(): HydrationGoal {
   try {
-    return { dailyMl: 2500, remindEveryMinutes: 60, ...JSON.parse(localStorage.getItem(HYDRO_GOAL_KEY) || '{}') };
+    return {
+      dailyMl: 2500,
+      remindEveryMinutes: 60,
+      ...JSON.parse(localStorage.getItem(HYDRO_GOAL_KEY) || '{}'),
+    };
   } catch {
     return { dailyMl: 2500, remindEveryMinutes: 60 };
   }
@@ -34,7 +38,7 @@ export function saveHydrationGoal(goal: HydrationGoal) {
 export function getTodayHydration(entries: HydrationEntry[]): number {
   const today = new Date().toISOString().slice(0, 10);
   return entries
-    .filter(entry => entry.date === today)
+    .filter((entry) => entry.date === today)
     .reduce((sum, entry) => sum + entry.amountMl, 0);
 }
 
@@ -53,7 +57,7 @@ export function loadSleepEntries(): SleepEntry[] {
 
 export function saveSleepEntry(entry: SleepEntry) {
   const all = loadSleepEntries();
-  const existing = all.findIndex(item => item.date === entry.date);
+  const existing = all.findIndex((item) => item.date === entry.date);
   if (existing >= 0) all[existing] = entry;
   else all.push(entry);
   localStorage.setItem(SLEEP_KEY, JSON.stringify(all.slice(-120)));
@@ -63,7 +67,7 @@ export function calcSleepDuration(bedtime: string, wakeTime: string): number {
   const [bedHour, bedMinute] = bedtime.split(':').map(Number);
   const [wakeHour, wakeMinute] = wakeTime.split(':').map(Number);
 
-  if ([bedHour, bedMinute, wakeHour, wakeMinute].some(value => Number.isNaN(value))) {
+  if ([bedHour, bedMinute, wakeHour, wakeMinute].some((value) => Number.isNaN(value))) {
     return 0;
   }
 

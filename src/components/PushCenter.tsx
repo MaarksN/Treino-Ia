@@ -79,9 +79,7 @@ export function PushCenter() {
             Push Center
           </p>
 
-          <h2 className="text-2xl font-black text-white mt-2">
-            Preferencias de notificacao
-          </h2>
+          <h2 className="text-2xl font-black text-white mt-2">Preferencias de notificacao</h2>
 
           <p className="text-brand-muted mt-1">
             Configure lembretes inteligentes de treino, streak, recovery e relatorio semanal.
@@ -125,7 +123,7 @@ export function PushCenter() {
           title="Lembrete de treino"
           description="Avisar quando chegar o horario preferido de treino."
           checked={preferences.workoutReminder}
-          onChange={value => update('workoutReminder', value)}
+          onChange={(value) => update('workoutReminder', value)}
         />
 
         <PreferenceRow
@@ -133,7 +131,7 @@ export function PushCenter() {
           title="Lembrete de streak"
           description="Avisar quando o usuario estiver perto de perder sequencia."
           checked={preferences.streakReminder}
-          onChange={value => update('streakReminder', value)}
+          onChange={(value) => update('streakReminder', value)}
         />
 
         <PreferenceRow
@@ -141,7 +139,7 @@ export function PushCenter() {
           title="Recovery"
           description="Avisar sobre descanso, sono e recuperacao pos-treino."
           checked={preferences.recoveryReminder}
-          onChange={value => update('recoveryReminder', value)}
+          onChange={(value) => update('recoveryReminder', value)}
         />
 
         <PreferenceRow
@@ -149,7 +147,7 @@ export function PushCenter() {
           title="Relatorio semanal"
           description="Avisar quando o relatorio semanal estiver pronto."
           checked={preferences.weeklyReport}
-          onChange={value => update('weeklyReport', value)}
+          onChange={(value) => update('weeklyReport', value)}
         />
       </div>
 
@@ -164,7 +162,7 @@ export function PushCenter() {
           min={5}
           max={23}
           value={preferences.preferredHour}
-          onChange={event => update('preferredHour', Number(event.target.value))}
+          onChange={(event) => update('preferredHour', Number(event.target.value))}
           className="w-full mt-3"
         />
 

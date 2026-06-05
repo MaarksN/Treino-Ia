@@ -28,7 +28,7 @@ const mockEntry: HydrationEntry = {
   date: '2026-05-24',
   time: '14:30',
   amountMl: 500,
-  type: 'água'
+  type: 'água',
 };
 
 describe('useSaveHydrationEntryMutation', () => {

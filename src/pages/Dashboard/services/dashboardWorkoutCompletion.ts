@@ -7,10 +7,7 @@ import type {
   WorkoutSession,
 } from '../../../services/trainingTypes';
 import type { ActiveExerciseDraft } from '../types';
-import {
-  buildWorkoutExerciseLog,
-  calculateWorkoutTonnage,
-} from './activeWorkoutEngine';
+import { buildWorkoutExerciseLog, calculateWorkoutTonnage } from './activeWorkoutEngine';
 import { createDashboardSessionId } from './dashboardSession';
 
 export interface BuildCompletedDashboardWorkoutInput {
@@ -63,13 +60,19 @@ export function buildCompletedDashboardWorkout(
     nextRecommendation: '',
     exercises: logs,
   };
-  const nextHistory = [baseSession, ...input.history.filter(item => item.id !== baseSession.id)].slice(0, 50);
+  const nextHistory = [
+    baseSession,
+    ...input.history.filter((item) => item.id !== baseSession.id),
+  ].slice(0, 50);
   const adjustedPlan = calculateTrainingPlan(input.profile, nextHistory);
   const completedSession = {
     ...baseSession,
     nextRecommendation: adjustedPlan.nextRecommendation,
   };
-  const finalHistory = [completedSession, ...input.history.filter(item => item.id !== completedSession.id)].slice(0, 50);
+  const finalHistory = [
+    completedSession,
+    ...input.history.filter((item) => item.id !== completedSession.id),
+  ].slice(0, 50);
 
   return {
     adjustedPlan,

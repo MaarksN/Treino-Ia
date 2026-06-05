@@ -47,7 +47,10 @@ describe('aiRecommendationRepository local fallback', () => {
       legacySourceSessionId: 'session-1',
     });
 
-    const applied = await aiRecommendationRepository.markApplied(record, record.payload.proposedPlan);
+    const applied = await aiRecommendationRepository.markApplied(
+      record,
+      record.payload.proposedPlan,
+    );
 
     expect(applied.status).toBe('applied');
     expect(applied.acceptedAt).toBeTruthy();

@@ -60,7 +60,9 @@ async function findUserIdForStripeSubscription(subscription: Stripe.Subscription
   const { data, error } = await supabase
     .from('billing_subscriptions')
     .select('user_id')
-    .or(`stripe_subscription_id.eq.${subscription.id},stripe_customer_id.eq.${getStripeId(subscription.customer)}`)
+    .or(
+      `stripe_subscription_id.eq.${subscription.id},stripe_customer_id.eq.${getStripeId(subscription.customer)}`,
+    )
     .maybeSingle();
 
   if (error) {
@@ -125,15 +127,13 @@ export async function upsertSubscriptionFromCheckoutSession(session: Stripe.Chec
 
 export async function recordStripeWebhookEvent(event: Stripe.Event): Promise<boolean> {
   const supabase = getSupabaseAdmin();
-  const { error } = await supabase
-    .from('stripe_webhook_events')
-    .insert({
-      id: event.id,
-      type: event.type,
-      stripe_created_at: secondsToIso(event.created),
-      payload: minimizeStripeWebhookPayload(event) as unknown as Record<string, unknown>,
-      processed_at: new Date().toISOString(),
-    });
+  const { error } = await supabase.from('stripe_webhook_events').insert({
+    id: event.id,
+    type: event.type,
+    stripe_created_at: secondsToIso(event.created),
+    payload: minimizeStripeWebhookPayload(event) as unknown as Record<string, unknown>,
+    processed_at: new Date().toISOString(),
+  });
 
   if (!error) return true;
 
@@ -143,4 +143,3 @@ export async function recordStripeWebhookEvent(event: Stripe.Event): Promise<boo
 
   throw new Error(`Failed to record Stripe webhook event: ${error.message}`);
 }
-

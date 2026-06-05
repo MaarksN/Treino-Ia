@@ -15,7 +15,7 @@ describe('useAuthState', () => {
   it('refreshes the session on sign in and token refresh events', () => {
     const unsubscribe = vi.fn();
     let authCallback: Parameters<typeof onAuthStateChange>[0] | undefined;
-    vi.mocked(onAuthStateChange).mockImplementation(callback => {
+    vi.mocked(onAuthStateChange).mockImplementation((callback) => {
       authCallback = callback;
       return unsubscribe;
     });
@@ -35,7 +35,7 @@ describe('useAuthState', () => {
 
   it('ignores auth events that do not require a session refresh', () => {
     let authCallback: Parameters<typeof onAuthStateChange>[0] | undefined;
-    vi.mocked(onAuthStateChange).mockImplementation(callback => {
+    vi.mocked(onAuthStateChange).mockImplementation((callback) => {
       authCallback = callback;
       return vi.fn();
     });

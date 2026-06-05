@@ -7,10 +7,10 @@ import { mapWorkoutHistoryToWorkoutSessions } from '../adapters/workoutHistoryAd
 export function useProgressionSuggestion(
   exerciseId: string,
   exerciseName: string,
-  muscleGroup?: string
+  muscleGroup?: string,
 ): ProgressionSuggestion | null {
-  const workoutHistory = useAppStore(state => state.workoutHistory);
-  const profile = useAppStore(state => state.profile);
+  const workoutHistory = useAppStore((state) => state.workoutHistory);
+  const profile = useAppStore((state) => state.profile);
 
   return useMemo(() => {
     if (!profile) return null;
@@ -19,7 +19,7 @@ export function useProgressionSuggestion(
       exerciseId,
       exerciseName,
       sessions,
-      muscleGroup
+      muscleGroup,
     );
   }, [exerciseId, exerciseName, muscleGroup, workoutHistory, profile]);
 }

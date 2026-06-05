@@ -129,7 +129,7 @@ export function loadThemeId(): string {
 }
 
 export function getTheme(themeId: string): AppTheme {
-  return APP_THEMES.find(theme => theme.id === themeId) || APP_THEMES[0];
+  return APP_THEMES.find((theme) => theme.id === themeId) || APP_THEMES[0];
 }
 
 export function getThemeAccess(themeId: string, isPremium = false): ThemeAccessResult {

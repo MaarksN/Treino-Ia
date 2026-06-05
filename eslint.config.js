@@ -6,13 +6,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: [
-      'android/**',
-      'dist/**',
-      'node_modules/**',
-      '.lighthouseci/**',
-      'coverage/**',
-    ],
+    ignores: ['android/**', 'dist/**', 'node_modules/**', '.lighthouseci/**', 'coverage/**'],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

@@ -59,25 +59,29 @@ export function ChallengeParty({ groupId }: Props) {
       <div className="grid md:grid-cols-[1fr_140px_auto] gap-3 mb-5">
         <input
           value={name}
-          onChange={event => setName(event.target.value)}
+          onChange={(event) => setName(event.target.value)}
           className="bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none"
         />
 
         <input
           type="number"
           value={target}
-          onChange={event => setTarget(Number(event.target.value))}
+          onChange={(event) => setTarget(Number(event.target.value))}
           className="bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none"
         />
 
-        <button type="button" onClick={create} className="bg-brand-neon text-brand-dark rounded-xl px-4 py-3 font-black flex items-center gap-2">
+        <button
+          type="button"
+          onClick={create}
+          className="bg-brand-neon text-brand-dark rounded-xl px-4 py-3 font-black flex items-center gap-2"
+        >
           <Plus size={16} />
           Criar
         </button>
       </div>
 
       <div className="space-y-3">
-        {challenges.map(challenge => (
+        {challenges.map((challenge) => (
           <div key={challenge.id} className="rounded-2xl bg-white/5 p-4 border border-white/10">
             <div className="flex items-center justify-between gap-4">
               <div>
@@ -92,11 +96,14 @@ export function ChallengeParty({ groupId }: Props) {
             </div>
 
             <p className="text-xs text-white/50 mt-3">
-              {challenge.starts_at} até {challenge.ends_at} · recompensa: {challenge.badge_reward ?? 'sem badge'}
+              {challenge.starts_at} até {challenge.ends_at} · recompensa:{' '}
+              {challenge.badge_reward ?? 'sem badge'}
             </p>
           </div>
         ))}
-        {challenges.length === 0 && <p className="text-sm text-brand-muted">Nenhum desafio coletivo criado ainda.</p>}
+        {challenges.length === 0 && (
+          <p className="text-sm text-brand-muted">Nenhum desafio coletivo criado ainda.</p>
+        )}
       </div>
     </section>
   );

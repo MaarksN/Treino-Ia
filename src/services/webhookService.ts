@@ -14,7 +14,7 @@ export function recordWebhookDelivery(delivery: Omit<WebhookDelivery, 'createdAt
   };
 
   const raw = localStorage.getItem(WEBHOOK_KEY);
-  const deliveries = raw ? JSON.parse(raw) as WebhookDelivery[] : [];
+  const deliveries = raw ? (JSON.parse(raw) as WebhookDelivery[]) : [];
   localStorage.setItem(WEBHOOK_KEY, JSON.stringify([next, ...deliveries].slice(0, 50)));
   return next;
 }

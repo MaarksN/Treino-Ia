@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getCorrelationId, getTrustedRequestOrigin, handleApiError, json, readJsonObject } from './http';
+import {
+  getCorrelationId,
+  getTrustedRequestOrigin,
+  handleApiError,
+  json,
+  readJsonObject,
+} from './http';
 
 describe('http helpers', () => {
   afterEach(() => {
@@ -35,12 +41,20 @@ describe('http helpers', () => {
     vi.stubEnv('APP_URL', 'https://staging.treinoia.example');
     vi.stubEnv('CORS_ALLOWED_ORIGINS', 'https://app.treinoia.example');
 
-    const allowed = json({ ok: true }, 200, new Request('https://api.treinoia.example/api/test', {
-      headers: { origin: 'https://app.treinoia.example' },
-    }));
-    const blocked = json({ ok: true }, 200, new Request('https://api.treinoia.example/api/test', {
-      headers: { origin: 'https://evil.example' },
-    }));
+    const allowed = json(
+      { ok: true },
+      200,
+      new Request('https://api.treinoia.example/api/test', {
+        headers: { origin: 'https://app.treinoia.example' },
+      }),
+    );
+    const blocked = json(
+      { ok: true },
+      200,
+      new Request('https://api.treinoia.example/api/test', {
+        headers: { origin: 'https://evil.example' },
+      }),
+    );
 
     expect(allowed.headers.get('access-control-allow-origin')).toBe('https://app.treinoia.example');
     expect(blocked.headers.get('access-control-allow-origin')).toBeNull();

@@ -10,10 +10,16 @@ const GOALS = ['Hipertrofia', 'Força', 'Emagrecimento', 'Condicionamento'];
 export function QuickWorkoutCard({ onSelect }: Props) {
   return (
     <div className="bg-brand-gray border-2 border-brand-light/10 p-5 shadow-brutal-light">
-      <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light mb-4">Escolha um modo de treino</h3>
+      <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light mb-4">
+        Escolha um modo de treino
+      </h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-        <button type="button" onClick={() => onSelect('express')} className="flex items-center gap-3 p-4 bg-brand-neon/10 border-2 border-brand-neon/30 hover:border-brand-neon transition-all text-left">
+        <button
+          type="button"
+          onClick={() => onSelect('express')}
+          className="flex items-center gap-3 p-4 bg-brand-neon/10 border-2 border-brand-neon/30 hover:border-brand-neon transition-all text-left"
+        >
           <Zap className="text-brand-neon shrink-0" size={22} />
           <div>
             <p className="text-brand-light font-bold text-sm">Expresso</p>
@@ -21,7 +27,11 @@ export function QuickWorkoutCard({ onSelect }: Props) {
           </div>
         </button>
 
-        <button type="button" onClick={() => onSelect('bodyweight')} className="flex items-center gap-3 p-4 bg-brand-light/5 border-2 border-brand-light/10 hover:border-brand-light/30 transition-all text-left">
+        <button
+          type="button"
+          onClick={() => onSelect('bodyweight')}
+          className="flex items-center gap-3 p-4 bg-brand-light/5 border-2 border-brand-light/10 hover:border-brand-light/30 transition-all text-left"
+        >
           <Wind className="text-brand-light shrink-0" size={22} />
           <div>
             <p className="text-brand-light font-bold text-sm">Sem equipamento</p>
@@ -29,7 +39,11 @@ export function QuickWorkoutCard({ onSelect }: Props) {
           </div>
         </button>
 
-        <button type="button" onClick={() => onSelect('equipment')} className="flex items-center gap-3 p-4 bg-brand-light/5 border-2 border-brand-light/10 hover:border-brand-light/30 transition-all text-left">
+        <button
+          type="button"
+          onClick={() => onSelect('equipment')}
+          className="flex items-center gap-3 p-4 bg-brand-light/5 border-2 border-brand-light/10 hover:border-brand-light/30 transition-all text-left"
+        >
           <Dumbbell className="text-brand-light shrink-0" size={22} />
           <div>
             <p className="text-brand-light font-bold text-sm">Por equipamento</p>
@@ -37,7 +51,11 @@ export function QuickWorkoutCard({ onSelect }: Props) {
           </div>
         </button>
 
-        <button type="button" onClick={() => onSelect('goal')} className="flex items-center gap-3 p-4 bg-brand-light/5 border-2 border-brand-light/10 hover:border-brand-light/30 transition-all text-left">
+        <button
+          type="button"
+          onClick={() => onSelect('goal')}
+          className="flex items-center gap-3 p-4 bg-brand-light/5 border-2 border-brand-light/10 hover:border-brand-light/30 transition-all text-left"
+        >
           <Target className="text-brand-light shrink-0" size={22} />
           <div>
             <p className="text-brand-light font-bold text-sm">Por objetivo</p>
@@ -49,7 +67,7 @@ export function QuickWorkoutCard({ onSelect }: Props) {
       <div>
         <p className="text-xs text-brand-muted mb-2 font-mono uppercase">Objetivos rápidos:</p>
         <div className="flex flex-wrap gap-2">
-          {GOALS.map(goal => (
+          {GOALS.map((goal) => (
             <button
               key={goal}
               type="button"

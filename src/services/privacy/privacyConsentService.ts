@@ -1,15 +1,20 @@
 import { classifyDataSensitivity } from './sensitiveStoragePolicy';
 
-export interface PrivacyCategorySummary { key: string; sensitivity: string; }
+export interface PrivacyCategorySummary {
+  key: string;
+  sensitivity: string;
+}
 
 const SCOPE_PREFIXES = ['@TreinoApp:', '@TreinoIA:'];
 
-export function listLocalPrivacyCategories(storage: Storage = localStorage): PrivacyCategorySummary[] {
+export function listLocalPrivacyCategories(
+  storage: Storage = localStorage,
+): PrivacyCategorySummary[] {
   const output: PrivacyCategorySummary[] = [];
   for (let i = 0; i < storage.length; i += 1) {
     const key = storage.key(i);
     if (!key) continue;
-    if (!SCOPE_PREFIXES.some(prefix => key.startsWith(prefix))) continue;
+    if (!SCOPE_PREFIXES.some((prefix) => key.startsWith(prefix))) continue;
     const value = storage.getItem(key);
     output.push({ key, sensitivity: classifyDataSensitivity(key, value) });
   }

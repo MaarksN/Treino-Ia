@@ -7,13 +7,16 @@ export type ProgressionSuggestionCardProps = {
   onDismiss: () => void;
 };
 
-const ACTION_CONFIG: Record<ProgressionAction, {
-  icon: string;
-  label: string;
-  accentClass: string;
-  borderClass: string;
-  bgClass: string;
-}> = {
+const ACTION_CONFIG: Record<
+  ProgressionAction,
+  {
+    icon: string;
+    label: string;
+    accentClass: string;
+    borderClass: string;
+    bgClass: string;
+  }
+> = {
   increase: {
     icon: '↑',
     label: 'Aumentar carga',
@@ -79,10 +82,7 @@ export function ProgressionSuggestionCard({
 
   const config = ACTION_CONFIG[suggestion.action];
   const delta = suggestion.delta;
-  const deltaText =
-    delta != null && delta !== 0
-      ? `${delta > 0 ? '+' : ''}${delta}kg`
-      : null;
+  const deltaText = delta != null && delta !== 0 ? `${delta > 0 ? '+' : ''}${delta}kg` : null;
 
   return (
     <div
@@ -105,9 +105,7 @@ export function ProgressionSuggestionCard({
 
       <div className="flex items-baseline gap-3 mb-2">
         {suggestion.previousLoad != null && (
-          <span className="text-sm text-brand-muted line-through">
-            {suggestion.previousLoad}kg
-          </span>
+          <span className="text-sm text-brand-muted line-through">{suggestion.previousLoad}kg</span>
         )}
         {suggestion.suggestedLoad != null && (
           <span className={`text-2xl font-black ${config.accentClass}`}>
@@ -115,15 +113,11 @@ export function ProgressionSuggestionCard({
           </span>
         )}
         {deltaText && (
-          <span className={`text-sm font-bold ${config.accentClass}`}>
-            ({deltaText})
-          </span>
+          <span className={`text-sm font-bold ${config.accentClass}`}>({deltaText})</span>
         )}
       </div>
 
-      <p className="text-xs text-brand-light/70 mb-4 leading-relaxed">
-        {suggestion.reason}
-      </p>
+      <p className="text-xs text-brand-light/70 mb-4 leading-relaxed">{suggestion.reason}</p>
 
       <div className="flex gap-2">
         <button

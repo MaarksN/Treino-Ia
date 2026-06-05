@@ -49,7 +49,12 @@ export interface ReadinessScore {
   score: number;
   label: 'Excelente' | 'Boa' | 'Moderada' | 'Baixa' | 'Ruim';
   color: string;
-  recommendation: 'Treino completo' | 'Treino moderado' | 'Treino leve' | 'Recuperação ativa' | 'Descanso';
+  recommendation:
+    | 'Treino completo'
+    | 'Treino moderado'
+    | 'Treino leve'
+    | 'Recuperação ativa'
+    | 'Descanso';
   adjustedIntensity: number;
 }
 

@@ -2,7 +2,8 @@ import { memo } from 'react';
 import { Cloud, Database, ShieldAlert } from 'lucide-react';
 import { type PersistenceStatus } from '../../../services/database';
 
-const fieldClass = 'mt-2 w-full rounded-[22px] border-2 border-brand-light/15 bg-brand-gray px-4 py-3 font-mono text-sm text-brand-light outline-none transition-colors placeholder:text-brand-muted focus:border-brand-neon';
+const fieldClass =
+  'mt-2 w-full rounded-[22px] border-2 border-brand-light/15 bg-brand-gray px-4 py-3 font-mono text-sm text-brand-light outline-none transition-colors placeholder:text-brand-muted focus:border-brand-neon';
 
 interface CloudPanelProps {
   persistence: PersistenceStatus | null;
@@ -33,8 +34,14 @@ export const CloudPanel = memo(function CloudPanel({
     <section className="mb-8 rounded-[28px] border-2 border-brand-light/15 bg-brand-gray/80 p-5 shadow-brutal-light">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex gap-4">
-          <div className={`rounded-[22px] border-2 p-3 ${persistence.mode === 'supabase' ? 'border-brand-neon text-brand-neon' : 'border-brand-magenta text-brand-magenta'}`}>
-            {persistence.mode === 'supabase' ? <Cloud className="h-6 w-6" /> : <Database className="h-6 w-6" />}
+          <div
+            className={`rounded-[22px] border-2 p-3 ${persistence.mode === 'supabase' ? 'border-brand-neon text-brand-neon' : 'border-brand-magenta text-brand-magenta'}`}
+          >
+            {persistence.mode === 'supabase' ? (
+              <Cloud className="h-6 w-6" />
+            ) : (
+              <Database className="h-6 w-6" />
+            )}
           </div>
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.3em] text-brand-muted">
@@ -64,14 +71,14 @@ export const CloudPanel = memo(function CloudPanel({
           <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto_auto]">
             <input
               value={email}
-              onChange={event => onEmailChange(event.target.value)}
+              onChange={(event) => onEmailChange(event.target.value)}
               className={fieldClass}
               placeholder="email"
               type="email"
             />
             <input
               value={password}
-              onChange={event => onPasswordChange(event.target.value)}
+              onChange={(event) => onPasswordChange(event.target.value)}
               className={fieldClass}
               placeholder="senha"
               type="password"

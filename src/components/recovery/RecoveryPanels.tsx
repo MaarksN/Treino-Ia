@@ -2,7 +2,10 @@ import { useMemo, useState } from 'react';
 import { type WorkoutSession } from '../../services/database';
 import { calculateRpeLoad } from '../../services/recovery/rpeLoadService';
 import { calculateSleepStrengthCorrelation } from '../../services/recovery/sleepStrengthCorrelation';
-import { estimateCaffeineImpact, sanitizeCaffeineMg } from '../../services/recovery/caffeineImpactService';
+import {
+  estimateCaffeineImpact,
+  sanitizeCaffeineMg,
+} from '../../services/recovery/caffeineImpactService';
 import {
   getPainCheckin,
   PAIN_REGIONS,
@@ -25,7 +28,7 @@ export function RecoveryPanels({ history }: { history: WorkoutSession[] }) {
   const [caffeineTime, setCaffeineTime] = useState('14:00');
 
   const sleepStrength = useMemo(() => {
-    const sample = history.slice(0, 12).map(session => ({
+    const sample = history.slice(0, 12).map((session) => ({
       sleepHours: 6 + (session.completedExercises % 4),
       strengthScore: session.totalVolume / 100,
     }));
@@ -37,7 +40,9 @@ export function RecoveryPanels({ history }: { history: WorkoutSession[] }) {
   const shouldRecover = rpeLoad.level === 'alta' || rpeLoad.level === 'muito alta' || painMax >= 6;
   const caffeineImpact = useMemo(() => {
     const mg = sanitizeCaffeineMg(caffeineMg);
-    return estimateCaffeineImpact(mg > 0 ? [{ mg, loggedAt: buildTodayTimestamp(caffeineTime) }] : []);
+    return estimateCaffeineImpact(
+      mg > 0 ? [{ mg, loggedAt: buildTodayTimestamp(caffeineTime) }] : [],
+    );
   }, [caffeineMg, caffeineTime]);
 
   const saveSelectedPain = () => {
@@ -78,10 +83,10 @@ export function RecoveryPanels({ history }: { history: WorkoutSession[] }) {
         <div className="mt-2 flex gap-2">
           <select
             value={region}
-            onChange={event => setRegion(event.target.value as PainRegion)}
+            onChange={(event) => setRegion(event.target.value as PainRegion)}
             className="bg-brand-dark p-2"
           >
-            {PAIN_REGIONS.map(currentRegion => (
+            {PAIN_REGIONS.map((currentRegion) => (
               <option key={currentRegion} value={currentRegion}>
                 {currentRegion}
               </option>
@@ -92,10 +97,14 @@ export function RecoveryPanels({ history }: { history: WorkoutSession[] }) {
             min={0}
             max={10}
             value={pain}
-            onChange={event => setPain(Number(event.target.value))}
+            onChange={(event) => setPain(Number(event.target.value))}
             className="w-20 bg-brand-dark p-2"
           />
-          <button type="button" onClick={saveSelectedPain} className="rounded bg-brand-neon px-3 text-brand-dark">
+          <button
+            type="button"
+            onClick={saveSelectedPain}
+            className="rounded bg-brand-neon px-3 text-brand-dark"
+          >
             Salvar
           </button>
         </div>
@@ -110,19 +119,21 @@ export function RecoveryPanels({ history }: { history: WorkoutSession[] }) {
           <input
             type="number"
             value={caffeineMg}
-            onChange={event => setCaffeineMg(Number(event.target.value))}
+            onChange={(event) => setCaffeineMg(Number(event.target.value))}
             className="w-24 bg-brand-dark p-2"
           />
           <input
             type="time"
             value={caffeineTime}
-            onChange={event => setCaffeineTime(event.target.value)}
+            onChange={(event) => setCaffeineTime(event.target.value)}
             className="bg-brand-dark p-2"
           />
         </div>
         <p className="mt-2 font-mono text-xs">{caffeineImpact.message}</p>
         {caffeineImpact.nearSleepMg >= 120 && (
-          <p className="font-mono text-xs text-brand-magenta">Atenção: consumo próximo da janela de sono.</p>
+          <p className="font-mono text-xs text-brand-magenta">
+            Atenção: consumo próximo da janela de sono.
+          </p>
         )}
       </article>
     </section>

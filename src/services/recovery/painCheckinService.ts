@@ -1,4 +1,12 @@
-export const PAIN_REGIONS = ['ombros', 'costas', 'joelhos', 'quadril', 'cotovelos', 'punhos', 'tornozelos'] as const;
+export const PAIN_REGIONS = [
+  'ombros',
+  'costas',
+  'joelhos',
+  'quadril',
+  'cotovelos',
+  'punhos',
+  'tornozelos',
+] as const;
 
 export type PainRegion = (typeof PAIN_REGIONS)[number];
 export type PainMap = Record<PainRegion, number>;
@@ -21,7 +29,9 @@ export function clampPainLevel(value: unknown): number {
   return Math.min(10, Math.max(0, Math.round(numeric)));
 }
 
-export function sanitizePainMap(input: Partial<Record<PainRegion, unknown>> | null | undefined): PainMap {
+export function sanitizePainMap(
+  input: Partial<Record<PainRegion, unknown>> | null | undefined,
+): PainMap {
   const base = createEmptyPainMap();
   for (const region of PAIN_REGIONS) {
     base[region] = clampPainLevel(input?.[region]);

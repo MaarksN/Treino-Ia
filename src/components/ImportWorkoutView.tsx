@@ -45,12 +45,13 @@ export function ImportWorkoutView({ onImport, onCancel, isLoading }: Props) {
   const [crop, setCrop] = useState<CropRectPercent>(DEFAULT_WORKOUT_IMPORT_CROP);
   const [localError, setLocalError] = useState('');
 
-  const guard = useMemo(() => (
-    selectedFile ? getWorkoutImportGuard(selectedFile.type, selectedFile.size) : null
-  ), [selectedFile]);
+  const guard = useMemo(
+    () => (selectedFile ? getWorkoutImportGuard(selectedFile.type, selectedFile.size) : null),
+    [selectedFile],
+  );
 
   const updateCrop = (key: keyof CropRectPercent, value: string) => {
-    setCrop(current => normalizeCropRect({ ...current, [key]: Number(value) }));
+    setCrop((current) => normalizeCropRect({ ...current, [key]: Number(value) }));
   };
 
   const handleFile = async (file: File) => {
@@ -119,7 +120,8 @@ export function ImportWorkoutView({ onImport, onCancel, isLoading }: Props) {
           </p>
           <h2 className="font-display text-5xl uppercase text-brand-light">Imagem ou PDF</h2>
           <p className="mt-2 max-w-3xl font-mono text-sm leading-6 text-brand-light/70">
-            Prepare arquivo e crop local. OCR e leitura automatizada ficam bloqueados até existir uma integração real.
+            Prepare arquivo e crop local. OCR e leitura automatizada ficam bloqueados até existir
+            uma integração real.
           </p>
         </div>
         <button
@@ -147,7 +149,7 @@ export function ImportWorkoutView({ onImport, onCancel, isLoading }: Props) {
           type="file"
           accept="image/jpeg,image/png,image/webp,application/pdf"
           className="hidden"
-          onChange={event => {
+          onChange={(event) => {
             const file = event.target.files?.[0];
             if (file) void handleFile(file);
           }}
@@ -197,17 +199,23 @@ export function ImportWorkoutView({ onImport, onCancel, isLoading }: Props) {
               </div>
             </div>
             {guard && (
-              <p className={`rounded-[14px] border px-3 py-2 font-mono text-xs leading-5 ${
-                guard.status === 'ready'
-                  ? 'border-brand-neon/40 text-brand-neon'
-                  : 'border-brand-magenta/50 text-brand-magenta'
-              }`}>
+              <p
+                className={`rounded-[14px] border px-3 py-2 font-mono text-xs leading-5 ${
+                  guard.status === 'ready'
+                    ? 'border-brand-neon/40 text-brand-neon'
+                    : 'border-brand-magenta/50 text-brand-magenta'
+                }`}
+              >
                 {guard.reason}
               </p>
             )}
             {previewDataUrl && (
               <div className="mt-4 overflow-hidden rounded-[18px] border border-brand-light/10 bg-brand-gray">
-                <img src={previewDataUrl} alt="Prévia da ficha importada" className="max-h-72 w-full object-contain" />
+                <img
+                  src={previewDataUrl}
+                  alt="Prévia da ficha importada"
+                  className="max-h-72 w-full object-contain"
+                />
               </div>
             )}
           </div>
@@ -220,7 +228,7 @@ export function ImportWorkoutView({ onImport, onCancel, isLoading }: Props) {
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              {cropFields.map(field => (
+              {cropFields.map((field) => (
                 <label key={field.key} className="block">
                   <span className="font-mono text-[10px] uppercase tracking-widest text-brand-muted">
                     {field.label}: {crop[field.key]}%
@@ -230,7 +238,7 @@ export function ImportWorkoutView({ onImport, onCancel, isLoading }: Props) {
                     min={field.key === 'width' || field.key === 'height' ? 1 : 0}
                     max={100}
                     value={crop[field.key]}
-                    onChange={event => updateCrop(field.key, event.target.value)}
+                    onChange={(event) => updateCrop(field.key, event.target.value)}
                     className="mt-2 w-full accent-brand-neon"
                   />
                 </label>

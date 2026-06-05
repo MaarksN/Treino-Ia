@@ -16,14 +16,21 @@ export const PLATFORM_BLOCKS: PlatformBlockDefinition[] = [
     number: 11,
     title: 'Monetizacao & Planos Premium',
     shortTitle: 'Monetizacao',
-    objective: 'Base comercial com planos, trial, paywall, billing, faturas, cupons e proxy seguro de IA.',
+    objective:
+      'Base comercial com planos, trial, paywall, billing, faturas, cupons e proxy seguro de IA.',
     layers: ['Pricing', 'Paywall', 'Entitlements', 'Billing', 'Stripe webhooks'],
     featureFlag: 'block11.monetization',
     surfaceStatus: 'core',
     features: [
       feature(1, 'Estrutura de planos Free / Pro / Coach / Elite', 'MVP / Base', 'type', 'active'),
       feature(2, 'Paywall com checkout seguro', 'MVP / Base', 'service', 'active'),
-      feature(3, 'Trial gratuito de 7 dias com contagem regressiva', 'MVP / Base', 'service', 'active'),
+      feature(
+        3,
+        'Trial gratuito de 7 dias com contagem regressiva',
+        'MVP / Base',
+        'service',
+        'active',
+      ),
       feature(4, 'Upgrade contextual no momento certo', 'Premium / V2'),
       feature(5, 'Dashboard de assinatura', 'MVP / Base', 'ui', 'active'),
       feature(6, 'Cupons e codigos promocionais', 'Premium / V2', 'service', 'active'),
@@ -48,7 +55,8 @@ export const PLATFORM_BLOCKS: PlatformBlockDefinition[] = [
     number: 12,
     title: 'PWA & Mobile UX',
     shortTitle: 'PWA Mobile',
-    objective: 'Experiencia app-like com instalacao, offline, gestos, haptics, timer e mobile navigation.',
+    objective:
+      'Experiencia app-like com instalacao, offline, gestos, haptics, timer e mobile navigation.',
     layers: ['PWA', 'Offline', 'Mobile first', 'Gestos', 'Performance visual'],
     featureFlag: 'block12.pwaMobile',
     surfaceStatus: 'core',
@@ -80,7 +88,8 @@ export const PLATFORM_BLOCKS: PlatformBlockDefinition[] = [
     number: 13,
     title: 'Nutricao & Macros IA',
     shortTitle: 'Nutricao',
-    objective: 'Camada nutricional com TDEE, macros, diario alimentar, IA, hidratacao e score diario.',
+    objective:
+      'Camada nutricional com TDEE, macros, diario alimentar, IA, hidratacao e score diario.',
     layers: ['Metabolismo', 'Diario alimentar', 'IA nutricional', 'Foto', 'Relatorios'],
     featureFlag: 'block13.nutrition',
     surfaceStatus: 'beta',
@@ -112,7 +121,8 @@ export const PLATFORM_BLOCKS: PlatformBlockDefinition[] = [
     number: 14,
     title: 'Sono & Recuperacao',
     shortTitle: 'Recuperacao',
-    objective: 'Readiness e recovery com sono, DOMS, humor, estresse, deload e recomendacoes de treino.',
+    objective:
+      'Readiness e recovery com sono, DOMS, humor, estresse, deload e recomendacoes de treino.',
     layers: ['Sono', 'Recovery score', 'DOMS', 'Overtraining', 'IA de recuperacao'],
     featureFlag: 'block14.recovery',
     surfaceStatus: 'beta',
@@ -144,7 +154,8 @@ export const PLATFORM_BLOCKS: PlatformBlockDefinition[] = [
     number: 15,
     title: 'Wearables & Integracoes Externas',
     shortTitle: 'Integracoes',
-    objective: 'Conectar Apple Health, Google Fit, Garmin, Fitbit, BLE, Strava, Calendar, webhooks e Supabase.',
+    objective:
+      'Conectar Apple Health, Google Fit, Garmin, Fitbit, BLE, Strava, Calendar, webhooks e Supabase.',
     layers: ['Health data', 'BLE', 'Import/export', 'APIs', 'Cloud sync'],
     featureFlag: 'block15.integrations',
     surfaceStatus: 'internal',
@@ -208,7 +219,8 @@ export const PLATFORM_BLOCKS: PlatformBlockDefinition[] = [
     number: 17,
     title: 'Seguranca, Auth & LGPD',
     shortTitle: 'Seguranca',
-    objective: 'Auth, proxy Gemini, rate limit, LGPD, cookies, exportacao/exclusao de dados, auditoria e CSP.',
+    objective:
+      'Auth, proxy Gemini, rate limit, LGPD, cookies, exportacao/exclusao de dados, auditoria e CSP.',
     layers: ['Auth', 'API protection', 'Privacidade', 'Auditoria', 'Operacao'],
     featureFlag: 'block17.security',
     surfaceStatus: 'core',
@@ -240,7 +252,8 @@ export const PLATFORM_BLOCKS: PlatformBlockDefinition[] = [
     number: 18,
     title: 'Conteudo Educacional & Biblioteca',
     shortTitle: 'Educacao',
-    objective: 'Biblioteca de exercicios, cursos, artigos, glossario, quiz, calculadoras e referencias.',
+    objective:
+      'Biblioteca de exercicios, cursos, artigos, glossario, quiz, calculadoras e referencias.',
     layers: ['Exercicios', 'Cursos', 'Calculadoras', 'Protocolos', 'Ciencia'],
     featureFlag: 'block18.education',
     surfaceStatus: 'internal',
@@ -272,7 +285,8 @@ export const PLATFORM_BLOCKS: PlatformBlockDefinition[] = [
     number: 19,
     title: 'Personalizacao Avancada de IA',
     shortTitle: 'IA Avancada',
-    objective: 'Coach IA com personas, memoria, overload, platô, lesoes, voz, video, forecast e relatórios.',
+    objective:
+      'Coach IA com personas, memoria, overload, platô, lesoes, voz, video, forecast e relatórios.',
     layers: ['Personas', 'Memoria', 'Adaptacao', 'Multimodal', 'Forecast'],
     featureFlag: 'block19.aiPersonalization',
     surfaceStatus: 'internal',
@@ -304,7 +318,8 @@ export const PLATFORM_BLOCKS: PlatformBlockDefinition[] = [
     number: 20,
     title: 'DevOps, Deploy & Escalabilidade',
     shortTitle: 'DevOps',
-    objective: 'Preparar producao com CI/CD, Vercel, Supabase, observabilidade, testes, flags e disaster recovery.',
+    objective:
+      'Preparar producao com CI/CD, Vercel, Supabase, observabilidade, testes, flags e disaster recovery.',
     layers: ['Deploy', 'Backend', 'Observabilidade', 'Qualidade', 'Escala'],
     featureFlag: 'block20.devops',
     surfaceStatus: 'internal',
@@ -334,16 +349,16 @@ export const PLATFORM_BLOCKS: PlatformBlockDefinition[] = [
 ];
 
 export function getPlatformBlock(id: PlatformBlockDefinition['id']) {
-  return PLATFORM_BLOCKS.find(block => block.id === id) ?? PLATFORM_BLOCKS[0];
+  return PLATFORM_BLOCKS.find((block) => block.id === id) ?? PLATFORM_BLOCKS[0];
 }
 
 export function getCoverageSummary(block: PlatformBlockDefinition) {
   return {
     total: block.features.length,
-    active: block.features.filter(item => item.status === 'active').length,
-    fallback: block.features.filter(item => item.status === 'fallback').length,
-    roadmap: block.features.filter(item => item.status === 'roadmap').length,
-    mvp: block.features.filter(item => item.priority === 'MVP / Base').length,
-    premium: block.features.filter(item => item.priority === 'Premium / V2').length,
+    active: block.features.filter((item) => item.status === 'active').length,
+    fallback: block.features.filter((item) => item.status === 'fallback').length,
+    roadmap: block.features.filter((item) => item.status === 'roadmap').length,
+    mvp: block.features.filter((item) => item.priority === 'MVP / Base').length,
+    premium: block.features.filter((item) => item.priority === 'Premium / V2').length,
   };
 }

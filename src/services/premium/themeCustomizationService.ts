@@ -29,10 +29,34 @@ const STORAGE_KEY = '@TreinoIA:premium:selectedThemeVariant';
 
 export function getThemePreviewOptions(): ThemePreviewOption[] {
   return [
-    { id: 'neon', variant: 'neon', name: 'Cyberpunk Neon', description: 'Roxo e rosa neon futurista', isPremium: true },
-    { id: 'high_contrast', variant: 'high_contrast', name: 'Alto Contraste', description: 'Contraste máximo para legibilidade', isPremium: false },
-    { id: 'minimal', variant: 'minimal', name: 'Minimal', description: 'Cinza frio e branco clean', isPremium: true },
-    { id: 'performance_dark', variant: 'performance_dark', name: 'Performance Dark', description: 'Escuro puro para economia de bateria', isPremium: false },
+    {
+      id: 'neon',
+      variant: 'neon',
+      name: 'Cyberpunk Neon',
+      description: 'Roxo e rosa neon futurista',
+      isPremium: true,
+    },
+    {
+      id: 'high_contrast',
+      variant: 'high_contrast',
+      name: 'Alto Contraste',
+      description: 'Contraste máximo para legibilidade',
+      isPremium: false,
+    },
+    {
+      id: 'minimal',
+      variant: 'minimal',
+      name: 'Minimal',
+      description: 'Cinza frio e branco clean',
+      isPremium: true,
+    },
+    {
+      id: 'performance_dark',
+      variant: 'performance_dark',
+      name: 'Performance Dark',
+      description: 'Escuro puro para economia de bateria',
+      isPremium: false,
+    },
   ];
 }
 
@@ -64,7 +88,7 @@ export function getSelectedVariant(): ThemeVariant | null {
 
 export function getCurrentThemeInfo(): { id: string; name: string; isPremium: boolean } {
   const themeId = loadThemeId();
-  const theme = APP_THEMES.find(t => t.id === themeId) ?? APP_THEMES[0];
+  const theme = APP_THEMES.find((t) => t.id === themeId) ?? APP_THEMES[0];
   return { id: theme.id, name: theme.name, isPremium: theme.isPremium };
 }
 

@@ -14,6 +14,6 @@ export function checkLongevityProjectionGuard(consistencyScore: number): Longevi
   return {
     hasConsistencyIndicator: isConsistent,
     canShowFitnessAge: false, // Too risky right now to show a calculated "age"
-    status: 'foundation_created'
+    status: 'foundation_created',
   };
 }

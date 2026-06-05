@@ -33,28 +33,28 @@ docs/bloco-13-nutricao-macros-ia.md
 
 ## Tabela dos 20 itens
 
-| # | Item | Prioridade sugerida |
-|---:|---|---|
-| 1 | Calculadora de TDEE (gasto calórico total diário) | MVP / Base |
-| 2 | Definição de metas de macros (proteína, carbo, gordura) | MVP / Base |
-| 3 | Diário alimentar diário com busca de alimentos (TACO/USDA) | MVP / Base |
-| 4 | Scanner de código de barras para alimentos | Roadmap / Futuro |
-| 5 | Geração de plano alimentar IA baseado no objetivo | MVP / Base |
-| 6 | Análise de adequação calórica vs treino do dia | MVP / Base |
-| 7 | Sugestão de pré-treino e pós-treino (alimento + horário) | MVP / Base |
-| 8 | Protocolo de cutting/bulking IA com fase e semana | Premium / V2 |
-| 9 | Hidratação: meta diária de água com lembretes | MVP / Base |
-| 10 | Integração de suplementos: whey, creatina, cafeína | Premium / V2 |
-| 11 | Receitas high-protein geradas por IA | Premium / V2 |
-| 12 | Relação macro × desempenho (correlação no gráfico) | Premium / V2 |
-| 13 | Modo refeição rápida (últimas refeições salvas) | MVP / Base |
-| 14 | Alerta de déficit calórico excessivo (risco à saúde) | Roadmap / Futuro |
-| 15 | Histórico nutricional semanal/mensal com gráfico | Premium / V2 |
-| 16 | Exportar diário alimentar em PDF | Premium / V2 |
-| 17 | Modo jejum intermitente com timer e janela configurável | Premium / V2 |
-| 18 | Registro de refeição por foto (Gemini Vision) | Premium / V2 |
-| 19 | Plano vegetariano / vegano / low-carb por preferência | Premium / V2 |
-| 20 | Score nutricional diário (A–F) com dica de melhoria | MVP / Base |
+|   # | Item                                                       | Prioridade sugerida |
+| --: | ---------------------------------------------------------- | ------------------- |
+|   1 | Calculadora de TDEE (gasto calórico total diário)          | MVP / Base          |
+|   2 | Definição de metas de macros (proteína, carbo, gordura)    | MVP / Base          |
+|   3 | Diário alimentar diário com busca de alimentos (TACO/USDA) | MVP / Base          |
+|   4 | Scanner de código de barras para alimentos                 | Roadmap / Futuro    |
+|   5 | Geração de plano alimentar IA baseado no objetivo          | MVP / Base          |
+|   6 | Análise de adequação calórica vs treino do dia             | MVP / Base          |
+|   7 | Sugestão de pré-treino e pós-treino (alimento + horário)   | MVP / Base          |
+|   8 | Protocolo de cutting/bulking IA com fase e semana          | Premium / V2        |
+|   9 | Hidratação: meta diária de água com lembretes              | MVP / Base          |
+|  10 | Integração de suplementos: whey, creatina, cafeína         | Premium / V2        |
+|  11 | Receitas high-protein geradas por IA                       | Premium / V2        |
+|  12 | Relação macro × desempenho (correlação no gráfico)         | Premium / V2        |
+|  13 | Modo refeição rápida (últimas refeições salvas)            | MVP / Base          |
+|  14 | Alerta de déficit calórico excessivo (risco à saúde)       | Roadmap / Futuro    |
+|  15 | Histórico nutricional semanal/mensal com gráfico           | Premium / V2        |
+|  16 | Exportar diário alimentar em PDF                           | Premium / V2        |
+|  17 | Modo jejum intermitente com timer e janela configurável    | Premium / V2        |
+|  18 | Registro de refeição por foto (Gemini Vision)              | Premium / V2        |
+|  19 | Plano vegetariano / vegano / low-carb por preferência      | Premium / V2        |
+|  20 | Score nutricional diário (A–F) com dica de melhoria        | MVP / Base          |
 
 ## Organização por prioridade
 
@@ -112,7 +112,9 @@ docs/bloco-13-nutricao-macros-ia.md
 
 ```tsx
 // Exemplo conceitual de rota/tela para o Bloco 13
-{currentView === 'bloco-13' && <NutricaoMacrosIaHub />}
+{
+  currentView === 'bloco-13' && <NutricaoMacrosIaHub />;
+}
 ```
 
 ## Resultado esperado

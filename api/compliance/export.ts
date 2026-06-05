@@ -64,20 +64,22 @@ export default async function handler(request: Request) {
     const rateLimit = await checkRateLimit(userId, 5, 60 * 60 * 1000, 'compliance_export');
 
     if (!rateLimit.allowed) {
-      return json({ error: 'Too many compliance export requests.', resetAt: rateLimit.resetAt }, 429, request);
+      return json(
+        { error: 'Too many compliance export requests.', resetAt: rateLimit.resetAt },
+        429,
+        request,
+      );
     }
 
-    const [
-      { data: profile },
-      collectionResults,
-      entitlement
-    ] = await Promise.all([
+    const [{ data: profile }, collectionResults, entitlement] = await Promise.all([
       supabase.from('training_user_profiles').select('*').eq('user_id', userId).maybeSingle(),
-      Promise.all(EXPORT_COLLECTIONS.map(async ([key, table, column]) => {
-        const { data } = await supabase.from(table).select('*').eq(column, userId);
-        return [key, data ?? []] as const;
-      })),
-      getServerEntitlement(userId).catch(() => null)
+      Promise.all(
+        EXPORT_COLLECTIONS.map(async ([key, table, column]) => {
+          const { data } = await supabase.from(table).select('*').eq(column, userId);
+          return [key, data ?? []] as const;
+        }),
+      ),
+      getServerEntitlement(userId).catch(() => null),
     ]);
     const collections = Object.fromEntries(collectionResults);
 
@@ -87,11 +89,11 @@ export default async function handler(request: Request) {
         id: userId,
         email: authData.user.email,
         phone: authData.user.phone,
-        created_at: authData.user.created_at
+        created_at: authData.user.created_at,
       },
       profile: profile ?? null,
       ...collections,
-      billing_entitlement: entitlement
+      billing_entitlement: entitlement,
     };
 
     return json(exportData, 200, request);

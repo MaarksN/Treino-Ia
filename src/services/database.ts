@@ -8,7 +8,13 @@ import {
   readWorkoutSessionJson,
 } from './trainingReadModels';
 import { workoutSessionRepository } from './data/workoutSessionRepository';
-import type { PersistenceStatus, TrainingLevel, TrainingPlan, UserProfile, WorkoutSession } from './trainingTypes';
+import type {
+  PersistenceStatus,
+  TrainingLevel,
+  TrainingPlan,
+  UserProfile,
+  WorkoutSession,
+} from './trainingTypes';
 export type {
   ExerciseIntensityTechnique,
   ExercisePrescription,
@@ -36,9 +42,10 @@ export type WorkoutSessionSaveResult =
 const validLevels: TrainingLevel[] = ['iniciante', 'intermediario', 'avancado'];
 
 function createId(prefix: string) {
-  const uuid = typeof crypto !== 'undefined' && 'randomUUID' in crypto
-    ? crypto.randomUUID()
-    : Math.random().toString(36).slice(2);
+  const uuid =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2);
   return `${prefix}_${uuid}`;
 }
 
@@ -58,9 +65,7 @@ export function createDefaultProfile(): UserProfile {
 
 export function normalizeProfile(profile: Partial<UserProfile> | null | undefined): UserProfile {
   const base = createDefaultProfile();
-  const level = profile?.level && validLevels.includes(profile.level)
-    ? profile.level
-    : base.level;
+  const level = profile?.level && validLevels.includes(profile.level) ? profile.level : base.level;
 
   return {
     id: profile?.id || base.id,
@@ -93,7 +98,7 @@ function writeLocal<T>(key: string, value: T) {
 
 function upsertLocalWorkoutSession(session: WorkoutSession): WorkoutSession[] {
   const history = readLocal<WorkoutSession[]>(STORAGE_KEYS.history, []);
-  const nextHistory = [session, ...history.filter(item => item.id !== session.id)].slice(0, 50);
+  const nextHistory = [session, ...history.filter((item) => item.id !== session.id)].slice(0, 50);
   writeLocal(STORAGE_KEYS.history, nextHistory);
   return nextHistory;
 }
@@ -184,7 +189,7 @@ export const DatabaseService = {
   saveProfile: async (profile: UserProfile): Promise<boolean> => {
     const normalized = normalizeProfile({ ...profile, updatedAt: Date.now() });
 
-    const cloudSaved = await tryCloud(async userId => {
+    const cloudSaved = await tryCloud(async (userId) => {
       const { error } = await supabase
         .from('training_user_profiles')
         .upsert(buildTrainingProfileUpsert(userId, normalized), { onConflict: 'user_id' });
@@ -200,7 +205,7 @@ export const DatabaseService = {
   },
 
   getProfile: async (): Promise<UserProfile | null> => {
-    const cloudProfile = await tryCloud(async userId => {
+    const cloudProfile = await tryCloud(async (userId) => {
       const { data, error } = await supabase
         .from('training_user_profiles')
         .select('profile_json')
@@ -219,7 +224,7 @@ export const DatabaseService = {
   },
 
   saveCurrentPlan: async (plan: TrainingPlan): Promise<boolean> => {
-    const cloudSaved = await tryCloud(async userId => {
+    const cloudSaved = await tryCloud(async (userId) => {
       await supabase
         .from('training_workout_plans')
         .update({ is_current: false })
@@ -241,7 +246,7 @@ export const DatabaseService = {
   },
 
   getCurrentPlan: async (): Promise<TrainingPlan | null> => {
-    const cloudPlan = await tryCloud(async userId => {
+    const cloudPlan = await tryCloud(async (userId) => {
       const { data, error } = await supabase
         .from('training_workout_plans')
         .select('plan_json')
@@ -259,7 +264,9 @@ export const DatabaseService = {
     return readLocal<TrainingPlan | null>(STORAGE_KEYS.plan, null);
   },
 
-  saveWorkoutSessionWithStatus: async (session: WorkoutSession): Promise<WorkoutSessionSaveResult> => {
+  saveWorkoutSessionWithStatus: async (
+    session: WorkoutSession,
+  ): Promise<WorkoutSessionSaveResult> => {
     const persistenceStatus = await DatabaseService.getPersistenceStatus();
 
     if (persistenceStatus.mode === 'supabase') {
@@ -296,7 +303,8 @@ export const DatabaseService = {
         return {
           status: 'local_fallback',
           saved: true,
-          message: 'Falha ao salvar na nuvem. O treino ficou guardado localmente para sincronizar depois.',
+          message:
+            'Falha ao salvar na nuvem. O treino ficou guardado localmente para sincronizar depois.',
           error: message,
         };
       }
@@ -319,7 +327,7 @@ export const DatabaseService = {
   },
 
   getWorkoutHistory: async (): Promise<WorkoutSession[]> => {
-    const cloudHistory = await tryCloud(async userId => {
+    const cloudHistory = await tryCloud(async (userId) => {
       const { data, error } = await supabase
         .from('training_workout_history_records')
         .select('record_json')
@@ -329,7 +337,7 @@ export const DatabaseService = {
 
       if (error) throw error;
       return (data ?? [])
-        .map(row => readWorkoutSessionJson(row))
+        .map((row) => readWorkoutSessionJson(row))
         .filter((session): session is WorkoutSession => Boolean(session));
     });
 

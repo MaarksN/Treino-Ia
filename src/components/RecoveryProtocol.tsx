@@ -19,7 +19,11 @@ interface Props {
 
 type RecoveryTab = 'descanso' | 'mobilidade' | 'pos-treino' | 'volume' | 'intensidade';
 
-const TABS: Array<{ id: RecoveryTab; label: string; Icon: React.ComponentType<{ className?: string }> }> = [
+const TABS: Array<{
+  id: RecoveryTab;
+  label: string;
+  Icon: React.ComponentType<{ className?: string }>;
+}> = [
   { id: 'descanso', label: 'Descanso ativo', Icon: Activity },
   { id: 'mobilidade', label: 'Mobilidade', Icon: Move },
   { id: 'pos-treino', label: 'Pós-treino', Icon: Dumbbell },
@@ -41,14 +45,19 @@ export function RecoveryProtocol({ plan, checkin, allCheckins, profile }: Props)
       let text = '';
 
       if (activeTab === 'descanso') text = await generateActiveRestRecommendation(checkin);
-      else if (activeTab === 'mobilidade') text = await generateMobilityRecommendation(checkin.sorenessMap);
+      else if (activeTab === 'mobilidade')
+        text = await generateMobilityRecommendation(checkin.sorenessMap);
       else if (activeTab === 'pos-treino') text = await generatePostWorkoutProtocol(plan, checkin);
-      else if (activeTab === 'volume') text = await generateVolumeReductionAdvice(allCheckins, profile);
-      else if (activeTab === 'intensidade') text = await generateIntensityAdjustment(plan, readiness);
+      else if (activeTab === 'volume')
+        text = await generateVolumeReductionAdvice(allCheckins, profile);
+      else if (activeTab === 'intensidade')
+        text = await generateIntensityAdjustment(plan, readiness);
 
       setResult(text);
     } catch {
-      setResult('Não consegui gerar a recomendação agora. Verifique a chave Gemini e tente novamente.');
+      setResult(
+        'Não consegui gerar a recomendação agora. Verifique a chave Gemini e tente novamente.',
+      );
     } finally {
       setLoading(false);
     }
@@ -56,7 +65,9 @@ export function RecoveryProtocol({ plan, checkin, allCheckins, profile }: Props)
 
   return (
     <div className="bg-brand-gray border-2 border-brand-light/10 p-5 shadow-brutal-light">
-      <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light mb-4">Protocolo de recuperação</h3>
+      <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light mb-4">
+        Protocolo de recuperação
+      </h3>
 
       <div className="flex gap-2 flex-wrap mb-4">
         {TABS.map(({ id, label, Icon }) => (

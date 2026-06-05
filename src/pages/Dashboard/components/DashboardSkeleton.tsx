@@ -29,16 +29,31 @@ export function DashboardSkeleton() {
         </section>
 
         <section className="mb-8 grid gap-5 md:grid-cols-3">
-          <Skeleton lines={4} className="rounded-[28px] border-2 border-brand-light/15 bg-brand-gray p-6" />
-          <Skeleton lines={4} className="rounded-[28px] border-2 border-brand-light/15 bg-brand-gray p-6" />
-          <Skeleton lines={4} className="rounded-[28px] border-2 border-brand-light/15 bg-brand-gray p-6" />
+          <Skeleton
+            lines={4}
+            className="rounded-[28px] border-2 border-brand-light/15 bg-brand-gray p-6"
+          />
+          <Skeleton
+            lines={4}
+            className="rounded-[28px] border-2 border-brand-light/15 bg-brand-gray p-6"
+          />
+          <Skeleton
+            lines={4}
+            className="rounded-[28px] border-2 border-brand-light/15 bg-brand-gray p-6"
+          />
         </section>
 
         <section className="rounded-[28px] border-4 border-brand-light bg-brand-gray p-6 shadow-brutal-light md:p-8">
           <Skeleton lines={8} />
           <div className="mt-6 grid gap-4 lg:grid-cols-2">
-            <Skeleton lines={5} className="rounded-[24px] border-2 border-brand-light/15 bg-brand-dark p-5" />
-            <Skeleton lines={5} className="rounded-[24px] border-2 border-brand-light/15 bg-brand-dark p-5" />
+            <Skeleton
+              lines={5}
+              className="rounded-[24px] border-2 border-brand-light/15 bg-brand-dark p-5"
+            />
+            <Skeleton
+              lines={5}
+              className="rounded-[24px] border-2 border-brand-light/15 bg-brand-dark p-5"
+            />
           </div>
         </section>
       </div>

@@ -1,13 +1,13 @@
 import { create } from 'zustand';
-import { 
-  User, 
-  WorkoutPlan, 
-  UserProfile, 
-  StreakData, 
-  WorkoutHistoryRecord, 
-  WorkoutHistoryEntry, 
-  DailyCheckin, 
-  RecoveryCheckin 
+import {
+  User,
+  WorkoutPlan,
+  UserProfile,
+  StreakData,
+  WorkoutHistoryRecord,
+  WorkoutHistoryEntry,
+  DailyCheckin,
+  RecoveryCheckin,
 } from '../types';
 import { loadHistory } from '../utils/analyticsUtils';
 import { loadStreak } from '../utils/streakUtils';

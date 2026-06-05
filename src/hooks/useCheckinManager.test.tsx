@@ -159,7 +159,10 @@ describe('useCheckinManager', () => {
     vi.mocked(useDailyCheckinsQuery).mockReturnValue(dailyCheckinsQuery as never);
     vi.mocked(useSaveDailyCheckinMutation).mockReturnValue(saveDailyCheckinMutation as never);
     vi.mocked(getTodayCheckinFromList).mockReturnValue(dailyCheckin);
-    vi.mocked(recordGamificationEvent).mockResolvedValue({ skipped: true, reason: 'mocked test event' });
+    vi.mocked(recordGamificationEvent).mockResolvedValue({
+      skipped: true,
+      reason: 'mocked test event',
+    });
   });
 
   it('applies mocked query data to local state and the app store on mount', async () => {
@@ -224,7 +227,11 @@ describe('useCheckinManager', () => {
     expect(saveDailyCheckinMutation.mutateAsync).toHaveBeenCalledWith(dailyCheckin);
     expect(dailyCheckinsQuery.refetch).toHaveBeenCalledTimes(1);
     expect(useAppStore.getState().todayCheckin).toEqual(dailyCheckin);
-    expect(onEngagementRefresh).toHaveBeenCalledWith(streakData, [analyticsEntry], refreshedResult.data);
+    expect(onEngagementRefresh).toHaveBeenCalledWith(
+      streakData,
+      [analyticsEntry],
+      refreshedResult.data,
+    );
     expect(onSnapshotSave).toHaveBeenCalledWith([analyticsEntry], streakData, refreshedResult.data);
     expect(recordGamificationEvent).toHaveBeenCalledWith('checkin');
     expect(result.current.checkinSaving).toBe(false);

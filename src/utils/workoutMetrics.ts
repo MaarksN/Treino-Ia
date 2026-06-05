@@ -9,51 +9,55 @@ export function parseFirstNumber(value?: string | number) {
 }
 
 export function extractLogsFromPlan(plan: WorkoutPlan): ExerciseLog[] {
-  return plan.days.flatMap(day =>
+  return plan.days.flatMap((day) =>
     day.exercises
-      .filter(ex => ex.completed && (ex.actualWeight || ex.actualReps || ex.rpe))
-      .map(ex => ({
+      .filter((ex) => ex.completed && (ex.actualWeight || ex.actualReps || ex.rpe))
+      .map((ex) => ({
         exerciseName: ex.name,
         date: plan.createdAt,
         actualWeight: ex.actualWeight,
         actualReps: ex.actualReps,
         rpe: ex.rpe,
-      }))
+      })),
   );
 }
 
 export function extractLogsFromHistory(records: WorkoutHistoryRecord[]): ExerciseLog[] {
-  return records.flatMap(record =>
+  return records.flatMap((record) =>
     record.exercises
-      .filter(ex => ex.actualWeight || ex.actualReps || ex.rpe)
-      .map(ex => ({
+      .filter((ex) => ex.actualWeight || ex.actualReps || ex.rpe)
+      .map((ex) => ({
         exerciseName: ex.name,
         date: record.date,
         actualWeight: ex.actualWeight,
         actualReps: ex.actualReps,
         rpe: ex.rpe,
-      }))
+      })),
   );
 }
 
-function getExerciseLogs(plans: WorkoutPlan[], exerciseName: string, records: WorkoutHistoryRecord[] = []) {
+function getExerciseLogs(
+  plans: WorkoutPlan[],
+  exerciseName: string,
+  records: WorkoutHistoryRecord[] = [],
+) {
   const sourceLogs = records.length
     ? extractLogsFromHistory(records)
-    : plans.flatMap(plan => extractLogsFromPlan(plan));
+    : plans.flatMap((plan) => extractLogsFromPlan(plan));
 
   return sourceLogs
-    .filter(log => log.exerciseName.toLowerCase() === exerciseName.toLowerCase())
+    .filter((log) => log.exerciseName.toLowerCase() === exerciseName.toLowerCase())
     .sort((a, b) => a.date - b.date);
 }
 
 export function detectPlateau(
   plans: WorkoutPlan[],
   exerciseName: string,
-  records: WorkoutHistoryRecord[] = []
+  records: WorkoutHistoryRecord[] = [],
 ) {
   const weights = getExerciseLogs(plans, exerciseName, records)
-    .map(log => log.actualWeight || 0)
-    .filter(weight => weight > 0);
+    .map((log) => log.actualWeight || 0)
+    .filter((weight) => weight > 0);
 
   if (weights.length < 3) return { plateau: false, reason: 'Poucos dados para prever platô.' };
 
@@ -69,10 +73,10 @@ export function detectPlateau(
 }
 
 export function shouldSuggestDeload(plan: WorkoutPlan) {
-  const exercises = plan.days.flatMap(day => day.exercises);
-  const hardCount = exercises.filter(ex => ex.feedback === 'hard').length;
-  const painCount = exercises.filter(ex => ex.feedback === 'painful').length;
-  const rpeValues = exercises.map(ex => ex.rpe).filter((rpe): rpe is number => Boolean(rpe));
+  const exercises = plan.days.flatMap((day) => day.exercises);
+  const hardCount = exercises.filter((ex) => ex.feedback === 'hard').length;
+  const painCount = exercises.filter((ex) => ex.feedback === 'painful').length;
+  const rpeValues = exercises.map((ex) => ex.rpe).filter((rpe): rpe is number => Boolean(rpe));
   const avgRpe = rpeValues.reduce((sum, rpe) => sum + rpe, 0) / Math.max(1, rpeValues.length);
 
   return hardCount >= 4 || painCount >= 1 || avgRpe >= 8.5;

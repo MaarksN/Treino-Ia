@@ -59,7 +59,7 @@ type CardTheme = keyof typeof CARD_THEMES;
 type CanvasWindow = Window & {
   html2canvas?: (
     element: HTMLElement,
-    options?: { backgroundColor?: string | null; scale?: number; useCORS?: boolean }
+    options?: { backgroundColor?: string | null; scale?: number; useCORS?: boolean },
   ) => Promise<HTMLCanvasElement>;
 };
 
@@ -107,7 +107,7 @@ export function WorkoutShareCard({ entry, streak, userName = 'Atleta', onClose }
         return;
       }
 
-      canvas.toBlob(async blob => {
+      canvas.toBlob(async (blob) => {
         if (!blob || !navigator.clipboard?.write || typeof ClipboardItem === 'undefined') {
           await navigator.clipboard?.writeText(buildShareText(entry, streak));
           setStatus('Texto copiado. Clipboard de imagem indisponível.');
@@ -186,14 +186,26 @@ export function WorkoutShareCard({ entry, streak, userName = 'Atleta', onClose }
 
           <div className="flex justify-between items-start mb-4" style={{ position: 'relative' }}>
             <div>
-              <p style={{ color: themeConfig.accent, fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', fontWeight: 700 }}>
+              <p
+                style={{
+                  color: themeConfig.accent,
+                  fontSize: 11,
+                  letterSpacing: '0.15em',
+                  textTransform: 'uppercase',
+                  fontWeight: 700,
+                }}
+              >
                 TREINO CONCLUÍDO
               </p>
-              <p style={{ color: themeConfig.text, fontSize: 22, fontWeight: 900, marginTop: 2 }}>{userName}</p>
+              <p style={{ color: themeConfig.text, fontSize: 22, fontWeight: 900, marginTop: 2 }}>
+                {userName}
+              </p>
             </div>
             <div style={{ textAlign: 'right' }}>
               <p style={{ color: themeConfig.sub, fontSize: 12 }}>{entry.date}</p>
-              <p style={{ color: themeConfig.accent, fontSize: 28, fontWeight: 900, lineHeight: 1 }}>
+              <p
+                style={{ color: themeConfig.accent, fontSize: 28, fontWeight: 900, lineHeight: 1 }}
+              >
                 {streak.currentStreak}
               </p>
               <p style={{ color: themeConfig.sub, fontSize: 10 }}>dias streak</p>
@@ -209,14 +221,26 @@ export function WorkoutShareCard({ entry, streak, userName = 'Atleta', onClose }
               marginBottom: 16,
             }}
           >
-            <p style={{ color: themeConfig.accent, fontWeight: 800, fontSize: 16 }}>{entry.dayFocus || entry.planName}</p>
+            <p style={{ color: themeConfig.accent, fontWeight: 800, fontSize: 16 }}>
+              {entry.dayFocus || entry.planName}
+            </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr 1fr',
+              gap: 8,
+              marginBottom: 16,
+            }}
+          >
             {[
               { label: 'Exercícios', val: `${entry.completedCount}/${entry.exerciseCount}` },
               { label: 'Volume', val: entry.totalVolume > 0 ? `${entry.totalVolume}kg` : '—' },
-              { label: 'Duração', val: entry.durationMinutes ? `${entry.durationMinutes}min` : '—' },
+              {
+                label: 'Duração',
+                val: entry.durationMinutes ? `${entry.durationMinutes}min` : '—',
+              },
             ].map(({ label, val }) => (
               <div
                 key={label}
@@ -228,7 +252,16 @@ export function WorkoutShareCard({ entry, streak, userName = 'Atleta', onClose }
                   minWidth: 0,
                 }}
               >
-                <p style={{ color: themeConfig.text, fontWeight: 800, fontSize: 18, overflowWrap: 'anywhere' }}>{val}</p>
+                <p
+                  style={{
+                    color: themeConfig.text,
+                    fontWeight: 800,
+                    fontSize: 18,
+                    overflowWrap: 'anywhere',
+                  }}
+                >
+                  {val}
+                </p>
                 <p style={{ color: themeConfig.sub, fontSize: 10, marginTop: 2 }}>{label}</p>
               </div>
             ))}
@@ -253,15 +286,17 @@ export function WorkoutShareCard({ entry, streak, userName = 'Atleta', onClose }
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <p style={{ color: themeConfig.sub, fontSize: 10 }}>via Treino App</p>
             <div style={{ display: 'flex', gap: 4 }}>
-              {['🔥', '💪', '⚡'].map(item => (
-                <span key={item} style={{ fontSize: 16 }}>{item}</span>
+              {['🔥', '💪', '⚡'].map((item) => (
+                <span key={item} style={{ fontSize: 16 }}>
+                  {item}
+                </span>
               ))}
             </div>
           </div>
         </div>
 
         <div className="flex justify-center gap-2 mt-4">
-          {(Object.keys(CARD_THEMES) as CardTheme[]).map(item => (
+          {(Object.keys(CARD_THEMES) as CardTheme[]).map((item) => (
             <button
               key={item}
               type="button"

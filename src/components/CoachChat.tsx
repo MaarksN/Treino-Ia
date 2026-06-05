@@ -18,15 +18,15 @@ export function CoachChat({ profile, plan, sessions }: Props) {
     if (!question.trim() || loading) return;
     const text = question.trim();
 
-    setMessages(prev => [...prev, { role: 'user', text, createdAt: Date.now() }]);
+    setMessages((prev) => [...prev, { role: 'user', text, createdAt: Date.now() }]);
     setQuestion('');
     setLoading(true);
 
     try {
       const answer = await askAiCoach(text, profile, plan, sessions);
-      setMessages(prev => [...prev, { role: 'assistant', text: answer, createdAt: Date.now() }]);
+      setMessages((prev) => [...prev, { role: 'assistant', text: answer, createdAt: Date.now() }]);
     } catch {
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
@@ -43,7 +43,9 @@ export function CoachChat({ profile, plan, sessions }: Props) {
     <div className="bg-brand-gray border-2 border-brand-light/10 p-5 shadow-brutal-light h-full">
       <div className="flex items-center gap-2 mb-4">
         <MessageCircle className="text-brand-neon" size={18} />
-        <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">Coach IA</h3>
+        <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">
+          Coach IA
+        </h3>
       </div>
 
       <div className="space-y-3 max-h-80 overflow-y-auto mb-4 pr-1">
@@ -72,8 +74,8 @@ export function CoachChat({ profile, plan, sessions }: Props) {
       <div className="flex gap-2">
         <input
           value={question}
-          onChange={event => setQuestion(event.target.value)}
-          onKeyDown={event => event.key === 'Enter' && handleAsk()}
+          onChange={(event) => setQuestion(event.target.value)}
+          onKeyDown={(event) => event.key === 'Enter' && handleAsk()}
           className="flex-1 bg-brand-dark px-4 py-3 text-sm border-2 border-brand-light/10 text-brand-light outline-none focus:border-brand-neon font-mono min-w-0"
           placeholder="Ex.: devo trocar agachamento por leg press hoje?"
         />

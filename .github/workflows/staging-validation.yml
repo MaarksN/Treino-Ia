@@ -1,0 +1,152 @@
+name: Staging Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      staging_app_url:
+        description: 'Validated Vercel preview/staging URL'
+        required: true
+      confirm_erasure:
+        description: 'Run destructive compliance erasure smoke for a disposable user'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  staging:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Validate required secrets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_TEST_ACCESS_TOKEN: ${{ secrets.SUPABASE_TEST_ACCESS_TOKEN }}
+          TENANT_A_ACCESS_TOKEN: ${{ secrets.TENANT_A_ACCESS_TOKEN }}
+          TENANT_B_ACCESS_TOKEN: ${{ secrets.TENANT_B_ACCESS_TOKEN }}
+          COMPLIANCE_ERASURE_ACCESS_TOKEN: ${{ secrets.COMPLIANCE_ERASURE_ACCESS_TOKEN }}
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          STRIPE_PRICE_PRO_MONTHLY: ${{ secrets.STRIPE_PRICE_PRO_MONTHLY }}
+          STRIPE_PRICE_PRO_YEARLY: ${{ secrets.STRIPE_PRICE_PRO_YEARLY }}
+          STRIPE_PRICE_COACH_MONTHLY: ${{ secrets.STRIPE_PRICE_COACH_MONTHLY }}
+          STRIPE_PRICE_COACH_YEARLY: ${{ secrets.STRIPE_PRICE_COACH_YEARLY }}
+          STRIPE_PRICE_ELITE_MONTHLY: ${{ secrets.STRIPE_PRICE_ELITE_MONTHLY }}
+          STRIPE_PRICE_ELITE_YEARLY: ${{ secrets.STRIPE_PRICE_ELITE_YEARLY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+        run: |
+          missing=0
+          required_names=(
+            SUPABASE_URL
+            SUPABASE_ANON_KEY
+            SUPABASE_SERVICE_ROLE_KEY
+            SUPABASE_TEST_ACCESS_TOKEN
+            TENANT_A_ACCESS_TOKEN
+            TENANT_B_ACCESS_TOKEN
+            VITE_SENTRY_DSN
+            STRIPE_SECRET_KEY
+            STRIPE_WEBHOOK_SECRET
+            STRIPE_PRICE_PRO_MONTHLY
+            STRIPE_PRICE_PRO_YEARLY
+            STRIPE_PRICE_COACH_MONTHLY
+            STRIPE_PRICE_COACH_YEARLY
+            STRIPE_PRICE_ELITE_MONTHLY
+            STRIPE_PRICE_ELITE_YEARLY
+            GEMINI_API_KEY
+            SENTRY_AUTH_TOKEN
+            SENTRY_ORG
+            SENTRY_PROJECT
+          )
+          if [ "${{ inputs.confirm_erasure }}" = "true" ]; then
+            required_names+=(COMPLIANCE_ERASURE_ACCESS_TOKEN)
+          fi
+          for name in "${required_names[@]}"; do
+            if [ -z "${!name}" ]; then
+              echo "::error::$name is required for staging validation."
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Preflight
+        env:
+          VITE_ENV: staging
+          VITE_FEATURE_AUDIENCE: user
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || secrets.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
+          VITE_GEMINI_PROXY_URL: ${{ vars.VITE_GEMINI_PROXY_URL || '/api/gemini-proxy' }}
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          STAGING_APP_URL: ${{ inputs.staging_app_url }}
+          SUPABASE_TEST_ACCESS_TOKEN: ${{ secrets.SUPABASE_TEST_ACCESS_TOKEN }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          STRIPE_PRICE_PRO_MONTHLY: ${{ secrets.STRIPE_PRICE_PRO_MONTHLY }}
+          STRIPE_PRICE_PRO_YEARLY: ${{ secrets.STRIPE_PRICE_PRO_YEARLY }}
+          STRIPE_PRICE_COACH_MONTHLY: ${{ secrets.STRIPE_PRICE_COACH_MONTHLY }}
+          STRIPE_PRICE_COACH_YEARLY: ${{ secrets.STRIPE_PRICE_COACH_YEARLY }}
+          STRIPE_PRICE_ELITE_MONTHLY: ${{ secrets.STRIPE_PRICE_ELITE_MONTHLY }}
+          STRIPE_PRICE_ELITE_YEARLY: ${{ secrets.STRIPE_PRICE_ELITE_YEARLY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SENTRY_RELEASE: ${{ github.sha }}
+          SENTRY_DEPLOY_ENV: staging
+          APP_URL: ${{ inputs.staging_app_url }}
+          CORS_ALLOWED_ORIGINS: ${{ inputs.staging_app_url }}
+          OAUTH_REDIRECT_ALLOWED_ORIGINS: ${{ inputs.staging_app_url }}
+          OAUTH_TOKEN_SECURITY_MODE: ${{ vars.OAUTH_TOKEN_SECURITY_MODE || 'plaintext_blocked' }}
+        run: npm run preflight:sprint3
+
+      - name: Sprint 3 smoke
+        env:
+          STAGING_APP_URL: ${{ inputs.staging_app_url }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
+          SUPABASE_TEST_ACCESS_TOKEN: ${{ secrets.SUPABASE_TEST_ACCESS_TOKEN }}
+          STRIPE_SMOKE_PLAN_ID: ${{ vars.STRIPE_SMOKE_PLAN_ID || 'pro' }}
+          STRIPE_SMOKE_INTERVAL: ${{ vars.STRIPE_SMOKE_INTERVAL || 'month' }}
+          GEMINI_SMOKE_EXPECT_SUCCESS: ${{ vars.GEMINI_SMOKE_EXPECT_SUCCESS || 'false' }}
+          RATE_LIMIT_SMOKE_EXPECT_429: ${{ vars.RATE_LIMIT_SMOKE_EXPECT_429 || 'false' }}
+          SPRINT3_SMOKE_STRICT: 'true'
+        run: npm run smoke:sprint3
+
+      - name: Tenant A/B smoke
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
+          TENANT_A_ACCESS_TOKEN: ${{ secrets.TENANT_A_ACCESS_TOKEN }}
+          TENANT_B_ACCESS_TOKEN: ${{ secrets.TENANT_B_ACCESS_TOKEN }}
+        run: npm run smoke:tenant-ab
+
+      - name: Compliance smoke
+        env:
+          STAGING_APP_URL: ${{ inputs.staging_app_url }}
+          SUPABASE_TEST_ACCESS_TOKEN: ${{ secrets.SUPABASE_TEST_ACCESS_TOKEN }}
+          COMPLIANCE_ERASURE_ACCESS_TOKEN: ${{ secrets.COMPLIANCE_ERASURE_ACCESS_TOKEN }}
+          COMPLIANCE_SMOKE_CONFIRM_ERASURE: ${{ inputs.confirm_erasure == 'true' && 'DELETE_STAGING_USER' || '' }}
+        run: npm run smoke:compliance

@@ -50,10 +50,12 @@ function getRequestId(value: unknown): string | null {
 }
 
 function getAmount(object: JsonRecord): number | null {
-  return getNumber(object.amount_total) ??
+  return (
+    getNumber(object.amount_total) ??
     getNumber(object.amount_paid) ??
     getNumber(object.amount_due) ??
-    getNumber(object.amount);
+    getNumber(object.amount)
+  );
 }
 
 function getPriceRecord(value: unknown): JsonRecord | null {
@@ -111,7 +113,9 @@ function buildMinimizedObject(value: unknown): MinimizedStripeWebhookObject {
 
 export function minimizeStripeWebhookPayload(event: Stripe.Event): MinimizedStripeWebhookPayload {
   const apiVersion = getString((event as Stripe.Event & { api_version?: unknown }).api_version);
-  const pendingWebhooks = getNumber((event as Stripe.Event & { pending_webhooks?: unknown }).pending_webhooks);
+  const pendingWebhooks = getNumber(
+    (event as Stripe.Event & { pending_webhooks?: unknown }).pending_webhooks,
+  );
   const requestId = getRequestId((event as Stripe.Event & { request?: unknown }).request);
 
   const minimized: MinimizedStripeWebhookPayload = {

@@ -17,17 +17,19 @@ export function estimateDomsRisk(totalVolume: number, averageRpe: number): DomsE
   if (score > 10000 && averageRpe > 8) {
     return {
       risk: 'alto',
-      message: 'Treino intenso e volumoso. Risco alto de DMT (Dor Muscular Tardia) nas próximas 24-48h. Priorize recuperação e sono.'
+      message:
+        'Treino intenso e volumoso. Risco alto de DMT (Dor Muscular Tardia) nas próximas 24-48h. Priorize recuperação e sono.',
     };
   } else if (score > 5000 || averageRpe > 7) {
     return {
       risk: 'moderado',
-      message: 'Volume e intensidade moderados. É provável que você sinta uma leve DMT. Mantenha-se hidratado.'
+      message:
+        'Volume e intensidade moderados. É provável que você sinta uma leve DMT. Mantenha-se hidratado.',
     };
   }
 
   return {
     risk: 'baixo',
-    message: 'Treino leve. Risco baixo de dor muscular tardia.'
+    message: 'Treino leve. Risco baixo de dor muscular tardia.',
   };
 }

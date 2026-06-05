@@ -33,7 +33,8 @@ export function PendingAiRecommendationCard({
             {recommendation.reason}
           </p>
           <p className="mt-3 font-mono text-xs uppercase tracking-widest text-brand-muted">
-            Plano atual: {recommendation.payload.currentPlan.planName} | Sugerido: {recommendation.payload.proposedPlan.planName}
+            Plano atual: {recommendation.payload.currentPlan.planName} | Sugerido:{' '}
+            {recommendation.payload.proposedPlan.planName}
           </p>
         </div>
 

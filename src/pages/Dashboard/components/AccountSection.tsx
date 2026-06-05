@@ -4,7 +4,7 @@ import { type PersistenceStatus } from '../../../services/database';
 import { CloudPanel } from './CloudPanel';
 
 const MonetizationHub = lazy(() =>
-  import('./monetization/MonetizationHub').then(module => ({ default: module.MonetizationHub })),
+  import('./monetization/MonetizationHub').then((module) => ({ default: module.MonetizationHub })),
 );
 
 interface AccountSectionProps {

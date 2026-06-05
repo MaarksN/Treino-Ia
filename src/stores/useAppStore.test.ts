@@ -3,11 +3,11 @@ import { useAppStore } from './useAppStore';
 
 // Mock utils that are called on initialization to prevent real side effects
 vi.mock('../utils/analyticsUtils', () => ({
-  loadHistory: vi.fn().mockReturnValue([])
+  loadHistory: vi.fn().mockReturnValue([]),
 }));
 
 vi.mock('../utils/streakUtils', () => ({
-  loadStreak: vi.fn().mockReturnValue({ current: 0, best: 0, lastCheckin: 0 })
+  loadStreak: vi.fn().mockReturnValue({ current: 0, best: 0, lastCheckin: 0 }),
 }));
 
 const initialState = useAppStore.getState();
@@ -32,12 +32,12 @@ describe('useAppStore', () => {
 
   it('updates simple state values correctly', () => {
     const state = useAppStore.getState();
-    
+
     // Act
     state.setIsPremium(true);
     state.setLanguage('EN');
     state.setDarkMode(false);
-    
+
     // Assert
     const updated = useAppStore.getState();
     expect(updated.isPremium).toBe(true);
@@ -47,14 +47,14 @@ describe('useAppStore', () => {
 
   it('updates objects and arrays correctly', () => {
     const state = useAppStore.getState();
-    
+
     const mockProfile = { id: 'test-profile' } as any;
     const mockPlans = [{ id: 'plan-1' }] as any[];
-    
+
     // Act
     state.setProfile(mockProfile);
     state.setPlans(mockPlans);
-    
+
     // Assert
     const updated = useAppStore.getState();
     expect(updated.profile).toEqual(mockProfile);

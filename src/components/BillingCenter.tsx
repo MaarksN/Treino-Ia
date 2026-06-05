@@ -26,10 +26,7 @@ export function BillingCenter() {
   const [portalLoading, setPortalLoading] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
 
-  const plan = useMemo(
-    () => getBillingPlan(entitlement?.planId ?? 'free'),
-    [entitlement?.planId],
-  );
+  const plan = useMemo(() => getBillingPlan(entitlement?.planId ?? 'free'), [entitlement?.planId]);
 
   useEffect(() => {
     let active = true;
@@ -65,7 +62,9 @@ export function BillingCenter() {
       const portal = await createBillingPortalSession();
       window.location.assign(portal.portalUrl);
     } catch (portalError) {
-      setError(portalError instanceof Error ? portalError.message : 'Falha ao abrir portal Stripe.');
+      setError(
+        portalError instanceof Error ? portalError.message : 'Falha ao abrir portal Stripe.',
+      );
       setPortalLoading(false);
     }
   };
@@ -81,9 +80,7 @@ export function BillingCenter() {
           <p className="text-brand-neon text-xs uppercase tracking-[0.25em] font-bold">
             Billing Center
           </p>
-          <h1 className="text-4xl font-black mt-2">
-            Assinatura e Entitlements
-          </h1>
+          <h1 className="text-4xl font-black mt-2">Assinatura e Entitlements</h1>
           <p className="text-brand-muted mt-2">
             Status carregado do backend. Stripe webhook e Supabase são a fonte de verdade.
           </p>
@@ -114,9 +111,7 @@ export function BillingCenter() {
 
                 <h2 className="text-3xl font-black text-white">{plan.name}</h2>
 
-                <p className="text-brand-muted mt-1">
-                  Status: {entitlement.billingStatus}
-                </p>
+                <p className="text-brand-muted mt-1">Status: {entitlement.billingStatus}</p>
 
                 <p className="text-sm text-white/70 mt-4">
                   {entitlement.subscription?.current_period_end
@@ -130,9 +125,7 @@ export function BillingCenter() {
                       <CalendarClock size={16} />
                       Trial ativo
                     </p>
-                    <p className="text-sm">
-                      Até {trialEndsAt.toLocaleDateString('pt-BR')}
-                    </p>
+                    <p className="text-sm">Até {trialEndsAt.toLocaleDateString('pt-BR')}</p>
                   </div>
                 )}
               </div>
@@ -143,14 +136,12 @@ export function BillingCenter() {
                   <span className="font-bold">Entitlements</span>
                 </div>
 
-                <p className="text-3xl font-black text-white">
-                  {entitlement.entitlements.length}
-                </p>
+                <p className="text-3xl font-black text-white">{entitlement.entitlements.length}</p>
 
                 <p className="text-brand-muted mt-1">recursos liberados pelo servidor</p>
 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {entitlement.entitlements.slice(0, 8).map(feature => (
+                  {entitlement.entitlements.slice(0, 8).map((feature) => (
                     <span
                       key={feature}
                       className="rounded-full bg-white/10 px-3 py-1 text-xs text-white"
@@ -178,13 +169,19 @@ export function BillingCenter() {
             </section>
 
             <section className="bg-brand-gray rounded-3xl border border-white/10 p-5">
-              <h2 className="text-xl font-black text-white mb-4">
-                Uso mensal
-              </h2>
+              <h2 className="text-xl font-black text-white mb-4">Uso mensal</h2>
 
               <div className="grid md:grid-cols-4 gap-3">
-                <UsageCard label="IA usada" value={entitlement.usage.aiRequestsThisMonth} suffix="req" />
-                <UsageCard label="Exportações" value={entitlement.usage.exportsThisMonth} suffix="x" />
+                <UsageCard
+                  label="IA usada"
+                  value={entitlement.usage.aiRequestsThisMonth}
+                  suffix="req"
+                />
+                <UsageCard
+                  label="Exportações"
+                  value={entitlement.usage.exportsThisMonth}
+                  suffix="x"
+                />
                 <UsageCard label="PRs" value={entitlement.usage.prCount} suffix="x" />
                 <UsageCard label="Melhor streak" value={entitlement.usage.bestStreak} suffix="d" />
               </div>
@@ -195,9 +192,7 @@ export function BillingCenter() {
         <section className="bg-brand-gray rounded-3xl border border-white/10 p-5">
           <div className="flex items-center gap-2 mb-5">
             <CreditCard className="text-brand-neon" size={20} />
-            <h2 className="text-xl font-black text-white">
-              Planos
-            </h2>
+            <h2 className="text-xl font-black text-white">Planos</h2>
           </div>
 
           <PricingTable
@@ -208,9 +203,7 @@ export function BillingCenter() {
         </section>
 
         <section className="bg-brand-gray rounded-3xl border border-white/10 p-5">
-          <h2 className="text-xl font-black text-white mb-4">
-            Gestão da assinatura
-          </h2>
+          <h2 className="text-xl font-black text-white mb-4">Gestão da assinatura</h2>
 
           <div className="flex flex-col sm:flex-row gap-3">
             <button
@@ -219,7 +212,11 @@ export function BillingCenter() {
               onClick={openPortal}
               className="bg-white/10 text-white rounded-xl px-4 py-3 font-bold flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-white/20 transition-colors"
             >
-              {portalLoading ? <Loader2 className="animate-spin" size={16} /> : <ExternalLink size={16} />}
+              {portalLoading ? (
+                <Loader2 className="animate-spin" size={16} />
+              ) : (
+                <ExternalLink size={16} />
+              )}
               Abrir portal Stripe
             </button>
 
@@ -234,14 +231,12 @@ export function BillingCenter() {
             )}
           </div>
 
-          {message && (
-            <p className="text-brand-neon text-sm mt-4">{message}</p>
-          )}
+          {message && <p className="text-brand-neon text-sm mt-4">{message}</p>}
         </section>
 
         {entitlement?.isPremium && (
           <section className="mt-8">
-             <InvoiceHistory invoices={[]} />
+            <InvoiceHistory invoices={[]} />
           </section>
         )}
       </main>
@@ -258,15 +253,7 @@ export function BillingCenter() {
     </div>
   );
 }
-function UsageCard({
-  label,
-  value,
-  suffix,
-}: {
-  label: string;
-  value: number;
-  suffix: string;
-}) {
+function UsageCard({ label, value, suffix }: { label: string; value: number; suffix: string }) {
   return (
     <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
       <p className="text-xs text-brand-muted uppercase tracking-widest">{label}</p>

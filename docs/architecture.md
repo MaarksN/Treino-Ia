@@ -1,6 +1,7 @@
 # TREINO-IA — Arquitetura Base (PARTE 1)
 
 ## Visão geral
+
 A base do produto segue arquitetura **frontend SPA + API serverless + Supabase**:
 
 - **Frontend**: React 19 + Vite + TypeScript + TailwindCSS, mobile-first e PWA-ready.
@@ -10,6 +11,7 @@ A base do produto segue arquitetura **frontend SPA + API serverless + Supabase**
 - **IA**: Gemini somente via `api/gemini-proxy.ts` com guardrails e validação de schema.
 
 ## Princípios críticos
+
 1. Source of truth server-side para auth, billing, entitlement, gamificação e histórico.
 2. `localStorage` apenas para preferências de UI não sensíveis.
 3. Segredos nunca no client (`STRIPE_SECRET_KEY`, `GEMINI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, etc.).
@@ -18,6 +20,7 @@ A base do produto segue arquitetura **frontend SPA + API serverless + Supabase**
 6. Chamadas client -> `/api/*` devem usar `apiFetch` para propagar `X-Correlation-ID`.
 
 ## Camadas
+
 - `src/components/*`: UI modular por domínio.
 - `src/services/*`: regras de negócio client-side sem autoridade de segurança.
 - `src/utils/*`: validações, regras determinísticas e utilitários.
@@ -28,6 +31,7 @@ A base do produto segue arquitetura **frontend SPA + API serverless + Supabase**
 - `tests/*`: unitários, handlers de API e regressões críticas.
 
 ## Escalabilidade
+
 - Feature flags centralizadas (`src/config/featureFlags.ts`).
 - Contratos tipados (`src/types/*`) por módulo.
 - CI/CD com lint, typecheck, tests e build em PR.

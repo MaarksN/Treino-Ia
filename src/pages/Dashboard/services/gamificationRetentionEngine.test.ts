@@ -32,7 +32,11 @@ describe('gamificationRetentionEngine', () => {
     ];
     const highVolumeSingleDay = [session('v1', 2026, 5, 6, 50_000)];
 
-    const leaderboard = buildConsistencyLeaderboard(profile, [...consistentWeek, ...highVolumeSingleDay], today);
+    const leaderboard = buildConsistencyLeaderboard(
+      profile,
+      [...consistentWeek, ...highVolumeSingleDay],
+      today,
+    );
 
     expect(leaderboard[0].workouts).toBe(4);
     expect(leaderboard[0].score).toBeGreaterThan(leaderboard[1].score);
@@ -50,9 +54,9 @@ describe('gamificationRetentionEngine', () => {
 
     const badges = buildLifestyleBadges(profile, history, today);
 
-    expect(badges.find(badge => badge.id === 'first_workout_local')?.achieved).toBe(true);
-    expect(badges.find(badge => badge.id === 'weekly_lifestyle_target')?.achieved).toBe(true);
-    expect(badges.find(badge => badge.id === 'ten_workouts_no_gap')?.achieved).toBe(false);
+    expect(badges.find((badge) => badge.id === 'first_workout_local')?.achieved).toBe(true);
+    expect(badges.find((badge) => badge.id === 'weekly_lifestyle_target')?.achieved).toBe(true);
+    expect(badges.find((badge) => badge.id === 'ten_workouts_no_gap')?.achieved).toBe(false);
   });
 
   it('preserva ofensiva local com freeze quando hoje e descanso legitimo', () => {
@@ -71,9 +75,9 @@ describe('gamificationRetentionEngine', () => {
   });
 
   it('libera titulos de perfil por nivel local', () => {
-    const history = Array.from({ length: 23 }).map((_, index) => (
-      session(`s${index}`, 2026, 5, Math.max(1, 16 - index), 1000, true)
-    ));
+    const history = Array.from({ length: 23 }).map((_, index) =>
+      session(`s${index}`, 2026, 5, Math.max(1, 16 - index), 1000, true),
+    );
 
     const title = buildProfileTitle(history);
 
@@ -83,19 +87,23 @@ describe('gamificationRetentionEngine', () => {
 
   it('cria missoes escondidas diarias deterministicas com progresso real', () => {
     const today = date(2026, 5, 17);
-    const missions = buildHiddenDailyMissions(profile, [
-      session('today', 2026, 5, 17, 1000, true, 'feito'),
-    ], today);
+    const missions = buildHiddenDailyMissions(
+      profile,
+      [session('today', 2026, 5, 17, 1000, true, 'feito')],
+      today,
+    );
 
     expect(missions).toHaveLength(3);
-    expect(missions.some(mission => mission.revealed)).toBe(true);
-    expect(missions.every(mission => mission.id.endsWith('2026-05-17'))).toBe(true);
+    expect(missions.some((mission) => mission.revealed)).toBe(true);
+    expect(missions.every((mission) => mission.id.endsWith('2026-05-17'))).toBe(true);
   });
 
   it('monta estado consolidado para a secao do Dashboard', () => {
-    const state = buildGamificationRetentionState(profile, [
-      session('s1', 2026, 5, 17, 1000, true, 'feito'),
-    ], date(2026, 5, 17));
+    const state = buildGamificationRetentionState(
+      profile,
+      [session('s1', 2026, 5, 17, 1000, true, 'feito')],
+      date(2026, 5, 17),
+    );
 
     expect(state.summary.totalWorkouts).toBe(1);
     expect(state.leaderboard.length).toBeGreaterThan(0);
@@ -126,19 +134,21 @@ function session(
     totalExercises: 3,
     feedback,
     nextRecommendation: '',
-    exercises: [{
-      exerciseId: 'ex-1',
-      name: 'Supino',
-      targetSets: 3,
-      targetReps: '8-10',
-      targetRest: '90s',
-      completed: complete,
-      sets: [
-        { weight: totalVolume / 30, reps: 10, rpe: 8 },
-        { weight: totalVolume / 30, reps: 10, rpe: 8 },
-        { weight: totalVolume / 30, reps: 10, rpe: 8 },
-      ],
-    }],
+    exercises: [
+      {
+        exerciseId: 'ex-1',
+        name: 'Supino',
+        targetSets: 3,
+        targetReps: '8-10',
+        targetRest: '90s',
+        completed: complete,
+        sets: [
+          { weight: totalVolume / 30, reps: 10, rpe: 8 },
+          { weight: totalVolume / 30, reps: 10, rpe: 8 },
+          { weight: totalVolume / 30, reps: 10, rpe: 8 },
+        ],
+      },
+    ],
   };
 }
 

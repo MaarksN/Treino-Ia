@@ -40,11 +40,11 @@ export async function sendCoachMessage(
   history: CoachMessage[],
   profile: UserProfile,
   plan: WorkoutPlan | null,
-  streak: number
+  streak: number,
 ): Promise<string> {
   const contents = [
-    ...history.slice(-8).map(item => ({
-      role: item.role === 'user' ? 'user' as const : 'model' as const,
+    ...history.slice(-8).map((item) => ({
+      role: item.role === 'user' ? ('user' as const) : ('model' as const),
       parts: [{ text: item.content }],
     })),
     { role: 'user' as const, parts: [{ text: message }] },
@@ -102,8 +102,12 @@ export async function generatePlanAdjustments(
   plan: WorkoutPlan,
   history: WorkoutHistoryEntry[],
   checkins: DailyCheckin[],
-  profile: UserProfile
-): Promise<{ suggestions: AutoAdjustSuggestion[]; overallAssessment: string; priorityLevel: string }> {
+  profile: UserProfile,
+): Promise<{
+  suggestions: AutoAdjustSuggestion[];
+  overallAssessment: string;
+  priorityLevel: string;
+}> {
   const recentHistory = history.slice(-14);
   const recentCheckins = checkins.slice(-7);
 
@@ -122,10 +126,10 @@ Perfil: ${JSON.stringify({ goal: profile.goal, level: profile.experienceLevel, w
 Plano: ${JSON.stringify({
     name: plan.planName,
     goal: plan.goalDescription,
-    days: plan.days.map(day => ({
+    days: plan.days.map((day) => ({
       dayName: day.dayName,
       focus: day.focus,
-      exercises: day.exercises.map(exercise => ({
+      exercises: day.exercises.map((exercise) => ({
         name: exercise.name,
         sets: exercise.sets,
         reps: exercise.reps,
@@ -162,11 +166,14 @@ Sugira 3-5 ajustes específicos e acionáveis. Responda em JSON válido no schem
 
 export async function analyzeStagnation(
   history: WorkoutHistoryEntry[],
-  profile: UserProfile
+  profile: UserProfile,
 ): Promise<string> {
-  const recentVolumes = history.slice(-12).map(entry => entry.totalVolume).filter(volume => volume > 0);
-  const isStagnant = recentVolumes.length >= 4
-    && Math.max(...recentVolumes) - Math.min(...recentVolumes) < 500;
+  const recentVolumes = history
+    .slice(-12)
+    .map((entry) => entry.totalVolume)
+    .filter((volume) => volume > 0);
+  const isStagnant =
+    recentVolumes.length >= 4 && Math.max(...recentVolumes) - Math.min(...recentVolumes) < 500;
 
   if (!isStagnant) return '';
 
@@ -183,7 +190,7 @@ Identifique a causa provável (overreaching, falta de progressão, adaptação) 
 
 export async function getNutritionalAdvice(
   question: string,
-  profile: UserProfile
+  profile: UserProfile,
 ): Promise<string> {
   const prompt = `
 Pergunta nutricional do atleta: "${question}"

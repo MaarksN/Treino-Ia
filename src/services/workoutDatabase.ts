@@ -33,5 +33,5 @@ export const WorkoutDatabase = {
     } catch (error) {
       return [];
     }
-  }
+  },
 };

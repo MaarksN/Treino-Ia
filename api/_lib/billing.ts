@@ -61,7 +61,10 @@ const ENTITLEMENTS_BY_PLAN: Record<BillingTier, string[]> = {
   ],
 };
 
-export function normalizeBillingPlan(planId: unknown, interval: unknown): {
+export function normalizeBillingPlan(
+  planId: unknown,
+  interval: unknown,
+): {
   planId: BillingTier;
   interval: BillingInterval;
 } {
@@ -77,7 +80,7 @@ export function normalizeBillingPlan(planId: unknown, interval: unknown): {
   }
 
   const normalizedPlan = ['free', 'pro', 'coach', 'elite'].includes(rawPlan)
-    ? rawPlan as BillingTier
+    ? (rawPlan as BillingTier)
     : null;
   const normalizedInterval = rawInterval === 'year' ? 'year' : 'month';
 
@@ -120,4 +123,3 @@ export function getBillingMonth(date = new Date()): string {
 export function isPaidStatus(status?: string | null): boolean {
   return status === 'active' || status === 'trialing';
 }
-

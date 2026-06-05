@@ -15,17 +15,19 @@ import {
 import { type ActiveExerciseDraft } from '../types';
 import { type WorkoutSession } from '../../../services/database';
 
-const sampleDraft: ActiveExerciseDraft[] = [{
-  exerciseId: 'ex-1',
-  name: 'Supino',
-  targetSets: 3,
-  targetReps: '8-10',
-  targetRest: '90s',
-  completed: true,
-  exerciseNote: 'Manter escápulas encaixadas.',
-  intensityTechnique: 'dropset',
-  sets: [{ weight: '100', reps: '10', rpe: '8', completed: true }],
-}];
+const sampleDraft: ActiveExerciseDraft[] = [
+  {
+    exerciseId: 'ex-1',
+    name: 'Supino',
+    targetSets: 3,
+    targetReps: '8-10',
+    targetRest: '90s',
+    completed: true,
+    exerciseNote: 'Manter escápulas encaixadas.',
+    intensityTechnique: 'dropset',
+    sets: [{ weight: '100', reps: '10', rpe: '8', completed: true }],
+  },
+];
 
 describe('activeWorkoutEngine', () => {
   it('calcula tonelagem com peso e reps válidos', () => {
@@ -128,17 +130,19 @@ function createHistory(volumes: number[]): WorkoutSession[] {
     totalExercises: 1,
     feedback: '',
     nextRecommendation: '',
-    exercises: [{
-      exerciseId: 'ex-1',
-      name: 'Supino',
-      targetSets: 3,
-      targetReps: '8-10',
-      targetRest: '90s',
-      completed: true,
-      actualWeight: 90,
-      actualReps: 10,
-      rpe: 8,
-      sets: [{ weight: volume / 10, reps: 10, rpe: 8 }],
-    }],
+    exercises: [
+      {
+        exerciseId: 'ex-1',
+        name: 'Supino',
+        targetSets: 3,
+        targetReps: '8-10',
+        targetRest: '90s',
+        completed: true,
+        actualWeight: 90,
+        actualReps: 10,
+        rpe: 8,
+        sets: [{ weight: volume / 10, reps: 10, rpe: 8 }],
+      },
+    ],
   }));
 }

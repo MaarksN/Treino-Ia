@@ -32,10 +32,13 @@ export async function getServerEntitlement(userId: string) {
 
   const { data: usage, error: usageError } = await supabase
     .from('billing_usage_counters')
-    .upsert({
-      user_id: userId,
-      billing_month: billingMonth,
-    }, { onConflict: 'user_id,billing_month' })
+    .upsert(
+      {
+        user_id: userId,
+        billing_month: billingMonth,
+      },
+      { onConflict: 'user_id,billing_month' },
+    )
     .select('ai_requests, exports_count, prs_count, best_streak')
     .single();
 

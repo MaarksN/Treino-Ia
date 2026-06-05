@@ -1,8 +1,4 @@
-import {
-  FatigueSnapshot,
-  IntensitySemaphore,
-  SessionReadiness,
-} from '../types';
+import { FatigueSnapshot, IntensitySemaphore, SessionReadiness } from '../types';
 
 function clamp(value: number, min = 0, max = 100): number {
   return Math.max(min, Math.min(max, value));
@@ -65,10 +61,7 @@ export function shouldAutoDeload(snapshot: FatigueSnapshot): boolean {
   const fatigueScore = snapshot.fatigueScore ?? calcFatigueScore(snapshot);
 
   return (
-    fatigueScore >= 72 ||
-    snapshot.readiness <= 35 ||
-    snapshot.soreness >= 8 ||
-    snapshot.sleep <= 4
+    fatigueScore >= 72 || snapshot.readiness <= 35 || snapshot.soreness >= 8 || snapshot.sleep <= 4
   );
 }
 
@@ -92,8 +85,7 @@ export function getSessionReadiness(snapshot: FatigueSnapshot): SessionReadiness
       fatigueScore,
       recoveryIndex,
       semaphore: traffic.semaphore,
-      recommendation:
-        'Reduza carga e volume hoje. Considere deload, mobilidade ou descanso ativo.',
+      recommendation: 'Reduza carga e volume hoje. Considere deload, mobilidade ou descanso ativo.',
     };
   }
 

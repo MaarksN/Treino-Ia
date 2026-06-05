@@ -40,8 +40,8 @@ export function SleepTracker() {
   const avgQuality = getAvgSleepQuality(entries);
   const avgDuration = getAvgSleepDuration(entries);
   const avgQualityRounded = clampQuality(avgQuality);
-  const todayEntry = entries.find(entry => entry.date === today);
-  const chartData = entries.slice(-14).map(entry => ({
+  const todayEntry = entries.find((entry) => entry.date === today);
+  const chartData = entries.slice(-14).map((entry) => ({
     date: entry.date.slice(5),
     horas: Number((entry.durationMinutes / 60).toFixed(1)),
     qualidade: entry.quality * 20,
@@ -70,7 +70,7 @@ export function SleepTracker() {
       </div>
 
       <div className="flex gap-2 mb-4">
-        {(['log', 'stats'] as const).map(item => (
+        {(['log', 'stats'] as const).map((item) => (
           <button
             key={item}
             type="button"
@@ -87,21 +87,31 @@ export function SleepTracker() {
           <div className="grid grid-cols-2 gap-3">
             <div className="p-4 bg-brand-dark rounded-xl border border-white/10">
               <p className="text-brand-muted text-xs mb-1">Média 7 dias</p>
-              <p className="text-purple-400 font-black text-2xl tabular-nums">{(avgDuration / 60).toFixed(1)}h</p>
+              <p className="text-purple-400 font-black text-2xl tabular-nums">
+                {(avgDuration / 60).toFixed(1)}h
+              </p>
               <p className="text-brand-muted text-xs">duração</p>
             </div>
             <div className="p-4 bg-brand-dark rounded-xl border border-white/10">
               <p className="text-brand-muted text-xs mb-1">Qualidade média</p>
-              <p style={{ color: getSleepQualityColor(Math.round(avgQuality)) }} className="font-black text-2xl tabular-nums">
+              <p
+                style={{ color: getSleepQualityColor(Math.round(avgQuality)) }}
+                className="font-black text-2xl tabular-nums"
+              >
                 {avgQuality ? avgQuality.toFixed(1) : '0.0'}/5
               </p>
-              <p className="text-brand-muted text-xs">{avgQuality ? getSleepQualityLabel(avgQualityRounded) : 'Sem dados'}</p>
+              <p className="text-brand-muted text-xs">
+                {avgQuality ? getSleepQualityLabel(avgQualityRounded) : 'Sem dados'}
+              </p>
             </div>
           </div>
 
           {avgDuration < 420 && entries.length >= 3 && (
             <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
-              <p className="text-yellow-400 text-sm">Você está dormindo menos de 7h em média. Sono insuficiente reduz recuperação, força e síntese proteica.</p>
+              <p className="text-yellow-400 text-sm">
+                Você está dormindo menos de 7h em média. Sono insuficiente reduz recuperação, força
+                e síntese proteica.
+              </p>
             </div>
           )}
 
@@ -110,20 +120,24 @@ export function SleepTracker() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className="text-xs text-brand-muted mb-1 flex items-center gap-1"><Moon size={11} /> Dormiu</p>
+                <p className="text-xs text-brand-muted mb-1 flex items-center gap-1">
+                  <Moon size={11} /> Dormiu
+                </p>
                 <input
                   type="time"
                   value={bedtime}
-                  onChange={event => setBedtime(event.target.value)}
+                  onChange={(event) => setBedtime(event.target.value)}
                   className="w-full bg-brand-gray border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none"
                 />
               </div>
               <div>
-                <p className="text-xs text-brand-muted mb-1 flex items-center gap-1"><Sun size={11} /> Acordou</p>
+                <p className="text-xs text-brand-muted mb-1 flex items-center gap-1">
+                  <Sun size={11} /> Acordou
+                </p>
                 <input
                   type="time"
                   value={wakeTime}
-                  onChange={event => setWakeTime(event.target.value)}
+                  onChange={(event) => setWakeTime(event.target.value)}
                   className="w-full bg-brand-gray border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none"
                 />
               </div>
@@ -137,7 +151,7 @@ export function SleepTracker() {
             <div>
               <p className="text-xs text-brand-muted mb-2">Qualidade do sono</p>
               <div className="flex gap-2">
-                {([1, 2, 3, 4, 5] as const).map(item => (
+                {([1, 2, 3, 4, 5] as const).map((item) => (
                   <button
                     key={item}
                     type="button"
@@ -153,7 +167,10 @@ export function SleepTracker() {
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-center mt-1" style={{ color: getSleepQualityColor(quality) }}>
+              <p
+                className="text-xs text-center mt-1"
+                style={{ color: getSleepQualityColor(quality) }}
+              >
                 {QUALITY_LABELS[quality - 1]}
               </p>
             </div>
@@ -161,30 +178,44 @@ export function SleepTracker() {
             <input
               placeholder="Notas (opcional)..."
               value={notes}
-              onChange={event => setNotes(event.target.value)}
+              onChange={(event) => setNotes(event.target.value)}
               className="w-full bg-brand-gray border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none"
             />
 
-            <button type="button" onClick={handleSave} className="w-full bg-brand-neon text-brand-dark font-bold py-3 rounded-xl">
+            <button
+              type="button"
+              onClick={handleSave}
+              className="w-full bg-brand-neon text-brand-dark font-bold py-3 rounded-xl"
+            >
               {todayEntry ? 'Atualizar' : 'Salvar sono'}
             </button>
           </div>
 
           <div className="space-y-2">
-            {[...entries].reverse().slice(0, 5).map(entry => (
-              <div key={entry.id} className="flex items-center justify-between p-3 bg-brand-dark rounded-xl border border-white/10">
-                <div>
-                  <p className="text-white text-sm">{entry.date}</p>
-                  <p className="text-brand-muted text-xs">{entry.bedtime} → {entry.wakeTime}</p>
+            {[...entries]
+              .reverse()
+              .slice(0, 5)
+              .map((entry) => (
+                <div
+                  key={entry.id}
+                  className="flex items-center justify-between p-3 bg-brand-dark rounded-xl border border-white/10"
+                >
+                  <div>
+                    <p className="text-white text-sm">{entry.date}</p>
+                    <p className="text-brand-muted text-xs">
+                      {entry.bedtime} → {entry.wakeTime}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-purple-400 font-bold">
+                      {(entry.durationMinutes / 60).toFixed(1)}h
+                    </p>
+                    <p className="text-xs" style={{ color: getSleepQualityColor(entry.quality) }}>
+                      {getSleepQualityLabel(entry.quality)}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-purple-400 font-bold">{(entry.durationMinutes / 60).toFixed(1)}h</p>
-                  <p className="text-xs" style={{ color: getSleepQualityColor(entry.quality) }}>
-                    {getSleepQualityLabel(entry.quality)}
-                  </p>
-                </div>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
       )}
@@ -209,21 +240,41 @@ export function SleepTracker() {
                     contentStyle={{ background: '#1c1b19', border: 'none', borderRadius: 8 }}
                     formatter={(value) => [`${Number(value ?? 0)}h`]}
                   />
-                  <Area type="monotone" dataKey="horas" stroke="#a78bfa" strokeWidth={2} fill="url(#sleepGrad)" dot={{ fill: '#a78bfa', r: 4 }} />
+                  <Area
+                    type="monotone"
+                    dataKey="horas"
+                    stroke="#a78bfa"
+                    strokeWidth={2}
+                    fill="url(#sleepGrad)"
+                    dot={{ fill: '#a78bfa', r: 4 }}
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           ) : (
-            <p className="text-brand-muted text-sm text-center py-6">Registre pelo menos 2 noites para ver o gráfico.</p>
+            <p className="text-brand-muted text-sm text-center py-6">
+              Registre pelo menos 2 noites para ver o gráfico.
+            </p>
           )}
 
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: 'Média 7d', value: `${(avgDuration / 60).toFixed(1)}h`, color: 'text-purple-400' },
-              { label: 'Qualidade média', value: `${avgQuality.toFixed(1)}/5`, color: 'text-brand-neon' },
+              {
+                label: 'Média 7d',
+                value: `${(avgDuration / 60).toFixed(1)}h`,
+                color: 'text-purple-400',
+              },
+              {
+                label: 'Qualidade média',
+                value: `${avgQuality.toFixed(1)}/5`,
+                color: 'text-brand-neon',
+              },
               { label: 'Noites registradas', value: entries.length, color: 'text-blue-400' },
-            ].map(item => (
-              <div key={item.label} className="p-3 bg-brand-dark rounded-xl border border-white/10 text-center">
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="p-3 bg-brand-dark rounded-xl border border-white/10 text-center"
+              >
                 <p className={`font-black text-xl tabular-nums ${item.color}`}>{item.value}</p>
                 <p className="text-brand-muted text-xs mt-1">{item.label}</p>
               </div>

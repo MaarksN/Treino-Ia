@@ -77,7 +77,7 @@ export function installGlobalErrorTelemetry(): void {
   if (installed) return;
   installed = true;
 
-  window.addEventListener('error', event => {
+  window.addEventListener('error', (event) => {
     captureError(event.error ?? event.message, 'window.error', {
       filename: event.filename,
       lineno: event.lineno,
@@ -85,7 +85,7 @@ export function installGlobalErrorTelemetry(): void {
     });
   });
 
-  window.addEventListener('unhandledrejection', event => {
+  window.addEventListener('unhandledrejection', (event) => {
     captureError(event.reason, 'window.unhandledrejection');
   });
 }

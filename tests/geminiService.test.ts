@@ -57,18 +57,21 @@ describe('geminiService', () => {
     };
 
     const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({
-        candidates: [
-          {
-            content: {
-              parts: [{ text: JSON.stringify(aiPlan) }],
+      new Response(
+        JSON.stringify({
+          candidates: [
+            {
+              content: {
+                parts: [{ text: JSON.stringify(aiPlan) }],
+              },
             },
-          },
-        ],
-      }), {
-        status: 200,
-        headers: { 'content-type': 'application/json' },
-      }),
+          ],
+        }),
+        {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        },
+      ),
     );
     vi.stubGlobal('fetch', fetchMock);
 
@@ -88,9 +91,12 @@ describe('geminiService', () => {
       workoutLocation: 'Academia',
     });
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/gemini-proxy', expect.objectContaining({
-      method: 'POST',
-    }));
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/gemini-proxy',
+      expect.objectContaining({
+        method: 'POST',
+      }),
+    );
     const headers = getFetchHeaders(fetchMock);
     expect(headers.get('authorization')).toBe('Bearer supabase-token');
     expect(plan.planName).toBe(aiPlan.planName);
@@ -123,18 +129,21 @@ describe('geminiService', () => {
       ],
     };
     const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({
-        candidates: [
-          {
-            content: {
-              parts: [{ text: JSON.stringify(aiPlan) }],
+      new Response(
+        JSON.stringify({
+          candidates: [
+            {
+              content: {
+                parts: [{ text: JSON.stringify(aiPlan) }],
+              },
             },
-          },
-        ],
-      }), {
-        status: 200,
-        headers: { 'content-type': 'application/json' },
-      }),
+          ],
+        }),
+        {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        },
+      ),
     );
     vi.stubGlobal('fetch', fetchMock);
 

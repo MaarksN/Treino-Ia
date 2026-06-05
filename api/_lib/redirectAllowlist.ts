@@ -7,7 +7,7 @@ function normalizeOrigin(origin: string): string {
 export function getAllowedRedirectOrigins(baseUrl?: string): Set<string> {
   const configured = (process.env.OAUTH_REDIRECT_ALLOWED_ORIGINS ?? '')
     .split(',')
-    .map(value => value.trim())
+    .map((value) => value.trim())
     .filter(Boolean)
     .map(normalizeOrigin);
 
@@ -26,7 +26,7 @@ export function getAllowedRedirectOrigins(baseUrl?: string): Set<string> {
 
 export function normalizeRedirectTo(
   candidate: unknown,
-  options: { baseUrl: string; fallbackPath?: string } 
+  options: { baseUrl: string; fallbackPath?: string },
 ): string {
   const fallbackPath = options.fallbackPath ?? DEFAULT_FALLBACK_PATH;
   const safeFallback = new URL(fallbackPath, options.baseUrl).toString();

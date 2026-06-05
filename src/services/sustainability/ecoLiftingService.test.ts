@@ -11,21 +11,24 @@ describe('ecoLiftingService', () => {
   });
 
   it('should calculate eco points and badges based on history size', () => {
-    const mockHistory = Array.from({ length: 6 }).map((_, i) => ({
-      id: `session-${i}`,
-      planId: 'p1',
-      dayId: 'd1',
-      dayName: 'Day 1',
-      focus: 'Hypertrophy',
-      completedAt: Date.now(),
-      durationMinutes: 45,
-      totalVolume: 1000,
-      completedExercises: 5,
-      totalExercises: 5,
-      feedback: 'Good',
-      nextRecommendation: 'Keep it up',
-      exercises: [],
-    } as WorkoutSession));
+    const mockHistory = Array.from({ length: 6 }).map(
+      (_, i) =>
+        ({
+          id: `session-${i}`,
+          planId: 'p1',
+          dayId: 'd1',
+          dayName: 'Day 1',
+          focus: 'Hypertrophy',
+          completedAt: Date.now(),
+          durationMinutes: 45,
+          totalVolume: 1000,
+          completedExercises: 5,
+          totalExercises: 5,
+          feedback: 'Good',
+          nextRecommendation: 'Keep it up',
+          exercises: [],
+        }) as WorkoutSession,
+    );
 
     const stats = calculateEcoLiftingImpact(mockHistory);
     expect(stats.score).toBe(60);

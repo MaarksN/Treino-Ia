@@ -22,22 +22,22 @@ Passou:
 - `npm run lint`.
 - `npm run typecheck`.
 - `npm run build`.
+- `npm run format:check`.
 - `madge`: sem ciclos.
 
 Falhou/partial:
 
-- `npm run format:check`: 717 arquivos fora do Prettier.
-- `jscpd`: 54 clones.
+- `jscpd`: 43 clones restantes; duplicacao total 0.92% de linhas.
 - `ts-prune`: muitos exports aparentemente nao usados.
 - `dependency-cruiser`: sem config de regras, portanto nao valida boundaries.
 
 ## Lacunas documentais
 
 - README nao documenta o workaround local usado aqui para ausencia de npm no PATH; isto e especifico do ambiente Codex, nao necessariamente do projeto.
-- OpenAPI usa `https://example.vercel.app` como servidor production placeholder.
+- OpenAPI usa variavel de servidor com default placeholder explicito; falta URL real de staging validada.
 - Falta relatorio formal de ultima execucao bem-sucedida em staging com URL e evidencias.
 - Falta SBOM e politica de supply chain.
 
 ## Decisao
 
-PARTIAL. Documentacao e ampla, mas gates de formatting, staging evidence e operating evidence ainda falham.
+PARTIAL. Documentacao e ampla, mas staging evidence e operating evidence reais ainda falham por env/secrets ausentes.

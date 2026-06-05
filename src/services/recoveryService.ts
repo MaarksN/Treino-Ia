@@ -10,7 +10,10 @@ export function getRecoveryScore(checkin: RecoveryCheckin) {
   const sorenessPenalty = checkin.sorenessLevel * 5;
   const stressPenalty = checkin.stressLevel * 4;
   const energyScore = checkin.energyLevel * 8;
-  const score = Math.max(0, Math.min(100, sleepScore + energyScore - sorenessPenalty - stressPenalty));
+  const score = Math.max(
+    0,
+    Math.min(100, sleepScore + energyScore - sorenessPenalty - stressPenalty),
+  );
 
   if (score >= 70) return { score, label: 'Alta', modifier: 'normal' as const };
   if (score >= 45) return { score, label: 'Média', modifier: 'reduced' as const };
@@ -34,7 +37,9 @@ Responda em tópicos práticos, em português do Brasil.
   return response.text || 'Sem recomendação.';
 }
 
-export async function generateMobilityRecommendation(sorenessMap: Record<string, number>): Promise<string> {
+export async function generateMobilityRecommendation(
+  sorenessMap: Record<string, number>,
+): Promise<string> {
   const regions = Object.entries(sorenessMap)
     .filter(([, value]) => value >= 4)
     .map(([region, value]) => `${region}: ${value}/10`)
@@ -55,7 +60,10 @@ Inclua nome do exercício, repetições/tempo e cuidados.
   return response.text || 'Sem rotina.';
 }
 
-export async function generatePostWorkoutProtocol(plan: WorkoutPlan, checkin: DailyCheckin): Promise<string> {
+export async function generatePostWorkoutProtocol(
+  plan: WorkoutPlan,
+  checkin: DailyCheckin,
+): Promise<string> {
   const prompt = `
 Gere um protocolo pós-treino personalizado.
 
@@ -79,7 +87,10 @@ Responda em tópicos práticos.
   return response.text || 'Sem protocolo.';
 }
 
-export async function generateVolumeReductionAdvice(checkins: DailyCheckin[], profile: UserProfile): Promise<string> {
+export async function generateVolumeReductionAdvice(
+  checkins: DailyCheckin[],
+  profile: UserProfile,
+): Promise<string> {
   const prompt = `
 Analise os check-ins e sugira redução de volume se necessário.
 
@@ -97,7 +108,10 @@ Indique: reduzir/manter volume, quais grupos musculares priorizar descanso, por 
   return response.text || 'Sem ajuste necessário.';
 }
 
-export async function generateIntensityAdjustment(plan: WorkoutPlan, readiness: ReadinessScore): Promise<string> {
+export async function generateIntensityAdjustment(
+  plan: WorkoutPlan,
+  readiness: ReadinessScore,
+): Promise<string> {
   const prompt = `
 Ajuste a intensidade do treino de hoje com base na prontidão.
 
@@ -106,7 +120,7 @@ Recomendação: ${readiness.recommendation}
 Intensidade sugerida: ${readiness.adjustedIntensity}%
 
 Plano: ${plan.planName} - ${plan.days[0]?.focus || ''}
-Exercícios: ${plan.days[0]?.exercises.map(exercise => exercise.name).join(', ')}
+Exercícios: ${plan.days[0]?.exercises.map((exercise) => exercise.name).join(', ')}
 
 Diga como ajustar cada exercício.
 `;

@@ -30,18 +30,18 @@ declare global {
     Pose?: new (options: { locateFile: (file: string) => string }) => MediaPipePose;
     Camera?: new (
       video: HTMLVideoElement,
-      options: { onFrame: () => Promise<void>; width: number; height: number }
+      options: { onFrame: () => Promise<void>; width: number; height: number },
     ) => MediaPipeCamera;
     drawConnectors?: (
       context: CanvasRenderingContext2D,
       landmarks: PoseLandmark[],
       connections: unknown,
-      options: { color: string; lineWidth: number }
+      options: { color: string; lineWidth: number },
     ) => void;
     drawLandmarks?: (
       context: CanvasRenderingContext2D,
       landmarks: PoseLandmark[],
-      options: { color: string; fillColor: string; radius: number }
+      options: { color: string; fillColor: string; radius: number },
     ) => void;
     POSE_CONNECTIONS?: unknown;
   }
@@ -87,7 +87,7 @@ export function PoseDetector() {
     }
 
     let loaded = 0;
-    MEDIAPIPE_SCRIPTS.forEach(src => {
+    MEDIAPIPE_SCRIPTS.forEach((src) => {
       const existing = document.querySelector(`script[src="${src}"]`) as HTMLScriptElement | null;
       if (existing?.dataset.loaded === 'true') {
         loaded += 1;
@@ -111,7 +111,7 @@ export function PoseDetector() {
   const stopCamera = useCallback(() => {
     cameraRef.current?.stop?.();
     cameraRef.current = null;
-    streamRef.current?.getTracks().forEach(track => track.stop());
+    streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
     poseRef.current?.close();
     poseRef.current = null;
@@ -120,64 +120,77 @@ export function PoseDetector() {
     repPhaseRef.current = 'up';
   }, []);
 
-  useEffect(() => () => {
-    stopCamera();
-  }, [stopCamera]);
+  useEffect(
+    () => () => {
+      stopCamera();
+    },
+    [stopCamera],
+  );
 
-  const onResults = useCallback((results: PoseResults) => {
-    const canvas = canvasRef.current;
-    const video = videoRef.current;
-    if (!canvas || !video || video.videoWidth === 0 || video.videoHeight === 0) return;
+  const onResults = useCallback(
+    (results: PoseResults) => {
+      const canvas = canvasRef.current;
+      const video = videoRef.current;
+      if (!canvas || !video || video.videoWidth === 0 || video.videoHeight === 0) return;
 
-    const context = canvas.getContext('2d');
-    if (!context) return;
+      const context = canvas.getContext('2d');
+      if (!context) return;
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    context.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(results.image, 0, 0, canvas.width, canvas.height);
 
-    if (!results.poseLandmarks) return;
+      if (!results.poseLandmarks) return;
 
-    const analysis = analyzeAngles(results.poseLandmarks, selectedRule);
-    setFormScore(analysis.formScore);
-    setIssues(analysis.issues);
-    setTips(analysis.tips);
-    setKeyAngles(analysis.keyAngles);
+      const analysis = analyzeAngles(results.poseLandmarks, selectedRule);
+      setFormScore(analysis.formScore);
+      setIssues(analysis.issues);
+      setTips(analysis.tips);
+      setKeyAngles(analysis.keyAngles);
 
-    const color = getScoreColor(analysis.formScore);
+      const color = getScoreColor(analysis.formScore);
 
-    if (window.drawConnectors && window.POSE_CONNECTIONS) {
-      window.drawConnectors(context, results.poseLandmarks, window.POSE_CONNECTIONS, { color, lineWidth: 3 });
-    }
-    if (window.drawLandmarks) {
-      window.drawLandmarks(context, results.poseLandmarks, { color: '#ffffff', fillColor: color, radius: 5 });
-    }
-
-    const repAngle = analysis.keyAngles.Joelho || analysis.keyAngles['Cotovelo na subida'];
-    if (repAngle) {
-      if (repAngle < 100 && repPhaseRef.current === 'up') {
-        repPhaseRef.current = 'down';
-      } else if (repAngle > 150 && repPhaseRef.current === 'down') {
-        repPhaseRef.current = 'up';
-        setRepCount(count => count + 1);
+      if (window.drawConnectors && window.POSE_CONNECTIONS) {
+        window.drawConnectors(context, results.poseLandmarks, window.POSE_CONNECTIONS, {
+          color,
+          lineWidth: 3,
+        });
       }
-    }
+      if (window.drawLandmarks) {
+        window.drawLandmarks(context, results.poseLandmarks, {
+          color: '#ffffff',
+          fillColor: color,
+          radius: 5,
+        });
+      }
 
-    Object.entries(analysis.keyAngles).forEach(([label, angle], index) => {
-      const landmarkIndex = selectedRule.keyAngles[index]?.landmarkIndices[1];
-      const landmark = results.poseLandmarks?.[landmarkIndex];
-      if (!landmark) return;
+      const repAngle = analysis.keyAngles.Joelho || analysis.keyAngles['Cotovelo na subida'];
+      if (repAngle) {
+        if (repAngle < 100 && repPhaseRef.current === 'up') {
+          repPhaseRef.current = 'down';
+        } else if (repAngle > 150 && repPhaseRef.current === 'down') {
+          repPhaseRef.current = 'up';
+          setRepCount((count) => count + 1);
+        }
+      }
 
-      const x = landmark.x * canvas.width;
-      const y = landmark.y * canvas.height - 10;
-      context.fillStyle = 'rgba(0,0,0,0.7)';
-      context.fillRect(x - 34, y - 18, 84, 22);
-      context.fillStyle = color;
-      context.font = 'bold 12px system-ui';
-      context.fillText(`${label}: ${angle}°`, x - 30, y - 2);
-    });
-  }, [selectedRule]);
+      Object.entries(analysis.keyAngles).forEach(([label, angle], index) => {
+        const landmarkIndex = selectedRule.keyAngles[index]?.landmarkIndices[1];
+        const landmark = results.poseLandmarks?.[landmarkIndex];
+        if (!landmark) return;
+
+        const x = landmark.x * canvas.width;
+        const y = landmark.y * canvas.height - 10;
+        context.fillStyle = 'rgba(0,0,0,0.7)';
+        context.fillRect(x - 34, y - 18, 84, 22);
+        context.fillStyle = color;
+        context.font = 'bold 12px system-ui';
+        context.fillText(`${label}: ${angle}°`, x - 30, y - 2);
+      });
+    },
+    [selectedRule],
+  );
 
   const startCamera = async () => {
     if (!scriptsLoaded || !window.Pose || !window.Camera) {
@@ -221,7 +234,11 @@ export function PoseDetector() {
       camera.start();
       setActive(true);
     } catch (err) {
-      setError(err instanceof Error ? `Permissão de câmera negada ou erro: ${err.message}` : 'Permissão de câmera negada.');
+      setError(
+        err instanceof Error
+          ? `Permissão de câmera negada ou erro: ${err.message}`
+          : 'Permissão de câmera negada.',
+      );
     } finally {
       setLoading(false);
     }
@@ -253,182 +270,215 @@ export function PoseDetector() {
       </div>
 
       <PremiumFeatureGate feature="pose_detection">
-      <div className="flex gap-2 mb-4">
-        {(['camera', 'history'] as const).map(item => (
-          <button
-            key={item}
-            type="button"
-            onClick={() => setTab(item)}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${tab === item ? 'bg-brand-neon text-brand-dark' : 'bg-white/10 text-brand-muted'}`}
-          >
-            {item === 'camera' ? 'Câmera' : 'Histórico'}
-          </button>
-        ))}
-      </div>
+        <div className="flex gap-2 mb-4">
+          {(['camera', 'history'] as const).map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => setTab(item)}
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${tab === item ? 'bg-brand-neon text-brand-dark' : 'bg-white/10 text-brand-muted'}`}
+            >
+              {item === 'camera' ? 'Câmera' : 'Histórico'}
+            </button>
+          ))}
+        </div>
 
-      {tab === 'camera' && (
-        <div className="space-y-4">
-          <div>
-            <p className="text-xs text-brand-muted mb-2">Exercício analisado</p>
-            <div className="flex gap-2 flex-wrap">
-              {EXERCISE_RULES.map(rule => (
-                <button
-                  key={rule.name}
-                  type="button"
-                  onClick={() => setSelectedRule(rule)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
-                    selectedRule.name === rule.name
-                      ? 'bg-brand-neon text-brand-dark border-brand-neon'
-                      : 'bg-brand-dark text-brand-muted border-white/10 hover:border-white/20'
-                  }`}
-                >
-                  {rule.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="relative rounded-2xl overflow-hidden bg-black border border-white/10" style={{ aspectRatio: '4 / 3' }}>
-            <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover opacity-0" playsInline muted />
-            <canvas ref={canvasRef} className="absolute inset-0 w-full h-full object-cover" />
-            {!active && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <CameraOff size={40} className="text-brand-muted mx-auto mb-2" />
-                  <p className="text-brand-muted text-sm">Câmera inativa</p>
-                </div>
+        {tab === 'camera' && (
+          <div className="space-y-4">
+            <div>
+              <p className="text-xs text-brand-muted mb-2">Exercício analisado</p>
+              <div className="flex gap-2 flex-wrap">
+                {EXERCISE_RULES.map((rule) => (
+                  <button
+                    key={rule.name}
+                    type="button"
+                    onClick={() => setSelectedRule(rule)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
+                      selectedRule.name === rule.name
+                        ? 'bg-brand-neon text-brand-dark border-brand-neon'
+                        : 'bg-brand-dark text-brand-muted border-white/10 hover:border-white/20'
+                    }`}
+                  >
+                    {rule.name}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
+
+            <div
+              className="relative rounded-2xl overflow-hidden bg-black border border-white/10"
+              style={{ aspectRatio: '4 / 3' }}
+            >
+              <video
+                ref={videoRef}
+                className="absolute inset-0 w-full h-full object-cover opacity-0"
+                playsInline
+                muted
+              />
+              <canvas ref={canvasRef} className="absolute inset-0 w-full h-full object-cover" />
+              {!active && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <CameraOff size={40} className="text-brand-muted mx-auto mb-2" />
+                    <p className="text-brand-muted text-sm">Câmera inativa</p>
+                  </div>
+                </div>
+              )}
+              {active && (
+                <>
+                  <div className="absolute top-3 right-3 flex items-center gap-2">
+                    <div className="flex items-center gap-1 bg-black/60 rounded-full px-3 py-1">
+                      <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                      <span className="text-white text-xs font-bold">AO VIVO</span>
+                    </div>
+                  </div>
+                  <div className="absolute top-3 left-3">
+                    <div className="bg-black/70 rounded-xl px-3 py-2 text-center">
+                      <p className="text-2xl font-black" style={{ color: scoreColor }}>
+                        {formScore}
+                      </p>
+                      <p className="text-white/60 text-xs">Form Score</p>
+                    </div>
+                  </div>
+                  <div className="absolute bottom-3 left-3">
+                    <div className="bg-black/70 rounded-xl px-4 py-2 text-center">
+                      <p className="text-3xl font-black text-brand-neon tabular-nums">{repCount}</p>
+                      <p className="text-white/60 text-xs">Reps</p>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {error && <p className="text-red-400 text-sm">{error}</p>}
+
+            <div className="flex gap-2">
+              {!active ? (
+                <button
+                  type="button"
+                  onClick={startCamera}
+                  disabled={loading}
+                  className="flex-1 py-3 bg-brand-neon text-brand-dark font-black rounded-xl text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  <Camera size={16} />
+                  {loading ? 'Iniciando...' : 'Iniciar análise'}
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={stopCamera}
+                    className="flex-1 py-3 bg-red-500/20 border border-red-500/40 text-red-400 font-bold rounded-xl text-sm"
+                  >
+                    Parar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={saveAnalysis}
+                    className="flex-1 py-3 bg-brand-neon/10 border border-brand-neon/30 text-brand-neon font-bold rounded-xl text-sm"
+                  >
+                    Salvar análise
+                  </button>
+                </>
+              )}
+            </div>
+
             {active && (
-              <>
-                <div className="absolute top-3 right-3 flex items-center gap-2">
-                  <div className="flex items-center gap-1 bg-black/60 rounded-full px-3 py-1">
-                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                    <span className="text-white text-xs font-bold">AO VIVO</span>
+              <div className="space-y-2">
+                {Object.keys(keyAngles).length > 0 && (
+                  <div className="p-3 bg-brand-dark rounded-xl border border-white/10">
+                    <p className="text-xs text-brand-muted mb-2 uppercase tracking-widest">
+                      Ângulos detectados
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {Object.entries(keyAngles).map(([label, angle]) => (
+                        <div key={label} className="text-center">
+                          <p className="text-brand-neon font-black text-xl tabular-nums">
+                            {angle}°
+                          </p>
+                          <p className="text-brand-muted text-xs">{label}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-                <div className="absolute top-3 left-3">
-                  <div className="bg-black/70 rounded-xl px-3 py-2 text-center">
-                    <p className="text-2xl font-black" style={{ color: scoreColor }}>{formScore}</p>
-                    <p className="text-white/60 text-xs">Form Score</p>
-                  </div>
-                </div>
-                <div className="absolute bottom-3 left-3">
-                  <div className="bg-black/70 rounded-xl px-4 py-2 text-center">
-                    <p className="text-3xl font-black text-brand-neon tabular-nums">{repCount}</p>
-                    <p className="text-white/60 text-xs">Reps</p>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+                )}
 
-          {error && <p className="text-red-400 text-sm">{error}</p>}
-
-          <div className="flex gap-2">
-            {!active ? (
-              <button
-                type="button"
-                onClick={startCamera}
-                disabled={loading}
-                className="flex-1 py-3 bg-brand-neon text-brand-dark font-black rounded-xl text-sm flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                <Camera size={16} />
-                {loading ? 'Iniciando...' : 'Iniciar análise'}
-              </button>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={stopCamera}
-                  className="flex-1 py-3 bg-red-500/20 border border-red-500/40 text-red-400 font-bold rounded-xl text-sm"
-                >
-                  Parar
-                </button>
-                <button
-                  type="button"
-                  onClick={saveAnalysis}
-                  className="flex-1 py-3 bg-brand-neon/10 border border-brand-neon/30 text-brand-neon font-bold rounded-xl text-sm"
-                >
-                  Salvar análise
-                </button>
-              </>
-            )}
-          </div>
-
-          {active && (
-            <div className="space-y-2">
-              {Object.keys(keyAngles).length > 0 && (
-                <div className="p-3 bg-brand-dark rounded-xl border border-white/10">
-                  <p className="text-xs text-brand-muted mb-2 uppercase tracking-widest">Ângulos detectados</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {Object.entries(keyAngles).map(([label, angle]) => (
-                      <div key={label} className="text-center">
-                        <p className="text-brand-neon font-black text-xl tabular-nums">{angle}°</p>
-                        <p className="text-brand-muted text-xs">{label}</p>
+                {issues.length > 0 ? (
+                  <div className="p-3 bg-red-500/5 border border-red-500/30 rounded-xl space-y-2">
+                    {issues.map((issue, index) => (
+                      <div key={issue} className="flex items-start gap-2">
+                        <AlertTriangle size={14} className="text-red-400 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-red-400 text-xs font-semibold">{issue}</p>
+                          {tips[index] && (
+                            <p className="text-white/70 text-xs mt-0.5">{tips[index]}</p>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
-
-              {issues.length > 0 ? (
-                <div className="p-3 bg-red-500/5 border border-red-500/30 rounded-xl space-y-2">
-                  {issues.map((issue, index) => (
-                    <div key={issue} className="flex items-start gap-2">
-                      <AlertTriangle size={14} className="text-red-400 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-red-400 text-xs font-semibold">{issue}</p>
-                        {tips[index] && <p className="text-white/70 text-xs mt-0.5">{tips[index]}</p>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : formScore >= 80 ? (
-                <div className="p-3 bg-green-500/5 border border-green-500/30 rounded-xl flex items-center gap-2">
-                  <CheckCircle size={16} className="text-green-400" />
-                  <p className="text-green-400 text-sm font-semibold">Forma excelente. Continue assim.</p>
-                </div>
-              ) : null}
-            </div>
-          )}
-
-          <p className="text-xs text-brand-muted text-center">
-            Requer Chrome/Edge · Câmera frontal recomendada · Posicione o corpo inteiro no quadro
-          </p>
-        </div>
-      )}
-
-      {tab === 'history' && (
-        <div className="space-y-3">
-          {analyses.length === 0 && (
-            <p className="text-brand-muted text-sm text-center py-6">Nenhuma análise salva ainda.</p>
-          )}
-          {[...analyses].reverse().slice(0, 15).map(analysis => (
-            <div key={analysis.id} className="p-4 bg-brand-dark rounded-xl border border-white/10">
-              <div className="flex justify-between items-start gap-3 mb-2">
-                <div>
-                  <p className="text-white font-semibold text-sm">{analysis.exerciseName}</p>
-                  <p className="text-brand-muted text-xs">{analysis.date} · {analysis.repCount} reps</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-black tabular-nums" style={{ color: getScoreColor(analysis.formScore) }}>
-                    {analysis.formScore}
-                  </p>
-                  <p className="text-brand-muted text-xs">Form Score</p>
-                </div>
+                ) : formScore >= 80 ? (
+                  <div className="p-3 bg-green-500/5 border border-green-500/30 rounded-xl flex items-center gap-2">
+                    <CheckCircle size={16} className="text-green-400" />
+                    <p className="text-green-400 text-sm font-semibold">
+                      Forma excelente. Continue assim.
+                    </p>
+                  </div>
+                ) : null}
               </div>
-              {analysis.issues.length > 0 && (
-                <div className="mt-2 space-y-1">
-                  {analysis.issues.map(issue => (
-                    <p key={issue} className="text-xs text-red-400">⚠️ {issue}</p>
-                  ))}
+            )}
+
+            <p className="text-xs text-brand-muted text-center">
+              Requer Chrome/Edge · Câmera frontal recomendada · Posicione o corpo inteiro no quadro
+            </p>
+          </div>
+        )}
+
+        {tab === 'history' && (
+          <div className="space-y-3">
+            {analyses.length === 0 && (
+              <p className="text-brand-muted text-sm text-center py-6">
+                Nenhuma análise salva ainda.
+              </p>
+            )}
+            {[...analyses]
+              .reverse()
+              .slice(0, 15)
+              .map((analysis) => (
+                <div
+                  key={analysis.id}
+                  className="p-4 bg-brand-dark rounded-xl border border-white/10"
+                >
+                  <div className="flex justify-between items-start gap-3 mb-2">
+                    <div>
+                      <p className="text-white font-semibold text-sm">{analysis.exerciseName}</p>
+                      <p className="text-brand-muted text-xs">
+                        {analysis.date} · {analysis.repCount} reps
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p
+                        className="text-2xl font-black tabular-nums"
+                        style={{ color: getScoreColor(analysis.formScore) }}
+                      >
+                        {analysis.formScore}
+                      </p>
+                      <p className="text-brand-muted text-xs">Form Score</p>
+                    </div>
+                  </div>
+                  {analysis.issues.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {analysis.issues.map((issue) => (
+                        <p key={issue} className="text-xs text-red-400">
+                          ⚠️ {issue}
+                        </p>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+              ))}
+          </div>
+        )}
       </PremiumFeatureGate>
     </div>
   );

@@ -40,10 +40,10 @@ describe('recoveryReadiness', () => {
   });
 
   it('estimates caffeine impact from total and late dose', () => {
-    const summary = summarizeCaffeine([
-      caffeine('c1', '2026-05-17', '08:00', 120),
-      caffeine('c2', '2026-05-17', '17:30', 180),
-    ], '2026-05-17');
+    const summary = summarizeCaffeine(
+      [caffeine('c1', '2026-05-17', '08:00', 120), caffeine('c2', '2026-05-17', '17:30', 180)],
+      '2026-05-17',
+    );
 
     expect(summary.totalMg).toBe(300);
     expect(summary.lateMg).toBe(180);
@@ -51,11 +51,14 @@ describe('recoveryReadiness', () => {
   });
 
   it('calculates accumulated RPE load over the recent window', () => {
-    const summary = calculateAccumulatedRpeLoad([
-      session('s1', NOW - 1_000, 60, 8),
-      session('s2', NOW - 2_000, 45, 6),
-      session('old', NOW - 10 * 24 * 60 * 60 * 1000, 60, 10),
-    ], NOW);
+    const summary = calculateAccumulatedRpeLoad(
+      [
+        session('s1', NOW - 1_000, 60, 8),
+        session('s2', NOW - 2_000, 45, 6),
+        session('old', NOW - 10 * 24 * 60 * 60 * 1000, 60, 10),
+      ],
+      NOW,
+    );
 
     expect(summary.sessionCount).toBe(2);
     expect(summary.totalLoad).toBe(750);
@@ -64,10 +67,7 @@ describe('recoveryReadiness', () => {
 
   it('recommends day off for very high recent RPE load', () => {
     const recommendation = buildRecoveryModeRecommendation({
-      history: [
-        session('s1', NOW - 1_000, 90, 9),
-        session('s2', NOW - 2_000, 90, 9),
-      ],
+      history: [session('s1', NOW - 1_000, 90, 9), session('s2', NOW - 2_000, 90, 9)],
       now: NOW,
     });
 
@@ -86,12 +86,7 @@ describe('recoveryReadiness', () => {
   });
 });
 
-function caffeine(
-  id: string,
-  date: string,
-  consumedAt: string,
-  amountMg: number
-): CaffeineEntry {
+function caffeine(id: string, date: string, consumedAt: string, amountMg: number): CaffeineEntry {
   return {
     id,
     date,
@@ -102,7 +97,12 @@ function caffeine(
   };
 }
 
-function session(id: string, completedAt: number, durationMinutes: number, rpe: number): WorkoutSession {
+function session(
+  id: string,
+  completedAt: number,
+  durationMinutes: number,
+  rpe: number,
+): WorkoutSession {
   return {
     id,
     planId: 'plan-1',
@@ -116,17 +116,19 @@ function session(id: string, completedAt: number, durationMinutes: number, rpe: 
     totalExercises: 1,
     feedback: '',
     nextRecommendation: '',
-    exercises: [{
-      exerciseId: 'ex-1',
-      name: 'Agachamento',
-      targetSets: 3,
-      targetReps: '8-10',
-      targetRest: '90s',
-      completed: true,
-      sets: [
-        { weight: 100, reps: 5, rpe },
-        { weight: 100, reps: 5, rpe },
-      ],
-    }],
+    exercises: [
+      {
+        exerciseId: 'ex-1',
+        name: 'Agachamento',
+        targetSets: 3,
+        targetReps: '8-10',
+        targetRest: '90s',
+        completed: true,
+        sets: [
+          { weight: 100, reps: 5, rpe },
+          { weight: 100, reps: 5, rpe },
+        ],
+      },
+    ],
   };
 }

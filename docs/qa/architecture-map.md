@@ -4,16 +4,16 @@ Status: PARTIAL
 
 ## Camadas inferidas
 
-| Camada | Evidencia | Status |
-|---|---|---|
-| UI/Rotas | `src/App.tsx`, `src/router.tsx`, `src/pages/Dashboard/**`, `src/components/**` | PASS local |
-| Estado e hooks | `src/stores/**`, `src/hooks/**`, React Query provider | PASS local |
-| Dominio/regra | `src/rules/**`, `src/pages/Dashboard/services/**`, `src/services/**` | PARTIAL |
-| Persistencia cliente | `src/services/database.ts`, `src/services/healthService.ts`, `src/services/legacyTrainingSyncService.ts` | PARTIAL, fallback local |
-| Backend serverless | `api/**` | PARTIAL, testado unitariamente |
-| Banco/RLS | `supabase/migrations/**` | PARTIAL, validado estaticamente |
-| Observabilidade | `api/_lib/http.ts`, `src/services/observability/**`, Sentry em `src/main.tsx` | PARTIAL |
-| Deploy | `.github/workflows/*.yml`, `vercel.json` | PARTIAL |
+| Camada               | Evidencia                                                                                                | Status                          |
+| -------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| UI/Rotas             | `src/App.tsx`, `src/router.tsx`, `src/pages/Dashboard/**`, `src/components/**`                           | PASS local                      |
+| Estado e hooks       | `src/stores/**`, `src/hooks/**`, React Query provider                                                    | PASS local                      |
+| Dominio/regra        | `src/rules/**`, `src/pages/Dashboard/services/**`, `src/services/**`                                     | PARTIAL                         |
+| Persistencia cliente | `src/services/database.ts`, `src/services/healthService.ts`, `src/services/legacyTrainingSyncService.ts` | PARTIAL, fallback local         |
+| Backend serverless   | `api/**`                                                                                                 | PARTIAL, testado unitariamente  |
+| Banco/RLS            | `supabase/migrations/**`                                                                                 | PARTIAL, validado estaticamente |
+| Observabilidade      | `api/_lib/http.ts`, `src/services/observability/**`, Sentry em `src/main.tsx`                            | PARTIAL                         |
+| Deploy               | `.github/workflows/*.yml`, `vercel.json`                                                                 | PARTIAL                         |
 
 ## Analise estrutural
 

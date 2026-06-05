@@ -1,6 +1,11 @@
 import { useCallback, useState, useEffect } from 'react';
 import { useAppStore } from '../stores/useAppStore';
-import { type DailyCheckin, type RecoveryCheckin, type StreakData, type WorkoutHistoryEntry } from '../types';
+import {
+  type DailyCheckin,
+  type RecoveryCheckin,
+  type StreakData,
+  type WorkoutHistoryEntry,
+} from '../types';
 import { type DailyCheckinsQueryResult, useDailyCheckinsQuery } from './useDailyCheckinsQuery';
 import { useSaveDailyCheckinMutation } from './useSaveDailyCheckinMutation';
 import { getErrorMessage, toError } from '../utils/errors';
@@ -12,8 +17,16 @@ import type { DataMode } from '../types/trainingExecution';
 interface UseCheckinManagerOptions {
   allCheckins: DailyCheckin[];
   setAllCheckins: (checkins: DailyCheckin[]) => void;
-  onEngagementRefresh: (streak?: StreakData, history?: WorkoutHistoryEntry[], checkins?: DailyCheckin[]) => void;
-  onSnapshotSave: (history?: WorkoutHistoryEntry[], streak?: StreakData, checkins?: DailyCheckin[]) => void;
+  onEngagementRefresh: (
+    streak?: StreakData,
+    history?: WorkoutHistoryEntry[],
+    checkins?: DailyCheckin[],
+  ) => void;
+  onSnapshotSave: (
+    history?: WorkoutHistoryEntry[],
+    streak?: StreakData,
+    checkins?: DailyCheckin[],
+  ) => void;
 }
 
 export function useCheckinManager({
@@ -22,13 +35,8 @@ export function useCheckinManager({
   onEngagementRefresh,
   onSnapshotSave,
 }: UseCheckinManagerOptions) {
-  const { 
-    setTodayCheckin, 
-    setRecoveryCheckin,
-    todayCheckin,
-    streakData,
-    analyticsHistory
-  } = useAppStore();
+  const { setTodayCheckin, setRecoveryCheckin, todayCheckin, streakData, analyticsHistory } =
+    useAppStore();
 
   const dailyCheckinsQuery = useDailyCheckinsQuery();
   const saveDailyCheckinMutation = useSaveDailyCheckinMutation();
@@ -38,14 +46,17 @@ export function useCheckinManager({
   const [checkinSaving, setCheckinSaving] = useState(false);
   const [checkinError, setCheckinError] = useState<string | null>(null);
 
-  const applyDailyCheckinsResult = useCallback((result: DailyCheckinsQueryResult) => {
-    setAllCheckins(result.data);
-    setTodayCheckin(getTodayCheckinFromList(result.data));
-    setHealthDataMode(result.dataMode);
-    setHealthWarning(result.warning ?? null);
-    setCheckinError(null);
-    return result.data;
-  }, [setAllCheckins, setTodayCheckin]);
+  const applyDailyCheckinsResult = useCallback(
+    (result: DailyCheckinsQueryResult) => {
+      setAllCheckins(result.data);
+      setTodayCheckin(getTodayCheckinFromList(result.data));
+      setHealthDataMode(result.dataMode);
+      setHealthWarning(result.warning ?? null);
+      setCheckinError(null);
+      return result.data;
+    },
+    [setAllCheckins, setTodayCheckin],
+  );
 
   const refreshDailyCheckins = async () => {
     try {
@@ -82,13 +93,14 @@ export function useCheckinManager({
       timestamp: Date.now(),
     };
 
-    saveDailyCheckinMutation.mutateAsync(dailyFromRecovery)
-      .then(async result => {
+    saveDailyCheckinMutation
+      .mutateAsync(dailyFromRecovery)
+      .then(async (result) => {
         setHealthDataMode(result.dataMode);
         setHealthWarning(result.warning ?? null);
         await refreshDailyCheckins();
       })
-      .catch(error => {
+      .catch((error) => {
         setCheckinError(getErrorMessage(error, 'Falha ao salvar prontidão pré-treino.'));
         captureError(error, 'App.saveRecoveryAsDailyCheckin');
       });
@@ -105,7 +117,9 @@ export function useCheckinManager({
       const updatedCheckins = await refreshDailyCheckins();
       setTodayCheckin(saved.data);
       onEngagementRefresh(streakData, analyticsHistory, updatedCheckins);
-      void recordGamificationEvent('checkin').catch(error => captureError(error, 'App.dailyCheckin'));
+      void recordGamificationEvent('checkin').catch((error) =>
+        captureError(error, 'App.dailyCheckin'),
+      );
       onSnapshotSave(analyticsHistory, streakData, updatedCheckins);
     } catch (error) {
       const normalizedError = toError(error, 'Falha ao salvar check-in.');
@@ -137,6 +151,6 @@ export function useCheckinManager({
     checkinError,
     handleSaveCheckin,
     handleSaveRecoveryCheckin,
-    refreshDailyCheckins
+    refreshDailyCheckins,
   };
 }

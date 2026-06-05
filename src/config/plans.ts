@@ -38,7 +38,13 @@ export const BILLING_PLAN_CATALOG: BillingPlanCatalogItem[] = [
     aiRequests: 'unlimited',
     coachSeats: 0,
     features: ['Tudo do Pro mensal', 'Bundle anual com desconto'],
-    entitlements: ['workouts.unlimited', 'ai.unlimited', 'export.clean', 'nutrition.ai', 'bundle.annual'],
+    entitlements: [
+      'workouts.unlimited',
+      'ai.unlimited',
+      'export.clean',
+      'nutrition.ai',
+      'bundle.annual',
+    ],
   },
   {
     id: 'coach',
@@ -69,14 +75,16 @@ export const BILLING_PLAN_CATALOG: BillingPlanCatalogItem[] = [
 ];
 
 export const BILLING_PLANS = BILLING_PLAN_CATALOG.filter(
-  plan => plan.id === 'free' || plan.id === 'pro_monthly' || plan.id === 'coach' || plan.id === 'elite',
-).map(plan => ({
+  (plan) =>
+    plan.id === 'free' || plan.id === 'pro_monthly' || plan.id === 'coach' || plan.id === 'elite',
+).map((plan) => ({
   id: plan.tier,
   name: plan.name,
   monthlyPrice: plan.billingInterval === 'month' ? plan.price : 0,
-  annualPrice: plan.tier === 'pro'
-    ? (BILLING_PLAN_CATALOG.find(item => item.id === 'pro_yearly')?.price ?? plan.price * 12)
-    : plan.price * 12,
+  annualPrice:
+    plan.tier === 'pro'
+      ? (BILLING_PLAN_CATALOG.find((item) => item.id === 'pro_yearly')?.price ?? plan.price * 12)
+      : plan.price * 12,
   planLimit: plan.planLimit,
   aiRequests: plan.aiRequests,
   coachSeats: plan.coachSeats,
@@ -84,7 +92,6 @@ export const BILLING_PLANS = BILLING_PLAN_CATALOG.filter(
   entitlements: plan.entitlements,
 }));
 
-
 export function getBillingPlan(tier: 'free' | 'pro' | 'coach' | 'elite') {
-  return BILLING_PLANS.find(plan => plan.id === tier) ?? BILLING_PLANS[0];
+  return BILLING_PLANS.find((plan) => plan.id === tier) ?? BILLING_PLANS[0];
 }

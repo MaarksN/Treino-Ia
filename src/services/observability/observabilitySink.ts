@@ -1,5 +1,9 @@
 import { redactObservabilityEvent } from './observabilityRedaction';
-import type { ObservabilityEvent, ObservabilitySink, ObservabilitySource } from './observability.types';
+import type {
+  ObservabilityEvent,
+  ObservabilitySink,
+  ObservabilitySource,
+} from './observability.types';
 
 type InMemoryObservabilitySinkOptions = {
   maxEvents?: number;

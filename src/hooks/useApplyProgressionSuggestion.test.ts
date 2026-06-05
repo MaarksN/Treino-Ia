@@ -27,9 +27,7 @@ describe('useApplyProgressionSuggestion', () => {
     const onApplyLoad = vi.fn();
     const suggestion = makeSuggestion();
 
-    const { result } = renderHook(() =>
-      useApplyProgressionSuggestion(suggestion, onApplyLoad)
-    );
+    const { result } = renderHook(() => useApplyProgressionSuggestion(suggestion, onApplyLoad));
 
     act(() => {
       result.current.acceptSuggestion();
@@ -43,9 +41,7 @@ describe('useApplyProgressionSuggestion', () => {
     const onApplyLoad = vi.fn();
     const suggestion = makeSuggestion();
 
-    const { result } = renderHook(() =>
-      useApplyProgressionSuggestion(suggestion, onApplyLoad)
-    );
+    const { result } = renderHook(() => useApplyProgressionSuggestion(suggestion, onApplyLoad));
 
     act(() => {
       result.current.rejectSuggestion();
@@ -58,9 +54,7 @@ describe('useApplyProgressionSuggestion', () => {
   it('handles null suggestion gracefully', () => {
     const onApplyLoad = vi.fn();
 
-    const { result } = renderHook(() =>
-      useApplyProgressionSuggestion(null, onApplyLoad)
-    );
+    const { result } = renderHook(() => useApplyProgressionSuggestion(null, onApplyLoad));
 
     // Should not crash
     act(() => {
@@ -79,9 +73,7 @@ describe('useApplyProgressionSuggestion', () => {
   });
 
   it('starts with isDismissed false', () => {
-    const { result } = renderHook(() =>
-      useApplyProgressionSuggestion(makeSuggestion(), vi.fn())
-    );
+    const { result } = renderHook(() => useApplyProgressionSuggestion(makeSuggestion(), vi.fn()));
 
     expect(result.current.isDismissed).toBe(false);
   });

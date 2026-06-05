@@ -23,12 +23,7 @@ export interface Challenge {
   reward?: string;
 }
 
-export type MissionType =
-  | 'daily'
-  | 'weekly'
-  | 'flash'
-  | 'boss'
-  | 'weekend';
+export type MissionType = 'daily' | 'weekly' | 'flash' | 'boss' | 'weekend';
 
 export type MissionMetric =
   | 'workouts'
@@ -42,19 +37,9 @@ export type MissionMetric =
 
 export type MissionStatus = 'active' | 'completed' | 'claimed' | 'expired';
 
-export type CosmeticType =
-  | 'avatar_skin'
-  | 'frame'
-  | 'badge'
-  | 'title'
-  | 'effect';
+export type CosmeticType = 'avatar_skin' | 'frame' | 'badge' | 'title' | 'effect';
 
-export type Rarity =
-  | 'common'
-  | 'rare'
-  | 'epic'
-  | 'legendary'
-  | 'mythic';
+export type Rarity = 'common' | 'rare' | 'epic' | 'legendary' | 'mythic';
 
 export interface XpEvent {
   id: string;

@@ -9,8 +9,8 @@ interface Props {
 
 export function ConsistencyHeatmap({ history, checkins = [], weeksBack = 16 }: Props) {
   const { cells, months } = useMemo(() => {
-    const workoutDates = new Set(history.map(entry => entry.date));
-    const checkinDates = new Set(checkins.map(checkin => checkin.date));
+    const workoutDates = new Set(history.map((entry) => entry.date));
+    const checkinDates = new Set(checkins.map((checkin) => checkin.date));
     const today = new Date();
     const startDate = new Date(today);
     startDate.setDate(today.getDate() - weeksBack * 7);
@@ -44,17 +44,24 @@ export function ConsistencyHeatmap({ history, checkins = [], weeksBack = 16 }: P
     return { cells: allCells, months: monthLabels };
   }, [history, checkins, weeksBack]);
 
-  const colors = ['rgba(255,255,255,0.06)', 'rgba(163,230,53,0.25)', 'rgba(163,230,53,0.5)', '#a3e635'];
+  const colors = [
+    'rgba(255,255,255,0.06)',
+    'rgba(163,230,53,0.25)',
+    'rgba(163,230,53,0.5)',
+    '#a3e635',
+  ];
   const dayLabels = ['Dom', '', 'Ter', '', 'Qui', '', 'Sáb'];
   const totalCols = Math.ceil(cells.length / 7);
 
   return (
     <div className="bg-brand-gray border-2 border-brand-light/10 p-5 shadow-brutal-light">
       <div className="flex items-center justify-between mb-4 gap-4">
-        <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">Consistência</h3>
+        <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">
+          Consistência
+        </h3>
         <div className="flex items-center gap-2 text-xs text-brand-muted">
           <span>Menos</span>
-          {[0, 1, 2, 3].map(level => (
+          {[0, 1, 2, 3].map((level) => (
             <div key={level} className="w-3 h-3" style={{ background: colors[level] }} />
           ))}
           <span>Mais</span>
@@ -64,8 +71,12 @@ export function ConsistencyHeatmap({ history, checkins = [], weeksBack = 16 }: P
       <div className="overflow-x-auto pb-1">
         <div className="relative" style={{ width: `${totalCols * 16 + 34}px` }}>
           <div className="ml-8 mb-1 relative h-5">
-            {months.map(month => (
-              <span key={`${month.label}-${month.col}`} className="absolute text-[10px] text-brand-muted" style={{ left: `${month.col * 16}px` }}>
+            {months.map((month) => (
+              <span
+                key={`${month.label}-${month.col}`}
+                className="absolute text-[10px] text-brand-muted"
+                style={{ left: `${month.col * 16}px` }}
+              >
                 {month.label}
               </span>
             ))}
@@ -74,14 +85,16 @@ export function ConsistencyHeatmap({ history, checkins = [], weeksBack = 16 }: P
           <div className="flex gap-1">
             <div className="flex flex-col gap-0.5 mr-1 w-7">
               {dayLabels.map((day, index) => (
-                <div key={index} className="h-3 text-[9px] text-brand-muted leading-3">{day}</div>
+                <div key={index} className="h-3 text-[9px] text-brand-muted leading-3">
+                  {day}
+                </div>
               ))}
             </div>
 
             <div className="flex gap-0.5">
               {Array.from({ length: totalCols }).map((_, colIdx) => (
                 <div key={colIdx} className="flex flex-col gap-0.5">
-                  {[0, 1, 2, 3, 4, 5, 6].map(dayIdx => {
+                  {[0, 1, 2, 3, 4, 5, 6].map((dayIdx) => {
                     const cell = cells[colIdx * 7 + dayIdx];
                     if (!cell) return <div key={dayIdx} className="w-3 h-3" />;
                     return (
@@ -101,8 +114,12 @@ export function ConsistencyHeatmap({ history, checkins = [], weeksBack = 16 }: P
       </div>
 
       <div className="flex gap-4 mt-4 text-xs text-brand-muted">
-        <span><strong className="text-brand-light">{history.length}</strong> treinos</span>
-        <span><strong className="text-brand-light">{checkins.length}</strong> check-ins</span>
+        <span>
+          <strong className="text-brand-light">{history.length}</strong> treinos
+        </span>
+        <span>
+          <strong className="text-brand-light">{checkins.length}</strong> check-ins
+        </span>
       </div>
     </div>
   );

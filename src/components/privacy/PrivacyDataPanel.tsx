@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import { clearSensitiveLocalData, exportLocalPrivacyData, getPrivacyLocalOnlyNotice, listLocalPrivacyCategories } from '../../services/privacy/privacyConsentService';
+import {
+  clearSensitiveLocalData,
+  exportLocalPrivacyData,
+  getPrivacyLocalOnlyNotice,
+  listLocalPrivacyCategories,
+} from '../../services/privacy/privacyConsentService';
 
 export function PrivacyDataPanel() {
   const [version, setVersion] = useState(0);
@@ -17,13 +22,32 @@ export function PrivacyDataPanel() {
     URL.revokeObjectURL(url);
   };
 
-  return <section className="bg-brand-dark border-2 border-brand-light/10 p-4 space-y-3">
-    <h3 className="font-bold uppercase">Privacidade de dados locais</h3>
-    <p className="text-xs text-brand-muted">{notice}</p>
-    <ul className="text-xs space-y-1">{categories.map(item => <li key={item.key}>{item.key} — {item.sensitivity}</li>)}</ul>
-    <div className="flex gap-2">
-      <button type="button" onClick={onExport} className="px-3 py-2 border">Exportar JSON local</button>
-      <button type="button" onClick={() => { clearSensitiveLocalData(); setVersion(v => v + 1); }} className="px-3 py-2 border">Limpar dados locais sensíveis</button>
-    </div>
-  </section>;
+  return (
+    <section className="bg-brand-dark border-2 border-brand-light/10 p-4 space-y-3">
+      <h3 className="font-bold uppercase">Privacidade de dados locais</h3>
+      <p className="text-xs text-brand-muted">{notice}</p>
+      <ul className="text-xs space-y-1">
+        {categories.map((item) => (
+          <li key={item.key}>
+            {item.key} — {item.sensitivity}
+          </li>
+        ))}
+      </ul>
+      <div className="flex gap-2">
+        <button type="button" onClick={onExport} className="px-3 py-2 border">
+          Exportar JSON local
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            clearSensitiveLocalData();
+            setVersion((v) => v + 1);
+          }}
+          className="px-3 py-2 border"
+        >
+          Limpar dados locais sensíveis
+        </button>
+      </div>
+    </section>
+  );
 }

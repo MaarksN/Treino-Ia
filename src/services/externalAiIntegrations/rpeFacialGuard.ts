@@ -12,6 +12,6 @@ export function checkRpeFacialGuard(): RpeFacialState {
   return {
     isSupported: false,
     isResearchEnabled: false,
-    status: 'deferred_high_risk'
+    status: 'deferred_high_risk',
   };
 }

@@ -8,13 +8,13 @@ interface ViewStoreState {
   setView: (view: AppView) => void;
 }
 
-export const useViewStore = create<ViewStoreState>(set => ({
+export const useViewStore = create<ViewStoreState>((set) => ({
   initialized: false,
   view: VIEWS.LOADING,
-  initializeView: view =>
-    set(state => {
+  initializeView: (view) =>
+    set((state) => {
       if (state.initialized) return state;
       return { initialized: true, view };
     }),
-  setView: view => set({ initialized: true, view }),
+  setView: (view) => set({ initialized: true, view }),
 }));

@@ -5,7 +5,9 @@ interface OfflineMediaViewerProps {
   exerciseName: string;
 }
 
-export const OfflineMediaViewer = memo(function OfflineMediaViewer({ exerciseName }: OfflineMediaViewerProps) {
+export const OfflineMediaViewer = memo(function OfflineMediaViewer({
+  exerciseName,
+}: OfflineMediaViewerProps) {
   const svgContent = getOfflineMediaForExercise(exerciseName);
 
   if (!svgContent) return null;

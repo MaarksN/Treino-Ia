@@ -2,7 +2,7 @@ class RetroSoundService {
   private audioContext: AudioContext | null = null;
   private isMuted: boolean = true;
 
-  constructor() { }
+  constructor() {}
 
   private init() {
     if (!this.audioContext) {

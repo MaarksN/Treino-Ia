@@ -1,4 +1,10 @@
-export type AiValidationStatus = 'valid' | 'invalid_json' | 'invalid_schema' | 'no_json' | 'error' | 'blocked';
+export type AiValidationStatus =
+  | 'valid'
+  | 'invalid_json'
+  | 'invalid_schema'
+  | 'no_json'
+  | 'error'
+  | 'blocked';
 
 export interface AiDecisionAudit {
   feature: string;

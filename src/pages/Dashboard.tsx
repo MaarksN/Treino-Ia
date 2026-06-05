@@ -583,9 +583,10 @@ export default function Dashboard() {
       setPendingRecommendation(recommendation);
       setActiveDayIndex(null);
       setActiveDraft([]);
-      const saveMessage = 'warning' in saveResult && saveResult.warning
-        ? `${saveResult.message} ${saveResult.warning}`
-        : saveResult.message;
+      const saveMessage =
+        'warning' in saveResult && saveResult.warning
+          ? `${saveResult.message} ${saveResult.warning}`
+          : saveResult.message;
       setNotice(
         recommendation
           ? `${saveMessage} A IA gerou uma sugestao pendente para voce revisar.`

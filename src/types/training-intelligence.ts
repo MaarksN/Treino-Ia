@@ -10,11 +10,7 @@ export type MuscleGroup =
   | 'Panturrilhas'
   | 'Core';
 
-export type VolumeStatus =
-  | 'below_mev'
-  | 'optimal'
-  | 'high_tolerable'
-  | 'above_mrv';
+export type VolumeStatus = 'below_mev' | 'optimal' | 'high_tolerable' | 'above_mrv';
 
 export type LoadAction = 'increase' | 'decrease' | 'keep' | 'swap';
 

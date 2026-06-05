@@ -8,12 +8,7 @@ function renderImportView(overrides: Partial<Parameters<typeof ImportWorkoutView
   const onCancel = vi.fn();
 
   const view = renderWithProviders(
-    <ImportWorkoutView
-      onImport={onImport}
-      onCancel={onCancel}
-      isLoading={false}
-      {...overrides}
-    />,
+    <ImportWorkoutView onImport={onImport} onCancel={onCancel} isLoading={false} {...overrides} />,
   );
 
   return { ...view, onImport, onCancel };
@@ -88,7 +83,9 @@ describe('ImportWorkoutView', () => {
         ]),
       }),
     );
-    expect(screen.getAllByText('Formato nao suportado. Use imagem JPG, PNG, WebP ou PDF.')).toHaveLength(2);
+    expect(
+      screen.getAllByText('Formato nao suportado. Use imagem JPG, PNG, WebP ou PDF.'),
+    ).toHaveLength(2);
   });
 
   it('renders the loading fallback without exposing file selection actions', () => {

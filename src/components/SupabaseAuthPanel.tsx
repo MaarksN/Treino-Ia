@@ -41,7 +41,8 @@ export function SupabaseAuthPanel({ onAuthenticated }: Props) {
       <section className="bg-brand-gray rounded-3xl border border-yellow-500/30 p-5">
         <h2 className="text-xl font-black text-white">Supabase Auth indisponível</h2>
         <p className="text-sm text-yellow-300 mt-2">
-          Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY para usar comunidade, grupos, coach e feed com dados reais.
+          Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY para usar comunidade, grupos, coach e
+          feed com dados reais.
         </p>
       </section>
     );
@@ -74,7 +75,7 @@ export function SupabaseAuthPanel({ onAuthenticated }: Props) {
         {mode === 'signup' && (
           <input
             value={name}
-            onChange={event => setName(event.target.value)}
+            onChange={(event) => setName(event.target.value)}
             placeholder="Nome público"
             className="bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none"
             maxLength={80}
@@ -84,7 +85,7 @@ export function SupabaseAuthPanel({ onAuthenticated }: Props) {
         <input
           type="email"
           value={email}
-          onChange={event => setEmail(event.target.value)}
+          onChange={(event) => setEmail(event.target.value)}
           placeholder="email"
           required
           className="bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none"
@@ -93,7 +94,7 @@ export function SupabaseAuthPanel({ onAuthenticated }: Props) {
         <input
           type="password"
           value={password}
-          onChange={event => setPassword(event.target.value)}
+          onChange={(event) => setPassword(event.target.value)}
           placeholder="senha"
           required
           minLength={8}

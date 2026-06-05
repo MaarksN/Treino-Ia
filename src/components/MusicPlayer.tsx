@@ -24,7 +24,7 @@ export function MusicPlayer() {
 
   if (!isOpen) {
     return (
-      <button 
+      <button
         onClick={() => setIsOpen(true)}
         className="fixed bottom-6 left-6 w-16 h-16 bg-brand-magenta text-brand-light border-brutal flex items-center justify-center shadow-brutal-magenta hover:scale-110 transition-transform z-50 group"
         title="Player de Música"
@@ -35,10 +35,13 @@ export function MusicPlayer() {
   }
 
   return (
-    <div className={`fixed bottom-6 left-6 z-50 bg-brand-dark border-4 border-brand-magenta shadow-brutal-magenta transition-all duration-300 ${isMinimized ? 'w-64 h-16' : 'w-80 md:w-96 p-4'}`}>
-      
+    <div
+      className={`fixed bottom-6 left-6 z-50 bg-brand-dark border-4 border-brand-magenta shadow-brutal-magenta transition-all duration-300 ${isMinimized ? 'w-64 h-16' : 'w-80 md:w-96 p-4'}`}
+    >
       {/* Header */}
-      <div className={`flex items-center justify-between ${isMinimized ? 'h-full px-4' : 'mb-4 border-b-2 border-brand-magenta/30 pb-2'}`}>
+      <div
+        className={`flex items-center justify-between ${isMinimized ? 'h-full px-4' : 'mb-4 border-b-2 border-brand-magenta/30 pb-2'}`}
+      >
         <div className="flex items-center text-brand-magenta font-black uppercase tracking-widest text-sm">
           <Music className="w-5 h-5 mr-2" />
           {isMinimized ? 'Player' : 'Streaming Hub'}
@@ -57,10 +60,12 @@ export function MusicPlayer() {
         <div className="space-y-4">
           {!embed ? (
             <div className="space-y-3">
-              <p className="text-xs text-brand-light font-mono font-bold uppercase">Conecte YouTube, Spotify ou SoundCloud</p>
+              <p className="text-xs text-brand-light font-mono font-bold uppercase">
+                Conecte YouTube, Spotify ou SoundCloud
+              </p>
               <div className="flex gap-2">
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={url}
                   onChange={(e) => {
                     setUrl(e.target.value);
@@ -69,7 +74,7 @@ export function MusicPlayer() {
                   placeholder="Cole uma URL HTTPS..."
                   className="flex-1 bg-brand-gray border-2 border-brand-magenta/50 px-3 py-2 text-brand-light font-mono text-xs focus:outline-none focus:border-brand-magenta"
                 />
-                <button 
+                <button
                   onClick={handleLoad}
                   className="bg-brand-magenta text-brand-light px-3 flex items-center justify-center font-black"
                 >
@@ -97,7 +102,7 @@ export function MusicPlayer() {
                   allowFullScreen
                 />
               </div>
-              <button 
+              <button
                 onClick={() => setEmbed(null)}
                 className="w-full text-center mt-3 text-xs text-brand-muted hover:text-brand-magenta font-mono font-bold uppercase transition-colors"
               >

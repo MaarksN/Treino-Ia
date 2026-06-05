@@ -51,7 +51,7 @@ export const marketplaceCatalog: PlanMarketplaceItem[] = [
     title: 'Hipertrofia Avançada',
     description: 'Plano focado em ganho de massa muscular para usuários experientes.',
     author: 'Treino IA',
-    price: 29.90,
+    price: 29.9,
     rating: 4.8,
     durationWeeks: 12,
   },
@@ -60,14 +60,14 @@ export const marketplaceCatalog: PlanMarketplaceItem[] = [
     title: 'Emagrecimento Acelerado',
     description: 'Protocolo de alta intensidade para queima de gordura.',
     author: 'Coach Especialista',
-    price: 19.90,
+    price: 19.9,
     rating: 4.5,
     durationWeeks: 8,
-  }
+  },
 ];
 
 export const payPerWorkoutGuard: PayPerWorkoutModel = {
-  basePrice: 4.90,
+  basePrice: 4.9,
   currency: 'BRL',
   premiumFeatures: ['Análise de IA avançada', 'Recomendações em tempo real', 'Sem anúncios'],
 };

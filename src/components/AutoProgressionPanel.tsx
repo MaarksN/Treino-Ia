@@ -1,10 +1,7 @@
 import React, { useMemo } from 'react';
 import { ArrowDown, ArrowRight, ArrowUp, Repeat2, Sparkles } from 'lucide-react';
 import { LoadAction, TrainingExercisePerformance } from '../types';
-import {
-  createLoadSuggestion,
-  shouldSuggestExerciseSwap,
-} from '../utils/periodizationUtils';
+import { createLoadSuggestion, shouldSuggestExerciseSwap } from '../utils/periodizationUtils';
 
 interface Props {
   performances: TrainingExercisePerformance[];
@@ -13,7 +10,7 @@ interface Props {
 
 export function AutoProgressionPanel({ performances, fatigueScore }: Props) {
   const suggestions = useMemo(() => {
-    return performances.map(performance => ({
+    return performances.map((performance) => ({
       performance,
       suggestion: createLoadSuggestion(performance, fatigueScore),
       shouldSwap: shouldSuggestExerciseSwap(performance),
@@ -38,16 +35,22 @@ export function AutoProgressionPanel({ performances, fatigueScore }: Props) {
           const Icon = actionStyle.icon;
 
           return (
-            <div key={performance.exerciseName} className="rounded-2xl bg-brand-dark border border-white/10 p-4">
+            <div
+              key={performance.exerciseName}
+              className="rounded-2xl bg-brand-dark border border-white/10 p-4"
+            >
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h3 className="font-black text-white">{performance.exerciseName}</h3>
                   <p className="text-xs text-brand-muted">
-                    Carga atual: {performance.currentLoad}kg · Meta: {performance.targetReps} reps · Feito: {performance.actualReps} reps · RPE {performance.rpe}
+                    Carga atual: {performance.currentLoad}kg · Meta: {performance.targetReps} reps ·
+                    Feito: {performance.actualReps} reps · RPE {performance.rpe}
                   </p>
                 </div>
 
-                <span className={`rounded-full border px-3 py-1 text-xs font-bold flex items-center gap-1 ${actionStyle.className}`}>
+                <span
+                  className={`rounded-full border px-3 py-1 text-xs font-bold flex items-center gap-1 ${actionStyle.className}`}
+                >
                   <Icon size={14} />
                   {actionStyle.label}
                 </span>

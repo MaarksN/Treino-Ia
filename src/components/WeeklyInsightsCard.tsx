@@ -1,6 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { UserProfile, WorkoutSession } from '../types';
-import { detectRiskOfAbandonment, generateWeeklyAiInsights } from '../services/aiPersonalizationService';
+import {
+  detectRiskOfAbandonment,
+  generateWeeklyAiInsights,
+} from '../services/aiPersonalizationService';
 import { generateLocalWeeklyInsights } from '../services/insightsService';
 
 interface Props {
@@ -12,7 +15,10 @@ function formatStructuredText(value: unknown, fallback: string): string {
   if (typeof value === 'string') return value;
   if (!value || typeof value !== 'object') return fallback;
 
-  const structured = value as { data?: Record<string, unknown>; audit?: { usedDeterministicFallback?: boolean } };
+  const structured = value as {
+    data?: Record<string, unknown>;
+    audit?: { usedDeterministicFallback?: boolean };
+  };
   if (!structured.data) return fallback;
 
   const data = structured.data;
@@ -47,7 +53,9 @@ export function WeeklyInsightsCard({ profile, sessions }: Props) {
       setInsights(formatStructuredText(weekly, 'Sem relatório IA ainda.'));
       setRisk(formatStructuredText(abandonment, 'Sem risco IA calculado.'));
     } catch {
-      setInsights('Não consegui gerar os insights agora. Verifique a chave Gemini e tente novamente.');
+      setInsights(
+        'Não consegui gerar os insights agora. Verifique a chave Gemini e tente novamente.',
+      );
       setRisk('');
     } finally {
       setLoading(false);
@@ -57,7 +65,9 @@ export function WeeklyInsightsCard({ profile, sessions }: Props) {
   return (
     <div className="bg-brand-gray border-2 border-brand-light/10 p-5 shadow-brutal-light">
       <div className="flex items-center justify-between gap-4 mb-4">
-        <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">Insights da semana</h3>
+        <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">
+          Insights da semana
+        </h3>
         <button
           type="button"
           onClick={handleGenerate}
@@ -69,7 +79,7 @@ export function WeeklyInsightsCard({ profile, sessions }: Props) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-        {localInsights.map(insight => (
+        {localInsights.map((insight) => (
           <div
             key={insight.title}
             className={`border-l-2 pl-3 text-xs font-mono ${
@@ -93,7 +103,9 @@ export function WeeklyInsightsCard({ profile, sessions }: Props) {
           <div className="text-sm whitespace-pre-wrap text-brand-light/80 font-mono">
             {insights || 'Sem relatório IA ainda.'}
           </div>
-          <div className="text-sm whitespace-pre-wrap text-yellow-300 font-mono">{risk || 'Sem risco IA calculado.'}</div>
+          <div className="text-sm whitespace-pre-wrap text-yellow-300 font-mono">
+            {risk || 'Sem risco IA calculado.'}
+          </div>
         </div>
       )}
     </div>

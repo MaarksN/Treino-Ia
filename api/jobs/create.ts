@@ -23,9 +23,10 @@ export default async function handler(request: Request) {
       throw new HttpError(400, 'Unsupported jobType.');
     }
 
-    const payload = body.payload && typeof body.payload === 'object' && !Array.isArray(body.payload)
-      ? body.payload
-      : {};
+    const payload =
+      body.payload && typeof body.payload === 'object' && !Array.isArray(body.payload)
+        ? body.payload
+        : {};
 
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase

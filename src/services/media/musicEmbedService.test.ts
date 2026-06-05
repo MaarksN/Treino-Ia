@@ -3,7 +3,9 @@ import { createSafeMusicEmbed } from './musicEmbedService';
 
 describe('musicEmbedService', () => {
   it('rejects raw HTML embeds', () => {
-    const result = createSafeMusicEmbed('<iframe src="https://www.youtube.com/embed/abc123XYZ"></iframe>');
+    const result = createSafeMusicEmbed(
+      '<iframe src="https://www.youtube.com/embed/abc123XYZ"></iframe>',
+    );
 
     expect(result.ok).toBe(false);
     expect(result.error).toContain('HTML');
@@ -31,11 +33,15 @@ describe('musicEmbedService', () => {
   });
 
   it('accepts valid Spotify URLs', () => {
-    const result = createSafeMusicEmbed('https://open.spotify.com/playlist/37i9dQZF1DX76Wlfdnj7bg?si=test');
+    const result = createSafeMusicEmbed(
+      'https://open.spotify.com/playlist/37i9dQZF1DX76Wlfdnj7bg?si=test',
+    );
 
     expect(result.ok).toBe(true);
     expect(result.embed?.provider).toBe('spotify');
-    expect(result.embed?.src).toBe('https://open.spotify.com/embed/playlist/37i9dQZF1DX76Wlfdnj7bg?utm_source=generator');
+    expect(result.embed?.src).toBe(
+      'https://open.spotify.com/embed/playlist/37i9dQZF1DX76Wlfdnj7bg?utm_source=generator',
+    );
   });
 
   it('accepts valid SoundCloud URLs', () => {

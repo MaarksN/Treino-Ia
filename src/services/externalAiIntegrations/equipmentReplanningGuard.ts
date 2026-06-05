@@ -12,7 +12,7 @@ export function checkEquipmentReplanningGuard(): EquipmentReplanningState {
   return {
     isReady: false,
     hasSafeUploadFlow: true,
-    status: 'foundation_created'
+    status: 'foundation_created',
   };
 }
 

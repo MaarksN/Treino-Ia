@@ -27,6 +27,11 @@ export function nutritionProfileFromUser(profile: UserProfile): NutritionProfile
     weightKg: profile.weight,
     heightCm: profile.height,
     workoutsPerWeek: profile.daysPerWeek,
-    goal: goal.includes('emag') || goal.includes('cut') ? 'cutting' : goal.includes('hiper') ? 'bulking' : 'maintenance',
+    goal:
+      goal.includes('emag') || goal.includes('cut')
+        ? 'cutting'
+        : goal.includes('hiper')
+          ? 'bulking'
+          : 'maintenance',
   };
 }

@@ -4,13 +4,20 @@ import {
   findFairRivalPlaceholder,
   generateReplayDataAbstraction,
   calculateLocalSkillTree,
-  applySocialBlurPolicy
+  applySocialBlurPolicy,
 } from './advancedSocialService';
 
 describe('Advanced Social Service', () => {
   it('Item 71 - valida consentimento de guilda por geolocalização', () => {
-    expect(() => requestGeoGuildConsent({ userId: '1', agreedToLocationSharing: true })).toThrow('Localização é obrigatória se consentida.');
-    const consent = requestGeoGuildConsent({ userId: '1', agreedToLocationSharing: true, latitude: 10, longitude: 20 });
+    expect(() => requestGeoGuildConsent({ userId: '1', agreedToLocationSharing: true })).toThrow(
+      'Localização é obrigatória se consentida.',
+    );
+    const consent = requestGeoGuildConsent({
+      userId: '1',
+      agreedToLocationSharing: true,
+      latitude: 10,
+      longitude: 20,
+    });
     expect(consent.agreedToLocationSharing).toBe(true);
   });
 
@@ -28,9 +35,9 @@ describe('Advanced Social Service', () => {
 
   it('Item 74 - calcula skill-tree baseada em métricas', () => {
     const tree = calculateLocalSkillTree({ strength: 25, endurance: 15, mobility: 35 });
-    expect(tree.find(t => t.id === 'str')?.currentLevel).toBe(2);
-    expect(tree.find(t => t.id === 'end')?.currentLevel).toBe(1);
-    expect(tree.find(t => t.id === 'mob')?.currentLevel).toBe(3);
+    expect(tree.find((t) => t.id === 'str')?.currentLevel).toBe(2);
+    expect(tree.find((t) => t.id === 'end')?.currentLevel).toBe(1);
+    expect(tree.find((t) => t.id === 'mob')?.currentLevel).toBe(3);
   });
 
   it('Item 75 - aplica política de blur social', () => {

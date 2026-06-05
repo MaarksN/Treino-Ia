@@ -39,6 +39,8 @@ describe('offlineQueue', () => {
   });
 
   it('bloqueia action sem tipo operacional', async () => {
-    await expect(enqueueOfflineAction({ type: ' ', payload: {} })).rejects.toThrow('type is required');
+    await expect(enqueueOfflineAction({ type: ' ', payload: {} })).rejects.toThrow(
+      'type is required',
+    );
   });
 });

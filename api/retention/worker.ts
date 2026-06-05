@@ -75,7 +75,9 @@ async function deliverNotification(input: DeliveryInput): Promise<'queued' | 'se
       provider: webhookUrl ? 'webhook' : input.channel === 'in_app' ? 'in_app' : 'external_pending',
       scheduled_for: input.scheduled_for ?? new Date().toISOString(),
       sent_at: webhookUrl ? null : input.channel === 'in_app' ? new Date().toISOString() : null,
-      provider_response: webhookUrl ? {} : { reason: input.channel === 'in_app' ? 'stored_in_app' : 'provider_not_configured' },
+      provider_response: webhookUrl
+        ? {}
+        : { reason: input.channel === 'in_app' ? 'stored_in_app' : 'provider_not_configured' },
     })
     .select('id')
     .single();
@@ -256,7 +258,7 @@ async function processHabitReminders(limit: number) {
     const { error: updateError } = await supabase
       .from('habit_reminders')
       .update({
-        last_sent_at: result === 'failed' ? reminder.last_sent_at ?? null : nowIso,
+        last_sent_at: result === 'failed' ? (reminder.last_sent_at ?? null) : nowIso,
         next_run_at: getNextReminderRun(schedule, now),
         updated_at: nowIso,
       })
@@ -286,13 +288,17 @@ export default async function handler(request: Request) {
       processHabitReminders(limit),
     ]);
 
-    return json({
-      ok: true,
-      dataMode: 'supabase',
-      processedAt: new Date().toISOString(),
-      checkins,
-      reminders,
-    }, 200, request);
+    return json(
+      {
+        ok: true,
+        dataMode: 'supabase',
+        processedAt: new Date().toISOString(),
+        checkins,
+        reminders,
+      },
+      200,
+      request,
+    );
   } catch (error) {
     return handleApiError(error, request);
   }

@@ -7,7 +7,7 @@ interface UseAuthStateParams {
 
 export function useAuthState({ onSessionRefresh }: UseAuthStateParams) {
   useEffect(() => {
-    return onAuthStateChange(event => {
+    return onAuthStateChange((event) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         void onSessionRefresh();
       }

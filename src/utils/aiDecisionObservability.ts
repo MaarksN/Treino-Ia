@@ -7,30 +7,39 @@ export interface AiFallbackQualityMetrics {
   fallbackRate: number;
   invalidResponseRate: number;
   blockedRate: number;
-  byFeature: Record<string, {
-    total: number;
-    fallbackRate: number;
-    lastValidationStatus: AiDecisionAudit['validationStatus'];
-    lastReason: string;
-  }>;
+  byFeature: Record<
+    string,
+    {
+      total: number;
+      fallbackRate: number;
+      lastValidationStatus: AiDecisionAudit['validationStatus'];
+      lastReason: string;
+    }
+  >;
 }
 
 export function summarizeAiDecisionQuality(audits: AiDecisionAudit[]): AiFallbackQualityMetrics {
   const totalDecisions = audits.length;
-  const aiSuccesses = audits.filter(audit => audit.usedAi && audit.validationStatus === 'valid').length;
-  const deterministicFallbacks = audits.filter(audit => audit.usedDeterministicFallback).length;
-  const invalidResponses = audits.filter(audit =>
-    audit.validationStatus === 'invalid_json'
-    || audit.validationStatus === 'invalid_schema'
-    || audit.validationStatus === 'no_json'
+  const aiSuccesses = audits.filter(
+    (audit) => audit.usedAi && audit.validationStatus === 'valid',
   ).length;
-  const blocked = audits.filter(audit => audit.validationStatus === 'blocked').length;
-  const featureDraft: Record<string, {
-    total: number;
-    fallbackCount: number;
-    lastValidationStatus: AiDecisionAudit['validationStatus'];
-    lastReason: string;
-  }> = {};
+  const deterministicFallbacks = audits.filter((audit) => audit.usedDeterministicFallback).length;
+  const invalidResponses = audits.filter(
+    (audit) =>
+      audit.validationStatus === 'invalid_json' ||
+      audit.validationStatus === 'invalid_schema' ||
+      audit.validationStatus === 'no_json',
+  ).length;
+  const blocked = audits.filter((audit) => audit.validationStatus === 'blocked').length;
+  const featureDraft: Record<
+    string,
+    {
+      total: number;
+      fallbackCount: number;
+      lastValidationStatus: AiDecisionAudit['validationStatus'];
+      lastReason: string;
+    }
+  > = {};
 
   for (const audit of audits) {
     const current = featureDraft[audit.feature] || {

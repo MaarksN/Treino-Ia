@@ -71,7 +71,9 @@ function mapRow(row: Record<string, unknown>): AiRecommendationRecord {
     status: String(row.status) as AiRecommendationStatus,
     payload,
     reason: row.reason ? String(row.reason) : '',
-    legacySourceSessionId: row.legacy_source_session_id ? String(row.legacy_source_session_id) : undefined,
+    legacySourceSessionId: row.legacy_source_session_id
+      ? String(row.legacy_source_session_id)
+      : undefined,
     createdAt: String(row.created_at),
     reviewedAt: row.reviewed_at ? String(row.reviewed_at) : undefined,
     acceptedAt: row.accepted_at ? String(row.accepted_at) : undefined,
@@ -84,7 +86,7 @@ function mapRow(row: Record<string, unknown>): AiRecommendationRecord {
 
 function replaceLocal(record: AiRecommendationRecord): AiRecommendationRecord {
   const current = readLocal();
-  const next = [record, ...current.filter(item => item.id !== record.id)];
+  const next = [record, ...current.filter((item) => item.id !== record.id)];
   writeLocal(next);
   return record;
 }
@@ -140,9 +142,13 @@ export const aiRecommendationRepository = {
     const userId = await getOptionalUserId();
 
     if (!userId) {
-      return readLocal()
-        .filter(item => item.recommendationType === 'plan_revision' && item.status === 'pending')
-        .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0] ?? null;
+      return (
+        readLocal()
+          .filter(
+            (item) => item.recommendationType === 'plan_revision' && item.status === 'pending',
+          )
+          .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0] ?? null
+      );
     }
 
     const { data, error } = await supabase
@@ -159,7 +165,10 @@ export const aiRecommendationRepository = {
     return data ? mapRow(data as Record<string, unknown>) : null;
   },
 
-  async markApplied(record: AiRecommendationRecord, appliedPlan: TrainingPlan): Promise<AiRecommendationRecord> {
+  async markApplied(
+    record: AiRecommendationRecord,
+    appliedPlan: TrainingPlan,
+  ): Promise<AiRecommendationRecord> {
     const userId = await getOptionalUserId();
     const now = new Date().toISOString();
     const next: AiRecommendationRecord = {
@@ -207,7 +216,10 @@ export const aiRecommendationRepository = {
     return mapRow(data as Record<string, unknown>);
   },
 
-  async reject(record: AiRecommendationRecord, decisionReason = 'user_rejected'): Promise<AiRecommendationRecord> {
+  async reject(
+    record: AiRecommendationRecord,
+    decisionReason = 'user_rejected',
+  ): Promise<AiRecommendationRecord> {
     const userId = await getOptionalUserId();
     const now = new Date().toISOString();
     const next: AiRecommendationRecord = {
@@ -240,7 +252,10 @@ export const aiRecommendationRepository = {
     return mapRow(data as Record<string, unknown>);
   },
 
-  async dismiss(record: AiRecommendationRecord, decisionReason = 'kept_current_plan'): Promise<AiRecommendationRecord> {
+  async dismiss(
+    record: AiRecommendationRecord,
+    decisionReason = 'kept_current_plan',
+  ): Promise<AiRecommendationRecord> {
     const userId = await getOptionalUserId();
     const now = new Date().toISOString();
     const next: AiRecommendationRecord = {

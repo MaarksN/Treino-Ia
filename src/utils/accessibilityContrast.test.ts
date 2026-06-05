@@ -13,9 +13,15 @@ describe('accessibilityContrast', () => {
   });
 
   it('mantem superficies criticas acima de AA para texto normal', () => {
-    const surfaces = ['primaryAction', 'activeSelection', 'positiveStatus', 'warningStatus', 'neutralPanel'] as const;
+    const surfaces = [
+      'primaryAction',
+      'activeSelection',
+      'positiveStatus',
+      'warningStatus',
+      'neutralPanel',
+    ] as const;
 
-    surfaces.forEach(surface => {
+    surfaces.forEach((surface) => {
       expect(auditCriticalContrast(surface).passesAaText).toBe(true);
     });
   });

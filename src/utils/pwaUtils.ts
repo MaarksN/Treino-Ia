@@ -13,7 +13,7 @@ export async function registerSW(): Promise<ServiceWorkerRegistration | null> {
 
   const registration = await navigator.serviceWorker.register('/sw.js');
 
-  navigator.serviceWorker.addEventListener('message', event => {
+  navigator.serviceWorker.addEventListener('message', (event) => {
     if (event.data?.type === 'APP_UPDATED') {
       window.dispatchEvent(new CustomEvent('app:update-available'));
     }
@@ -23,12 +23,14 @@ export async function registerSW(): Promise<ServiceWorkerRegistration | null> {
     }
 
     if (event.data?.type === 'HYDRATION_QUICK_ADD') {
-      window.dispatchEvent(new CustomEvent('hydration:quick-add-request', {
-        detail: {
-          amountMl: event.data.amountMl,
-          source: 'notification-action',
-        },
-      }));
+      window.dispatchEvent(
+        new CustomEvent('hydration:quick-add-request', {
+          detail: {
+            amountMl: event.data.amountMl,
+            source: 'notification-action',
+          },
+        }),
+      );
     }
   });
 
@@ -50,7 +52,10 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
   return Notification.requestPermission();
 }
 
-export async function showLocalNotification(title: string, options?: NotificationOptions): Promise<void> {
+export async function showLocalNotification(
+  title: string,
+  options?: NotificationOptions,
+): Promise<void> {
   const permission = await requestNotificationPermission();
 
   if (permission !== 'granted') return;
@@ -72,7 +77,10 @@ export async function showLocalNotification(title: string, options?: Notificatio
   });
 }
 
-export async function showHydrationReminderNotification(totalMl: number, goalMl: number): Promise<void> {
+export async function showHydrationReminderNotification(
+  totalMl: number,
+  goalMl: number,
+): Promise<void> {
   await showLocalNotification('Hora de hidratar', {
     body: `Você bebeu ${totalMl}ml de ${goalMl}ml hoje.`,
     data: {
@@ -90,9 +98,11 @@ export async function registerBackgroundSync(tag = 'treino-app-sync'): Promise<b
   if (!('serviceWorker' in navigator)) return false;
 
   const registration = await navigator.serviceWorker.ready;
-  const syncManager = (registration as ServiceWorkerRegistration & {
-    sync?: { register: (tag: string) => Promise<void> };
-  }).sync;
+  const syncManager = (
+    registration as ServiceWorkerRegistration & {
+      sync?: { register: (tag: string) => Promise<void> };
+    }
+  ).sync;
 
   if (!syncManager) {
     return false;

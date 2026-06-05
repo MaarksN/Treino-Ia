@@ -33,7 +33,15 @@ Retorne apenas JSON com: calories, protein (g), carbs (g), fat (g).
     config: { responseMimeType: 'application/json', responseSchema: macroSchema },
   });
 
-  const parsed = safeAiJsonParser<MacroTargets>(response.text, (value): value is MacroTargets => Boolean(value) && typeof value === 'object' && ['calories','protein','carbs','fat'].every(k => typeof (value as Record<string, unknown>)[k] === 'number'));
+  const parsed = safeAiJsonParser<MacroTargets>(
+    response.text,
+    (value): value is MacroTargets =>
+      Boolean(value) &&
+      typeof value === 'object' &&
+      ['calories', 'protein', 'carbs', 'fat'].every(
+        (k) => typeof (value as Record<string, unknown>)[k] === 'number',
+      ),
+  );
   if (!parsed.ok) throw new Error('Invalid macro targets response');
   return parsed.data;
 }
@@ -54,7 +62,10 @@ Inclua: 5-6 refeições com exemplos de alimentos, distribuição de macros, dic
   return response.text || 'Sem plano disponível.';
 }
 
-export async function analyzePhotoMacros(base64: string, mimeType: string): Promise<Partial<MealEntry>> {
+export async function analyzePhotoMacros(
+  base64: string,
+  mimeType: string,
+): Promise<Partial<MealEntry>> {
   const schema: Schema = {
     type: Type.OBJECT,
     properties: {
@@ -65,27 +76,44 @@ export async function analyzePhotoMacros(base64: string, mimeType: string): Prom
       estimatedFat: { type: Type.INTEGER },
       aiAnalysis: { type: Type.STRING },
     },
-    required: ['description', 'estimatedCalories', 'estimatedProtein', 'estimatedCarbs', 'estimatedFat', 'aiAnalysis'],
+    required: [
+      'description',
+      'estimatedCalories',
+      'estimatedProtein',
+      'estimatedCarbs',
+      'estimatedFat',
+      'aiAnalysis',
+    ],
   };
 
   const response = await getAI().models.generateContent({
     model: getAiModelPolicy('nutrition_analysis').model,
-    contents: [{
-      role: 'user',
-      parts: [
-        { text: 'Identifique os alimentos, estime calorias, proteínas, carboidratos e gorduras. Avalie se é adequado para um atleta de academia. Responda em JSON.' },
-        { inlineData: { data: base64, mimeType } },
-      ],
-    }],
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          {
+            text: 'Identifique os alimentos, estime calorias, proteínas, carboidratos e gorduras. Avalie se é adequado para um atleta de academia. Responda em JSON.',
+          },
+          { inlineData: { data: base64, mimeType } },
+        ],
+      },
+    ],
     config: { responseMimeType: 'application/json', responseSchema: schema },
   });
 
-  const parsed = safeAiJsonParser<Partial<MealEntry>>(response.text, (value): value is Partial<MealEntry> => Boolean(value) && typeof value === 'object');
+  const parsed = safeAiJsonParser<Partial<MealEntry>>(
+    response.text,
+    (value): value is Partial<MealEntry> => Boolean(value) && typeof value === 'object',
+  );
   if (!parsed.ok) throw new Error('Invalid meal scan response');
   return parsed.data;
 }
 
-export async function generatePreWorkoutSuggestion(profile: UserProfile, workoutTime: string): Promise<string> {
+export async function generatePreWorkoutSuggestion(
+  profile: UserProfile,
+  workoutTime: string,
+): Promise<string> {
   const prompt = `
 Sugira uma refeição pré-treino para:
 Objetivo: ${profile.goal}
@@ -120,7 +148,10 @@ Inclua opções rápidas e práticas, proporção proteína/carboidrato e hidrat
   return response.text || 'Sem sugestão.';
 }
 
-export async function generateWeeklyNutritionAnalysis(meals: MealEntry[], targets: MacroTargets): Promise<string> {
+export async function generateWeeklyNutritionAnalysis(
+  meals: MealEntry[],
+  targets: MacroTargets,
+): Promise<string> {
   const prompt = `
 Analise a aderência nutricional da semana.
 
@@ -144,10 +175,12 @@ Forneça:
 export async function analyzeBodyPhoto(
   base64Current: string,
   base64Previous: string | null,
-  mimeType: string
+  mimeType: string,
 ): Promise<string> {
   const parts: Array<{ text: string } | { inlineData: { data: string; mimeType: string } }> = [
-    { text: 'Analise a composição corporal aparente nesta foto. Avalie volume muscular aparente, definição e simetria. Seja preciso, mas cauteloso com afirmações médicas.' },
+    {
+      text: 'Analise a composição corporal aparente nesta foto. Avalie volume muscular aparente, definição e simetria. Seja preciso, mas cauteloso com afirmações médicas.',
+    },
     { inlineData: { data: base64Current, mimeType } },
   ];
 

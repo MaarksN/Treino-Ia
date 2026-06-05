@@ -27,25 +27,47 @@ export function validateAvailableMinutes(value: number): number {
 export function computeDeterministicFlags(
   profile: UserProfile,
   sessions: WorkoutSession[],
-  recovery?: RecoveryCheckin
+  recovery?: RecoveryCheckin,
 ): DeterministicFlags {
   const recent = sessions.slice(-12);
-  const avgRpe = average(recent.flatMap(session => session.logs.map(log => log.rpe || 0)).filter(Boolean));
+  const avgRpe = average(
+    recent.flatMap((session) => session.logs.map((log) => log.rpe || 0)).filter(Boolean),
+  );
   const completionRate = recent.length / 12;
-  const volumeSeries = recent.map(session =>
-    session.logs.reduce((sum, log) => sum + (log.actualWeight || 0) * estimateReps(log.actualReps), 0)
-  ).filter(v => v > 0);
+  const volumeSeries = recent
+    .map((session) =>
+      session.logs.reduce(
+        (sum, log) => sum + (log.actualWeight || 0) * estimateReps(log.actualReps),
+        0,
+      ),
+    )
+    .filter((v) => v > 0);
   const range = volumeSeries.length > 0 ? Math.max(...volumeSeries) - Math.min(...volumeSeries) : 0;
 
-  const plateauRisk: DeterministicFlags['plateauRisk'] = range < 400 && recent.length >= 6 ? 'alto' : range < 900 ? 'medio' : 'baixo';
-  const fatigueScore = (recovery?.sorenessLevel || 0) + (recovery?.stressLevel || 0) + (avgRpe > 8 ? 2 : avgRpe > 7 ? 1 : 0);
+  const plateauRisk: DeterministicFlags['plateauRisk'] =
+    range < 400 && recent.length >= 6 ? 'alto' : range < 900 ? 'medio' : 'baixo';
+  const fatigueScore =
+    (recovery?.sorenessLevel || 0) +
+    (recovery?.stressLevel || 0) +
+    (avgRpe > 8 ? 2 : avgRpe > 7 ? 1 : 0);
   const lowRecovery = Boolean(recovery && (recovery.energyLevel <= 4 || recovery.sleepHours < 6));
   const highFatigue = fatigueScore >= 8 || avgRpe >= 9;
-  const poorSleepOrStress = Boolean(recovery && (recovery.sleepHours < 6 || recovery.stressLevel >= 8));
+  const poorSleepOrStress = Boolean(
+    recovery && (recovery.sleepHours < 6 || recovery.stressLevel >= 8),
+  );
   const painOrLimitation = hasPainOrLimitation(profile, recent);
   const deloadNeeded = highFatigue || lowRecovery || poorSleepOrStress;
-  const adherenceRisk: DeterministicFlags['adherenceRisk'] = completionRate < 0.35 ? 'alto' : completionRate < 0.6 ? 'medio' : 'baixo';
-  const recommendedFrequency = Math.max(2, Math.min(6, Math.round(profile.daysPerWeek + (adherenceRisk === 'alto' ? -1 : 0) + (deloadNeeded ? -1 : 0))));
+  const adherenceRisk: DeterministicFlags['adherenceRisk'] =
+    completionRate < 0.35 ? 'alto' : completionRate < 0.6 ? 'medio' : 'baixo';
+  const recommendedFrequency = Math.max(
+    2,
+    Math.min(
+      6,
+      Math.round(
+        profile.daysPerWeek + (adherenceRisk === 'alto' ? -1 : 0) + (deloadNeeded ? -1 : 0),
+      ),
+    ),
+  );
 
   return {
     plateauRisk,
@@ -71,12 +93,14 @@ export function listDeterministicFlagLabels(flags: DeterministicFlags): string[]
   return labels;
 }
 
-export function enforceTrainingGuardrails<T extends {
-  volumeAdjustment?: 'increase' | 'maintain' | 'reduce';
-  intensityAdjustment?: 'increase' | 'maintain' | 'reduce';
-  safetyNotes?: string[];
-  summary?: string;
-}>(value: T, flags: DeterministicFlags): T {
+export function enforceTrainingGuardrails<
+  T extends {
+    volumeAdjustment?: 'increase' | 'maintain' | 'reduce';
+    intensityAdjustment?: 'increase' | 'maintain' | 'reduce';
+    safetyNotes?: string[];
+    summary?: string;
+  },
+>(value: T, flags: DeterministicFlags): T {
   const next = { ...value };
   const notes = [...(value.safetyNotes || [])];
 
@@ -102,19 +126,24 @@ export function enforceTrainingGuardrails<T extends {
 
 export function buildDayVariationGuardrails(input: DayVariationGuardrailInput) {
   const availableMinutes = validateAvailableMinutes(input.availableMinutes);
-  const lowRecovery = Boolean(input.recovery && (input.recovery.energyLevel <= 4 || input.recovery.sleepHours < 6));
+  const lowRecovery = Boolean(
+    input.recovery && (input.recovery.energyLevel <= 4 || input.recovery.sleepHours < 6),
+  );
   const equipment = (input.equipment || 'peso corporal')
     .split(/[,;/]/)
-    .map(item => item.trim())
+    .map((item) => item.trim())
     .filter(Boolean);
 
   return {
     availableMinutes,
     equipment: equipment.length ? equipment : ['peso corporal'],
-    volumeAdjustment: availableMinutes < 35 || lowRecovery ? 'reduce' as const : 'maintain' as const,
-    intensityAdjustment: lowRecovery ? 'reduce' as const : 'maintain' as const,
+    volumeAdjustment:
+      availableMinutes < 35 || lowRecovery ? ('reduce' as const) : ('maintain' as const),
+    intensityAdjustment: lowRecovery ? ('reduce' as const) : ('maintain' as const),
     safetyNotes: [
-      ...(availableMinutes < 35 ? ['Tempo reduzido: usar menos exercícios e descansos controlados.'] : []),
+      ...(availableMinutes < 35
+        ? ['Tempo reduzido: usar menos exercícios e descansos controlados.']
+        : []),
       ...(lowRecovery ? ['Recuperação baixa: evitar séries até a falha.'] : []),
     ],
   };
@@ -127,8 +156,11 @@ function average(values: number[]): number {
 
 function hasPainOrLimitation(profile: UserProfile, sessions: WorkoutSession[]): boolean {
   const injuryText = `${profile.injuries || ''}`.toLowerCase();
-  const hasKnownLimitation = injuryText.trim().length > 0 && !['nenhuma', 'não', 'nao', 'sem'].includes(injuryText.trim());
-  const hasPainFeedback = sessions.some(session => session.logs.some(log => log.feedback === 'painful'));
+  const hasKnownLimitation =
+    injuryText.trim().length > 0 && !['nenhuma', 'não', 'nao', 'sem'].includes(injuryText.trim());
+  const hasPainFeedback = sessions.some((session) =>
+    session.logs.some((log) => log.feedback === 'painful'),
+  );
   return hasKnownLimitation || hasPainFeedback;
 }
 

@@ -23,7 +23,11 @@ export interface FileMetadata {
   guard: WorkoutImportGuard;
 }
 
-export function extractFileMetadata(file: { name: string; type: string; size: number }): FileMetadata {
+export function extractFileMetadata(file: {
+  name: string;
+  type: string;
+  size: number;
+}): FileMetadata {
   const isImage = file.type.startsWith('image/');
   const isPdf = file.type === 'application/pdf';
   const isSupported = isSupportedWorkoutImportMimeType(file.type);
@@ -58,7 +62,9 @@ export function validateImportFile(file: { name: string; type: string; size: num
   }
 
   if (!isSupportedWorkoutImportMimeType(file.type)) {
-    errors.push(`Formato "${file.type || 'desconhecido'}" não é suportado. Use JPG, PNG, WebP ou PDF.`);
+    errors.push(
+      `Formato "${file.type || 'desconhecido'}" não é suportado. Use JPG, PNG, WebP ou PDF.`,
+    );
   }
 
   if (file.size > 12 * 1024 * 1024) {

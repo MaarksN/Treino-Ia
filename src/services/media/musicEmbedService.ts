@@ -17,7 +17,8 @@ export interface MusicEmbedValidationResult {
 
 const HTTPS_PROTOCOL = 'https:';
 const IFRAME_ALLOW = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
-const IFRAME_SANDBOX = 'allow-scripts allow-same-origin allow-popups allow-forms allow-presentation';
+const IFRAME_SANDBOX =
+  'allow-scripts allow-same-origin allow-popups allow-forms allow-presentation';
 const REFERRER_POLICY = 'strict-origin-when-cross-origin';
 
 const SPOTIFY_EMBED_TYPES = new Set(['album', 'episode', 'playlist', 'show', 'track']);
@@ -39,7 +40,11 @@ function fail(error: string): MusicEmbedValidationResult {
   return { ok: false, error };
 }
 
-function safeEmbed(provider: MusicProvider, src: string, title: string): MusicEmbedValidationResult {
+function safeEmbed(
+  provider: MusicProvider,
+  src: string,
+  title: string,
+): MusicEmbedValidationResult {
   return {
     ok: true,
     embed: {
@@ -95,7 +100,9 @@ function buildYouTubeEmbed(url: URL): MusicEmbedValidationResult | null {
     videoId = sanitizeId(url.searchParams.get('v'));
   } else {
     const parts = url.pathname.split('/').filter(Boolean);
-    const embedIndex = parts.findIndex(part => part === 'embed' || part === 'shorts' || part === 'live');
+    const embedIndex = parts.findIndex(
+      (part) => part === 'embed' || part === 'shorts' || part === 'live',
+    );
     if (embedIndex >= 0) {
       videoId = sanitizeId(parts[embedIndex + 1] ?? null);
     }
@@ -167,13 +174,12 @@ export function createSafeMusicEmbed(input: string): MusicEmbedValidationResult 
   const url = parseHttpsUrl(input);
 
   if (!url) {
-    return fail('Cole uma URL HTTPS valida. HTML, srcdoc, javascript: e embeds brutos nao sao aceitos.');
+    return fail(
+      'Cole uma URL HTTPS valida. HTML, srcdoc, javascript: e embeds brutos nao sao aceitos.',
+    );
   }
 
-  const result =
-    buildYouTubeEmbed(url) ??
-    buildSpotifyEmbed(url) ??
-    buildSoundCloudEmbed(url);
+  const result = buildYouTubeEmbed(url) ?? buildSpotifyEmbed(url) ?? buildSoundCloudEmbed(url);
 
   if (!result) {
     return fail('Provedor nao permitido. Use YouTube, Spotify ou SoundCloud.');

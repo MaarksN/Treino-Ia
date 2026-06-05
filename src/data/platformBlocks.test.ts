@@ -13,7 +13,7 @@ describe('platform block registry', () => {
       expect(block.featureFlag in DEFAULT_FEATURE_FLAGS).toBe(true);
       expect(['core', 'beta', 'internal', 'off']).toContain(block.surfaceStatus);
 
-      const ids = new Set(block.features.map(feature => feature.id));
+      const ids = new Set(block.features.map((feature) => feature.id));
       expect(ids.size).toBe(20);
       expect([...ids].sort((a, b) => a - b)).toEqual(
         Array.from({ length: 20 }, (_, index) => index + 1),
@@ -26,7 +26,9 @@ describe('platform block registry', () => {
   });
 
   it('classifies platform blocks for the private beta surface', () => {
-    const statuses = Object.fromEntries(PLATFORM_BLOCKS.map(block => [block.id, block.surfaceStatus]));
+    const statuses = Object.fromEntries(
+      PLATFORM_BLOCKS.map((block) => [block.id, block.surfaceStatus]),
+    );
 
     expect(statuses).toMatchObject({
       'bloco-11': 'core',

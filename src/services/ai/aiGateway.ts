@@ -4,7 +4,12 @@ import { getAiModelPolicy } from './aiModelPolicy';
 import { safeAiJsonParser, TypeGuard } from './safeAiJsonParser';
 import { AiGatewayResult, AiRequestConfig } from './aiGateway.types';
 
-export async function runAiTask<T>(prompt: string, config: AiRequestConfig, guard: TypeGuard<T>, fallback?: T): Promise<AiGatewayResult<T>> {
+export async function runAiTask<T>(
+  prompt: string,
+  config: AiRequestConfig,
+  guard: TypeGuard<T>,
+  fallback?: T,
+): Promise<AiGatewayResult<T>> {
   const modelPolicy = getAiModelPolicy(config.taskType);
   const budgetPolicy = getAiBudgetPolicy(config.taskType);
   const meta = {
@@ -26,14 +31,40 @@ export async function runAiTask<T>(prompt: string, config: AiRequestConfig, guar
     const parsed = safeAiJsonParser(response.text, guard, fallback);
     if (parsed.ok) return { ok: true, data: parsed.data, meta };
     if (fallback !== undefined) {
-      return { ok: false, error: { code: parsed.reason, message: 'Resposta IA inválida.', retryable: parsed.reason !== 'invalid_schema' }, fallback, meta: { ...meta, usedFallback: true } };
+      return {
+        ok: false,
+        error: {
+          code: parsed.reason,
+          message: 'Resposta IA inválida.',
+          retryable: parsed.reason !== 'invalid_schema',
+        },
+        fallback,
+        meta: { ...meta, usedFallback: true },
+      };
     }
 
-    return { ok: false, error: { code: parsed.reason, message: 'Resposta IA inválida.', retryable: parsed.reason !== 'invalid_schema' }, meta };
+    return {
+      ok: false,
+      error: {
+        code: parsed.reason,
+        message: 'Resposta IA inválida.',
+        retryable: parsed.reason !== 'invalid_schema',
+      },
+      meta,
+    };
   } catch {
     if (fallback !== undefined) {
-      return { ok: false, error: { code: 'provider_error', message: 'Falha no provedor de IA.', retryable: true }, fallback, meta: { ...meta, usedFallback: true } };
+      return {
+        ok: false,
+        error: { code: 'provider_error', message: 'Falha no provedor de IA.', retryable: true },
+        fallback,
+        meta: { ...meta, usedFallback: true },
+      };
     }
-    return { ok: false, error: { code: 'provider_error', message: 'Falha no provedor de IA.', retryable: true }, meta };
+    return {
+      ok: false,
+      error: { code: 'provider_error', message: 'Falha no provedor de IA.', retryable: true },
+      meta,
+    };
   }
 }

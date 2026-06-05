@@ -3,9 +3,9 @@ import { VIEWS, type AppView } from '../navigation/views';
 import { useViewStore } from '../stores/viewStore';
 
 export function useAppNavigation(initialView: AppView = VIEWS.LOADING) {
-  const view = useViewStore(state => state.view);
-  const setView = useViewStore(state => state.setView);
-  const initializeView = useViewStore(state => state.initializeView);
+  const view = useViewStore((state) => state.view);
+  const setView = useViewStore((state) => state.setView);
+  const initializeView = useViewStore((state) => state.initializeView);
 
   useEffect(() => {
     initializeView(initialView);

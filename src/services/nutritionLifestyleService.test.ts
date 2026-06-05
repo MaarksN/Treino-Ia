@@ -34,12 +34,15 @@ describe('nutritionLifestyleService', () => {
       trainingDays: 5,
       workoutMinutes: 60,
     });
-    const selection = selectRecipesForMacroTargets(targets, { maxRecipes: 3, preferTags: ['pre-treino'] });
+    const selection = selectRecipesForMacroTargets(targets, {
+      maxRecipes: 3,
+      preferTags: ['pre-treino'],
+    });
 
     expect(selection.recipes).toHaveLength(3);
     expect(selection.apiQuery).toContain('minProtein=');
     expect(selection.shoppingList.length).toBeGreaterThan(6);
-    expect(selection.shoppingList.every(item => item.amount > 0)).toBe(true);
+    expect(selection.shoppingList.every((item) => item.amount > 0)).toBe(true);
   });
 
   it('turns meal scan macros into an actionable next step', () => {

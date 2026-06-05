@@ -1,5 +1,9 @@
 import { useMemo } from 'react';
-import { extractFileMetadata, IMPORT_DISCLAIMER, OCR_STATUS_MESSAGE } from '../../services/media/workoutImportService';
+import {
+  extractFileMetadata,
+  IMPORT_DISCLAIMER,
+  OCR_STATUS_MESSAGE,
+} from '../../services/media/workoutImportService';
 import { InlineNotice } from '../ui/InlineNotice';
 
 /**
@@ -13,7 +17,7 @@ export function WorkoutImportPanel() {
       { name: 'ficha.pdf', type: 'application/pdf', size: 2 * 1024 * 1024 },
       { name: 'treino.png', type: 'image/png', size: 300 * 1024 },
     ];
-    return formats.map(f => extractFileMetadata(f));
+    return formats.map((f) => extractFileMetadata(f));
   }, []);
 
   return (
@@ -25,13 +29,16 @@ export function WorkoutImportPanel() {
         Importação de ficha
       </h3>
       <p className="mt-1 font-mono text-xs text-brand-muted">
-        Upload de imagem ou PDF com preview e crop local. Use o botão &quot;Importar ficha&quot; no topo do Dashboard.
+        Upload de imagem ou PDF com preview e crop local. Use o botão &quot;Importar ficha&quot; no
+        topo do Dashboard.
       </p>
 
       <div className="mt-4">
-        <h4 className="font-mono text-xs font-bold uppercase text-brand-light/80">Formatos aceitos</h4>
+        <h4 className="font-mono text-xs font-bold uppercase text-brand-light/80">
+          Formatos aceitos
+        </h4>
         <ul className="mt-2 space-y-1" role="list">
-          {sampleFormats.map(meta => (
+          {sampleFormats.map((meta) => (
             <li
               key={meta.name}
               className="flex items-center justify-between rounded-lg border border-brand-light/10 bg-brand-dark/30 px-3 py-2"
@@ -39,9 +46,11 @@ export function WorkoutImportPanel() {
               <span className="font-mono text-sm text-brand-light">
                 {meta.isPdf ? '📄' : '🖼️'} {meta.type}
               </span>
-              <span className={`font-mono text-xs font-bold ${
-                meta.guard.status === 'ready' ? 'text-brand-neon' : 'text-brand-magenta'
-              }`}>
+              <span
+                className={`font-mono text-xs font-bold ${
+                  meta.guard.status === 'ready' ? 'text-brand-neon' : 'text-brand-magenta'
+                }`}
+              >
                 {meta.guard.status === 'ready' ? '✓ Aceito' : '✗ Bloqueado'}
               </span>
             </li>

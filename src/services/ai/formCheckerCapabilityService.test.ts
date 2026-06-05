@@ -38,12 +38,17 @@ describe('formCheckerCapabilityService', () => {
   it('returns 4 capability checks', () => {
     const caps = getFormCheckerCapabilities();
     expect(caps).toHaveLength(4);
-    expect(caps.map(c => c.id)).toEqual(['camera', 'camera_permission', 'mediapipe', 'processing']);
+    expect(caps.map((c) => c.id)).toEqual([
+      'camera',
+      'camera_permission',
+      'mediapipe',
+      'processing',
+    ]);
   });
 
   it('marks MediaPipe as unavailable', () => {
     const caps = getFormCheckerCapabilities();
-    const mp = caps.find(c => c.id === 'mediapipe');
+    const mp = caps.find((c) => c.id === 'mediapipe');
     expect(mp?.status).toBe('unavailable');
   });
 

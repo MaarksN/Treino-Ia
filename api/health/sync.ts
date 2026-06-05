@@ -6,8 +6,16 @@ export const config = {
   runtime: 'nodejs',
 };
 
-const PROVIDERS = ['apple_health', 'google_fit', 'health_connect', 'garmin', 'fitbit', 'ble_hr', 'strava'] as const;
-type Provider = typeof PROVIDERS[number];
+const PROVIDERS = [
+  'apple_health',
+  'google_fit',
+  'health_connect',
+  'garmin',
+  'fitbit',
+  'ble_hr',
+  'strava',
+] as const;
+type Provider = (typeof PROVIDERS)[number];
 
 function isProvider(value: string): value is Provider {
   return PROVIDERS.includes(value as Provider);
@@ -52,9 +60,10 @@ export default async function handler(request: Request) {
       }
     }
 
-    const summary = typeof body.summary === 'object' && body.summary && !Array.isArray(body.summary)
-      ? body.summary as Record<string, unknown>
-      : {};
+    const summary =
+      typeof body.summary === 'object' && body.summary && !Array.isArray(body.summary)
+        ? (body.summary as Record<string, unknown>)
+        : {};
 
     const { data: job, error: jobError } = await supabase
       .from('health_sync_jobs')
@@ -77,9 +86,8 @@ export default async function handler(request: Request) {
       throw new Error(`Failed to create health sync job: ${jobError.message}`);
     }
 
-    const { error: integrationError } = await supabase
-      .from('health_integrations')
-      .upsert({
+    const { error: integrationError } = await supabase.from('health_integrations').upsert(
+      {
         user_id: user.id,
         provider,
         status: 'connected',
@@ -88,17 +96,23 @@ export default async function handler(request: Request) {
         last_sync_at: new Date().toISOString(),
         error_message: null,
         updated_at: new Date().toISOString(),
-      }, { onConflict: 'user_id,provider' });
+      },
+      { onConflict: 'user_id,provider' },
+    );
 
     if (integrationError) {
       throw new Error(`Failed to update health integration: ${integrationError.message}`);
     }
 
-    return json({
-      ok: true,
-      dataMode,
-      job,
-    }, 200, request);
+    return json(
+      {
+        ok: true,
+        dataMode,
+        job,
+      },
+      200,
+      request,
+    );
   } catch (error) {
     return handleApiError(error, request);
   }

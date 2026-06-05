@@ -7,7 +7,7 @@ export const Type = {
   STRING: 'STRING',
 } as const;
 
-export type GeminiSchemaType = typeof Type[keyof typeof Type];
+export type GeminiSchemaType = (typeof Type)[keyof typeof Type];
 
 export interface Schema {
   type: GeminiSchemaType;

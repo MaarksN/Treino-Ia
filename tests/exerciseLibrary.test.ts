@@ -5,7 +5,7 @@ import {
   saveCustomExercise,
   getExerciseLibrary,
   findExerciseLibraryEntry,
-  LibraryExercise
+  LibraryExercise,
 } from '../src/data/exerciseLibrary';
 
 const mockLibrary: LibraryExercise[] = [
@@ -15,7 +15,7 @@ const mockLibrary: LibraryExercise[] = [
     muscleGroup: 'Chest',
     movementPattern: 'Horizontal Push',
     tags: ['barbell', 'strength'],
-    aliases: ['BP', 'supino']
+    aliases: ['BP', 'supino'],
   },
   {
     id: '2',
@@ -23,7 +23,7 @@ const mockLibrary: LibraryExercise[] = [
     muscleGroup: 'Legs',
     movementPattern: 'Squat',
     tags: ['barbell', 'compound'],
-    aliases: ['back squat']
+    aliases: ['back squat'],
   },
   {
     id: '3',
@@ -31,7 +31,7 @@ const mockLibrary: LibraryExercise[] = [
     muscleGroup: 'Chest',
     movementPattern: 'Horizontal Push',
     tags: ['bodyweight', 'endurance'],
-  }
+  },
 ];
 
 describe('exerciseLibrary - searchExercises', () => {
@@ -48,19 +48,19 @@ describe('exerciseLibrary - searchExercises', () => {
   it('searches by muscle group', () => {
     const results = searchExercises('chest', mockLibrary);
     expect(results).toHaveLength(2);
-    expect(results.map(r => r.id).sort()).toEqual(['1', '3']);
+    expect(results.map((r) => r.id).sort()).toEqual(['1', '3']);
   });
 
   it('searches by movement pattern', () => {
     const results = searchExercises('horizontal push', mockLibrary);
     expect(results).toHaveLength(2);
-    expect(results.map(r => r.id).sort()).toEqual(['1', '3']);
+    expect(results.map((r) => r.id).sort()).toEqual(['1', '3']);
   });
 
   it('searches by tags', () => {
     const results = searchExercises('barbell', mockLibrary);
     expect(results).toHaveLength(2);
-    expect(results.map(r => r.id).sort()).toEqual(['1', '2']);
+    expect(results.map((r) => r.id).sort()).toEqual(['1', '2']);
   });
 
   it('searches by aliases', () => {
@@ -89,7 +89,7 @@ describe('exerciseLibrary - custom exercises', () => {
       name: 'My Custom Deadlift',
       muscleGroup: 'Posterior',
       movementPattern: 'Hinge',
-      tags: ['custom', 'deadlift']
+      tags: ['custom', 'deadlift'],
     });
 
     expect(newExercise.id).toBeDefined();
@@ -115,12 +115,12 @@ describe('exerciseLibrary - custom exercises', () => {
       name: 'Another Custom Exercise',
       muscleGroup: 'Any',
       movementPattern: 'Any',
-      tags: []
+      tags: [],
     });
 
     const newLibrary = getExerciseLibrary();
     expect(newLibrary).toHaveLength(initialLibrary.length + 1);
-    expect(newLibrary.find(e => e.name === 'Another Custom Exercise')).toBeDefined();
+    expect(newLibrary.find((e) => e.name === 'Another Custom Exercise')).toBeDefined();
   });
 
   it('findExerciseLibraryEntry finds exercises by name or alias', () => {
@@ -140,7 +140,7 @@ describe('exerciseLibrary - custom exercises', () => {
       muscleGroup: 'Any',
       movementPattern: 'Any',
       tags: [],
-      aliases: ['special']
+      aliases: ['special'],
     });
 
     const foundCustom = findExerciseLibraryEntry('special custom lift');

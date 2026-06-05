@@ -27,13 +27,16 @@ describe('privacyService consent versioning', () => {
   });
 
   it('backfills policy version for legacy stored consent', () => {
-    localStorage.setItem('@TreinoApp:cookie-consent', JSON.stringify({
-      necessary: true,
-      analytics: false,
-      personalization: true,
-      marketing: false,
-      updatedAt: '2026-05-01T00:00:00.000Z',
-    }));
+    localStorage.setItem(
+      '@TreinoApp:cookie-consent',
+      JSON.stringify({
+        necessary: true,
+        analytics: false,
+        personalization: true,
+        marketing: false,
+        updatedAt: '2026-05-01T00:00:00.000Z',
+      }),
+    );
 
     expect(loadCookieConsent()).toMatchObject({
       policyVersion: PRIVACY_POLICY_VERSION,

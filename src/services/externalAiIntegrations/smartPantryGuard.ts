@@ -12,7 +12,7 @@ export function checkSmartPantryGuard(): SmartPantryState {
   return {
     isIoTConnected: false,
     canUseLocalModel: true,
-    status: 'foundation_created'
+    status: 'foundation_created',
   };
 }
 

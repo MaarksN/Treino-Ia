@@ -12,14 +12,17 @@ export function loadPRs(): PersonalRecord[] {
 
 export function savePR(pr: PersonalRecord) {
   const prs = loadPRs();
-  const existing = prs.findIndex(record => record.exerciseName === pr.exerciseName);
+  const existing = prs.findIndex((record) => record.exerciseName === pr.exerciseName);
 
   if (existing === -1) {
     localStorage.setItem(PR_KEY, JSON.stringify([...prs, pr]));
     return true;
   }
 
-  if (pr.weight > prs[existing].weight || (pr.weight === prs[existing].weight && pr.reps > prs[existing].reps)) {
+  if (
+    pr.weight > prs[existing].weight ||
+    (pr.weight === prs[existing].weight && pr.reps > prs[existing].reps)
+  ) {
     prs[existing] = pr;
     localStorage.setItem(PR_KEY, JSON.stringify(prs));
     return true;
@@ -29,7 +32,7 @@ export function savePR(pr: PersonalRecord) {
 }
 
 export function getPRForExercise(exerciseName: string) {
-  return loadPRs().find(record => record.exerciseName === exerciseName) || null;
+  return loadPRs().find((record) => record.exerciseName === exerciseName) || null;
 }
 
 function parseFirstReps(actualReps?: string) {
@@ -41,10 +44,10 @@ function parseFirstReps(actualReps?: string) {
 export function extractAndSavePRsFromPlan(plan: WorkoutPlan) {
   const newPRs: string[] = [];
 
-  plan.days.forEach(day => {
-    day.exercises.forEach(exercise => {
+  plan.days.forEach((day) => {
+    day.exercises.forEach((exercise) => {
       const bestSet = exercise.setLogs
-        ?.filter(log => log.weight && log.reps)
+        ?.filter((log) => log.weight && log.reps)
         .sort((a, b) => (b.weight || 0) - (a.weight || 0))[0];
 
       const weight = bestSet?.weight || exercise.actualWeight;

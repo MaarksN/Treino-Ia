@@ -42,9 +42,9 @@ Evidencias:
 - Build produziu chunks manuais para react, supabase, sentry, charts etc.
 - Maior chunk reportado no build: `index-*.js` 276.39 kB gzip 85.55 kB; `supabase` 200.67 kB gzip 51.62 kB; `react` 181.78 kB gzip 57.19 kB.
 
-Falhas:
+Falhas/partial:
 
-- Lighthouse CI local falhou com `NO_FCP`.
+- Lighthouse CI local passou em 2026-06-05; falta repetir contra staging real.
 - Sem Web Vitals real.
 - Sem teste de carga ou API latency.
 

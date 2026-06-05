@@ -21,9 +21,7 @@ function clonePlanWithExercises(
 ): TrainingPlan {
   return {
     ...plan,
-    days: plan.days.map((day, index) => (
-      index === dayIndex ? { ...day, exercises } : day
-    )),
+    days: plan.days.map((day, index) => (index === dayIndex ? { ...day, exercises } : day)),
   };
 }
 
@@ -33,7 +31,7 @@ function clearSupersetGroup(
 ): ExercisePrescription[] {
   if (!groupId) return exercises;
 
-  return exercises.map(exercise => {
+  return exercises.map((exercise) => {
     if (exercise.supersetGroupId !== groupId) return exercise;
 
     return {
@@ -51,7 +49,11 @@ export function reorderExercisesInDay(
   toIndex: number,
 ): TrainingPlan {
   const day = plan.days[dayIndex];
-  if (!day || !isValidIndex(fromIndex, day.exercises.length) || !isValidIndex(toIndex, day.exercises.length)) {
+  if (
+    !day ||
+    !isValidIndex(fromIndex, day.exercises.length) ||
+    !isValidIndex(toIndex, day.exercises.length)
+  ) {
     return plan;
   }
 
@@ -78,7 +80,8 @@ export function updateExerciseTechnique(
 
   if (technique === 'superset') {
     const nextIndex = exerciseIndex + 1;
-    if (!isValidIndex(nextIndex, exercises.length)) return clonePlanWithExercises(plan, dayIndex, exercises);
+    if (!isValidIndex(nextIndex, exercises.length))
+      return clonePlanWithExercises(plan, dayIndex, exercises);
 
     const groupId = `superset-${day.id}-${exerciseIndex}-${nextIndex}`;
     exercises[exerciseIndex] = {
@@ -113,13 +116,15 @@ export function updateExerciseNotes(
   const day = plan.days[dayIndex];
   if (!day || !isValidIndex(exerciseIndex, day.exercises.length)) return plan;
 
-  const exercises = day.exercises.map((exercise, index) => (
-    index === exerciseIndex ? { ...exercise, notes } : exercise
-  ));
+  const exercises = day.exercises.map((exercise, index) =>
+    index === exerciseIndex ? { ...exercise, notes } : exercise,
+  );
 
   return clonePlanWithExercises(plan, dayIndex, exercises);
 }
 
-export function getExerciseTechniqueLabel(technique: ExerciseIntensityTechnique | undefined): string {
+export function getExerciseTechniqueLabel(
+  technique: ExerciseIntensityTechnique | undefined,
+): string {
   return EXERCISE_TECHNIQUE_LABELS[technique ?? 'normal'];
 }

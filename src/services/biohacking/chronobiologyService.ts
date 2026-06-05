@@ -12,7 +12,8 @@ export const assessChronotype = (preferredWakeUpHour: number): ChronobiologyProf
     return {
       chronotype: 'morning_lark',
       optimalWorkoutWindow: '06:00 - 10:00',
-      currentRecommendation: 'Seu pico de energia costuma ser matutino. Treinos intensos são ideais pela manhã.'
+      currentRecommendation:
+        'Seu pico de energia costuma ser matutino. Treinos intensos são ideais pela manhã.',
     };
   }
 
@@ -20,23 +21,28 @@ export const assessChronotype = (preferredWakeUpHour: number): ChronobiologyProf
     return {
       chronotype: 'night_owl',
       optimalWorkoutWindow: '16:00 - 20:00',
-      currentRecommendation: 'Seu pico de energia é vespertino/noturno. Evite treinos muito intensos pouco antes de dormir.'
+      currentRecommendation:
+        'Seu pico de energia é vespertino/noturno. Evite treinos muito intensos pouco antes de dormir.',
     };
   }
 
   return {
     chronotype: 'intermediate',
     optimalWorkoutWindow: '10:00 - 16:00',
-    currentRecommendation: 'Seu perfil é intermediário. Flexível, mas final de tarde pode render bem para força.'
+    currentRecommendation:
+      'Seu perfil é intermediário. Flexível, mas final de tarde pode render bem para força.',
   };
 };
 
-export const getTimeBasedSuggestion = (profile: ChronobiologyProfile, currentHour: number): string | null => {
+export const getTimeBasedSuggestion = (
+  profile: ChronobiologyProfile,
+  currentHour: number,
+): string | null => {
   if (profile.chronotype === 'night_owl' && currentHour < 8) {
-    return "Treino matutino pode ser mais desafiador para seu cronotipo. Foque no aquecimento.";
+    return 'Treino matutino pode ser mais desafiador para seu cronotipo. Foque no aquecimento.';
   }
   if (profile.chronotype === 'morning_lark' && currentHour > 19) {
-    return "Treino noturno pode afetar seu sono. Considere uma intensidade menor.";
+    return 'Treino noturno pode afetar seu sono. Considere uma intensidade menor.';
   }
   return null;
 };

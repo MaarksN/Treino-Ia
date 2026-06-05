@@ -49,7 +49,9 @@ export function ActiveWorkoutView(props: Props) {
   const initialDay = isPlanMode ? null : props.day;
   const planDays = isPlanMode ? props.plan.days : null;
   const dayWorkoutHistory = isPlanMode ? undefined : props.workoutHistory;
-  const [localDay, setLocalDay] = useState<WorkoutDay | null>(() => initialDay ? cloneDay(initialDay) : null);
+  const [localDay, setLocalDay] = useState<WorkoutDay | null>(() =>
+    initialDay ? cloneDay(initialDay) : null,
+  );
   const [index, setIndex] = useState(0);
   const [restKey, setRestKey] = useState<number | undefined>(undefined);
   const [restSecs, setRestSecs] = useState(90);
@@ -62,21 +64,23 @@ export function ActiveWorkoutView(props: Props) {
   }, [initialDay]);
 
   const days = useMemo(
-    () => isPlanMode ? planDays ?? [] : localDay ? [localDay] : [],
+    () => (isPlanMode ? (planDays ?? []) : localDay ? [localDay] : []),
     [isPlanMode, localDay, planDays],
   );
-  const entries = useMemo(() =>
-    days.flatMap((day, dIdx) =>
-      day.exercises.map((ex, eIdx) => ({ ex, dIdx, eIdx, day }))
-    ),
-  [days]);
+  const entries = useMemo(
+    () => days.flatMap((day, dIdx) => day.exercises.map((ex, eIdx) => ({ ex, dIdx, eIdx, day }))),
+    [days],
+  );
 
   const current = entries[index];
   const total = entries.length;
   const progress = total ? ((index + 1) / total) * 100 : 0;
   const voiceEnabled = props.voiceEnabled;
+  const plan = isPlanMode ? props.plan : null;
+  const onUpdatePlan = isPlanMode ? props.onUpdatePlan : null;
+  const onCompleteDay = isPlanMode ? null : props.onComplete;
   const workoutHistory = useMemo(
-    () => isPlanMode ? [] : dayWorkoutHistory || [],
+    () => (isPlanMode ? [] : dayWorkoutHistory || []),
     [dayWorkoutHistory, isPlanMode],
   );
 
@@ -84,9 +88,10 @@ export function ActiveWorkoutView(props: Props) {
     if (!current) return null;
 
     for (let i = workoutHistory.length - 1; i >= 0; i--) {
-      const found = workoutHistory[i].exercises.find(ex =>
-        ex.name.toLowerCase() === current.ex.name.toLowerCase() &&
-        (ex.actualWeight || ex.actualReps || ex.rpe || ex.setLogs?.length)
+      const found = workoutHistory[i].exercises.find(
+        (ex) =>
+          ex.name.toLowerCase() === current.ex.name.toLowerCase() &&
+          (ex.actualWeight || ex.actualReps || ex.rpe || ex.setLogs?.length),
       );
       if (found) return found;
     }
@@ -99,19 +104,8 @@ export function ActiveWorkoutView(props: Props) {
   const progressionSuggestion = useProgressionSuggestion(
     current?.ex.id ?? '',
     current?.ex.name ?? '',
-    current?.ex.muscleGroup
+    current?.ex.muscleGroup,
   );
-
-  const handleApplyLoad = useCallback((newLoad: number) => {
-    if (!current) return;
-    persistExercise({ ...current.ex, actualWeight: newLoad });
-  }, [current]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const {
-    acceptSuggestion,
-    rejectSuggestion,
-    isDismissed: progressionDismissed,
-  } = useApplyProgressionSuggestion(progressionSuggestion, handleApplyLoad);
 
   useEffect(() => {
     if (!current || !voiceEnabled) return;
@@ -120,7 +114,9 @@ export function ActiveWorkoutView(props: Props) {
     if (spokenRef.current === spokenKey) return;
     spokenRef.current = spokenKey;
 
-    speakText(`${current.ex.name}. ${current.ex.sets} series de ${current.ex.reps}. Descanso de ${current.ex.rest}.`);
+    speakText(
+      `${current.ex.name}. ${current.ex.sets} series de ${current.ex.reps}. Descanso de ${current.ex.rest}.`,
+    );
   }, [current, index, voiceEnabled]);
 
   const close = () => {
@@ -131,34 +127,54 @@ export function ActiveWorkoutView(props: Props) {
     }
   };
 
-  const persistExercise = (updated: Exercise) => {
-    if (!current) return null;
+  const persistExercise = useCallback(
+    (updated: Exercise) => {
+      if (!current) return null;
 
-    if (isPlanMode) {
-      const nextPlan: WorkoutPlan = {
-        ...props.plan,
-        days: props.plan.days.map((day, dIdx) =>
-          dIdx === current.dIdx
-            ? {
-                ...day,
-                exercises: day.exercises.map((ex, eIdx) => eIdx === current.eIdx ? updated : ex),
-              }
-            : day
-        ),
+      if (isPlanMode) {
+        if (!plan || !onUpdatePlan) return null;
+        const nextPlan: WorkoutPlan = {
+          ...plan,
+          days: plan.days.map((day, dIdx) =>
+            dIdx === current.dIdx
+              ? {
+                  ...day,
+                  exercises: day.exercises.map((ex, eIdx) =>
+                    eIdx === current.eIdx ? updated : ex,
+                  ),
+                }
+              : day,
+          ),
+        };
+        onUpdatePlan(nextPlan);
+        return nextPlan.days[current.dIdx];
+      }
+
+      if (!localDay) return null;
+
+      const nextDay = {
+        ...localDay,
+        exercises: localDay.exercises.map((ex, eIdx) => (eIdx === current.eIdx ? updated : ex)),
       };
-      props.onUpdatePlan(nextPlan);
-      return nextPlan.days[current.dIdx];
-    }
+      setLocalDay(nextDay);
+      return nextDay;
+    },
+    [current, isPlanMode, localDay, onUpdatePlan, plan],
+  );
 
-    if (!localDay) return null;
+  const handleApplyLoad = useCallback(
+    (newLoad: number) => {
+      if (!current) return;
+      persistExercise({ ...current.ex, actualWeight: newLoad });
+    },
+    [current, persistExercise],
+  );
 
-    const nextDay = {
-      ...localDay,
-      exercises: localDay.exercises.map((ex, eIdx) => eIdx === current.eIdx ? updated : ex),
-    };
-    setLocalDay(nextDay);
-    return nextDay;
-  };
+  const {
+    acceptSuggestion,
+    rejectSuggestion,
+    isDismissed: progressionDismissed,
+  } = useApplyProgressionSuggestion(progressionSuggestion, handleApplyLoad);
 
   const completeAndNext = () => {
     if (!current) return;
@@ -169,12 +185,12 @@ export function ActiveWorkoutView(props: Props) {
     setRestKey(Date.now());
 
     if (index < total - 1) {
-      setIndex(value => value + 1);
+      setIndex((value) => value + 1);
       return;
     }
 
     if (!isPlanMode && updatedDay) {
-      props.onComplete(updatedDay);
+      onCompleteDay?.(updatedDay);
     }
   };
 
@@ -183,7 +199,11 @@ export function ActiveWorkoutView(props: Props) {
   return (
     <div className="fixed inset-0 z-50 bg-brand-dark text-brand-light flex flex-col overflow-y-auto">
       <div className="flex items-center justify-between p-5 border-b border-white/10">
-        <button onClick={close} className="p-2 rounded-xl bg-white/10 text-white hover:bg-white/15 transition-colors" title="Fechar">
+        <button
+          onClick={close}
+          className="p-2 rounded-xl bg-white/10 text-white hover:bg-white/15 transition-colors"
+          title="Fechar"
+        >
           <X size={20} />
         </button>
 
@@ -191,7 +211,9 @@ export function ActiveWorkoutView(props: Props) {
           <p className="text-xs text-brand-muted uppercase tracking-widest truncate">
             {isPlanMode ? props.plan.planName : current.day.dayName}
           </p>
-          <p className="text-sm font-bold text-white">{index + 1} / {total}</p>
+          <p className="text-sm font-bold text-white">
+            {index + 1} / {total}
+          </p>
         </div>
 
         <div className="w-10" />
@@ -229,7 +251,8 @@ export function ActiveWorkoutView(props: Props) {
 
         {previousData && (
           <div className="mb-6 p-3 bg-brand-neon/10 border-2 border-brand-neon/30 text-xs font-mono text-brand-light/80">
-            Ultima vez: {previousData.actualWeight ? `${previousData.actualWeight}kg` : '-'} x {previousData.actualReps || '-'}
+            Ultima vez: {previousData.actualWeight ? `${previousData.actualWeight}kg` : '-'} x{' '}
+            {previousData.actualReps || '-'}
           </div>
         )}
 
@@ -247,11 +270,17 @@ export function ActiveWorkoutView(props: Props) {
           </div>
         )}
 
-        {(current.ex.executionDetails || current.ex.concentricPhase || current.ex.eccentricPhase) && (
+        {(current.ex.executionDetails ||
+          current.ex.concentricPhase ||
+          current.ex.eccentricPhase) && (
           <div className="mb-6 bg-brand-gray/50 border-2 border-brand-light/10 p-4 space-y-3 text-sm text-brand-light/80">
             {current.ex.executionDetails && <p>{current.ex.executionDetails}</p>}
-            {current.ex.concentricPhase && <p className="text-brand-magenta">{current.ex.concentricPhase}</p>}
-            {current.ex.eccentricPhase && <p className="text-brand-neon">{current.ex.eccentricPhase}</p>}
+            {current.ex.concentricPhase && (
+              <p className="text-brand-magenta">{current.ex.concentricPhase}</p>
+            )}
+            {current.ex.eccentricPhase && (
+              <p className="text-brand-neon">{current.ex.eccentricPhase}</p>
+            )}
           </div>
         )}
 
@@ -261,7 +290,9 @@ export function ActiveWorkoutView(props: Props) {
 
         <textarea
           value={current.ex.performanceNotes || ''}
-          onChange={event => persistExercise({ ...current.ex, performanceNotes: event.target.value })}
+          onChange={(event) =>
+            persistExercise({ ...current.ex, performanceNotes: event.target.value })
+          }
           rows={2}
           placeholder="Nota rápida do exercício..."
           className="w-full mb-6 bg-brand-gray border-2 border-brand-light/10 px-4 py-3 text-sm text-brand-light outline-none resize-none placeholder:text-brand-light/30 focus:border-brand-neon"
@@ -282,7 +313,7 @@ export function ActiveWorkoutView(props: Props) {
       <footer className="p-5 border-t border-white/10">
         <div className="max-w-3xl mx-auto w-full flex gap-3">
           <button
-            onClick={() => setIndex(value => Math.max(0, value - 1))}
+            onClick={() => setIndex((value) => Math.max(0, value - 1))}
             className="flex-1 py-4 bg-white/10 text-white font-bold flex items-center justify-center gap-2 hover:bg-white/15 transition-colors"
           >
             <ChevronLeft size={20} /> Anterior
@@ -292,11 +323,12 @@ export function ActiveWorkoutView(props: Props) {
             onClick={completeAndNext}
             className="flex-[1.4] py-4 px-6 bg-brand-neon text-brand-dark font-black flex items-center justify-center gap-2 hover:bg-brand-neon-hover transition-colors"
           >
-            <CheckCircle2 size={20} /> {index === total - 1 && !isPlanMode ? 'Finalizar' : 'Concluir'}
+            <CheckCircle2 size={20} />{' '}
+            {index === total - 1 && !isPlanMode ? 'Finalizar' : 'Concluir'}
           </button>
 
           <button
-            onClick={() => setIndex(value => Math.min(total - 1, value + 1))}
+            onClick={() => setIndex((value) => Math.min(total - 1, value + 1))}
             className="flex-1 py-4 bg-white/10 text-white font-bold flex items-center justify-center gap-2 hover:bg-white/15 transition-colors"
           >
             Proximo <ChevronRight size={20} />

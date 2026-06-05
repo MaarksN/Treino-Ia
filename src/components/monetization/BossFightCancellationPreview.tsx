@@ -29,9 +29,7 @@ export function BossFightCancellationPreview() {
         <p className="font-mono text-xs font-bold uppercase tracking-widest text-brand-neon">
           Status de Implementação Ética:
         </p>
-        <p className="mt-2 font-mono text-sm text-brand-light">
-          {guardResponse.message}
-        </p>
+        <p className="mt-2 font-mono text-sm text-brand-light">{guardResponse.message}</p>
       </div>
     </div>
   );

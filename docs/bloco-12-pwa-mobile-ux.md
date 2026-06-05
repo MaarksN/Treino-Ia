@@ -33,28 +33,28 @@ docs/bloco-12-pwa-mobile-ux.md
 
 ## Tabela dos 20 itens
 
-| # | Item | Prioridade sugerida |
-|---:|---|---|
-| 1 | Web App Manifest (instalação como app nativo) | MVP / Base |
-| 2 | Service Worker com cache offline dos treinos | MVP / Base |
-| 3 | Tela splash e ícone personalizado por plataforma | Premium / V2 |
-| 4 | Push Notifications: lembrete de treino diário | Premium / V2 |
-| 5 | Bottom Navigation Bar para mobile (≤768px) | MVP / Base |
-| 6 | Swipe lateral para trocar de dia de treino | Premium / V2 |
-| 7 | Pull-to-refresh no feed e no histórico | Premium / V2 |
-| 8 | Modo tela cheia durante execução do treino | MVP / Base |
-| 9 | Haptic feedback nos check de exercício (vibração) | MVP / Base |
-| 10 | Timer de descanso com cronômetro regressivo e vibração | MVP / Base |
-| 11 | Tela de bloqueio: exibir exercício atual no widget | Roadmap / Futuro |
-| 12 | Modo landscape para ver tabela de exercícios | Roadmap / Futuro |
-| 13 | Gestos de swipe para marcar exercício como feito | Premium / V2 |
-| 14 | Skeleton loaders em todas as telas de carregamento | MVP / Base |
-| 15 | Transições de página com animação fluida (Framer Motion) | Premium / V2 |
-| 16 | Modo noturno automático por horário (22h–6h) | Premium / V2 |
-| 17 | Scroll infinito no histórico de treinos | Premium / V2 |
-| 18 | FAB (floating action button) para ação principal | MVP / Base |
-| 19 | Detecção de conexão offline com banner de aviso | MVP / Base |
-| 20 | Atalhos de app (3D Touch / long press no ícone) | Premium / V2 |
+|   # | Item                                                     | Prioridade sugerida |
+| --: | -------------------------------------------------------- | ------------------- |
+|   1 | Web App Manifest (instalação como app nativo)            | MVP / Base          |
+|   2 | Service Worker com cache offline dos treinos             | MVP / Base          |
+|   3 | Tela splash e ícone personalizado por plataforma         | Premium / V2        |
+|   4 | Push Notifications: lembrete de treino diário            | Premium / V2        |
+|   5 | Bottom Navigation Bar para mobile (≤768px)               | MVP / Base          |
+|   6 | Swipe lateral para trocar de dia de treino               | Premium / V2        |
+|   7 | Pull-to-refresh no feed e no histórico                   | Premium / V2        |
+|   8 | Modo tela cheia durante execução do treino               | MVP / Base          |
+|   9 | Haptic feedback nos check de exercício (vibração)        | MVP / Base          |
+|  10 | Timer de descanso com cronômetro regressivo e vibração   | MVP / Base          |
+|  11 | Tela de bloqueio: exibir exercício atual no widget       | Roadmap / Futuro    |
+|  12 | Modo landscape para ver tabela de exercícios             | Roadmap / Futuro    |
+|  13 | Gestos de swipe para marcar exercício como feito         | Premium / V2        |
+|  14 | Skeleton loaders em todas as telas de carregamento       | MVP / Base          |
+|  15 | Transições de página com animação fluida (Framer Motion) | Premium / V2        |
+|  16 | Modo noturno automático por horário (22h–6h)             | Premium / V2        |
+|  17 | Scroll infinito no histórico de treinos                  | Premium / V2        |
+|  18 | FAB (floating action button) para ação principal         | MVP / Base          |
+|  19 | Detecção de conexão offline com banner de aviso          | MVP / Base          |
+|  20 | Atalhos de app (3D Touch / long press no ícone)          | Premium / V2        |
 
 ## Organização por prioridade
 
@@ -112,7 +112,9 @@ docs/bloco-12-pwa-mobile-ux.md
 
 ```tsx
 // Exemplo conceitual de rota/tela para o Bloco 12
-{currentView === 'bloco-12' && <PwaMobileUxHub />}
+{
+  currentView === 'bloco-12' && <PwaMobileUxHub />;
+}
 ```
 
 ## Resultado esperado

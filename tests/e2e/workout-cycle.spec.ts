@@ -131,7 +131,9 @@ test.describe('Workout value cycle', () => {
     expect(errors).toEqual([]);
   });
 
-  test('user completes anamnesis, finishes a workout, sees history and accepts the pending AI suggestion', async ({ page }) => {
+  test('user completes anamnesis, finishes a workout, sees history and accepts the pending AI suggestion', async ({
+    page,
+  }) => {
     const errors = collectCriticalErrors(page);
 
     await createLocalProfileAndPlan(page);
@@ -139,13 +141,19 @@ test.describe('Workout value cycle', () => {
     await finishWorkoutWithOneSet(page);
 
     await page.getByTestId('ai-recommendation-accept').click();
-    await expect(page.getByTestId('pending-ai-recommendation-card')).not.toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText(/Sugestao aceita e plano atualizado|Sugestao aplicada localmente/i)).toBeVisible();
+    await expect(page.getByTestId('pending-ai-recommendation-card')).not.toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(
+      page.getByText(/Sugestao aceita e plano atualizado|Sugestao aplicada localmente/i),
+    ).toBeVisible();
 
     expect(errors).toEqual([]);
   });
 
-  test('user can reject the pending AI suggestion without applying the proposed plan', async ({ page }) => {
+  test('user can reject the pending AI suggestion without applying the proposed plan', async ({
+    page,
+  }) => {
     const errors = collectCriticalErrors(page);
 
     await createLocalProfileAndPlan(page);
@@ -153,7 +161,9 @@ test.describe('Workout value cycle', () => {
     await finishWorkoutWithOneSet(page);
 
     await page.getByTestId('ai-recommendation-reject').click();
-    await expect(page.getByTestId('pending-ai-recommendation-card')).not.toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId('pending-ai-recommendation-card')).not.toBeVisible({
+      timeout: 10_000,
+    });
     await expect(page.getByText(/Sugestao rejeitada/i)).toBeVisible();
 
     expect(errors).toEqual([]);

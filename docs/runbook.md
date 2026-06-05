@@ -66,6 +66,15 @@
 6. Confirmar no mesmo run que `SPRINT3_SMOKE_STRICT=true npm run smoke:sprint3` passou com `PASS supabase-rls`, `PASS gemini` e `PASS stripe`.
 7. Registrar somente a URL publica de preview, IDs dos jobs/runs e status PASS/FAIL/BLOCKED; nunca copiar tokens, keys, JWTs, service role ou headers de autorizacao para docs, issues ou PRs.
 
+## Validacao real complementar: DT-002, DT-005 e DT-012
+
+1. Usar somente usuarios descartaveis de staging.
+2. Rodar `npm run smoke:tenant-ab` com `TENANT_A_ACCESS_TOKEN` e `TENANT_B_ACCESS_TOKEN` para provar que `workout_sessions` bloqueia leitura, update e delete cruzados.
+3. Rodar `npm run smoke:sprint3` em modo estrito para Supabase RLS, Gemini, Stripe e rate limit basico publicado.
+4. Rodar `npm run smoke:compliance` para export LGPD autenticado e bloqueio sem auth.
+5. Rodar erasure real apenas com `COMPLIANCE_SMOKE_CONFIRM_ERASURE=DELETE_STAGING_USER` e token de um usuario criado para ser apagado.
+6. Registrar status, URL publica e IDs de jobs; nunca registrar bearer tokens ou payloads exportados completos.
+
 ## Incidente: falha ao salvar treino
 
 1. Verificar eventos `workout_save_failed` e erros Sentry no horario do usuario.

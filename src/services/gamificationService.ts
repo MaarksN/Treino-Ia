@@ -26,7 +26,6 @@ export interface ServerGamificationEvent {
   created_at: string;
 }
 
-
 export interface GamificationMission {
   id: string;
   type: 'daily' | 'weekly' | 'flash' | 'boss' | 'weekend';
@@ -56,8 +55,8 @@ export interface CosmeticItem {
 
 export interface SeasonReward {
   level: number;
-  freeReward?: { label: string; xp?: number; coins?: number; cosmeticId?: string; };
-  eliteReward?: { label: string; xp?: number; coins?: number; cosmeticId?: string; };
+  freeReward?: { label: string; xp?: number; coins?: number; cosmeticId?: string };
+  eliteReward?: { label: string; xp?: number; coins?: number; cosmeticId?: string };
   claimedFree?: boolean;
   claimedElite?: boolean;
 }
@@ -164,5 +163,9 @@ export async function recordGamificationEvent(
     body: JSON.stringify({ eventType, sourceId }),
   });
 
-  return parseApiResponse<{ profile?: ServerGamificationProfile; skipped?: boolean; reason?: string }>(response);
+  return parseApiResponse<{
+    profile?: ServerGamificationProfile;
+    skipped?: boolean;
+    reason?: string;
+  }>(response);
 }

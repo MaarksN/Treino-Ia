@@ -63,9 +63,7 @@ test.describe('Registration flow', () => {
     await page.waitForTimeout(1_000);
 
     // Starter user should be persisted in localStorage
-    const starterUser = await page.evaluate(() =>
-      localStorage.getItem('@TreinoIA:starterUser'),
-    );
+    const starterUser = await page.evaluate(() => localStorage.getItem('@TreinoIA:starterUser'));
     expect(starterUser).toBeTruthy();
 
     const parsed = JSON.parse(starterUser!);
@@ -84,7 +82,11 @@ test.describe('Registration flow', () => {
         localStorage.setItem('@TreinoApp:onboarding', 'true');
         localStorage.setItem(
           '@TreinoIA:starterUser',
-          JSON.stringify({ name: 'Returning User', email: 'return@test.com', createdAt: Date.now() }),
+          JSON.stringify({
+            name: 'Returning User',
+            email: 'return@test.com',
+            createdAt: Date.now(),
+          }),
         );
       } catch {}
     });

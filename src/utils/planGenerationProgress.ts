@@ -10,7 +10,7 @@ export interface PlanGenerationProgressStep {
 export function buildPlanGenerationProgress(
   profile: UserProfile,
   history: WorkoutSession[],
-  plan: TrainingPlan
+  plan: TrainingPlan,
 ): PlanGenerationProgressStep[] {
   const totalExercises = plan.days.reduce((sum, day) => sum + day.exercises.length, 0);
   const lastSession = history[0];

@@ -36,7 +36,16 @@ interface SliderProps {
   icon: React.ComponentType<{ size?: number; className?: string }>;
 }
 
-function Slider({ label, value, onChange, max = 10, min = 1, step = 1, suffix = '/10', icon: Icon }: SliderProps) {
+function Slider({
+  label,
+  value,
+  onChange,
+  max = 10,
+  min = 1,
+  step = 1,
+  suffix = '/10',
+  icon: Icon,
+}: SliderProps) {
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
@@ -44,7 +53,10 @@ function Slider({ label, value, onChange, max = 10, min = 1, step = 1, suffix = 
           <Icon size={16} className="text-brand-muted" />
           <span className="text-sm text-brand-light">{label}</span>
         </div>
-        <span className="text-brand-neon font-bold tabular-nums">{value}{suffix}</span>
+        <span className="text-brand-neon font-bold tabular-nums">
+          {value}
+          {suffix}
+        </span>
       </div>
       <input
         type="range"
@@ -52,7 +64,7 @@ function Slider({ label, value, onChange, max = 10, min = 1, step = 1, suffix = 
         max={max}
         step={step}
         value={value}
-        onChange={event => onChange(Number(event.target.value))}
+        onChange={(event) => onChange(Number(event.target.value))}
         className="w-full accent-brand-neon"
       />
     </div>
@@ -76,7 +88,14 @@ function createDefaultCheckin(): DailyCheckin {
   };
 }
 
-export function DailyCheckinForm({ onSave, existing, saving = false, error, dataMode, warning }: Props) {
+export function DailyCheckinForm({
+  onSave,
+  existing,
+  saving = false,
+  error,
+  dataMode,
+  warning,
+}: Props) {
   const [form, setForm] = useState<DailyCheckin>(existing || createDefaultCheckin());
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -86,11 +105,11 @@ export function DailyCheckinForm({ onSave, existing, saving = false, error, data
   }, [existing]);
 
   const setField = <K extends keyof DailyCheckin>(key: K, value: DailyCheckin[K]) => {
-    setForm(current => ({ ...current, [key]: value }));
+    setForm((current) => ({ ...current, [key]: value }));
   };
 
   const setSoreness = (region: string, value: number) => {
-    setForm(current => ({
+    setForm((current) => ({
       ...current,
       sorenessMap: { ...current.sorenessMap, [region]: value },
     }));
@@ -111,30 +130,50 @@ export function DailyCheckinForm({ onSave, existing, saving = false, error, data
     <div className="bg-brand-gray border-2 border-brand-light/10 p-5 shadow-brutal-light">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">Check-in do dia</h3>
+          <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">
+            Check-in do dia
+          </h3>
           <p className="font-mono text-xs text-brand-muted mt-1">{form.date}</p>
         </div>
-          {saving ? <Loader2 className="w-5 h-5 text-brand-neon animate-spin" /> : <Save className="w-5 h-5 text-brand-neon" />}
-        </div>
-        {dataMode && (
-          <div className={`mb-4 inline-flex border-2 px-3 py-1 text-[10px] font-black uppercase tracking-widest ${
+        {saving ? (
+          <Loader2 className="w-5 h-5 text-brand-neon animate-spin" />
+        ) : (
+          <Save className="w-5 h-5 text-brand-neon" />
+        )}
+      </div>
+      {dataMode && (
+        <div
+          className={`mb-4 inline-flex border-2 px-3 py-1 text-[10px] font-black uppercase tracking-widest ${
             dataMode === 'supabase'
               ? 'border-brand-neon/40 bg-brand-neon/10 text-brand-neon'
               : 'border-yellow-500/40 bg-yellow-500/10 text-yellow-300'
-          }`}>
-            dataMode: {dataMode}
-          </div>
-        )}
-        {warning && <p className="mb-4 text-xs text-yellow-300 bg-yellow-500/10 border-2 border-yellow-500/30 p-3">{warning}</p>}
-        {(error || localError) && <p className="mb-4 text-xs text-red-300 bg-red-500/10 border-2 border-red-500/30 p-3">{error || localError}</p>}
-        {savedAt && !error && !localError && <p className="mb-4 text-xs text-brand-neon bg-brand-neon/10 border-2 border-brand-neon/30 p-3">Check-in salvo às {savedAt}.</p>}
+          }`}
+        >
+          dataMode: {dataMode}
+        </div>
+      )}
+      {warning && (
+        <p className="mb-4 text-xs text-yellow-300 bg-yellow-500/10 border-2 border-yellow-500/30 p-3">
+          {warning}
+        </p>
+      )}
+      {(error || localError) && (
+        <p className="mb-4 text-xs text-red-300 bg-red-500/10 border-2 border-red-500/30 p-3">
+          {error || localError}
+        </p>
+      )}
+      {savedAt && !error && !localError && (
+        <p className="mb-4 text-xs text-brand-neon bg-brand-neon/10 border-2 border-brand-neon/30 p-3">
+          Check-in salvo às {savedAt}.
+        </p>
+      )}
 
       <div className="space-y-5">
         <Slider
           label="Horas de sono"
           icon={Moon}
           value={form.sleepHours}
-          onChange={value => setField('sleepHours', value)}
+          onChange={(value) => setField('sleepHours', value)}
           min={0}
           max={12}
           step={0.5}
@@ -144,7 +183,7 @@ export function DailyCheckinForm({ onSave, existing, saving = false, error, data
         <div>
           <p className="text-sm text-brand-light mb-2">Qualidade do sono</p>
           <div className="grid grid-cols-5 gap-2">
-            {[1, 2, 3, 4, 5].map(value => (
+            {[1, 2, 3, 4, 5].map((value) => (
               <button
                 key={value}
                 type="button"
@@ -161,8 +200,18 @@ export function DailyCheckinForm({ onSave, existing, saving = false, error, data
           </div>
         </div>
 
-        <Slider label="Nível de estresse" icon={Brain} value={form.stressLevel} onChange={value => setField('stressLevel', value)} />
-        <Slider label="Nível de energia" icon={Zap} value={form.energyLevel} onChange={value => setField('energyLevel', value)} />
+        <Slider
+          label="Nível de estresse"
+          icon={Brain}
+          value={form.stressLevel}
+          onChange={(value) => setField('stressLevel', value)}
+        />
+        <Slider
+          label="Nível de energia"
+          icon={Zap}
+          value={form.energyLevel}
+          onChange={(value) => setField('energyLevel', value)}
+        />
 
         <div>
           <div className="flex items-center justify-between mb-2">
@@ -173,7 +222,7 @@ export function DailyCheckinForm({ onSave, existing, saving = false, error, data
             <span className="text-brand-neon font-bold">{form.hydrationGlasses}</span>
           </div>
           <div className="grid grid-cols-7 gap-2">
-            {[0, 2, 4, 6, 8, 10, 12].map(value => (
+            {[0, 2, 4, 6, 8, 10, 12].map((value) => (
               <button
                 key={value}
                 type="button"
@@ -193,7 +242,7 @@ export function DailyCheckinForm({ onSave, existing, saving = false, error, data
         <div>
           <p className="text-sm text-brand-light mb-3">Dor muscular por região</p>
           <div className="space-y-2">
-            {MUSCLE_REGIONS.map(region => {
+            {MUSCLE_REGIONS.map((region) => {
               const value = form.sorenessMap[region] || 0;
               return (
                 <div key={region} className="grid grid-cols-[86px_1fr_28px] gap-3 items-center">
@@ -204,10 +253,12 @@ export function DailyCheckinForm({ onSave, existing, saving = false, error, data
                     max={10}
                     step={1}
                     value={value}
-                    onChange={event => setSoreness(region, Number(event.target.value))}
+                    onChange={(event) => setSoreness(region, Number(event.target.value))}
                     className="w-full accent-red-500"
                   />
-                  <span className={`text-xs font-bold tabular-nums ${value >= 7 ? 'text-red-400' : value >= 4 ? 'text-orange-400' : 'text-brand-muted'}`}>
+                  <span
+                    className={`text-xs font-bold tabular-nums ${value >= 7 ? 'text-red-400' : value >= 4 ? 'text-orange-400' : 'text-brand-muted'}`}
+                  >
                     {value}
                   </span>
                 </div>
@@ -224,7 +275,7 @@ export function DailyCheckinForm({ onSave, existing, saving = false, error, data
             max={12}
             step={0.5}
             value={form.sleepGoalHours}
-            onChange={event => setField('sleepGoalHours', Number(event.target.value))}
+            onChange={(event) => setField('sleepGoalHours', Number(event.target.value))}
             className="w-full bg-brand-dark border-2 border-brand-light/10 px-4 py-3 text-sm text-brand-light outline-none focus:border-brand-neon"
           />
         </div>
@@ -232,7 +283,7 @@ export function DailyCheckinForm({ onSave, existing, saving = false, error, data
         <textarea
           rows={2}
           value={form.notes || ''}
-          onChange={event => setField('notes', event.target.value)}
+          onChange={(event) => setField('notes', event.target.value)}
           placeholder="Notas do dia..."
           className="w-full bg-brand-dark border-2 border-brand-light/10 px-4 py-3 text-sm text-brand-light outline-none resize-none placeholder:text-brand-light/30 focus:border-brand-neon"
         />

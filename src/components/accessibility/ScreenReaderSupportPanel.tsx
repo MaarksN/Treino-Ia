@@ -61,7 +61,7 @@ export function ScreenReaderSupportPanel() {
           )}
 
           <ul className="space-y-2" role="list">
-            {checks.map(check => (
+            {checks.map((check) => (
               <li
                 key={check.id}
                 className={`flex items-center gap-3 rounded-xl border px-3 py-2 ${

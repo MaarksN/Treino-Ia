@@ -61,7 +61,7 @@ function readFallbackActions(): OfflineAction[] {
 
   try {
     const raw = window.localStorage.getItem(FALLBACK_STORAGE_KEY);
-    return raw ? JSON.parse(raw) as OfflineAction[] : [];
+    return raw ? (JSON.parse(raw) as OfflineAction[]) : [];
   } catch {
     return [];
   }
@@ -133,7 +133,7 @@ export async function enqueueOfflineAction(action: {
 }): Promise<OfflineAction> {
   const row = createOfflineAction(action);
   const indexedDbSaved = await tryIndexedDb(async () => {
-    await withStore('readwrite', store => store.add(row));
+    await withStore('readwrite', (store) => store.add(row));
     return true;
   });
 
@@ -145,16 +145,16 @@ export async function enqueueOfflineAction(action: {
   return row;
 }
 
-export async function listOfflineActions(status?: OfflineAction['status']): Promise<OfflineAction[]> {
+export async function listOfflineActions(
+  status?: OfflineAction['status'],
+): Promise<OfflineAction[]> {
   const indexedDbRows = await tryIndexedDb(async () => {
     const db = await openDb();
 
     return await new Promise<OfflineAction[]>((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, 'readonly');
       const store = tx.objectStore(STORE_NAME);
-      const request = status
-        ? store.index('status').getAll(status)
-        : store.getAll();
+      const request = status ? store.index('status').getAll(status) : store.getAll();
 
       request.onsuccess = () => resolve(request.result as OfflineAction[]);
       request.onerror = () => reject(request.error);
@@ -167,7 +167,7 @@ export async function listOfflineActions(status?: OfflineAction['status']): Prom
   });
 
   const rows = indexedDbRows ?? readFallbackActions();
-  return status ? rows.filter(row => row.status === status) : rows;
+  return status ? rows.filter((row) => row.status === status) : rows;
 }
 
 export async function updateOfflineAction(action: OfflineAction): Promise<void> {
@@ -176,14 +176,14 @@ export async function updateOfflineAction(action: OfflineAction): Promise<void> 
     updatedAt: Date.now(),
   };
   const indexedDbUpdated = await tryIndexedDb(async () => {
-    await withStore('readwrite', store => store.put(nextAction));
+    await withStore('readwrite', (store) => store.put(nextAction));
     return true;
   });
 
   if (!indexedDbUpdated) {
-    writeFallbackActions(readFallbackActions().map(row => (
-      row.id === nextAction.id ? nextAction : row
-    )));
+    writeFallbackActions(
+      readFallbackActions().map((row) => (row.id === nextAction.id ? nextAction : row)),
+    );
   }
 
   emitQueueChange();
@@ -191,12 +191,12 @@ export async function updateOfflineAction(action: OfflineAction): Promise<void> 
 
 export async function removeOfflineAction(id: string): Promise<void> {
   const indexedDbRemoved = await tryIndexedDb(async () => {
-    await withStore('readwrite', store => store.delete(id));
+    await withStore('readwrite', (store) => store.delete(id));
     return true;
   });
 
   if (!indexedDbRemoved) {
-    writeFallbackActions(readFallbackActions().filter(row => row.id !== id));
+    writeFallbackActions(readFallbackActions().filter((row) => row.id !== id));
   }
 
   emitQueueChange();
@@ -205,7 +205,7 @@ export async function removeOfflineAction(id: string): Promise<void> {
 export async function clearSyncedActions(): Promise<void> {
   const rows = await listOfflineActions('synced');
 
-  await Promise.all(rows.map(row => removeOfflineAction(row.id)));
+  await Promise.all(rows.map((row) => removeOfflineAction(row.id)));
   emitQueueChange();
 }
 

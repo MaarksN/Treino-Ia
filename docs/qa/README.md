@@ -16,8 +16,8 @@ Motivos principais:
 - Smoke real de staging bloqueado por ausencia de `STAGING_APP_URL`, `SUPABASE_TEST_ACCESS_TOKEN`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_*`, `GEMINI_API_KEY` e Sentry.
 - Isolamento multi-tenant/RLS nao foi validado dinamicamente com dois usuarios/tenants reais no Supabase.
 - Backup/restore e rollback de banco nao foram executados.
-- `npm run format:check` falhou em 717 arquivos.
-- Lighthouse CI local falhou com `NO_FCP`.
+- Coverage global continua abaixo de 60%.
+- Clones restantes ainda acima da meta ideal `<30`.
 
 ## Evidencias verdes
 
@@ -25,13 +25,15 @@ Motivos principais:
 - `npm run lint`: PASS.
 - `npm run typecheck`: PASS.
 - `npm run build`: PASS, Vite build concluido.
-- `npm run test`: PASS, 196 arquivos e 770 testes.
-- `npm run test:coverage`: PASS nos thresholds configurados; cobertura global 34.05% statements, 28.78% branches, 33.5% functions, 34.32% lines.
+- `npm run test`: PASS, 194 arquivos e 763 testes.
+- `npm run test:coverage`: PASS nos thresholds configurados; cobertura global 33.04% statements, 27.94% branches, 31.96% functions, 33.68% lines.
 - `npm run test:e2e`: PASS, 21/21 testes Chromium.
 - `npm run test:a11y`: PASS, 1/1 axe smoke.
 - `npm run schema:drift`: PASS, 1 arquivo e 2 testes.
 - `npm audit --json`: PASS, 0 vulnerabilidades.
 - `madge --circular`: PASS, nenhum ciclo detectado.
+- `npm run format:check`: PASS.
+- Lighthouse CI local: PASS em 2026-06-05.
 
 ## Arquivos gerados
 

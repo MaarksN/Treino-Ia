@@ -12,11 +12,7 @@ export function renderWithProviders(
   { queryClient = createTestQueryClient(), ...renderOptions }: RenderWithProvidersOptions = {},
 ) {
   function Providers({ children }: { children: ReactNode }) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        {children}
-      </QueryClientProvider>
-    );
+    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
   }
 
   return {

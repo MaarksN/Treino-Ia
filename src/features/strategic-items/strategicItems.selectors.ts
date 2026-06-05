@@ -4,7 +4,7 @@ import { type StrategicItemCategory, type StrategicItemStatus } from './strategi
 export const getAllStrategicItems = () => strategicItemsRegistry;
 
 export const getStrategicItemsByStatus = (status: StrategicItemStatus) =>
-  strategicItemsRegistry.filter(item => item.status === status);
+  strategicItemsRegistry.filter((item) => item.status === status);
 
 export const getStrategicItemsByCategory = (category: StrategicItemCategory) =>
-  strategicItemsRegistry.filter(item => item.category === category);
+  strategicItemsRegistry.filter((item) => item.category === category);

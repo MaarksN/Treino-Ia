@@ -38,28 +38,28 @@ docs/bloco-17-seguranca-auth-lgpd.md
 
 ## Tabela dos 20 itens
 
-| # | Item | Prioridade sugerida |
-|---:|---|---|
-| 1 | Autenticação Supabase Auth (email + senha) | MVP / Base |
-| 2 | Login social: Google OAuth2 | Premium / V2 |
-| 3 | Login social: Apple Sign-In | Premium / V2 |
-| 4 | 2FA via TOTP (Google Authenticator) | Premium / V2 |
-| 5 | JWT com refresh token seguro (httpOnly cookie) | Premium / V2 |
-| 6 | Proxy backend para API key Gemini | MVP / Base |
-| 7 | Rate limiting nas chamadas à IA | MVP / Base |
-| 8 | Política de privacidade completa (LGPD/GDPR) | MVP / Base |
-| 9 | Banner de consentimento de cookies granular | MVP / Base |
-| 10 | Direito ao esquecimento: exclusão de conta + dados | MVP / Base |
-| 11 | Exportação de dados pessoais (LGPD Art. 18) | MVP / Base |
-| 12 | Log de auditoria de ações do usuário | MVP / Base |
-| 13 | Sessões ativas: ver e revogar dispositivos | Premium / V2 |
-| 14 | Criptografia de dados sensíveis em repouso (AES-256) | Premium / V2 |
-| 15 | Sanitização de inputs contra XSS/injection | MVP / Base |
-| 16 | CSP (Content Security Policy) headers | MVP / Base |
-| 17 | Proteção CSRF em todas as mutações | MVP / Base |
-| 18 | Responsible disclosure (relatório de vulnerabilidades) | Premium / V2 |
-| 19 | Backup automático diário no Supabase | Premium / V2 |
-| 20 | Modo de manutenção com página de status | Premium / V2 |
+|   # | Item                                                   | Prioridade sugerida |
+| --: | ------------------------------------------------------ | ------------------- |
+|   1 | Autenticação Supabase Auth (email + senha)             | MVP / Base          |
+|   2 | Login social: Google OAuth2                            | Premium / V2        |
+|   3 | Login social: Apple Sign-In                            | Premium / V2        |
+|   4 | 2FA via TOTP (Google Authenticator)                    | Premium / V2        |
+|   5 | JWT com refresh token seguro (httpOnly cookie)         | Premium / V2        |
+|   6 | Proxy backend para API key Gemini                      | MVP / Base          |
+|   7 | Rate limiting nas chamadas à IA                        | MVP / Base          |
+|   8 | Política de privacidade completa (LGPD/GDPR)           | MVP / Base          |
+|   9 | Banner de consentimento de cookies granular            | MVP / Base          |
+|  10 | Direito ao esquecimento: exclusão de conta + dados     | MVP / Base          |
+|  11 | Exportação de dados pessoais (LGPD Art. 18)            | MVP / Base          |
+|  12 | Log de auditoria de ações do usuário                   | MVP / Base          |
+|  13 | Sessões ativas: ver e revogar dispositivos             | Premium / V2        |
+|  14 | Criptografia de dados sensíveis em repouso (AES-256)   | Premium / V2        |
+|  15 | Sanitização de inputs contra XSS/injection             | MVP / Base          |
+|  16 | CSP (Content Security Policy) headers                  | MVP / Base          |
+|  17 | Proteção CSRF em todas as mutações                     | MVP / Base          |
+|  18 | Responsible disclosure (relatório de vulnerabilidades) | Premium / V2        |
+|  19 | Backup automático diário no Supabase                   | Premium / V2        |
+|  20 | Modo de manutenção com página de status                | Premium / V2        |
 
 ## Organização por prioridade
 
@@ -117,7 +117,9 @@ docs/bloco-17-seguranca-auth-lgpd.md
 
 ```tsx
 // Exemplo conceitual de rota/tela para o Bloco 17
-{currentView === 'bloco-17' && <SegurancaAuthLgpdHub />}
+{
+  currentView === 'bloco-17' && <SegurancaAuthLgpdHub />;
+}
 ```
 
 ## Resultado esperado

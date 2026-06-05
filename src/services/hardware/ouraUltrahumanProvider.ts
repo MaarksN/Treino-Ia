@@ -25,7 +25,7 @@ export class OuraUltrahumanProvider implements WearableProvider {
 
   async connect(): Promise<boolean> {
     if (!this.configured) {
-      console.warn("Wearable OAuth is not configured yet.");
+      console.warn('Wearable OAuth is not configured yet.');
       return false;
     }
     return true;

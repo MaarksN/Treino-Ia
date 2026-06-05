@@ -3,7 +3,11 @@ import { handleApiError, HttpError, json } from '../../_lib/http';
 import { sanitizeRedirectTarget } from '../../_lib/oauthRedirect';
 import { encryptOAuthToken } from '../../_lib/oauthTokenCrypto';
 import { getSupabaseAdmin } from '../../_lib/server-supabase';
-import { assertOAuthTokenStorageAllowed, buildOAuthTokenStorageWarning, redactOAuthTokenPayload } from '../../_lib/oauthTokenSecurity';
+import {
+  assertOAuthTokenStorageAllowed,
+  buildOAuthTokenStorageWarning,
+  redactOAuthTokenPayload,
+} from '../../_lib/oauthTokenSecurity';
 
 export const config = {
   runtime: 'nodejs',
@@ -40,8 +44,11 @@ function getClientId(provider: OAuthProvider): string {
   return process.env.STRAVA_CLIENT_ID || '';
 }
 
-
-async function exchangeToken(provider: OAuthProvider, code: string, redirectUri: string): Promise<OAuthTokenResponse> {
+async function exchangeToken(
+  provider: OAuthProvider,
+  code: string,
+  redirectUri: string,
+): Promise<OAuthTokenResponse> {
   const clientId = getClientId(provider);
   const clientSecret = getSecret(provider);
 
@@ -130,9 +137,8 @@ export default async function handler(request: Request) {
     const provider = storedState.provider as OAuthProvider;
 
     if (oauthError) {
-      await supabase
-        .from('health_integrations')
-        .upsert({
+      await supabase.from('health_integrations').upsert(
+        {
           user_id: storedState.user_id,
           provider,
           status: 'error',
@@ -140,7 +146,9 @@ export default async function handler(request: Request) {
           scopes: [],
           error_message: oauthError,
           updated_at: new Date().toISOString(),
-        }, { onConflict: 'user_id,provider' });
+        },
+        { onConflict: 'user_id,provider' },
+      );
       return buildRedirect(redirectTo, { health_provider: provider, health_status: 'error' });
     }
 
@@ -148,7 +156,11 @@ export default async function handler(request: Request) {
 
     const token = await exchangeToken(provider, code, `${baseUrl}/api/health/oauth/callback`);
     if (!token.access_token) {
-      throw new Error(token.error_description || token.error || 'OAuth token response did not include access_token');
+      throw new Error(
+        token.error_description ||
+          token.error ||
+          'OAuth token response did not include access_token',
+      );
     }
 
     const expiresAt = token.expires_in
@@ -164,9 +176,8 @@ export default async function handler(request: Request) {
       console.warn('OAuth token storage warning', { provider, warning: securityWarning });
     }
 
-    const { error: tokenError } = await supabase
-      .from('health_integration_tokens')
-      .upsert({
+    const { error: tokenError } = await supabase.from('health_integration_tokens').upsert(
+      {
         user_id: storedState.user_id,
         provider,
         access_token: encryptOAuthToken(token.access_token),
@@ -175,15 +186,18 @@ export default async function handler(request: Request) {
         scope,
         expires_at: expiresAt,
         updated_at: new Date().toISOString(),
-      }, { onConflict: 'user_id,provider' });
+      },
+      { onConflict: 'user_id,provider' },
+    );
 
     if (tokenError) {
-      throw new Error(`Failed to store OAuth token: ${JSON.stringify(redactOAuthTokenPayload({ provider, error: tokenError.message }))}`);
+      throw new Error(
+        `Failed to store OAuth token: ${JSON.stringify(redactOAuthTokenPayload({ provider, error: tokenError.message }))}`,
+      );
     }
 
-    const { error: integrationError } = await supabase
-      .from('health_integrations')
-      .upsert({
+    const { error: integrationError } = await supabase.from('health_integrations').upsert(
+      {
         user_id: storedState.user_id,
         provider,
         status: 'connected',
@@ -192,7 +206,9 @@ export default async function handler(request: Request) {
         last_sync_at: new Date().toISOString(),
         error_message: null,
         updated_at: new Date().toISOString(),
-      }, { onConflict: 'user_id,provider' });
+      },
+      { onConflict: 'user_id,provider' },
+    );
 
     if (integrationError) {
       throw new Error(`Failed to update health integration: ${integrationError.message}`);
@@ -208,4 +224,3 @@ export default async function handler(request: Request) {
     return handleApiError(error, request);
   }
 }
-

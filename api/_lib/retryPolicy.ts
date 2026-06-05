@@ -9,13 +9,13 @@ export interface RetryWithBackoffOptions<T> {
 }
 
 function defaultSleep(delayMs: number) {
-  return new Promise<void>(resolve => {
+  return new Promise<void>((resolve) => {
     setTimeout(resolve, delayMs);
   });
 }
 
 export function getBackoffDelayMs(attempt: number, baseDelayMs: number): number {
-  return baseDelayMs * (2 ** attempt);
+  return baseDelayMs * 2 ** attempt;
 }
 
 export function shouldRetryGeminiStatus(status: number): boolean {
@@ -40,20 +40,14 @@ export async function retryWithBackoff<T>(
     try {
       const result = await operation();
 
-      if (
-        attempt < options.maxRetries &&
-        options.shouldRetryResult?.(result)
-      ) {
+      if (attempt < options.maxRetries && options.shouldRetryResult?.(result)) {
         await sleep(getBackoffDelayMs(attempt, options.baseDelayMs));
         continue;
       }
 
       return result;
     } catch (error) {
-      if (
-        attempt >= options.maxRetries ||
-        !options.shouldRetryError?.(error)
-      ) {
+      if (attempt >= options.maxRetries || !options.shouldRetryError?.(error)) {
         throw error;
       }
 

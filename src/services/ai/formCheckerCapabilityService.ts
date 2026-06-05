@@ -35,9 +35,9 @@ export function hasMediaPipeEngine(): boolean {
   const runtime = globalThis as GlobalWithMediaPipe;
   return Boolean(
     runtime.__TREINO_IA_MEDIAPIPE_FORM_ENGINE__ ||
-      runtime.MediaPipe ||
-      runtime.PoseLandmarker ||
-      runtime.FilesetResolver,
+    runtime.MediaPipe ||
+    runtime.PoseLandmarker ||
+    runtime.FilesetResolver,
   );
 }
 
@@ -81,8 +81,8 @@ export function getFormCheckerCapabilities(): FormCheckerCapability[] {
 
 export function getFormCheckerStatus(): FormCheckerStatus {
   const capabilities = getFormCheckerCapabilities();
-  const cameraAvailable = capabilities.find(c => c.id === 'camera')?.status === 'available';
-  const engineAvailable = capabilities.find(c => c.id === 'mediapipe')?.status === 'available';
+  const cameraAvailable = capabilities.find((c) => c.id === 'camera')?.status === 'available';
+  const engineAvailable = capabilities.find((c) => c.id === 'mediapipe')?.status === 'available';
   const canAnalyze = cameraAvailable && engineAvailable;
 
   return {

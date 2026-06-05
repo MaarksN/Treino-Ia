@@ -1,8 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { checkSpotifyIntegrationGuard } from '../../src/services/externalAiIntegrations/spotifyGuard';
 import { checkRpeFacialGuard } from '../../src/services/externalAiIntegrations/rpeFacialGuard';
-import { checkEquipmentReplanningGuard, validateSafeEquipmentPhotoUpload } from '../../src/services/externalAiIntegrations/equipmentReplanningGuard';
-import { checkSmartPantryGuard, addIngredientLocally } from '../../src/services/externalAiIntegrations/smartPantryGuard';
+import {
+  checkEquipmentReplanningGuard,
+  validateSafeEquipmentPhotoUpload,
+} from '../../src/services/externalAiIntegrations/equipmentReplanningGuard';
+import {
+  checkSmartPantryGuard,
+  addIngredientLocally,
+} from '../../src/services/externalAiIntegrations/smartPantryGuard';
 import { checkLongevityProjectionGuard } from '../../src/services/externalAiIntegrations/longevityProjectionGuard';
 
 describe('External AI Integration Guards (Items 56-60)', () => {

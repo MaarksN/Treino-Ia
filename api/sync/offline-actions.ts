@@ -66,15 +66,16 @@ export default async function handler(request: Request) {
       ...action.payload,
       clientCreatedAt: action.createdAt ? new Date(action.createdAt).toISOString() : undefined,
     };
-    const { error } = await supabase
-      .from('offline_sync_actions')
-      .upsert({
+    const { error } = await supabase.from('offline_sync_actions').upsert(
+      {
         user_id: user.id,
         client_action_id: action.id,
         action_type: action.type,
         payload,
         processed_at: new Date().toISOString(),
-      }, { onConflict: 'user_id,client_action_id' });
+      },
+      { onConflict: 'user_id,client_action_id' },
+    );
 
     if (error) {
       throw new Error(`Failed to persist offline action: ${error.message}`);

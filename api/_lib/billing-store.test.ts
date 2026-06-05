@@ -1,6 +1,9 @@
 import Stripe from 'stripe';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { recordStripeWebhookEvent, upsertSubscriptionFromStripeSubscription } from './billing-store';
+import {
+  recordStripeWebhookEvent,
+  upsertSubscriptionFromStripeSubscription,
+} from './billing-store';
 import { getSupabaseAdmin } from './server-supabase';
 
 vi.mock('./server-supabase', () => ({
@@ -28,12 +31,14 @@ function buildEvent(): Stripe.Event {
           email: 'metadata@example.com',
         },
         items: {
-          data: [{
-            price: {
-              id: 'price_123',
-              product: 'prod_123',
+          data: [
+            {
+              price: {
+                id: 'price_123',
+                product: 'prod_123',
+              },
             },
-          }],
+          ],
         },
       },
     },
@@ -137,17 +142,20 @@ describe('billing-store Stripe webhook recording', () => {
 
     await upsertSubscriptionFromStripeSubscription(subscription);
 
-    expect(upsert).toHaveBeenCalledWith({
-      user_id: 'user-1',
-      plan_id: 'pro',
-      status: 'active',
-      interval: 'month',
-      stripe_customer_id: 'cus_123',
-      stripe_subscription_id: 'sub_123',
-      current_period_end: '2025-01-02T00:00:00.000Z',
-      trial_ends_at: null,
-      cancel_at_period_end: false,
-      updated_at: expect.any(String),
-    }, { onConflict: 'user_id' });
+    expect(upsert).toHaveBeenCalledWith(
+      {
+        user_id: 'user-1',
+        plan_id: 'pro',
+        status: 'active',
+        interval: 'month',
+        stripe_customer_id: 'cus_123',
+        stripe_subscription_id: 'sub_123',
+        current_period_end: '2025-01-02T00:00:00.000Z',
+        trial_ends_at: null,
+        cancel_at_period_end: false,
+        updated_at: expect.any(String),
+      },
+      { onConflict: 'user_id' },
+    );
   });
 });

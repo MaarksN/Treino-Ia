@@ -57,7 +57,12 @@ function markdownToHtml(markdown: string): string {
       while (index < lines.length && lines[index].startsWith('| ')) {
         const current = lines[index];
         if (!/^\|\s*-/.test(current)) {
-          rows.push(current.split('|').slice(1, -1).map(cell => cell.trim()));
+          rows.push(
+            current
+              .split('|')
+              .slice(1, -1)
+              .map((cell) => cell.trim()),
+          );
         }
         index += 1;
       }
@@ -66,8 +71,12 @@ function markdownToHtml(markdown: string): string {
       const [header, ...body] = rows;
       if (header) {
         html.push('<table>');
-        html.push(`<thead><tr>${header.map(cell => `<th>${renderInline(cell)}</th>`).join('')}</tr></thead>`);
-        html.push(`<tbody>${body.map(row => `<tr>${row.map(cell => `<td>${renderInline(cell)}</td>`).join('')}</tr>`).join('')}</tbody>`);
+        html.push(
+          `<thead><tr>${header.map((cell) => `<th>${renderInline(cell)}</th>`).join('')}</tr></thead>`,
+        );
+        html.push(
+          `<tbody>${body.map((row) => `<tr>${row.map((cell) => `<td>${renderInline(cell)}</td>`).join('')}</tr>`).join('')}</tbody>`,
+        );
         html.push('</table>');
       }
       continue;
@@ -84,11 +93,13 @@ export function ExportPanel({ plans, history, streak, isPremium = false }: Props
 
   const handleExportPDF = (plan: WorkoutPlan) => {
     const markdown = generateWorkoutMarkdown(plan);
-    const watermarkHtml = !isPremium ? `
+    const watermarkHtml = !isPremium
+      ? `
       <div style="position: fixed; bottom: 20px; right: 20px; color: #a3e635; font-weight: bold; font-family: monospace; font-size: 12px; opacity: 0.8; z-index: 1000; padding: 4px 8px; border: 1px solid #a3e635;">
         GERADO POR TREINOAPP FREE
       </div>
-    ` : '';
+    `
+      : '';
     const html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -120,7 +131,11 @@ export function ExportPanel({ plans, history, streak, isPremium = false }: Props
 
   const handleExportCSV = () => {
     const csv = `\uFEFF${generateHistoryCSV(history)}`;
-    downloadFile(csv, `historico-treinos-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv;charset=utf-8');
+    downloadFile(
+      csv,
+      `historico-treinos-${new Date().toISOString().slice(0, 10)}.csv`,
+      'text/csv;charset=utf-8',
+    );
   };
 
   const handleBackup = () => {
@@ -128,7 +143,7 @@ export function ExportPanel({ plans, history, streak, isPremium = false }: Props
     downloadFile(
       generateJSONBackup(backup),
       `treino-app-backup-${new Date().toISOString().slice(0, 10)}.json`,
-      'application/json;charset=utf-8'
+      'application/json;charset=utf-8',
     );
   };
 
@@ -156,78 +171,89 @@ export function ExportPanel({ plans, history, streak, isPremium = false }: Props
       <h3 className="text-white font-bold text-lg mb-5">Exportar & Backup</h3>
 
       <PremiumFeatureGate feature="export_data">
-      <div className="mb-5">
-        <p className="text-xs uppercase tracking-widest text-brand-muted mb-3">Planos de treino (PDF)</p>
-        <div className="space-y-2">
-          {plans.length === 0 && (
-            <p className="text-brand-muted text-sm">Nenhum plano criado ainda.</p>
-          )}
-          {plans.map(plan => (
-            <button
-              key={plan.id}
-              type="button"
-              onClick={() => handleExportPDF(plan)}
-              className="w-full flex items-center justify-between p-3 bg-brand-dark rounded-xl border border-white/10 hover:border-white/20 transition-all"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <FileText size={18} className="text-brand-neon shrink-0" />
-                <div className="text-left min-w-0">
-                  <p className="text-white text-sm font-semibold truncate">{plan.planName}</p>
-                  <p className="text-brand-muted text-xs">{plan.days?.length || 0} dias</p>
+        <div className="mb-5">
+          <p className="text-xs uppercase tracking-widest text-brand-muted mb-3">
+            Planos de treino (PDF)
+          </p>
+          <div className="space-y-2">
+            {plans.length === 0 && (
+              <p className="text-brand-muted text-sm">Nenhum plano criado ainda.</p>
+            )}
+            {plans.map((plan) => (
+              <button
+                key={plan.id}
+                type="button"
+                onClick={() => handleExportPDF(plan)}
+                className="w-full flex items-center justify-between p-3 bg-brand-dark rounded-xl border border-white/10 hover:border-white/20 transition-all"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <FileText size={18} className="text-brand-neon shrink-0" />
+                  <div className="text-left min-w-0">
+                    <p className="text-white text-sm font-semibold truncate">{plan.planName}</p>
+                    <p className="text-brand-muted text-xs">{plan.days?.length || 0} dias</p>
+                  </div>
                 </div>
-              </div>
-              <Download size={16} className="text-brand-muted shrink-0" />
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="mb-5">
-        <p className="text-xs uppercase tracking-widest text-brand-muted mb-3">Histórico de treinos</p>
-        <button
-          type="button"
-          onClick={handleExportCSV}
-          className="w-full flex items-center gap-3 p-4 bg-brand-dark rounded-xl border border-white/10 hover:border-white/20 transition-all"
-        >
-          <Download size={18} className="text-blue-400" />
-          <div className="text-left">
-            <p className="text-white text-sm font-semibold">Exportar como CSV</p>
-            <p className="text-brand-muted text-xs">{history.length} sessões registradas</p>
+                <Download size={16} className="text-brand-muted shrink-0" />
+              </button>
+            ))}
           </div>
-        </button>
-      </div>
+        </div>
 
-      <div>
-        <p className="text-xs uppercase tracking-widest text-brand-muted mb-3">Backup completo</p>
-        <div className="space-y-2">
+        <div className="mb-5">
+          <p className="text-xs uppercase tracking-widest text-brand-muted mb-3">
+            Histórico de treinos
+          </p>
           <button
             type="button"
-            onClick={handleBackup}
+            onClick={handleExportCSV}
             className="w-full flex items-center gap-3 p-4 bg-brand-dark rounded-xl border border-white/10 hover:border-white/20 transition-all"
           >
-            <Database size={18} className="text-orange-400" />
+            <Download size={18} className="text-blue-400" />
             <div className="text-left">
-              <p className="text-white text-sm font-semibold">Baixar backup (.json)</p>
-              <p className="text-brand-muted text-xs">Todos os dados do app</p>
+              <p className="text-white text-sm font-semibold">Exportar como CSV</p>
+              <p className="text-brand-muted text-xs">{history.length} sessões registradas</p>
             </div>
           </button>
-
-          <label className="w-full flex items-center gap-3 p-4 bg-brand-dark rounded-xl border border-white/10 hover:border-white/20 transition-all cursor-pointer">
-            <Upload size={18} className="text-purple-400" />
-            <div className="text-left">
-              <p className="text-white text-sm font-semibold">Restaurar backup</p>
-              <p className="text-brand-muted text-xs">Importar arquivo .json</p>
-            </div>
-            <input type="file" accept=".json,application/json" onChange={handleRestore} className="hidden" />
-          </label>
-
-          {restoreStatus && (
-            <p className={`text-sm mt-2 ${restoreStatus.startsWith('Backup') ? 'text-green-400' : 'text-red-400'}`}>
-              {restoreStatus}
-            </p>
-          )}
         </div>
-      </div>
+
+        <div>
+          <p className="text-xs uppercase tracking-widest text-brand-muted mb-3">Backup completo</p>
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={handleBackup}
+              className="w-full flex items-center gap-3 p-4 bg-brand-dark rounded-xl border border-white/10 hover:border-white/20 transition-all"
+            >
+              <Database size={18} className="text-orange-400" />
+              <div className="text-left">
+                <p className="text-white text-sm font-semibold">Baixar backup (.json)</p>
+                <p className="text-brand-muted text-xs">Todos os dados do app</p>
+              </div>
+            </button>
+
+            <label className="w-full flex items-center gap-3 p-4 bg-brand-dark rounded-xl border border-white/10 hover:border-white/20 transition-all cursor-pointer">
+              <Upload size={18} className="text-purple-400" />
+              <div className="text-left">
+                <p className="text-white text-sm font-semibold">Restaurar backup</p>
+                <p className="text-brand-muted text-xs">Importar arquivo .json</p>
+              </div>
+              <input
+                type="file"
+                accept=".json,application/json"
+                onChange={handleRestore}
+                className="hidden"
+              />
+            </label>
+
+            {restoreStatus && (
+              <p
+                className={`text-sm mt-2 ${restoreStatus.startsWith('Backup') ? 'text-green-400' : 'text-red-400'}`}
+              >
+                {restoreStatus}
+              </p>
+            )}
+          </div>
+        </div>
       </PremiumFeatureGate>
     </div>
   );

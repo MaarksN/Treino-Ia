@@ -7,13 +7,10 @@ export interface PersistedRestTimerState {
 }
 
 export function sanitizeRestDuration(seconds: number, fallbackSeconds = 90): number {
-  const fallback = Number.isFinite(fallbackSeconds) && fallbackSeconds > 0
-    ? Math.round(fallbackSeconds)
-    : 90;
+  const fallback =
+    Number.isFinite(fallbackSeconds) && fallbackSeconds > 0 ? Math.round(fallbackSeconds) : 90;
 
-  return Number.isFinite(seconds) && seconds > 0
-    ? Math.round(seconds)
-    : fallback;
+  return Number.isFinite(seconds) && seconds > 0 ? Math.round(seconds) : fallback;
 }
 
 export function createRestTimerState(

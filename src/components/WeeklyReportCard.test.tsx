@@ -4,7 +4,7 @@ import { WeeklyReportCard } from './WeeklyReportCard';
 import { generateWeeklyReport } from '../services/geminiService';
 
 vi.mock('../services/geminiService', () => ({
-  generateWeeklyReport: vi.fn()
+  generateWeeklyReport: vi.fn(),
 }));
 
 describe('WeeklyReportCard', () => {
@@ -14,7 +14,7 @@ describe('WeeklyReportCard', () => {
 
   it('renders initial state correctly', () => {
     render(<WeeklyReportCard plans={[]} />);
-    
+
     expect(screen.getByText('Relatório Semanal')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Gerar/i })).toBeInTheDocument();
     expect(screen.getByText(/Clique em gerar para receber/i)).toBeInTheDocument();
@@ -24,9 +24,9 @@ describe('WeeklyReportCard', () => {
     vi.mocked(generateWeeklyReport).mockResolvedValue('Mocked weekly report text');
 
     render(<WeeklyReportCard plans={[]} />);
-    
+
     const generateBtn = screen.getByRole('button', { name: /Gerar/i });
-    
+
     await act(async () => {
       fireEvent.click(generateBtn);
     });
@@ -39,9 +39,9 @@ describe('WeeklyReportCard', () => {
     vi.mocked(generateWeeklyReport).mockRejectedValue(new Error('API error'));
 
     render(<WeeklyReportCard plans={[]} />);
-    
+
     const generateBtn = screen.getByRole('button', { name: /Gerar/i });
-    
+
     await act(async () => {
       fireEvent.click(generateBtn);
     });

@@ -271,17 +271,12 @@ export type Tables<TableName extends keyof (DefaultSchema['Tables'] & DefaultSch
     : never;
 
 export type TablesInsert<TableName extends keyof DefaultSchema['Tables']> =
-  DefaultSchema['Tables'][TableName] extends { Insert: infer Insert }
-    ? Insert
-    : never;
+  DefaultSchema['Tables'][TableName] extends { Insert: infer Insert } ? Insert : never;
 
 export type TablesUpdate<TableName extends keyof DefaultSchema['Tables']> =
-  DefaultSchema['Tables'][TableName] extends { Update: infer Update }
-    ? Update
-    : never;
+  DefaultSchema['Tables'][TableName] extends { Update: infer Update } ? Update : never;
 
-export type Enums<EnumName extends keyof DefaultSchema['Enums']> =
-  DefaultSchema['Enums'][EnumName];
+export type Enums<EnumName extends keyof DefaultSchema['Enums']> = DefaultSchema['Enums'][EnumName];
 
 export const Constants = {
   public: {

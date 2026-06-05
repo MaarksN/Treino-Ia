@@ -6,19 +6,30 @@ const NOW = new Date('2026-05-17T12:00:00.000Z').getTime();
 
 function createSession(daysAgo: number, volume: number, rpe?: number): WorkoutSession {
   return {
-    id: `s-${daysAgo}`, planId: 'p1', dayId: 'd1', dayName: 'D1', focus: 'Full',
-    completedAt: NOW - daysAgo * 86400000, durationMinutes: 45,
-    totalVolume: volume, completedExercises: 4, totalExercises: 5,
-    feedback: '', nextRecommendation: '', exercises: rpe
-      ? [{
-        exerciseId: 'e1',
-        name: 'Agachamento',
-        targetSets: 3,
-        targetReps: '8',
-        targetRest: '90s',
-        completed: true,
-        sets: [{ weight: 100, reps: 8, rpe }],
-      }]
+    id: `s-${daysAgo}`,
+    planId: 'p1',
+    dayId: 'd1',
+    dayName: 'D1',
+    focus: 'Full',
+    completedAt: NOW - daysAgo * 86400000,
+    durationMinutes: 45,
+    totalVolume: volume,
+    completedExercises: 4,
+    totalExercises: 5,
+    feedback: '',
+    nextRecommendation: '',
+    exercises: rpe
+      ? [
+          {
+            exerciseId: 'e1',
+            name: 'Agachamento',
+            targetSets: 3,
+            targetReps: '8',
+            targetRest: '90s',
+            completed: true,
+            sets: [{ weight: 100, reps: 8, rpe }],
+          },
+        ]
       : [],
   };
 }
@@ -34,7 +45,7 @@ describe('longevitySignalService', () => {
     const history = Array.from({ length: 12 }, (_, i) => createSession(i * 2, 1000 + i * 50));
     const signal = calculateLongevitySignal({ history, now: NOW });
     expect(signal.consistencyScore).toBeGreaterThan(30);
-    expect(signal.factors.every(f => f.score >= 0 && f.score <= 100)).toBe(true);
+    expect(signal.factors.every((f) => f.score >= 0 && f.score <= 100)).toBe(true);
   });
 
   it('uses sleep and hydration local data in the habit signal', () => {
@@ -49,8 +60,10 @@ describe('longevitySignalService', () => {
       now: NOW,
     });
 
-    expect(signal.factors.find(factor => factor.id === 'sleep')?.score).toBeGreaterThanOrEqual(80);
-    expect(signal.factors.find(factor => factor.id === 'hydration')?.score).toBe(100);
+    expect(signal.factors.find((factor) => factor.id === 'sleep')?.score).toBeGreaterThanOrEqual(
+      80,
+    );
+    expect(signal.factors.find((factor) => factor.id === 'hydration')?.score).toBe(100);
   });
 
   it('penalizes excessive recent RPE without making a medical claim', () => {
@@ -63,8 +76,9 @@ describe('longevitySignalService', () => {
       now: NOW,
     });
 
-    expect(excessive.factors.find(factor => factor.id === 'rpe_balance')?.score)
-      .toBeLessThan(balanced.factors.find(factor => factor.id === 'rpe_balance')?.score ?? 0);
+    expect(excessive.factors.find((factor) => factor.id === 'rpe_balance')?.score).toBeLessThan(
+      balanced.factors.find((factor) => factor.id === 'rpe_balance')?.score ?? 0,
+    );
     expect(excessive.disclaimer).toContain('Não representa');
   });
 

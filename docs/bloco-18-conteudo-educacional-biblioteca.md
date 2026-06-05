@@ -35,28 +35,28 @@ docs/bloco-18-conteudo-educacional-biblioteca.md
 
 ## Tabela dos 20 itens
 
-| # | Item | Prioridade sugerida |
-|---:|---|---|
-| 1 | Biblioteca de +500 exercícios com GIF demonstrativo | MVP / Base |
-| 2 | Filtro por grupo muscular, equipamento e dificuldade | MVP / Base |
-| 3 | Ficha técnica: músculos primários e secundários | MVP / Base |
-| 4 | Dicas de execução geradas por IA por nível | MVP / Base |
-| 5 | Erros comuns e como corrigir (texto + imagem) | MVP / Base |
-| 6 | Substitutos de exercício sem equipamento | MVP / Base |
-| 7 | Cursos em vídeo: Iniciante, Intermediário, Avançado | Premium / V2 |
-| 8 | Artigos educativos: hipertrofia, força, nutrição, sono | Premium / V2 |
-| 9 | Glossário de termos do fitness | MVP / Base |
-| 10 | Quiz semanal com XP de recompensa | Premium / V2 |
-| 11 | Playlist de treino integrada (Spotify/YouTube embed) | Premium / V2 |
-| 12 | Calculadoras: 1RM, IMC, %gordura, VO2max estimado | MVP / Base |
-| 13 | Protocolo de aquecimento por grupo muscular do dia | MVP / Base |
-| 14 | Protocolo de volta à calma pós-treino | MVP / Base |
-| 15 | Biblioteca de alongamentos com timer | MVP / Base |
-| 16 | Programa de 12 semanas pré-montado (3 objetivos) | Premium / V2 |
-| 17 | Certificados de conclusão de programa | Premium / V2 |
-| 18 | Podcast / áudio-guia de treino (coach por voz) | Premium / V2 |
-| 19 | Seção "Mitos do fitness" com base científica | Premium / V2 |
-| 20 | Referências científicas com DOI para cada protocolo | Premium / V2 |
+|   # | Item                                                   | Prioridade sugerida |
+| --: | ------------------------------------------------------ | ------------------- |
+|   1 | Biblioteca de +500 exercícios com GIF demonstrativo    | MVP / Base          |
+|   2 | Filtro por grupo muscular, equipamento e dificuldade   | MVP / Base          |
+|   3 | Ficha técnica: músculos primários e secundários        | MVP / Base          |
+|   4 | Dicas de execução geradas por IA por nível             | MVP / Base          |
+|   5 | Erros comuns e como corrigir (texto + imagem)          | MVP / Base          |
+|   6 | Substitutos de exercício sem equipamento               | MVP / Base          |
+|   7 | Cursos em vídeo: Iniciante, Intermediário, Avançado    | Premium / V2        |
+|   8 | Artigos educativos: hipertrofia, força, nutrição, sono | Premium / V2        |
+|   9 | Glossário de termos do fitness                         | MVP / Base          |
+|  10 | Quiz semanal com XP de recompensa                      | Premium / V2        |
+|  11 | Playlist de treino integrada (Spotify/YouTube embed)   | Premium / V2        |
+|  12 | Calculadoras: 1RM, IMC, %gordura, VO2max estimado      | MVP / Base          |
+|  13 | Protocolo de aquecimento por grupo muscular do dia     | MVP / Base          |
+|  14 | Protocolo de volta à calma pós-treino                  | MVP / Base          |
+|  15 | Biblioteca de alongamentos com timer                   | MVP / Base          |
+|  16 | Programa de 12 semanas pré-montado (3 objetivos)       | Premium / V2        |
+|  17 | Certificados de conclusão de programa                  | Premium / V2        |
+|  18 | Podcast / áudio-guia de treino (coach por voz)         | Premium / V2        |
+|  19 | Seção "Mitos do fitness" com base científica           | Premium / V2        |
+|  20 | Referências científicas com DOI para cada protocolo    | Premium / V2        |
 
 ## Organização por prioridade
 
@@ -114,7 +114,9 @@ docs/bloco-18-conteudo-educacional-biblioteca.md
 
 ```tsx
 // Exemplo conceitual de rota/tela para o Bloco 18
-{currentView === 'bloco-18' && <ConteudoEducacionalBibliotecaHub />}
+{
+  currentView === 'bloco-18' && <ConteudoEducacionalBibliotecaHub />;
+}
 ```
 
 ## Resultado esperado

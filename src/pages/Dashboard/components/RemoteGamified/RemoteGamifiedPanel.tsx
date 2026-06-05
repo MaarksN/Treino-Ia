@@ -29,9 +29,7 @@ export function RemoteGamifiedPanel({ state }: Props) {
           <p className="font-mono text-sm font-bold uppercase text-brand-neon mb-2">
             {state.coopGuard.statusLabel}
           </p>
-          <p className="font-mono text-xs text-brand-muted">
-            {state.coopGuard.explanation}
-          </p>
+          <p className="font-mono text-xs text-brand-muted">{state.coopGuard.explanation}</p>
         </article>
 
         {/* Item 78 - Roguelike Mode */}
@@ -44,9 +42,9 @@ export function RemoteGamifiedPanel({ state }: Props) {
             <>
               <p className="font-mono text-sm text-brand-light mb-2">Modo Experimental Liberado!</p>
               <div className="flex gap-2">
-                 <span className="border border-brand-magenta px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-brand-magenta">
-                   Vidas: {state.roguelike.lives}
-                 </span>
+                <span className="border border-brand-magenta px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-brand-magenta">
+                  Vidas: {state.roguelike.lives}
+                </span>
               </div>
             </>
           ) : (
@@ -67,10 +65,15 @@ export function RemoteGamifiedPanel({ state }: Props) {
           </p>
           {state.cosmeticDrops.unlockedItems.length > 0 && (
             <div className="mt-3">
-              <p className="font-mono text-xs uppercase tracking-widest text-brand-muted mb-1">Desbloqueados:</p>
+              <p className="font-mono text-xs uppercase tracking-widest text-brand-muted mb-1">
+                Desbloqueados:
+              </p>
               <div className="flex flex-wrap gap-2">
-                {state.cosmeticDrops.unlockedItems.map(item => (
-                  <span key={item} className="bg-brand-gray border border-brand-neon/30 px-2 py-1 font-mono text-[10px] text-brand-neon">
+                {state.cosmeticDrops.unlockedItems.map((item) => (
+                  <span
+                    key={item}
+                    className="bg-brand-gray border border-brand-neon/30 px-2 py-1 font-mono text-[10px] text-brand-neon"
+                  >
                     {item}
                   </span>
                 ))}
@@ -85,7 +88,9 @@ export function RemoteGamifiedPanel({ state }: Props) {
             <Cat className="h-6 w-6 text-brand-magenta" />
             <h3 className="font-display text-2xl uppercase text-brand-light">Muscle Pet</h3>
           </div>
-          <p className="font-mono text-sm font-bold text-brand-light mb-1">{state.musclePet.petName}</p>
+          <p className="font-mono text-sm font-bold text-brand-light mb-1">
+            {state.musclePet.petName}
+          </p>
           <p className="font-mono text-xs text-brand-muted mb-3">{state.musclePet.status}</p>
           <div className="space-y-2">
             <div>
@@ -109,20 +114,21 @@ export function RemoteGamifiedPanel({ state }: Props) {
         <article className="border-2 border-red-500/30 bg-brand-dark p-5 sm:col-span-2 lg:col-span-2">
           <div className="mb-4 flex items-center gap-3">
             <Skull className="h-6 w-6 text-red-500" />
-            <h3 className="font-display text-2xl uppercase text-red-500">Death Penalty (Opcional)</h3>
+            <h3 className="font-display text-2xl uppercase text-red-500">
+              Death Penalty (Opcional)
+            </h3>
           </div>
           <p className="font-mono text-sm text-red-400 mb-2">{state.deathPenalty.warningLabel}</p>
-          <p className="font-mono text-xs text-red-500/70">
-            {state.deathPenalty.consequence}
-          </p>
+          <p className="font-mono text-xs text-red-500/70">{state.deathPenalty.consequence}</p>
           <div className="mt-4 flex items-center gap-2">
-             <div className="h-4 w-8 rounded-full bg-brand-gray border border-red-500/50 flex items-center p-1">
-               <div className="h-2 w-2 rounded-full bg-red-500/30" />
-             </div>
-             <span className="font-mono text-[10px] uppercase tracking-widest text-brand-muted">Desativado</span>
+            <div className="h-4 w-8 rounded-full bg-brand-gray border border-red-500/50 flex items-center p-1">
+              <div className="h-2 w-2 rounded-full bg-red-500/30" />
+            </div>
+            <span className="font-mono text-[10px] uppercase tracking-widest text-brand-muted">
+              Desativado
+            </span>
           </div>
         </article>
-
       </div>
     </section>
   );

@@ -24,23 +24,36 @@ export function InvoiceHistory({ invoices }: Props) {
 
       <div className="divide-y divide-white/5">
         {invoices.map((invoice) => (
-          <div key={invoice.id} className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors">
+          <div
+            key={invoice.id}
+            className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
+          >
             <div className="flex items-center gap-4">
               <div className="bg-brand-dark p-2 rounded-lg text-brand-muted">
                 <FileText size={20} />
               </div>
               <div>
-                <p className="text-white font-medium">{new Date(invoice.date).toLocaleDateString('pt-BR')}</p>
+                <p className="text-white font-medium">
+                  {new Date(invoice.date).toLocaleDateString('pt-BR')}
+                </p>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-brand-neon font-mono text-sm">
                     R$ {invoice.amount.toFixed(2)}
                   </span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold ${
-                    invoice.status === 'paid' ? 'bg-green-500/20 text-green-400' :
-                    invoice.status === 'open' ? 'bg-yellow-500/20 text-yellow-400' :
-                    'bg-red-500/20 text-red-400'
-                  }`}>
-                    {invoice.status === 'paid' ? 'Pago' : invoice.status === 'open' ? 'Aberto' : 'Cancelado'}
+                  <span
+                    className={`text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold ${
+                      invoice.status === 'paid'
+                        ? 'bg-green-500/20 text-green-400'
+                        : invoice.status === 'open'
+                          ? 'bg-yellow-500/20 text-yellow-400'
+                          : 'bg-red-500/20 text-red-400'
+                    }`}
+                  >
+                    {invoice.status === 'paid'
+                      ? 'Pago'
+                      : invoice.status === 'open'
+                        ? 'Aberto'
+                        : 'Cancelado'}
                   </span>
                 </div>
               </div>

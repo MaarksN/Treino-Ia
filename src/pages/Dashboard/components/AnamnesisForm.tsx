@@ -2,7 +2,8 @@ import { memo, type FormEvent } from 'react';
 import { Save } from 'lucide-react';
 import { type UserProfile } from '../../../services/database';
 
-const fieldClass = 'mt-2 w-full rounded-[22px] border-2 border-brand-light/15 bg-brand-gray px-4 py-3 font-mono text-sm text-brand-light outline-none transition-colors placeholder:text-brand-muted focus:border-brand-neon';
+const fieldClass =
+  'mt-2 w-full rounded-[22px] border-2 border-brand-light/15 bg-brand-gray px-4 py-3 font-mono text-sm text-brand-light outline-none transition-colors placeholder:text-brand-muted focus:border-brand-neon';
 const labelClass = 'block font-mono text-[11px] uppercase tracking-[0.25em] text-brand-muted';
 
 const levelOptions: Array<{ value: UserProfile['level']; label: string; detail: string }> = [
@@ -62,7 +63,7 @@ export const AnamnesisForm = memo(function AnamnesisForm({
           <input
             data-testid="anamnesis-name"
             value={profile.name}
-            onChange={event => onChange({ ...profile, name: event.target.value })}
+            onChange={(event) => onChange({ ...profile, name: event.target.value })}
             className={fieldClass}
             placeholder="Seu nome"
           />
@@ -73,17 +74,21 @@ export const AnamnesisForm = memo(function AnamnesisForm({
           <select
             data-testid="anamnesis-goal"
             value={profile.goal}
-            onChange={event => onChange({ ...profile, goal: event.target.value })}
+            onChange={(event) => onChange({ ...profile, goal: event.target.value })}
             className={fieldClass}
           >
-            {goalOptions.map(goal => <option key={goal} value={goal}>{goal}</option>)}
+            {goalOptions.map((goal) => (
+              <option key={goal} value={goal}>
+                {goal}
+              </option>
+            ))}
           </select>
         </label>
 
         <div className="md:col-span-2">
           <span className={labelClass}>Nível</span>
           <div className="mt-2 grid gap-3 md:grid-cols-3">
-            {levelOptions.map(option => {
+            {levelOptions.map((option) => {
               const selected = profile.level === option.value;
               return (
                 <button
@@ -96,8 +101,12 @@ export const AnamnesisForm = memo(function AnamnesisForm({
                       : 'border-brand-light/15 bg-brand-dark text-brand-light hover:border-brand-neon'
                   }`}
                 >
-                  <span className="block font-display text-3xl uppercase leading-none">{option.label}</span>
-                  <span className={`mt-1 block font-mono text-[10px] uppercase tracking-widest ${selected ? 'text-brand-dark/70' : 'text-brand-muted'}`}>
+                  <span className="block font-display text-3xl uppercase leading-none">
+                    {option.label}
+                  </span>
+                  <span
+                    className={`mt-1 block font-mono text-[10px] uppercase tracking-widest ${selected ? 'text-brand-dark/70' : 'text-brand-muted'}`}
+                  >
                     {option.detail}
                   </span>
                 </button>
@@ -114,7 +123,7 @@ export const AnamnesisForm = memo(function AnamnesisForm({
             min={1}
             max={6}
             value={profile.daysPerWeek}
-            onChange={event => onChange({ ...profile, daysPerWeek: Number(event.target.value) })}
+            onChange={(event) => onChange({ ...profile, daysPerWeek: Number(event.target.value) })}
             className={fieldClass}
           />
         </label>
@@ -127,7 +136,9 @@ export const AnamnesisForm = memo(function AnamnesisForm({
             min={20}
             max={120}
             value={profile.timePerWorkout}
-            onChange={event => onChange({ ...profile, timePerWorkout: Number(event.target.value) })}
+            onChange={(event) =>
+              onChange({ ...profile, timePerWorkout: Number(event.target.value) })
+            }
             className={fieldClass}
           />
         </label>
@@ -136,10 +147,14 @@ export const AnamnesisForm = memo(function AnamnesisForm({
           <span className={labelClass}>Equipamento disponível</span>
           <select
             value={profile.equipment}
-            onChange={event => onChange({ ...profile, equipment: event.target.value })}
+            onChange={(event) => onChange({ ...profile, equipment: event.target.value })}
             className={fieldClass}
           >
-            {equipmentOptions.map(equipment => <option key={equipment} value={equipment}>{equipment}</option>)}
+            {equipmentOptions.map((equipment) => (
+              <option key={equipment} value={equipment}>
+                {equipment}
+              </option>
+            ))}
           </select>
         </label>
 
@@ -147,7 +162,7 @@ export const AnamnesisForm = memo(function AnamnesisForm({
           <span className={labelClass}>Lesões ou limitações</span>
           <input
             value={profile.injuries}
-            onChange={event => onChange({ ...profile, injuries: event.target.value })}
+            onChange={(event) => onChange({ ...profile, injuries: event.target.value })}
             className={fieldClass}
             placeholder="Ex: joelho, ombro, lombar"
           />

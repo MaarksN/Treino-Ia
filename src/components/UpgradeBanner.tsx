@@ -13,7 +13,11 @@ export function UpgradeBanner({ trigger, streak = 0, compact = false }: Props) {
   const [paywallOpen, setPaywallOpen] = useState(false);
 
   useEffect(() => {
-    setVisible(trigger === 'generic' || trigger === 'after_pr' || (trigger === 'after_streak' && streak >= 7));
+    setVisible(
+      trigger === 'generic' ||
+        trigger === 'after_pr' ||
+        (trigger === 'after_streak' && streak >= 7),
+    );
   }, [trigger, streak]);
 
   if (!visible) return null;
@@ -36,22 +40,16 @@ export function UpgradeBanner({ trigger, streak = 0, compact = false }: Props) {
 
         <div className="flex flex-col md:flex-row md:items-center gap-4 md:justify-between pr-8">
           <div className="flex items-start gap-3">
-            <div className="rounded-2xl bg-brand-neon text-brand-dark p-3">
-              {content.icon}
-            </div>
+            <div className="rounded-2xl bg-brand-neon text-brand-dark p-3">{content.icon}</div>
 
             <div>
               <p className="text-xs uppercase tracking-[0.25em] text-brand-neon font-bold">
                 Upgrade Premium
               </p>
 
-              <h3 className="text-xl font-black text-white mt-1">
-                {content.title}
-              </h3>
+              <h3 className="text-xl font-black text-white mt-1">{content.title}</h3>
 
-              <p className="text-sm text-white/70 mt-1">
-                {content.description}
-              </p>
+              <p className="text-sm text-white/70 mt-1">{content.description}</p>
             </div>
           </div>
 

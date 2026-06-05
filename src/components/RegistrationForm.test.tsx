@@ -10,7 +10,7 @@ describe('RegistrationForm', () => {
 
   it('renders initial form fields correctly', () => {
     render(<RegistrationForm onRegister={vi.fn()} />);
-    
+
     expect(screen.getByText('INICIAR')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Ex: João da Silva')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('joao@example.com')).toBeInTheDocument();
@@ -19,7 +19,7 @@ describe('RegistrationForm', () => {
 
   it('updates input values when typing', () => {
     render(<RegistrationForm onRegister={vi.fn()} />);
-    
+
     const nameInput = screen.getByPlaceholderText('Ex: João da Silva');
     const emailInput = screen.getByPlaceholderText('joao@example.com');
 
@@ -33,21 +33,23 @@ describe('RegistrationForm', () => {
   it('calls onRegister and saves to localStorage on submit', () => {
     const mockOnRegister = vi.fn();
     render(<RegistrationForm onRegister={mockOnRegister} />);
-    
+
     const nameInput = screen.getByPlaceholderText('Ex: João da Silva');
     const emailInput = screen.getByPlaceholderText('joao@example.com');
     const submitButton = screen.getByRole('button', { name: /Cadastrar e continuar/i });
 
     fireEvent.change(nameInput, { target: { value: 'Carlos Silva' } });
     fireEvent.change(emailInput, { target: { value: 'carlos@example.com' } });
-    
+
     fireEvent.click(submitButton);
 
     // Verify callback
-    expect(mockOnRegister).toHaveBeenCalledWith(expect.objectContaining({
-      name: 'Carlos Silva',
-      email: 'carlos@example.com',
-    }));
+    expect(mockOnRegister).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Carlos Silva',
+        email: 'carlos@example.com',
+      }),
+    );
 
     // Verify localStorage
     const saved = JSON.parse(localStorage.getItem('@TreinoIA:starterUser') || '{}');

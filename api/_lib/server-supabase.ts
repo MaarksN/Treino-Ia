@@ -39,4 +39,3 @@ export async function requireSupabaseUser(request: Request): Promise<User> {
 
   return data.user;
 }
-

@@ -10,7 +10,25 @@ import {
   WorkoutPlan,
   WorkoutSession,
 } from '../types';
-import { Target, PlusCircle, History, ChevronDown, Download, Printer, FileJson, FileText, CheckCircle2, Play, Brain, Activity, Flame, BarChart3, BookOpen, Volume2, VolumeX } from 'lucide-react';
+import {
+  Target,
+  PlusCircle,
+  History,
+  ChevronDown,
+  Download,
+  Printer,
+  FileJson,
+  FileText,
+  CheckCircle2,
+  Play,
+  Brain,
+  Activity,
+  Flame,
+  BarChart3,
+  BookOpen,
+  Volume2,
+  VolumeX,
+} from 'lucide-react';
 import { ExerciseCard } from './ExerciseCard';
 import { CheckInModule } from './CheckInModule';
 import { NutritionModule } from './NutritionModule';
@@ -47,8 +65,16 @@ import { getTrackedExerciseNames } from '../services/analyticsService';
 import { detectPlateau, parseFirstNumber, shouldSuggestDeload } from '../utils/workoutMetrics';
 import { getJSON, STORAGE_KEYS, updateWorkoutStreak, WorkoutStreak } from '../utils/storage';
 import { extractAndSavePRsFromPlan, getPRForExercise } from '../utils/prUtils';
-import { calculateReadiness as calculateDailyReadiness, getOvertrainingRisk } from '../utils/readinessUtils';
-import { RECOVERY_FIELDS, createDefaultReadiness, formatAiPanelResult, parseRestToSeconds } from './workout-dashboard/workoutDashboard.helpers';
+import {
+  calculateReadiness as calculateDailyReadiness,
+  getOvertrainingRisk,
+} from '../utils/readinessUtils';
+import {
+  RECOVERY_FIELDS,
+  createDefaultReadiness,
+  formatAiPanelResult,
+  parseRestToSeconds,
+} from './workout-dashboard/workoutDashboard.helpers';
 
 interface Props {
   plan: WorkoutPlan;
@@ -101,11 +127,11 @@ export function WorkoutDashboard({
   const [showLibrary, setShowLibrary] = useState(false);
   const [quickWorkoutLoading, setQuickWorkoutLoading] = useState(false);
   const [streak, setStreak] = useState<WorkoutStreak>(() =>
-    getJSON<WorkoutStreak>(STORAGE_KEYS.streak, { count: 0, lastDate: null })
+    getJSON<WorkoutStreak>(STORAGE_KEYS.streak, { count: 0, lastDate: null }),
   );
   const [selectedExerciseName, setSelectedExerciseName] = useState('');
-  const [dailyReadiness, setDailyReadiness] = useState<RecoveryCheckin>(() =>
-    savedRecoveryCheckin || createDefaultReadiness(profile)
+  const [dailyReadiness, setDailyReadiness] = useState<RecoveryCheckin>(
+    () => savedRecoveryCheckin || createDefaultReadiness(profile),
   );
   const [recoveryAdvice, setRecoveryAdvice] = useState('');
   const [loadingRecoveryAdvice, setLoadingRecoveryAdvice] = useState(false);
@@ -128,7 +154,7 @@ export function WorkoutDashboard({
     const tracked = getTrackedExerciseNames(history, workoutHistory);
     if (tracked.length) return tracked;
 
-    return Array.from(new Set(plan.days.flatMap(day => day.exercises.map(ex => ex.name))));
+    return Array.from(new Set(plan.days.flatMap((day) => day.exercises.map((ex) => ex.name))));
   }, [history, plan.days, workoutHistory]);
 
   useEffect(() => {
@@ -139,16 +165,23 @@ export function WorkoutDashboard({
   }, [exerciseOptions, selectedExerciseName]);
 
   const recoveryScore = useMemo(() => getRecoveryScore(dailyReadiness), [dailyReadiness]);
-  const dailyReadinessScore = useMemo(() => dailyCheckin ? calculateDailyReadiness(dailyCheckin) : null, [dailyCheckin]);
+  const dailyReadinessScore = useMemo(
+    () => (dailyCheckin ? calculateDailyReadiness(dailyCheckin) : null),
+    [dailyCheckin],
+  );
   const overtrainingRisk = useMemo(() => getOvertrainingRisk(allDailyCheckins), [allDailyCheckins]);
   const chartExerciseName = selectedExerciseName || exerciseOptions[0] || '';
-  const plateauStatus = chartExerciseName ? detectPlateau(history, chartExerciseName, workoutHistory) : null;
+  const plateauStatus = chartExerciseName
+    ? detectPlateau(history, chartExerciseName, workoutHistory)
+    : null;
   const deloadSuggested = shouldSuggestDeload(plan);
 
   const getPreviousExerciseStat = (exerciseName: string) => {
     for (let i = workoutHistory.length - 1; i >= 0; i--) {
       const prevRec = workoutHistory[i];
-      const prevExc = prevRec.exercises.find(ex => ex.name.toLowerCase() === exerciseName.toLowerCase());
+      const prevExc = prevRec.exercises.find(
+        (ex) => ex.name.toLowerCase() === exerciseName.toLowerCase(),
+      );
       if (prevExc && (prevExc.actualWeight || prevExc.actualReps || prevExc.rpe)) {
         return {
           date: prevRec.date,
@@ -163,19 +196,21 @@ export function WorkoutDashboard({
 
   const getPreviousExerciseData = (exerciseName: string): Exercise | null => {
     for (let i = workoutHistory.length - 1; i >= 0; i--) {
-      const found = workoutHistory[i].exercises.find(ex =>
-        ex.name.toLowerCase() === exerciseName.toLowerCase() &&
-        (ex.actualWeight || ex.actualReps || ex.rpe || ex.setLogs?.length)
+      const found = workoutHistory[i].exercises.find(
+        (ex) =>
+          ex.name.toLowerCase() === exerciseName.toLowerCase() &&
+          (ex.actualWeight || ex.actualReps || ex.rpe || ex.setLogs?.length),
       );
       if (found) return found;
     }
 
-    for (const historicPlan of history.filter(item => item.id !== plan.id)) {
+    for (const historicPlan of history.filter((item) => item.id !== plan.id)) {
       const found = historicPlan.days
-        .flatMap(day => day.exercises)
-        .find(ex =>
-          ex.name.toLowerCase() === exerciseName.toLowerCase() &&
-          (ex.actualWeight || ex.actualReps || ex.rpe || ex.setLogs?.length)
+        .flatMap((day) => day.exercises)
+        .find(
+          (ex) =>
+            ex.name.toLowerCase() === exerciseName.toLowerCase() &&
+            (ex.actualWeight || ex.actualReps || ex.rpe || ex.setLogs?.length),
         );
       if (found) return found;
     }
@@ -183,7 +218,11 @@ export function WorkoutDashboard({
     return null;
   };
 
-  const handleUpdateExercise = (dayIndex: number, exerciseIndex: number, updatedExercise: Exercise) => {
+  const handleUpdateExercise = (
+    dayIndex: number,
+    exerciseIndex: number,
+    updatedExercise: Exercise,
+  ) => {
     const newDays = [...plan.days];
     newDays[dayIndex].exercises[exerciseIndex] = updatedExercise;
     onUpdatePlan({ ...plan, days: newDays });
@@ -193,18 +232,19 @@ export function WorkoutDashboard({
     dayIndex: number,
     exerciseIndex: number,
     currentExercise: Exercise,
-    updatedExercise: Exercise
+    updatedExercise: Exercise,
   ) => {
     const previousStat = getPreviousExerciseStat(currentExercise.name);
     const isNewlyCompleted = !currentExercise.completed && Boolean(updatedExercise.completed);
-    const nextExercise: Exercise = isNewlyCompleted && previousStat
-      ? {
-          ...updatedExercise,
-          actualWeight: updatedExercise.actualWeight || previousStat.weight,
-          actualReps: updatedExercise.actualReps || previousStat.reps,
-          rpe: updatedExercise.rpe || previousStat.rpe,
-        }
-      : updatedExercise;
+    const nextExercise: Exercise =
+      isNewlyCompleted && previousStat
+        ? {
+            ...updatedExercise,
+            actualWeight: updatedExercise.actualWeight || previousStat.weight,
+            actualReps: updatedExercise.actualReps || previousStat.reps,
+            rpe: updatedExercise.rpe || previousStat.rpe,
+          }
+        : updatedExercise;
 
     handleUpdateExercise(dayIndex, exerciseIndex, nextExercise);
 
@@ -221,7 +261,9 @@ export function WorkoutDashboard({
       const advice = await adjustWorkoutForRecovery(plan, dailyReadiness);
       setRecoveryAdvice(advice);
     } catch {
-      setRecoveryAdvice('Não consegui gerar o ajuste agora. Verifique a chave Gemini e tente novamente.');
+      setRecoveryAdvice(
+        'Não consegui gerar o ajuste agora. Verifique a chave Gemini e tente novamente.',
+      );
     } finally {
       setLoadingRecoveryAdvice(false);
     }
@@ -232,7 +274,9 @@ export function WorkoutDashboard({
     try {
       setAiPanel(formatAiPanelResult(await action()));
     } catch {
-      setAiPanel('Não consegui executar esta ação agora. Verifique a chave Gemini e tente novamente.');
+      setAiPanel(
+        'Não consegui executar esta ação agora. Verifique a chave Gemini e tente novamente.',
+      );
     } finally {
       setAiLoading(false);
     }
@@ -240,14 +284,14 @@ export function WorkoutDashboard({
 
   const handleQuickWorkout = async (
     type: 'express' | 'bodyweight' | 'equipment' | 'goal',
-    value?: string
+    value?: string,
   ) => {
     setQuickWorkoutLoading(true);
     try {
       const generated = await generateQuickWorkout(
         type,
         value || profile?.goal,
-        profile?.equipment || profile?.gymType || profile?.workoutLocation
+        profile?.equipment || profile?.gymType || profile?.workoutLocation,
       );
 
       if (onSaveNewPlan) {
@@ -256,7 +300,9 @@ export function WorkoutDashboard({
         onUpdatePlan({ ...generated, id: plan.id });
       }
     } catch {
-      setAiPanel('Não consegui gerar o treino rápido agora. Verifique a chave Gemini e tente novamente.');
+      setAiPanel(
+        'Não consegui gerar o treino rápido agora. Verifique a chave Gemini e tente novamente.',
+      );
     } finally {
       setQuickWorkoutLoading(false);
     }
@@ -270,8 +316,8 @@ export function WorkoutDashboard({
     durationMinutes,
     readiness: dailyReadiness,
     logs: day.exercises
-      .filter(ex => ex.completed || ex.actualWeight || ex.actualReps || ex.rpe || ex.feedback)
-      .map(ex => ({
+      .filter((ex) => ex.completed || ex.actualWeight || ex.actualReps || ex.rpe || ex.feedback)
+      .map((ex) => ({
         exerciseId: ex.id,
         exerciseName: ex.name,
         date: Date.now(),
@@ -308,10 +354,10 @@ export function WorkoutDashboard({
   const handleFinishWorkout = (dayIndex: number) => {
     const day = plan.days[dayIndex];
     let volumeLoad = 0;
-    day.exercises.forEach(exc => {
+    day.exercises.forEach((exc) => {
       const weight = exc.actualWeight || 0;
       const reps = parseFirstNumber(exc.actualReps || exc.reps);
-      volumeLoad += (weight * reps * exc.sets);
+      volumeLoad += weight * reps * exc.sets;
     });
 
     const record: WorkoutHistoryRecord = {
@@ -323,11 +369,11 @@ export function WorkoutDashboard({
       focus: day.focus,
       volumeLoad,
       durationMinutes: 45, // roughly
-      exercises: JSON.parse(JSON.stringify(day.exercises))
+      exercises: JSON.parse(JSON.stringify(day.exercises)),
     };
     const newPRs = extractAndSavePRsFromPlan({
       ...plan,
-      days: plan.days.map((item, index) => index === dayIndex ? day : item),
+      days: plan.days.map((item, index) => (index === dayIndex ? day : item)),
     });
     onCompleteDay(record);
     onSaveSession(buildSessionFromDay(day, record.durationMinutes));
@@ -337,7 +383,7 @@ export function WorkoutDashboard({
     newDays[dayIndex] = {
       ...newDays[dayIndex],
       workoutFeedback: undefined,
-      exercises: newDays[dayIndex].exercises.map(e => ({
+      exercises: newDays[dayIndex].exercises.map((e) => ({
         ...e,
         completed: false,
         actualWeight: undefined,
@@ -346,16 +392,18 @@ export function WorkoutDashboard({
         feedback: undefined,
         performanceNotes: undefined,
         setLogs: undefined,
-      }))
+      })),
     };
     onUpdatePlan({ ...plan, days: newDays });
     setStreak(updateWorkoutStreak());
 
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    alert(newPRs.length
-      ? `TREINO CONCLUÍDO! PR batido em: ${newPRs.join(', ')}`
-      : 'TREINO CONCLUÍDO! XP ADICIONADO!');
+    alert(
+      newPRs.length
+        ? `TREINO CONCLUÍDO! PR batido em: ${newPRs.join(', ')}`
+        : 'TREINO CONCLUÍDO! XP ADICIONADO!',
+    );
   };
 
   const [activeDayIndex, setActiveDayIndex] = useState<number | null>(null);
@@ -373,13 +421,17 @@ export function WorkoutDashboard({
       dayId: completedDay.id,
       dayName: completedDay.dayName,
       focus: completedDay.focus,
-      volumeLoad: completedDay.exercises.reduce((acc, exc) => acc + ((exc.actualWeight || 0) * parseFirstNumber(exc.actualReps || exc.reps) * exc.sets), 0),
+      volumeLoad: completedDay.exercises.reduce(
+        (acc, exc) =>
+          acc + (exc.actualWeight || 0) * parseFirstNumber(exc.actualReps || exc.reps) * exc.sets,
+        0,
+      ),
       durationMinutes: 45,
-      exercises: completedDay.exercises
+      exercises: completedDay.exercises,
     };
     const newPRs = extractAndSavePRsFromPlan({
       ...plan,
-      days: plan.days.map((item, index) => index === activeDayIndex ? completedDay : item),
+      days: plan.days.map((item, index) => (index === activeDayIndex ? completedDay : item)),
     });
     onCompleteDay(record);
     onSaveSession(buildSessionFromDay(completedDay, record.durationMinutes));
@@ -388,7 +440,7 @@ export function WorkoutDashboard({
     newDays[activeDayIndex!] = {
       ...completedDay,
       workoutFeedback: undefined,
-      exercises: completedDay.exercises.map(e => ({
+      exercises: completedDay.exercises.map((e) => ({
         ...e,
         completed: false,
         actualWeight: undefined,
@@ -397,20 +449,22 @@ export function WorkoutDashboard({
         feedback: undefined,
         performanceNotes: undefined,
         setLogs: undefined,
-      }))
+      })),
     };
     onUpdatePlan({ ...plan, days: newDays });
     setStreak(updateWorkoutStreak());
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    alert(newPRs.length
-      ? `TREINO CONCLUÍDO! PR batido em: ${newPRs.join(', ')}`
-      : 'TREINO CONCLUÍDO! XP ADICIONADO!');
+    alert(
+      newPRs.length
+        ? `TREINO CONCLUÍDO! PR batido em: ${newPRs.join(', ')}`
+        : 'TREINO CONCLUÍDO! XP ADICIONADO!',
+    );
   };
 
   if (activeDayIndex !== null) {
     return (
-      <ActiveWorkoutView 
-        day={plan.days[activeDayIndex]} 
+      <ActiveWorkoutView
+        day={plan.days[activeDayIndex]}
         workoutHistory={workoutHistory}
         onComplete={handleCompleteActiveWorkout}
         onCancel={() => setActiveDayIndex(null)}
@@ -419,7 +473,8 @@ export function WorkoutDashboard({
     );
   }
 
-  const isDayCompleted = (day: WorkoutDay) => day.exercises.length > 0 && day.exercises.every(e => e.completed);
+  const isDayCompleted = (day: WorkoutDay) =>
+    day.exercises.length > 0 && day.exercises.every((e) => e.completed);
 
   const handlePrint = () => {
     window.print();
@@ -428,10 +483,14 @@ export function WorkoutDashboard({
   const allDaysCompleted = plan.days.every(isDayCompleted);
 
   const downloadJSON = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(plan, null, 2));
+    const dataStr =
+      'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(plan, null, 2));
     const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `treino_${plan.planName.replace(/\s+/g, '_').toLowerCase()}.json`);
+    downloadAnchorNode.setAttribute('href', dataStr);
+    downloadAnchorNode.setAttribute(
+      'download',
+      `treino_${plan.planName.replace(/\s+/g, '_').toLowerCase()}.json`,
+    );
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
@@ -439,17 +498,20 @@ export function WorkoutDashboard({
 
   const downloadText = () => {
     let text = `${plan.planName}\n${plan.goalDescription}\n\n`;
-    plan.days.forEach(day => {
+    plan.days.forEach((day) => {
       text += `--- ${day.dayName}: ${day.focus} ---\n`;
-      day.exercises.forEach(exc => {
+      day.exercises.forEach((exc) => {
         text += `- ${exc.name}: ${exc.sets} séries | ${exc.reps} reps | Descanso: ${exc.rest}\n`;
       });
       text += '\n';
     });
-    const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(text);
+    const dataStr = 'data:text/plain;charset=utf-8,' + encodeURIComponent(text);
     const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `treino_${plan.planName.replace(/\s+/g, '_').toLowerCase()}.txt`);
+    downloadAnchorNode.setAttribute('href', dataStr);
+    downloadAnchorNode.setAttribute(
+      'download',
+      `treino_${plan.planName.replace(/\s+/g, '_').toLowerCase()}.txt`,
+    );
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
@@ -472,10 +534,10 @@ export function WorkoutDashboard({
           </div>
           {(userProfile || profile) && <NutritionModule profile={(userProfile || profile)!} />}
         </div>
-        
+
         <div className="flex flex-col md:flex-row gap-3 mt-6 md:mt-0 relative print:hidden">
           <button
-            onClick={() => onStartActiveWorkout ? onStartActiveWorkout() : startActiveWorkout(0)}
+            onClick={() => (onStartActiveWorkout ? onStartActiveWorkout() : startActiveWorkout(0))}
             className="w-full md:w-auto px-5 py-2.5 rounded-full bg-brand-neon text-brand-dark text-xs font-black uppercase tracking-widest border border-brand-neon hover:bg-transparent hover:text-brand-neon transition-colors flex items-center justify-center min-w-[180px]"
           >
             <Play className="w-4 h-4 mr-2 fill-current" /> Treino ativo
@@ -492,26 +554,51 @@ export function WorkoutDashboard({
             onClick={toggleVoiceEnabled}
             className={`w-full md:w-auto px-4 py-2.5 rounded-full border text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center ${voiceEnabled ? 'bg-brand-neon/10 border-brand-neon text-brand-neon' : 'bg-brand-light/5 border-brand-light/10 text-brand-light'}`}
           >
-            {voiceEnabled ? <Volume2 className="w-4 h-4 mr-2" /> : <VolumeX className="w-4 h-4 mr-2" />}
+            {voiceEnabled ? (
+              <Volume2 className="w-4 h-4 mr-2" />
+            ) : (
+              <VolumeX className="w-4 h-4 mr-2" />
+            )}
             Voz
           </button>
-          
+
           <div className="relative">
-            <button 
-              onClick={() => { setShowExport(!showExport); setShowHistory(false); }}
+            <button
+              onClick={() => {
+                setShowExport(!showExport);
+                setShowHistory(false);
+              }}
               className="w-full md:w-auto px-5 py-2.5 rounded-full bg-brand-neon/10 border border-brand-neon/50 text-xs font-bold uppercase tracking-widest text-brand-neon hover:bg-brand-neon hover:text-brand-dark transition-colors flex items-center justify-center min-w-[150px]"
             >
               <Download className="w-4 h-4 mr-2" /> Exportar
             </button>
             {showExport && (
               <div className="absolute top-full right-0 mt-2 w-48 bg-brand-gray border border-brand-light/10 rounded-2xl shadow-2xl overflow-hidden z-50">
-                <button onClick={() => { handlePrint(); setShowExport(false); }} className="w-full text-left px-4 py-3 flex items-center border-b border-brand-light/5 hover:bg-brand-light/5 text-sm font-bold text-brand-light transition-colors">
+                <button
+                  onClick={() => {
+                    handlePrint();
+                    setShowExport(false);
+                  }}
+                  className="w-full text-left px-4 py-3 flex items-center border-b border-brand-light/5 hover:bg-brand-light/5 text-sm font-bold text-brand-light transition-colors"
+                >
                   <Printer className="w-4 h-4 mr-2 text-brand-muted" /> Salvar PDF
                 </button>
-                <button onClick={() => { downloadJSON(); setShowExport(false); }} className="w-full text-left px-4 py-3 flex items-center border-b border-brand-light/5 hover:bg-brand-light/5 text-sm font-bold text-brand-light transition-colors">
+                <button
+                  onClick={() => {
+                    downloadJSON();
+                    setShowExport(false);
+                  }}
+                  className="w-full text-left px-4 py-3 flex items-center border-b border-brand-light/5 hover:bg-brand-light/5 text-sm font-bold text-brand-light transition-colors"
+                >
                   <FileJson className="w-4 h-4 mr-2 text-brand-muted" /> Exportar JSON
                 </button>
-                <button onClick={() => { downloadText(); setShowExport(false); }} className="w-full text-left px-4 py-3 flex items-center hover:bg-brand-light/5 text-sm font-bold text-brand-light transition-colors">
+                <button
+                  onClick={() => {
+                    downloadText();
+                    setShowExport(false);
+                  }}
+                  className="w-full text-left px-4 py-3 flex items-center hover:bg-brand-light/5 text-sm font-bold text-brand-light transition-colors"
+                >
                   <FileText className="w-4 h-4 mr-2 text-brand-muted" /> Exportar Texto
                 </button>
               </div>
@@ -519,36 +606,54 @@ export function WorkoutDashboard({
           </div>
 
           <div className="relative">
-            <button 
-              onClick={() => { setShowHistory(!showHistory); setShowExport(false); }}
+            <button
+              onClick={() => {
+                setShowHistory(!showHistory);
+                setShowExport(false);
+              }}
               className="w-full md:w-auto px-5 py-2.5 rounded-full bg-brand-light/5 border border-brand-light/10 text-xs font-bold uppercase tracking-widest text-brand-light hover:bg-brand-light/10 transition-colors flex items-center justify-between min-w-[180px]"
             >
-              <span className="flex items-center"><History className="w-4 h-4 mr-2" /> Histórico ({history.length})</span>
+              <span className="flex items-center">
+                <History className="w-4 h-4 mr-2" /> Histórico ({history.length})
+              </span>
               <ChevronDown className="w-4 h-4 ml-2" />
             </button>
-            
+
             {showHistory && (
-            <div className="absolute top-full right-0 mt-2 w-64 bg-brand-gray border border-brand-light/10 rounded-2xl shadow-2xl overflow-hidden z-50">
-               <div className="max-h-60 overflow-y-auto">
-                 {history.map(p => (
-                   <button 
-                     key={p.id} 
-                     onClick={() => { onSelectHistory(p.id); setShowHistory(false); }}
-                     className={`w-full text-left px-4 py-3 flex flex-col border-b border-brand-light/5 hover:bg-brand-light/5 transition-colors ${p.id === plan.id ? 'bg-brand-neon/10' : ''}`}
-                   >
-                     <span className="text-sm font-bold text-brand-light truncate">{p.planName}</span>
-                     <span className="text-xs text-brand-muted">{new Date(p.createdAt || Date.now()).toLocaleDateString()}</span>
-                   </button>
-                 ))}
-               </div>
-               <div className="p-2 border-t border-brand-light/10 bg-black/20">
-                 <button onClick={() => { onNew(); setShowHistory(false); }} className="w-full py-2 rounded-xl text-xs font-bold text-brand-dark bg-brand-neon hover:bg-brand-neon-hover flex items-center justify-center uppercase">
-                   <PlusCircle className="w-4 h-4 mr-2" />
-                   Novo Treino
-                 </button>
-               </div>
-            </div>
-          )}
+              <div className="absolute top-full right-0 mt-2 w-64 bg-brand-gray border border-brand-light/10 rounded-2xl shadow-2xl overflow-hidden z-50">
+                <div className="max-h-60 overflow-y-auto">
+                  {history.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => {
+                        onSelectHistory(p.id);
+                        setShowHistory(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 flex flex-col border-b border-brand-light/5 hover:bg-brand-light/5 transition-colors ${p.id === plan.id ? 'bg-brand-neon/10' : ''}`}
+                    >
+                      <span className="text-sm font-bold text-brand-light truncate">
+                        {p.planName}
+                      </span>
+                      <span className="text-xs text-brand-muted">
+                        {new Date(p.createdAt || Date.now()).toLocaleDateString()}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <div className="p-2 border-t border-brand-light/10 bg-black/20">
+                  <button
+                    onClick={() => {
+                      onNew();
+                      setShowHistory(false);
+                    }}
+                    className="w-full py-2 rounded-xl text-xs font-bold text-brand-dark bg-brand-neon hover:bg-brand-neon-hover flex items-center justify-center uppercase"
+                  >
+                    <PlusCircle className="w-4 h-4 mr-2" />
+                    Novo Treino
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -557,11 +662,18 @@ export function WorkoutDashboard({
         <div className="bg-brand-gray border-2 border-brand-light/10 p-5 shadow-brutal-light">
           <div className="flex items-center gap-2 text-brand-magenta mb-3">
             <Flame className="w-5 h-5" />
-            <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">Streak</h3>
+            <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">
+              Streak
+            </h3>
           </div>
-          <div className="font-display text-5xl text-brand-neon text-shadow-neon">{streak.count}</div>
+          <div className="font-display text-5xl text-brand-neon text-shadow-neon">
+            {streak.count}
+          </div>
           <p className="font-mono text-xs uppercase text-brand-muted mt-2">
-            Último treino: {streak.lastDate ? new Date(streak.lastDate).toLocaleDateString('pt-BR') : 'ainda não registrado'}
+            Último treino:{' '}
+            {streak.lastDate
+              ? new Date(streak.lastDate).toLocaleDateString('pt-BR')
+              : 'ainda não registrado'}
           </p>
         </div>
 
@@ -569,9 +681,13 @@ export function WorkoutDashboard({
           <div className="flex items-center justify-between gap-4 mb-4">
             <div className="flex items-center gap-2">
               <Activity className="w-5 h-5 text-brand-neon" />
-              <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">Recuperação</h3>
+              <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">
+                Recuperação
+              </h3>
             </div>
-            <span className="font-mono text-sm text-brand-neon">{Math.round(recoveryScore.score)}/100</span>
+            <span className="font-mono text-sm text-brand-neon">
+              {Math.round(recoveryScore.score)}/100
+            </span>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -582,7 +698,9 @@ export function WorkoutDashboard({
                 min={0}
                 max={12}
                 value={dailyReadiness.sleepHours}
-                onChange={event => setDailyReadiness(prev => ({ ...prev, sleepHours: Number(event.target.value) }))}
+                onChange={(event) =>
+                  setDailyReadiness((prev) => ({ ...prev, sleepHours: Number(event.target.value) }))
+                }
                 className="mt-1 w-full bg-brand-dark border-2 border-brand-light/10 px-3 py-2 text-brand-light font-mono outline-none focus:border-brand-neon"
               />
             </label>
@@ -594,7 +712,9 @@ export function WorkoutDashboard({
                   min={1}
                   max={10}
                   value={dailyReadiness[key]}
-                  onChange={event => setDailyReadiness(prev => ({ ...prev, [key]: Number(event.target.value) }))}
+                  onChange={(event) =>
+                    setDailyReadiness((prev) => ({ ...prev, [key]: Number(event.target.value) }))
+                  }
                   className="mt-2 w-full accent-brand-neon"
                 />
               </label>
@@ -623,20 +743,29 @@ export function WorkoutDashboard({
         <div className="bg-brand-gray border-2 border-brand-light/10 p-5 shadow-brutal-light">
           <div className="flex items-center gap-2 mb-3">
             <Brain className="w-5 h-5 text-brand-neon" />
-            <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">Sinais IA</h3>
+            <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">
+              Sinais IA
+            </h3>
           </div>
           <div className="space-y-3 font-mono text-sm">
-            <div className={`border-l-2 pl-3 ${deloadSuggested ? 'border-brand-magenta text-brand-magenta' : 'border-brand-neon text-brand-light/80'}`}>
-              {deloadSuggested ? 'Sinais de fadiga detectados. Considere deload.' : 'Deload não indicado pelos dados atuais.'}
+            <div
+              className={`border-l-2 pl-3 ${deloadSuggested ? 'border-brand-magenta text-brand-magenta' : 'border-brand-neon text-brand-light/80'}`}
+            >
+              {deloadSuggested
+                ? 'Sinais de fadiga detectados. Considere deload.'
+                : 'Deload não indicado pelos dados atuais.'}
             </div>
             {plateauStatus && (
-              <div className={`border-l-2 pl-3 ${plateauStatus.plateau ? 'border-brand-magenta text-brand-magenta' : 'border-brand-neon text-brand-light/80'}`}>
+              <div
+                className={`border-l-2 pl-3 ${plateauStatus.plateau ? 'border-brand-magenta text-brand-magenta' : 'border-brand-neon text-brand-light/80'}`}
+              >
                 {chartExerciseName}: {plateauStatus.reason}
               </div>
             )}
             {dailyReadinessScore && (
               <div className="border-l-2 pl-3 border-brand-neon text-brand-light/80">
-                Prontidão diária: {dailyReadinessScore.label} ({dailyReadinessScore.score}/100) - risco {overtrainingRisk}
+                Prontidão diária: {dailyReadinessScore.label} ({dailyReadinessScore.score}/100) -
+                risco {overtrainingRisk}
               </div>
             )}
           </div>
@@ -660,110 +789,208 @@ export function WorkoutDashboard({
 
       <div className="mb-12 print:hidden">
         <div className="grid md:grid-cols-3 gap-3 mb-4">
-          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => profile && runAiAction(() => generateAdvancedWorkoutPlan(profile, sessions))}>
+          <button
+            className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors"
+            onClick={() =>
+              profile && runAiAction(() => generateAdvancedWorkoutPlan(profile, sessions))
+            }
+          >
             Anamnese avançada
           </button>
-          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => runAiAction(() => adaptWeeklyPlan(plan, sessions))}>
+          <button
+            className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors"
+            onClick={() => runAiAction(() => adaptWeeklyPlan(plan, sessions))}
+          >
             Adaptação semanal
           </button>
-          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => runAiAction(() => generateLoadProgressionAdvice(plan, sessions))}>
+          <button
+            className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors"
+            onClick={() => runAiAction(() => generateLoadProgressionAdvice(plan, sessions))}
+          >
             Progressão de carga
           </button>
-          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => runAiAction(() => predictPlateau(plan, sessions))}>
+          <button
+            className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors"
+            onClick={() => runAiAction(() => predictPlateau(plan, sessions))}
+          >
             Predição de platô
           </button>
-          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => runAiAction(() => generateDeloadAdvice(plan, sessions))}>
+          <button
+            className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors"
+            onClick={() => runAiAction(() => generateDeloadAdvice(plan, sessions))}
+          >
             Deload inteligente
           </button>
           <button
             className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors"
-            onClick={() => runAiAction(() => {
-              const firstExercise = plan.days.flatMap(day => day.exercises)[0]?.name || 'exercício principal';
-              return suggestContextualExerciseAlternatives(
-                firstExercise,
-                profile?.equipment || profile?.gymType || profile?.workoutLocation || '',
-                profile?.injuries || ''
-              );
-            })}
+            onClick={() =>
+              runAiAction(() => {
+                const firstExercise =
+                  plan.days.flatMap((day) => day.exercises)[0]?.name || 'exercício principal';
+                return suggestContextualExerciseAlternatives(
+                  firstExercise,
+                  profile?.equipment || profile?.gymType || profile?.workoutLocation || '',
+                  profile?.injuries || '',
+                );
+              })
+            }
           >
             Substituições
           </button>
-          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => profile && runAiAction(() => recommendWeeklyVolume(profile))}>
+          <button
+            className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors"
+            onClick={() => profile && runAiAction(() => recommendWeeklyVolume(profile))}
+          >
             Volume semanal
           </button>
-          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => runAiAction(() => adjustWorkoutForAvailableTime(plan, 45))}>
+          <button
+            className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors"
+            onClick={() => runAiAction(() => adjustWorkoutForAvailableTime(plan, 45))}
+          >
             Ajustar para 45 min
           </button>
-          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => runAiAction(() => adjustWorkoutForRecovery(plan, dailyReadiness))}>
+          <button
+            className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors"
+            onClick={() => runAiAction(() => adjustWorkoutForRecovery(plan, dailyReadiness))}
+          >
             Ajustar por recuperação
           </button>
-          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => profile && runAiAction(async () => JSON.stringify(await generateMacrocycle(profile), null, 2))}>
+          <button
+            className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors"
+            onClick={() =>
+              profile &&
+              runAiAction(async () => JSON.stringify(await generateMacrocycle(profile), null, 2))
+            }
+          >
             Macrociclo anual
           </button>
-          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => profile && runAiAction(async () => JSON.stringify(await generateMicrocycles(profile, profile.goal), null, 2))}>
+          <button
+            className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors"
+            onClick={() =>
+              profile &&
+              runAiAction(async () =>
+                JSON.stringify(await generateMicrocycles(profile, profile.goal), null, 2),
+              )
+            }
+          >
             Microciclos
           </button>
-          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => profile && runAiAction(() => suggestAdvancedMethods(profile))}>
+          <button
+            className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors"
+            onClick={() => profile && runAiAction(() => suggestAdvancedMethods(profile))}
+          >
             Métodos avançados
           </button>
-          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => profile && runAiAction(() => recommendIdealFrequency(profile))}>
+          <button
+            className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors"
+            onClick={() => profile && runAiAction(() => recommendIdealFrequency(profile))}
+          >
             Frequência ideal
           </button>
-          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => runAiAction(() => adjustBySleepAndStress(plan, profile?.sleepHours || String(dailyReadiness.sleepHours), profile?.stressLevel || 'Médio'))}>
+          <button
+            className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors"
+            onClick={() =>
+              runAiAction(() =>
+                adjustBySleepAndStress(
+                  plan,
+                  profile?.sleepHours || String(dailyReadiness.sleepHours),
+                  profile?.stressLevel || 'Médio',
+                ),
+              )
+            }
+          >
             Sono/estresse
           </button>
-          <button className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors" onClick={() => runAiAction(() => generateDayVariations(plan, 'Hoje estou cansado, sem muito tempo e com academia cheia.'))}>
+          <button
+            className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors"
+            onClick={() =>
+              runAiAction(() =>
+                generateDayVariations(
+                  plan,
+                  'Hoje estou cansado, sem muito tempo e com academia cheia.',
+                ),
+              )
+            }
+          >
             Variações do dia
           </button>
           <button
             className="bg-white/10 border-2 border-brand-light/10 p-3 text-sm text-brand-light font-bold uppercase hover:border-brand-neon transition-colors"
-            onClick={() => runAiAction(async () => {
-              const session = sessions[sessions.length - 1] || saveCurrentSession(0);
-              if (!session) return 'Sem sessão disponível para análise.';
-              return JSON.stringify(await generatePremiumPostWorkoutFeedback(session, plan), null, 2);
-            })}
+            onClick={() =>
+              runAiAction(async () => {
+                const session = sessions[sessions.length - 1] || saveCurrentSession(0);
+                if (!session) return 'Sem sessão disponível para análise.';
+                return JSON.stringify(
+                  await generatePremiumPostWorkoutFeedback(session, plan),
+                  null,
+                  2,
+                );
+              })
+            }
           >
             Devolutiva pós-treino
           </button>
         </div>
 
         <div className="bg-brand-gray border-2 border-brand-light/10 p-5 shadow-brutal-light">
-          <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light mb-2">Painel de IA</h3>
+          <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light mb-2">
+            Painel de IA
+          </h3>
           <div className="text-sm text-brand-light/80 whitespace-pre-wrap font-mono">
-            {aiLoading ? 'Analisando...' : aiPanel || (profile ? 'Escolha uma ação acima.' : 'Complete a anamnese para liberar todas as ações de perfil.')}
+            {aiLoading
+              ? 'Analisando...'
+              : aiPanel ||
+                (profile
+                  ? 'Escolha uma ação acima.'
+                  : 'Complete a anamnese para liberar todas as ações de perfil.')}
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12 print:hidden">
-        {profile ? <CoachChat profile={profile} plan={plan} sessions={sessions} /> : <ReadinessCard checkin={dailyReadiness} />}
+        {profile ? (
+          <CoachChat profile={profile} plan={plan} sessions={sessions} />
+        ) : (
+          <ReadinessCard checkin={dailyReadiness} />
+        )}
         <WeeklyReportCard plans={history} workoutHistory={workoutHistory} />
         <div>
           <div className="mb-3 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-brand-neon" />
-              <span className="font-mono text-xs uppercase tracking-widest text-brand-muted">Histórico de carga</span>
+              <span className="font-mono text-xs uppercase tracking-widest text-brand-muted">
+                Histórico de carga
+              </span>
             </div>
             {exerciseOptions.length > 0 && (
               <select
                 value={chartExerciseName}
-                onChange={event => setSelectedExerciseName(event.target.value)}
+                onChange={(event) => setSelectedExerciseName(event.target.value)}
                 className="bg-brand-gray border-2 border-brand-light/10 text-brand-light text-xs font-mono px-3 py-2 outline-none focus:border-brand-neon max-w-[220px]"
               >
-                {exerciseOptions.map(name => (
-                  <option key={name} value={name}>{name}</option>
+                {exerciseOptions.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
                 ))}
               </select>
             )}
           </div>
           {chartExerciseName && (
-            <ProgressCharts plans={history} workoutHistory={workoutHistory} exerciseName={chartExerciseName} />
+            <ProgressCharts
+              plans={history}
+              workoutHistory={workoutHistory}
+              exerciseName={chartExerciseName}
+            />
           )}
         </div>
         <div className="bg-brand-gray border-2 border-brand-light/10 p-5 shadow-brutal-light">
-          <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light mb-3">Recuperação aplicada</h3>
+          <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light mb-3">
+            Recuperação aplicada
+          </h3>
           <p className="font-mono text-sm text-brand-light/80">
-            Estado atual: <span className="text-brand-neon">{recoveryScore.label}</span>. Use o ajuste do dia para reduzir volume, manter progressão ou avançar com prudência.
+            Estado atual: <span className="text-brand-neon">{recoveryScore.label}</span>. Use o
+            ajuste do dia para reduzir volume, manter progressão ou avançar com prudência.
           </p>
         </div>
       </div>
@@ -774,30 +1001,43 @@ export function WorkoutDashboard({
           <WeeklyInsightsCard profile={profile} sessions={sessions} />
         ) : (
           <div className="bg-brand-gray border-2 border-brand-light/10 p-5 shadow-brutal-light">
-            <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light mb-2">Insights da semana</h3>
-            <p className="text-brand-muted text-sm font-mono">Complete a anamnese para gerar insights personalizados.</p>
+            <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light mb-2">
+              Insights da semana
+            </h3>
+            <p className="text-brand-muted text-sm font-mono">
+              Complete a anamnese para gerar insights personalizados.
+            </p>
           </div>
         )}
       </div>
 
       {allDaysCompleted && (
         <div className="mb-12 bg-brand-neon/10 border-2 border-brand-neon p-6 md:p-8 rounded-3xl shadow-brutal-neon flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative">
-           <div className="absolute top-0 right-0 w-64 h-64 bg-brand-neon/10 blur-3xl rounded-full pointer-events-none"></div>
-           <div>
-             <h2 className="font-display font-black text-3xl md:text-4xl uppercase tracking-tighter text-brand-light text-shadow-neon mb-2">Semana Concluída!</h2>
-             <p className="font-mono text-brand-light/80 text-sm max-w-xl">
-               Sua inteligência artificial coletou os dados de carga, repetições e percepção de esforço desta semana. 
-               Podemos gerar o próximo microciclo aplicando sobrecarga progressiva, ou uma semana de deload se os dados indicarem fadiga nervosa.
-             </p>
-           </div>
-           <div className="flex flex-col gap-3 shrink-0 relative z-10 w-full md:w-auto">
-             <button onClick={() => onNew()} className="px-6 py-3 bg-brand-neon text-brand-dark font-black font-display uppercase tracking-widest text-xl shadow-lg border-2 border-brand-neon hover:bg-white hover:border-white transition-colors">
-               Gerar Próxima Semana
-             </button>
-             <button onClick={() => onNew()} className="px-6 py-3 bg-transparent text-brand-neon font-black font-display uppercase tracking-widest text-lg border-2 border-brand-neon hover:bg-brand-neon/20 transition-colors">
-               Forçar Deload
-             </button>
-           </div>
+          <div className="absolute top-0 right-0 w-64 h-64 bg-brand-neon/10 blur-3xl rounded-full pointer-events-none"></div>
+          <div>
+            <h2 className="font-display font-black text-3xl md:text-4xl uppercase tracking-tighter text-brand-light text-shadow-neon mb-2">
+              Semana Concluída!
+            </h2>
+            <p className="font-mono text-brand-light/80 text-sm max-w-xl">
+              Sua inteligência artificial coletou os dados de carga, repetições e percepção de
+              esforço desta semana. Podemos gerar o próximo microciclo aplicando sobrecarga
+              progressiva, ou uma semana de deload se os dados indicarem fadiga nervosa.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 shrink-0 relative z-10 w-full md:w-auto">
+            <button
+              onClick={() => onNew()}
+              className="px-6 py-3 bg-brand-neon text-brand-dark font-black font-display uppercase tracking-widest text-xl shadow-lg border-2 border-brand-neon hover:bg-white hover:border-white transition-colors"
+            >
+              Gerar Próxima Semana
+            </button>
+            <button
+              onClick={() => onNew()}
+              className="px-6 py-3 bg-transparent text-brand-neon font-black font-display uppercase tracking-widest text-lg border-2 border-brand-neon hover:bg-brand-neon/20 transition-colors"
+            >
+              Forçar Deload
+            </button>
+          </div>
         </div>
       )}
 
@@ -805,148 +1045,187 @@ export function WorkoutDashboard({
       <div className="space-y-12">
         {plan.days.map((day, dayIndex) => {
           const completed = isDayCompleted(day);
-          
-          return (
-          <div key={dayIndex} className={`bg-brand-gray/50 border-4 p-6 md:p-8 relative ${completed ? 'border-brand-neon' : 'border-brand-light/10'}`}>
-            {/* Background numeral */}
-            <div className="absolute -top-10 -right-6 font-display text-[150px] leading-none text-brand-light/[0.02] pointer-events-none select-none">
-              {(dayIndex + 1).toString().padStart(2, '0')}
-            </div>
 
-            <div className="relative z-10">
-              <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 border-b-2 border-brand-light/10 pb-6">
-                <div>
-                  <div className="inline-block bg-brand-magenta text-brand-light px-3 py-1 font-bold uppercase tracking-widest mb-3 border-2 border-brand-magenta shadow-[2px_2px_0px_#fff]">
-                    {day.dayName}
+          return (
+            <div
+              key={dayIndex}
+              className={`bg-brand-gray/50 border-4 p-6 md:p-8 relative ${completed ? 'border-brand-neon' : 'border-brand-light/10'}`}
+            >
+              {/* Background numeral */}
+              <div className="absolute -top-10 -right-6 font-display text-[150px] leading-none text-brand-light/[0.02] pointer-events-none select-none">
+                {(dayIndex + 1).toString().padStart(2, '0')}
+              </div>
+
+              <div className="relative z-10">
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 border-b-2 border-brand-light/10 pb-6">
+                  <div>
+                    <div className="inline-block bg-brand-magenta text-brand-light px-3 py-1 font-bold uppercase tracking-widest mb-3 border-2 border-brand-magenta shadow-[2px_2px_0px_#fff]">
+                      {day.dayName}
+                    </div>
+                    <h2 className="font-display font-black text-5xl uppercase tracking-tighter text-brand-neon text-shadow-neon">
+                      {day.focus}
+                    </h2>
+                    {day.estimatedDuration && (
+                      <p className="mt-2 font-mono text-xs uppercase tracking-widest text-brand-muted">
+                        Duração estimada: {day.estimatedDuration}
+                      </p>
+                    )}
                   </div>
-                  <h2 className="font-display font-black text-5xl uppercase tracking-tighter text-brand-neon text-shadow-neon">{day.focus}</h2>
-                  {day.estimatedDuration && (
-                    <p className="mt-2 font-mono text-xs uppercase tracking-widest text-brand-muted">
-                      Duração estimada: {day.estimatedDuration}
-                    </p>
+                  {completed ? (
+                    <div className="mt-4 md:mt-0 flex items-center text-brand-neon font-bold uppercase tracking-widest bg-brand-neon/10 px-4 py-2 border-2 border-brand-neon">
+                      <CheckCircle2 className="w-5 h-5 mr-2" /> Treino Concluído
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => startActiveWorkout(dayIndex)}
+                      className="mt-4 md:mt-0 flex items-center justify-center bg-brand-neon text-brand-dark px-6 py-3 font-black uppercase tracking-widest border-2 border-brand-neon hover:bg-transparent hover:text-brand-neon transition-colors shadow-brutal-neon"
+                    >
+                      <Play className="w-5 h-5 mr-2 fill-current" /> Modo Treino Ativo
+                    </button>
                   )}
                 </div>
-                {completed ? (
-                  <div className="mt-4 md:mt-0 flex items-center text-brand-neon font-bold uppercase tracking-widest bg-brand-neon/10 px-4 py-2 border-2 border-brand-neon">
-                    <CheckCircle2 className="w-5 h-5 mr-2" /> Treino Concluído
+
+                {day.warmup && (
+                  <div className="mb-6 p-4 bg-orange-500/10 border-2 border-orange-500/20">
+                    <p className="text-xs uppercase tracking-widest text-orange-400 mb-1 font-black">
+                      Aquecimento
+                    </p>
+                    <p className="text-sm text-brand-light/80 font-mono">{day.warmup}</p>
                   </div>
-                ) : (
-                  <button 
-                    onClick={() => startActiveWorkout(dayIndex)}
-                    className="mt-4 md:mt-0 flex items-center justify-center bg-brand-neon text-brand-dark px-6 py-3 font-black uppercase tracking-widest border-2 border-brand-neon hover:bg-transparent hover:text-brand-neon transition-colors shadow-brutal-neon"
-                  >
-                    <Play className="w-5 h-5 mr-2 fill-current" /> Modo Treino Ativo
-                  </button>
                 )}
-              </div>
 
-              {day.warmup && (
-                <div className="mb-6 p-4 bg-orange-500/10 border-2 border-orange-500/20">
-                  <p className="text-xs uppercase tracking-widest text-orange-400 mb-1 font-black">Aquecimento</p>
-                  <p className="text-sm text-brand-light/80 font-mono">{day.warmup}</p>
-                </div>
-              )}
+                {/* Exercises Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {day.exercises.map((exc, excIndex) => {
+                    const previousStat = getPreviousExerciseStat(exc.name);
+                    const previousData = getPreviousExerciseData(exc.name);
+                    const previousPR = getPRForExercise(exc.name);
 
-              {/* Exercises Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {day.exercises.map((exc, excIndex) => {
-                  const previousStat = getPreviousExerciseStat(exc.name);
-                  const previousData = getPreviousExerciseData(exc.name);
-                  const previousPR = getPRForExercise(exc.name);
-
-                  return (
-                  <ExerciseCard 
-                    key={exc.id || excIndex} 
-                    exercise={exc} 
-                    history={history}
-                    workoutHistory={workoutHistory}
-                    userProfile={userProfile || profile || undefined}
-                    previousStat={previousStat}
-                    previousData={previousData}
-                    previousPR={previousPR}
-                    onUpdate={(updated) => handleExerciseUpdateWithRest(dayIndex, excIndex, exc, updated)} 
-                  />
-                )})}
-              </div>
-
-              {day.cooldown && (
-                <div className="mt-6 p-4 bg-blue-500/10 border-2 border-blue-500/20">
-                  <p className="text-xs uppercase tracking-widest text-blue-400 mb-1 font-black">Cooldown</p>
-                  <p className="text-sm text-brand-light/80 font-mono">{day.cooldown}</p>
-                </div>
-              )}
-              
-              {/* Workout Feedback (Appears when day is complete) */}
-              {completed && (
-                <div className="mt-12 p-6 bg-brand-dark border-4 border-brand-magenta shadow-brutal-magenta">
-                  <h3 className="font-display uppercase tracking-widest text-2xl text-brand-light mb-2 flex items-center">
-                    🏁 Relatório Pós-Treino
-                  </h3>
-                  <p className="text-brand-muted text-sm font-mono mb-6">Como foi o treino? Salve os dados para otimizar a próxima sessão.</p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
-                    <div>
-                      <label className="block text-xs uppercase font-bold text-brand-light mb-3">Nível de Dificuldade Hoje (1-10)</label>
-                      <input 
-                        type="range" 
-                        min="1" max="10" 
-                        value={day.workoutFeedback?.difficulty || 5}
-                        onChange={(e) => handleUpdateDayFeedback(dayIndex, { ...day.workoutFeedback, difficulty: Number(e.target.value) } as WorkoutFeedback)}
-                        className="w-full accent-brand-magenta"
+                    return (
+                      <ExerciseCard
+                        key={exc.id || excIndex}
+                        exercise={exc}
+                        history={history}
+                        workoutHistory={workoutHistory}
+                        userProfile={userProfile || profile || undefined}
+                        previousStat={previousStat}
+                        previousData={previousData}
+                        previousPR={previousPR}
+                        onUpdate={(updated) =>
+                          handleExerciseUpdateWithRest(dayIndex, excIndex, exc, updated)
+                        }
                       />
-                      <div className="flex justify-between text-[10px] text-brand-muted uppercase font-bold mt-2 font-mono">
-                        <span>1 - Fácil</span>
-                        <span className="text-brand-magenta text-lg">{day.workoutFeedback?.difficulty || 5}</span>
-                        <span>10 - Morte</span>
+                    );
+                  })}
+                </div>
+
+                {day.cooldown && (
+                  <div className="mt-6 p-4 bg-blue-500/10 border-2 border-blue-500/20">
+                    <p className="text-xs uppercase tracking-widest text-blue-400 mb-1 font-black">
+                      Cooldown
+                    </p>
+                    <p className="text-sm text-brand-light/80 font-mono">{day.cooldown}</p>
+                  </div>
+                )}
+
+                {/* Workout Feedback (Appears when day is complete) */}
+                {completed && (
+                  <div className="mt-12 p-6 bg-brand-dark border-4 border-brand-magenta shadow-brutal-magenta">
+                    <h3 className="font-display uppercase tracking-widest text-2xl text-brand-light mb-2 flex items-center">
+                      🏁 Relatório Pós-Treino
+                    </h3>
+                    <p className="text-brand-muted text-sm font-mono mb-6">
+                      Como foi o treino? Salve os dados para otimizar a próxima sessão.
+                    </p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+                      <div>
+                        <label className="block text-xs uppercase font-bold text-brand-light mb-3">
+                          Nível de Dificuldade Hoje (1-10)
+                        </label>
+                        <input
+                          type="range"
+                          min="1"
+                          max="10"
+                          value={day.workoutFeedback?.difficulty || 5}
+                          onChange={(e) =>
+                            handleUpdateDayFeedback(dayIndex, {
+                              ...day.workoutFeedback,
+                              difficulty: Number(e.target.value),
+                            } as WorkoutFeedback)
+                          }
+                          className="w-full accent-brand-magenta"
+                        />
+                        <div className="flex justify-between text-[10px] text-brand-muted uppercase font-bold mt-2 font-mono">
+                          <span>1 - Fácil</span>
+                          <span className="text-brand-magenta text-lg">
+                            {day.workoutFeedback?.difficulty || 5}
+                          </span>
+                          <span>10 - Morte</span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs uppercase font-bold text-brand-light mb-3">
+                          Resumo em Uma Palavra (ou Emoji)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Ex: 🥵 Destruído"
+                          value={day.workoutFeedback?.feeling || ''}
+                          onChange={(e) =>
+                            handleUpdateDayFeedback(dayIndex, {
+                              ...day.workoutFeedback,
+                              feeling: e.target.value,
+                            } as WorkoutFeedback)
+                          }
+                          className="w-full bg-brand-gray border-2 border-brand-light/20 p-3 text-brand-light font-mono outline-none focus:border-brand-magenta"
+                        />
                       </div>
                     </div>
-                    
+
                     <div>
-                      <label className="block text-xs uppercase font-bold text-brand-light mb-3">Resumo em Uma Palavra (ou Emoji)</label>
-                      <input 
-                        type="text" 
-                        placeholder="Ex: 🥵 Destruído"
-                        value={day.workoutFeedback?.feeling || ''}
-                        onChange={(e) => handleUpdateDayFeedback(dayIndex, { ...day.workoutFeedback, feeling: e.target.value } as WorkoutFeedback)}
-                        className="w-full bg-brand-gray border-2 border-brand-light/20 p-3 text-brand-light font-mono outline-none focus:border-brand-magenta"
+                      <label className="block text-xs uppercase font-bold text-brand-light mb-3">
+                        Comentários Adicionais
+                      </label>
+                      <textarea
+                        rows={3}
+                        placeholder="Ex: Senti a lombar no Terra, preciso focar na técnica..."
+                        value={day.workoutFeedback?.comments || ''}
+                        onChange={(e) =>
+                          handleUpdateDayFeedback(dayIndex, {
+                            ...day.workoutFeedback,
+                            comments: e.target.value,
+                          } as WorkoutFeedback)
+                        }
+                        className="w-full bg-brand-gray border-2 border-brand-light/20 p-3 text-brand-light font-mono outline-none focus:border-brand-magenta resize-none"
                       />
                     </div>
+
+                    <div className="mt-8 flex flex-col md:flex-row justify-end gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          saveCurrentSession(dayIndex);
+                          alert('Sessão salva para a IA.');
+                        }}
+                        className="px-6 py-4 bg-brand-light/10 text-brand-light font-black font-display uppercase tracking-widest text-lg border-2 border-brand-light/20 hover:border-brand-neon hover:text-brand-neon transition-colors"
+                      >
+                        SALVAR SESSÃO PARA IA
+                      </button>
+                      <button
+                        onClick={() => handleFinishWorkout(dayIndex)}
+                        className="px-8 py-4 bg-brand-neon text-brand-dark font-black font-display uppercase tracking-widest text-xl shadow-lg border-2 border-brand-neon hover:bg-brand-neon-hover hover:scale-105 transition-transform"
+                      >
+                        FINALIZAR & SALVAR TREINO
+                      </button>
+                    </div>
                   </div>
-                  
-                  <div>
-                    <label className="block text-xs uppercase font-bold text-brand-light mb-3">Comentários Adicionais</label>
-                    <textarea 
-                      rows={3} 
-                      placeholder="Ex: Senti a lombar no Terra, preciso focar na técnica..."
-                      value={day.workoutFeedback?.comments || ''}
-                      onChange={(e) => handleUpdateDayFeedback(dayIndex, { ...day.workoutFeedback, comments: e.target.value } as WorkoutFeedback)}
-                      className="w-full bg-brand-gray border-2 border-brand-light/20 p-3 text-brand-light font-mono outline-none focus:border-brand-magenta resize-none"
-                    />
-                  </div>
-                  
-                  <div className="mt-8 flex flex-col md:flex-row justify-end gap-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        saveCurrentSession(dayIndex);
-                        alert('Sessão salva para a IA.');
-                      }}
-                      className="px-6 py-4 bg-brand-light/10 text-brand-light font-black font-display uppercase tracking-widest text-lg border-2 border-brand-light/20 hover:border-brand-neon hover:text-brand-neon transition-colors"
-                    >
-                      SALVAR SESSÃO PARA IA
-                    </button>
-                    <button 
-                      onClick={() => handleFinishWorkout(dayIndex)}
-                      className="px-8 py-4 bg-brand-neon text-brand-dark font-black font-display uppercase tracking-widest text-xl shadow-lg border-2 border-brand-neon hover:bg-brand-neon-hover hover:scale-105 transition-transform"
-                    >
-                      FINALIZAR & SALVAR TREINO
-                    </button>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
-        )})}
+          );
+        })}
       </div>
       <RestTimer initialSeconds={restSeconds} autoStartKey={timerKey} onVoiceAlert={voiceEnabled} />
       {showLibrary && <ExerciseLibraryModal onClose={() => setShowLibrary(false)} />}

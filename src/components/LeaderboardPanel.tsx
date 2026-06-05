@@ -15,11 +15,13 @@ export function LeaderboardPanel({ groupId }: Props) {
 
   useEffect(() => {
     listGroupLeaderboard(groupId, metric)
-      .then(data => {
+      .then((data) => {
         setRows(data);
         setError('');
       })
-      .catch(err => setError(err instanceof Error ? err.message : 'Não foi possível carregar o ranking.'));
+      .catch((err) =>
+        setError(err instanceof Error ? err.message : 'Não foi possível carregar o ranking.'),
+      );
   }, [groupId, metric]);
 
   return (
@@ -32,7 +34,7 @@ export function LeaderboardPanel({ groupId }: Props) {
 
         <select
           value={metric}
-          onChange={event => setMetric(event.target.value as typeof metric)}
+          onChange={(event) => setMetric(event.target.value as typeof metric)}
           className="bg-brand-dark border border-white/10 rounded-xl px-3 py-2 text-white outline-none"
         >
           <option value="volume">Volume semanal</option>
@@ -45,7 +47,10 @@ export function LeaderboardPanel({ groupId }: Props) {
 
       <div className="space-y-3">
         {rows.map((row, index) => (
-          <div key={row.user_id} className="flex items-center justify-between rounded-2xl bg-white/5 p-4">
+          <div
+            key={row.user_id}
+            className="flex items-center justify-between rounded-2xl bg-white/5 p-4"
+          >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-brand-neon/10 text-brand-neon flex items-center justify-center font-black">
                 #{index + 1}
@@ -68,11 +73,15 @@ export function LeaderboardPanel({ groupId }: Props) {
                   <Flame size={16} /> {row.current_streak}d
                 </p>
               )}
-              {metric === 'workouts' && <p className="font-black text-white">{row.total_workouts} treinos</p>}
+              {metric === 'workouts' && (
+                <p className="font-black text-white">{row.total_workouts} treinos</p>
+              )}
             </div>
           </div>
         ))}
-        {rows.length === 0 && !error && <p className="text-sm text-brand-muted">Ranking ainda vazio.</p>}
+        {rows.length === 0 && !error && (
+          <p className="text-sm text-brand-muted">Ranking ainda vazio.</p>
+        )}
       </div>
     </section>
   );

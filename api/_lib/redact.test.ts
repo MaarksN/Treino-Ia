@@ -3,7 +3,9 @@ import { redactMetadata, redactSensitiveString } from './redact';
 
 describe('redact helpers', () => {
   it('redacts Authorization bearer values', () => {
-    expect(redactSensitiveString('Authorization: Bearer secret-token')).toBe('Authorization: Bearer [REDACTED]');
+    expect(redactSensitiveString('Authorization: Bearer secret-token')).toBe(
+      'Authorization: Bearer [REDACTED]',
+    );
   });
 
   it('redacts token fields in metadata', () => {
@@ -28,13 +30,16 @@ describe('redact helpers', () => {
   });
 
   it('redacts base64 image payloads and truncates oversized metadata', () => {
-    const redacted = redactMetadata({
-      image: 'data:image/png;base64,a'.padEnd(1_500, 'a'),
-      notes: 'x'.repeat(1_500),
-    }, {
-      maxSerializedBytes: 50,
-      maxStringLength: 100,
-    });
+    const redacted = redactMetadata(
+      {
+        image: 'data:image/png;base64,a'.padEnd(1_500, 'a'),
+        notes: 'x'.repeat(1_500),
+      },
+      {
+        maxSerializedBytes: 50,
+        maxStringLength: 100,
+      },
+    );
 
     expect(redacted.truncated).toBe(true);
     expect(String(redacted.preview)).toContain('"image":"[REDACTED]"');

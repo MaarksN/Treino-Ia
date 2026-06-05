@@ -1,4 +1,10 @@
-import { getTrustedRequestOrigin, handleApiError, json, readJsonObject, HttpError } from '../_lib/http';
+import {
+  getTrustedRequestOrigin,
+  handleApiError,
+  json,
+  readJsonObject,
+  HttpError,
+} from '../_lib/http';
 import { requireSupabaseUser } from '../_lib/server-supabase';
 import { BILLING_PROVIDER_NOT_CONFIGURED, getStripeClient } from '../_lib/stripe-client';
 import { resolveCheckoutPlan } from '../_lib/billing';
@@ -14,7 +20,11 @@ export default async function handler(request: Request) {
 
   try {
     if (!process.env.STRIPE_SECRET_KEY) {
-      return json({ error: BILLING_PROVIDER_NOT_CONFIGURED, dataMode: 'not_configured' }, 503, request);
+      return json(
+        { error: BILLING_PROVIDER_NOT_CONFIGURED, dataMode: 'not_configured' },
+        503,
+        request,
+      );
     }
 
     const user = await requireSupabaseUser(request);
@@ -22,7 +32,7 @@ export default async function handler(request: Request) {
     const checkoutPlan = resolveCheckoutPlan(body.planId, body.interval);
 
     if (!checkoutPlan.planId || !checkoutPlan.interval) {
-       throw new HttpError(400, 'planId invalid or missing, and interval required');
+      throw new HttpError(400, 'planId invalid or missing, and interval required');
     }
 
     const stripe = getStripeClient();
@@ -34,10 +44,10 @@ export default async function handler(request: Request) {
       mode: 'subscription',
       allow_promotion_codes: true,
       line_items: [
-         {
-           price: checkoutPlan.priceId,
-           quantity: 1,
-         }
+        {
+          price: checkoutPlan.priceId,
+          quantity: 1,
+        },
       ],
       customer_email: user.email,
       success_url: `${origin}/?checkout=success`,
@@ -61,7 +71,11 @@ export default async function handler(request: Request) {
     return json({ checkoutUrl: session.url, sessionId: session.id }, 200, request);
   } catch (error) {
     if ((error as any)?.message === BILLING_PROVIDER_NOT_CONFIGURED) {
-      return json({ error: BILLING_PROVIDER_NOT_CONFIGURED, dataMode: 'not_configured' }, 503, request);
+      return json(
+        { error: BILLING_PROVIDER_NOT_CONFIGURED, dataMode: 'not_configured' },
+        503,
+        request,
+      );
     }
     return handleApiError(error, request);
   }

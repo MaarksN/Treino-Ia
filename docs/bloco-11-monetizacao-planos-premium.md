@@ -34,28 +34,28 @@ docs/bloco-11-monetizacao-planos-premium.md
 
 ## Tabela dos 20 itens
 
-| # | Item | Prioridade sugerida |
-|---:|---|---|
-| 1 | Estrutura de planos Free / Pro / Coach / Elite | MVP / Base |
-| 2 | Paywall com Stripe (checkout session) | MVP / Base |
-| 3 | Trial gratuito de 7 dias com contagem regressiva | MVP / Base |
-| 4 | Tela de upgrade contextual (upsell no momento certo) | Premium / V2 |
-| 5 | Dashboard de assinatura (status, renovação, cancelamento) | MVP / Base |
-| 6 | Cupons e códigos promocionais | Premium / V2 |
-| 7 | Comparativo de planos (feature matrix visual) | MVP / Base |
-| 8 | Limite de planos de treino no Free (2 planos) | Premium / V2 |
-| 9 | Marca d'água no PDF exportado no Free | Premium / V2 |
-| 10 | Desbloqueio de funcionalidades por tier | MVP / Base |
-| 11 | Histórico de faturas e recibos | Premium / V2 |
-| 12 | Modo Coach: cobrar alunos pelo app | Roadmap / Futuro |
-| 13 | Referral program (indique e ganhe 1 mês grátis) | Roadmap / Futuro |
-| 14 | Notificação de renovação (3 dias antes) | Premium / V2 |
-| 15 | Webhook Stripe para eventos de pagamento | MVP / Base |
-| 16 | Onboarding pós-upgrade (tour das features premium) | Premium / V2 |
-| 17 | Página de cancelamento com oferta de retenção | Premium / V2 |
-| 18 | Bundle anual com desconto de 40% | Premium / V2 |
-| 19 | Badge exclusivo de assinante Pro/Elite no perfil | Premium / V2 |
-| 20 | API key segura via Vercel Edge Function (proxy Gemini) | MVP / Base |
+|   # | Item                                                      | Prioridade sugerida |
+| --: | --------------------------------------------------------- | ------------------- |
+|   1 | Estrutura de planos Free / Pro / Coach / Elite            | MVP / Base          |
+|   2 | Paywall com Stripe (checkout session)                     | MVP / Base          |
+|   3 | Trial gratuito de 7 dias com contagem regressiva          | MVP / Base          |
+|   4 | Tela de upgrade contextual (upsell no momento certo)      | Premium / V2        |
+|   5 | Dashboard de assinatura (status, renovação, cancelamento) | MVP / Base          |
+|   6 | Cupons e códigos promocionais                             | Premium / V2        |
+|   7 | Comparativo de planos (feature matrix visual)             | MVP / Base          |
+|   8 | Limite de planos de treino no Free (2 planos)             | Premium / V2        |
+|   9 | Marca d'água no PDF exportado no Free                     | Premium / V2        |
+|  10 | Desbloqueio de funcionalidades por tier                   | MVP / Base          |
+|  11 | Histórico de faturas e recibos                            | Premium / V2        |
+|  12 | Modo Coach: cobrar alunos pelo app                        | Roadmap / Futuro    |
+|  13 | Referral program (indique e ganhe 1 mês grátis)           | Roadmap / Futuro    |
+|  14 | Notificação de renovação (3 dias antes)                   | Premium / V2        |
+|  15 | Webhook Stripe para eventos de pagamento                  | MVP / Base          |
+|  16 | Onboarding pós-upgrade (tour das features premium)        | Premium / V2        |
+|  17 | Página de cancelamento com oferta de retenção             | Premium / V2        |
+|  18 | Bundle anual com desconto de 40%                          | Premium / V2        |
+|  19 | Badge exclusivo de assinante Pro/Elite no perfil          | Premium / V2        |
+|  20 | API key segura via Vercel Edge Function (proxy Gemini)    | MVP / Base          |
 
 ## Organização por prioridade
 
@@ -113,7 +113,9 @@ docs/bloco-11-monetizacao-planos-premium.md
 
 ```tsx
 // Exemplo conceitual de rota/tela para o Bloco 11
-{currentView === 'bloco-11' && <MonetizacaoPlanosPremiumHub />}
+{
+  currentView === 'bloco-11' && <MonetizacaoPlanosPremiumHub />;
+}
 ```
 
 ## Resultado esperado

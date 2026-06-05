@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import { sentryVitePlugin } from '@sentry/vite-plugin';
 import path from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
-import {defineConfig} from 'vite';
+import { defineConfig } from 'vite';
 
 const manualChunkGroups = [
   { name: 'react', packages: ['react', 'react-dom'] },
@@ -22,25 +22,31 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       tailwindcss(),
-      ...(process.env.SENTRY_AUTH_TOKEN ? sentryVitePlugin({
-        org: process.env.SENTRY_ORG ?? '',
-        project: process.env.SENTRY_PROJECT ?? 'treino-ia',
-        authToken: process.env.SENTRY_AUTH_TOKEN,
-        release: process.env.SENTRY_RELEASE
-          ? {
-              name: process.env.SENTRY_RELEASE,
-              deploy: {
-                env: process.env.SENTRY_DEPLOY_ENV ?? process.env.VITE_ENV ?? mode,
-              },
-            }
-          : undefined,
-      }) : []),
-      ...(analyzeBundle ? [visualizer({
-        filename: 'dist/bundle-stats.html',
-        gzipSize: true,
-        brotliSize: true,
-        template: 'treemap',
-      })] : []),
+      ...(process.env.SENTRY_AUTH_TOKEN
+        ? sentryVitePlugin({
+            org: process.env.SENTRY_ORG ?? '',
+            project: process.env.SENTRY_PROJECT ?? 'treino-ia',
+            authToken: process.env.SENTRY_AUTH_TOKEN,
+            release: process.env.SENTRY_RELEASE
+              ? {
+                  name: process.env.SENTRY_RELEASE,
+                  deploy: {
+                    env: process.env.SENTRY_DEPLOY_ENV ?? process.env.VITE_ENV ?? mode,
+                  },
+                }
+              : undefined,
+          })
+        : []),
+      ...(analyzeBundle
+        ? [
+            visualizer({
+              filename: 'dist/bundle-stats.html',
+              gzipSize: true,
+              brotliSize: true,
+              template: 'treemap',
+            }),
+          ]
+        : []),
     ],
     define: {
       'process.env.GEMINI_API_KEY': 'undefined',
@@ -62,7 +68,9 @@ export default defineConfig(({ mode }) => {
           manualChunks(id) {
             const normalizedId = id.replace(/\\/g, '/');
             const group = manualChunkGroups.find(({ packages }) =>
-              packages.some((packageName) => normalizedId.includes(`/node_modules/${packageName}/`)),
+              packages.some((packageName) =>
+                normalizedId.includes(`/node_modules/${packageName}/`),
+              ),
             );
 
             return group?.name;

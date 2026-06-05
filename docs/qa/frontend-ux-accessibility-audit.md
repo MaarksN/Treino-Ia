@@ -7,7 +7,7 @@ Status: PARTIAL
 - `npm run test:e2e`: PASS, 21/21 testes Chromium.
 - `npm run test:a11y`: PASS, 1/1 teste axe smoke.
 - `npm run build`: PASS.
-- Lighthouse CI local: FAIL/BLOCKED, `NO_FCP`.
+- Lighthouse CI local: PASS em 2026-06-05.
 
 ## Rotas e fluxos testados por Playwright
 
@@ -26,14 +26,14 @@ Status: PARTIAL
 
 - Sem teste manual/automatizado em tablet, mobile landscape e mobile portrait fora do projeto Chromium desktop.
 - Sem auditoria completa WCAG; `docs/accessibility-wcag-vpat.md` tambem declara status parcial.
-- Lighthouse falhou com `NO_FCP`, entao performance/SEO/best-practices nao foram medidos com sucesso nesta execucao.
+- Performance/SEO/best-practices foram medidos por LHCI local em `dist`; falta repetir contra staging real.
 - UX com dados reais de Supabase/Stripe/Gemini nao foi validada.
 
 ## Achados
 
 - `src/components/GlobalFeed.tsx:4` usa `FAKE_POSTS`.
 - `src/components/platform/AdvancedPlatformHub.tsx:611` usa endpoint `https://example.com/n8n/treino`.
-- `npm run format:check` falhou em 717 arquivos, afetando consistencia de codigo/UX maintenance.
+- `npm run format:check` passou apos formatacao do repositorio.
 
 ## Decisao frontend
 

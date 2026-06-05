@@ -11,14 +11,14 @@ Status: PARTIAL
 
 ## Ferramentas
 
-| Ferramenta | Resultado |
-|---|---|
-| SO | Microsoft Windows 11 Pro 10.0.26200 64 bits |
-| Git | 2.52.0.windows.1 |
-| Node | v24.14.0 via `C:\Users\Marks\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe` |
-| npm | 11.16.0 baixado temporariamente de registry.npmjs.org e executado via Node bundled |
-| Python | 3.12.13 bundled |
-| Docker | BLOCKED: comando `docker` nao encontrado |
+| Ferramenta | Resultado                                                                                                |
+| ---------- | -------------------------------------------------------------------------------------------------------- |
+| SO         | Microsoft Windows 11 Pro 10.0.26200 64 bits                                                              |
+| Git        | 2.52.0.windows.1                                                                                         |
+| Node       | v24.14.0 via `C:\Users\Marks\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe` |
+| npm        | 11.16.0 baixado temporariamente de registry.npmjs.org e executado via Node bundled                       |
+| Python     | 3.12.13 bundled                                                                                          |
+| Docker     | BLOCKED: comando `docker` nao encontrado                                                                 |
 
 ## Observacoes de ambiente
 

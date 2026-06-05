@@ -22,4 +22,3 @@ export function getStripeClient(): Stripe {
 
   return stripeClient;
 }
-

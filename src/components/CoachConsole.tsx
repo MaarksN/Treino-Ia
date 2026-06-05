@@ -23,12 +23,14 @@ export function CoachConsole({ canInteract, onAuthRequired, currentPlan = null }
   const [assignments, setAssignments] = useState<CoachWorkoutAssignment[]>([]);
   const [studentUsername, setStudentUsername] = useState('');
   const [note, setNote] = useState('');
-  const [assignmentTitle, setAssignmentTitle] = useState(currentPlan?.planName || 'Treino da Semana');
+  const [assignmentTitle, setAssignmentTitle] = useState(
+    currentPlan?.planName || 'Treino da Semana',
+  );
   const [assignmentJson, setAssignmentJson] = useState('');
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(false);
   const selectedStudent = useMemo(
-    () => students.find(row => row.student.id === selectedStudentId),
+    () => students.find((row) => row.student.id === selectedStudentId),
     [students, selectedStudentId],
   );
 
@@ -39,7 +41,7 @@ export function CoachConsole({ canInteract, onAuthRequired, currentPlan = null }
       const rows = await listCoachStudents();
       setStudents(rows);
       setStatus('');
-      setSelectedStudentId(current => current || rows[0]?.student.id || '');
+      setSelectedStudentId((current) => current || rows[0]?.student.id || '');
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Não foi possível carregar alunos.');
     } finally {
@@ -47,19 +49,24 @@ export function CoachConsole({ canInteract, onAuthRequired, currentPlan = null }
     }
   }, [canInteract]);
 
-  const loadStudentDetails = useCallback(async (studentId: string) => {
-    if (!studentId || !canInteract) return;
-    try {
-      const [nextNotes, nextAssignments] = await Promise.all([
-        listCoachNotes(studentId),
-        listCoachAssignments(studentId),
-      ]);
-      setNotes(nextNotes);
-      setAssignments(nextAssignments);
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'Não foi possível carregar histórico do aluno.');
-    }
-  }, [canInteract]);
+  const loadStudentDetails = useCallback(
+    async (studentId: string) => {
+      if (!studentId || !canInteract) return;
+      try {
+        const [nextNotes, nextAssignments] = await Promise.all([
+          listCoachNotes(studentId),
+          listCoachAssignments(studentId),
+        ]);
+        setNotes(nextNotes);
+        setAssignments(nextAssignments);
+      } catch (error) {
+        setStatus(
+          error instanceof Error ? error.message : 'Não foi possível carregar histórico do aluno.',
+        );
+      }
+    },
+    [canInteract],
+  );
 
   useEffect(() => {
     if (currentPlan) {
@@ -111,7 +118,8 @@ export function CoachConsole({ canInteract, onAuthRequired, currentPlan = null }
 
   const getAssignmentPayload = () => {
     if (currentPlan) return currentPlan;
-    if (!assignmentJson.trim()) throw new Error('Informe um JSON de treino ou selecione um plano atual.');
+    if (!assignmentJson.trim())
+      throw new Error('Informe um JSON de treino ou selecione um plano atual.');
 
     try {
       return JSON.parse(assignmentJson);
@@ -148,7 +156,7 @@ export function CoachConsole({ canInteract, onAuthRequired, currentPlan = null }
         <div className="flex gap-2 mb-5">
           <input
             value={studentUsername}
-            onChange={event => setStudentUsername(event.target.value)}
+            onChange={(event) => setStudentUsername(event.target.value)}
             placeholder="username do aluno"
             className="min-w-0 flex-1 bg-brand-dark border border-white/10 rounded-xl px-3 py-3 text-white outline-none"
           />
@@ -165,31 +173,42 @@ export function CoachConsole({ canInteract, onAuthRequired, currentPlan = null }
         </div>
 
         <div className="space-y-2">
-          {students.map(row => (
+          {students.map((row) => (
             <button
               key={row.student.id}
               type="button"
               onClick={() => setSelectedStudentId(row.student.id)}
               className={`w-full text-left rounded-2xl p-4 border ${
-                selectedStudentId === row.student.id ? 'bg-brand-neon/10 border-brand-neon/30' : 'bg-white/5 border-white/10'
+                selectedStudentId === row.student.id
+                  ? 'bg-brand-neon/10 border-brand-neon/30'
+                  : 'bg-white/5 border-white/10'
               }`}
             >
               <p className="font-bold text-white">{row.student.display_name}</p>
               <p className="text-xs text-brand-muted">
-                @{row.student.username} · {row.student.current_streak}d · {row.student.total_workouts} treinos
+                @{row.student.username} · {row.student.current_streak}d ·{' '}
+                {row.student.total_workouts} treinos
               </p>
             </button>
           ))}
-          {students.length === 0 && <p className="text-sm text-brand-muted">Nenhum aluno ativo encontrado.</p>}
+          {students.length === 0 && (
+            <p className="text-sm text-brand-muted">Nenhum aluno ativo encontrado.</p>
+          )}
         </div>
       </aside>
 
       <main className="bg-brand-gray rounded-3xl border border-white/10 p-5">
         <h2 className="text-2xl font-black text-white mb-2">Painel do Coach</h2>
         <p className="text-brand-muted mb-4">
-          {selectedStudent ? `Aluno selecionado: ${selectedStudent.student.display_name}` : 'Selecione um aluno para operar.'}
+          {selectedStudent
+            ? `Aluno selecionado: ${selectedStudent.student.display_name}`
+            : 'Selecione um aluno para operar.'}
         </p>
-        {status && <p className="mb-4 rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm text-yellow-300">{status}</p>}
+        {status && (
+          <p className="mb-4 rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm text-yellow-300">
+            {status}
+          </p>
+        )}
 
         <div className="grid md:grid-cols-3 gap-3 mb-6">
           <Summary label="Alunos ativos" value={students.length} />
@@ -206,20 +225,26 @@ export function CoachConsole({ canInteract, onAuthRequired, currentPlan = null }
 
             <textarea
               value={note}
-              onChange={event => setNote(event.target.value)}
+              onChange={(event) => setNote(event.target.value)}
               placeholder="Observação clínica, adesão, dor, rotina ou ajuste de treino."
               className="w-full bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white min-h-32 outline-none"
             />
 
-            <button type="button" onClick={saveNote} className="mt-3 bg-brand-neon text-brand-dark rounded-xl px-4 py-3 font-black">
+            <button
+              type="button"
+              onClick={saveNote}
+              className="mt-3 bg-brand-neon text-brand-dark rounded-xl px-4 py-3 font-black"
+            >
               Salvar nota
             </button>
 
             <div className="mt-4 space-y-2 max-h-44 overflow-y-auto">
-              {notes.map(item => (
+              {notes.map((item) => (
                 <div key={item.id} className="rounded-xl bg-brand-dark border border-white/10 p-3">
                   <p className="text-sm text-white">{item.note}</p>
-                  <p className="text-xs text-brand-muted mt-1">{new Date(item.created_at).toLocaleString('pt-BR')}</p>
+                  <p className="text-xs text-brand-muted mt-1">
+                    {new Date(item.created_at).toLocaleString('pt-BR')}
+                  </p>
                 </div>
               ))}
             </div>
@@ -233,14 +258,14 @@ export function CoachConsole({ canInteract, onAuthRequired, currentPlan = null }
 
             <input
               value={assignmentTitle}
-              onChange={event => setAssignmentTitle(event.target.value)}
+              onChange={(event) => setAssignmentTitle(event.target.value)}
               className="w-full bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none mb-3"
             />
 
             {!currentPlan && (
               <textarea
                 value={assignmentJson}
-                onChange={event => setAssignmentJson(event.target.value)}
+                onChange={(event) => setAssignmentJson(event.target.value)}
                 placeholder='{"days":[...]}'
                 className="w-full bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white min-h-32 outline-none mb-3 font-mono text-sm"
               />
@@ -252,16 +277,22 @@ export function CoachConsole({ canInteract, onAuthRequired, currentPlan = null }
               </p>
             )}
 
-            <button type="button" onClick={assignWorkout} className="bg-brand-neon text-brand-dark rounded-xl px-4 py-3 font-black flex items-center gap-2">
+            <button
+              type="button"
+              onClick={assignWorkout}
+              className="bg-brand-neon text-brand-dark rounded-xl px-4 py-3 font-black flex items-center gap-2"
+            >
               <Send size={16} />
               Enviar treino
             </button>
 
             <div className="mt-4 space-y-2 max-h-44 overflow-y-auto">
-              {assignments.map(item => (
+              {assignments.map((item) => (
                 <div key={item.id} className="rounded-xl bg-brand-dark border border-white/10 p-3">
                   <p className="text-sm text-white font-bold">{item.title}</p>
-                  <p className="text-xs text-brand-muted">{item.status} · {new Date(item.created_at).toLocaleString('pt-BR')}</p>
+                  <p className="text-xs text-brand-muted">
+                    {item.status} · {new Date(item.created_at).toLocaleString('pt-BR')}
+                  </p>
                 </div>
               ))}
             </div>

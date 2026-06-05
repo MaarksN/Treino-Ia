@@ -21,7 +21,7 @@ export class IoTMatAdapter implements IoTMatProvider {
   }
 
   async connect(): Promise<boolean> {
-    console.warn("IoT Mat integration is currently blocked.");
+    console.warn('IoT Mat integration is currently blocked.');
     return false;
   }
 

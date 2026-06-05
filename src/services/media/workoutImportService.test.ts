@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { extractFileMetadata, IMPORT_DISCLAIMER, OCR_STATUS_MESSAGE, validateImportFile } from './workoutImportService';
+import {
+  extractFileMetadata,
+  IMPORT_DISCLAIMER,
+  OCR_STATUS_MESSAGE,
+  validateImportFile,
+} from './workoutImportService';
 
 describe('workoutImportService', () => {
   it('extracts metadata from a valid image file', () => {
@@ -12,7 +17,11 @@ describe('workoutImportService', () => {
   });
 
   it('extracts metadata from a PDF file', () => {
-    const meta = extractFileMetadata({ name: 'ficha.pdf', type: 'application/pdf', size: 2 * 1024 * 1024 });
+    const meta = extractFileMetadata({
+      name: 'ficha.pdf',
+      type: 'application/pdf',
+      size: 2 * 1024 * 1024,
+    });
     expect(meta.isImage).toBe(false);
     expect(meta.isPdf).toBe(true);
     expect(meta.isSupported).toBe(true);
@@ -20,7 +29,11 @@ describe('workoutImportService', () => {
   });
 
   it('marks unsupported formats', () => {
-    const meta = extractFileMetadata({ name: 'doc.docx', type: 'application/vnd.openxmlformats', size: 100 });
+    const meta = extractFileMetadata({
+      name: 'doc.docx',
+      type: 'application/vnd.openxmlformats',
+      size: 100,
+    });
     expect(meta.isSupported).toBe(false);
     expect(meta.guard.status).toBe('blocked');
   });
@@ -34,13 +47,17 @@ describe('workoutImportService', () => {
   it('rejects empty name', () => {
     const result = validateImportFile({ name: '', type: 'image/png', size: 1024 });
     expect(result.valid).toBe(false);
-    expect(result.errors.some(e => e.includes('vazio'))).toBe(true);
+    expect(result.errors.some((e) => e.includes('vazio'))).toBe(true);
   });
 
   it('rejects oversized file', () => {
-    const result = validateImportFile({ name: 'big.jpg', type: 'image/jpeg', size: 13 * 1024 * 1024 });
+    const result = validateImportFile({
+      name: 'big.jpg',
+      type: 'image/jpeg',
+      size: 13 * 1024 * 1024,
+    });
     expect(result.valid).toBe(false);
-    expect(result.errors.some(e => e.includes('12 MB'))).toBe(true);
+    expect(result.errors.some((e) => e.includes('12 MB'))).toBe(true);
   });
 
   it('rejects empty file', () => {

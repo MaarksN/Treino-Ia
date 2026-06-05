@@ -42,12 +42,14 @@ const PROTOCOLS: Record<AdaptiveProtocolId, AdaptiveProtocol> = {
       'Evitar movimentos que causem dor ou desconforto.',
       'Não realizar exercícios sem supervisão se houver risco de queda.',
     ],
-    disclaimer: 'Adaptações para treino sentado devem ser aprovadas por profissional de saúde antes de iniciar.',
+    disclaimer:
+      'Adaptações para treino sentado devem ser aprovadas por profissional de saúde antes de iniciar.',
   },
   low_impact: {
     id: 'low_impact',
     title: 'Baixo impacto',
-    description: 'Exercícios sem saltos ou impacto articular, adequados para proteção de articulações.',
+    description:
+      'Exercícios sem saltos ou impacto articular, adequados para proteção de articulações.',
     recommendations: [
       'Substituir corrida por caminhada ou bicicleta ergométrica.',
       'Agachamento assistido ou na cadeira.',
@@ -58,7 +60,8 @@ const PROTOCOLS: Record<AdaptiveProtocolId, AdaptiveProtocol> = {
       'Evitar exercícios pliométricos.',
       'Não forçar amplitudes de movimento dolorosas.',
     ],
-    disclaimer: 'Mesmo exercícios de baixo impacto podem não ser adequados para todas as condições. Consulte seu médico.',
+    disclaimer:
+      'Mesmo exercícios de baixo impacto podem não ser adequados para todas as condições. Consulte seu médico.',
   },
   reduced_mobility: {
     id: 'reduced_mobility',
@@ -74,7 +77,8 @@ const PROTOCOLS: Record<AdaptiveProtocolId, AdaptiveProtocol> = {
       'Não forçar articulações além do limite confortável.',
       'Evitar cargas altas sem supervisão.',
     ],
-    disclaimer: 'Limitações de mobilidade variam amplamente. Validação profissional individual é essencial.',
+    disclaimer:
+      'Limitações de mobilidade variam amplamente. Validação profissional individual é essencial.',
   },
   low_vision: {
     id: 'low_vision',
@@ -90,7 +94,8 @@ const PROTOCOLS: Record<AdaptiveProtocolId, AdaptiveProtocol> = {
       'Evitar exercícios que exijam equilíbrio visual preciso sem acompanhamento.',
       'Não usar pesos livres pesados sem supervisão.',
     ],
-    disclaimer: 'Treinar com baixa visão requer adaptações individuais. Consulte um educador físico especializado.',
+    disclaimer:
+      'Treinar com baixa visão requer adaptações individuais. Consulte um educador físico especializado.',
   },
   post_injury: {
     id: 'post_injury',
@@ -106,12 +111,14 @@ const PROTOCOLS: Record<AdaptiveProtocolId, AdaptiveProtocol> = {
       'Não treinar a região lesionada sem liberação médica.',
       'Interromper imediatamente se houver dor aguda.',
     ],
-    disclaimer: 'Retorno após lesão deve ser conduzido junto ao médico e/ou fisioterapeuta responsável.',
+    disclaimer:
+      'Retorno após lesão deve ser conduzido junto ao médico e/ou fisioterapeuta responsável.',
   },
   upper_limb_amputation: {
     id: 'upper_limb_amputation',
     title: 'Adaptação — membro superior',
-    description: 'Sugestões de exercícios adaptados para pessoas com amputação ou ausência de membro superior.',
+    description:
+      'Sugestões de exercícios adaptados para pessoas com amputação ou ausência de membro superior.',
     recommendations: [
       'Foco em membros inferiores, core e o membro superior disponível.',
       'Exercícios unilaterais com contrapeso quando possível.',
@@ -122,7 +129,8 @@ const PROTOCOLS: Record<AdaptiveProtocolId, AdaptiveProtocol> = {
       'Evitar exercícios que dependam de ambas as mãos sem adaptação prévia.',
       'Proteger o coto de pressão excessiva.',
     ],
-    disclaimer: 'Adaptações para amputação devem ser planejadas com equipe multidisciplinar: fisioterapeuta, educador físico e médico.',
+    disclaimer:
+      'Adaptações para amputação devem ser planejadas com equipe multidisciplinar: fisioterapeuta, educador físico e médico.',
   },
   lower_limb_amputation: {
     id: 'lower_limb_amputation',
@@ -138,14 +146,15 @@ const PROTOCOLS: Record<AdaptiveProtocolId, AdaptiveProtocol> = {
       'Não realizar exercícios em pé sem prótese ou apoio seguro.',
       'Evitar impacto no coto.',
     ],
-    disclaimer: 'Treinamento com prótese requer validação do protesista e fisioterapeuta. Este conteúdo é sugestivo.',
+    disclaimer:
+      'Treinamento com prótese requer validação do protesista e fisioterapeuta. Este conteúdo é sugestivo.',
   },
 };
 
 const STORAGE_KEY = '@TreinoIA:accessibility:selectedProtocols';
 
 export function getAllProtocols(): AdaptiveProtocol[] {
-  return ADAPTIVE_PROTOCOL_IDS.map(id => PROTOCOLS[id]);
+  return ADAPTIVE_PROTOCOL_IDS.map((id) => PROTOCOLS[id]);
 }
 
 export function getProtocolById(id: AdaptiveProtocolId): AdaptiveProtocol | null {
@@ -161,7 +170,7 @@ export function sanitizeProtocolId(value: unknown): AdaptiveProtocolId | null {
 
 export function saveSelectedProtocols(ids: AdaptiveProtocolId[]): AdaptiveProtocolId[] {
   const sanitized = ids
-    .map(id => sanitizeProtocolId(id))
+    .map((id) => sanitizeProtocolId(id))
     .filter((id): id is AdaptiveProtocolId => id !== null);
   const unique = Array.from(new Set(sanitized));
   localStorage.setItem(STORAGE_KEY, JSON.stringify(unique));
@@ -174,7 +183,7 @@ export function getSelectedProtocols(): AdaptiveProtocolId[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown[];
     return parsed
-      .map(item => sanitizeProtocolId(item))
+      .map((item) => sanitizeProtocolId(item))
       .filter((id): id is AdaptiveProtocolId => id !== null);
   } catch {
     return [];

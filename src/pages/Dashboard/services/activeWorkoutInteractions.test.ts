@@ -17,8 +17,12 @@ describe('activeWorkoutInteractions', () => {
   });
 
   it('ignora rolagem vertical e limites da lista', () => {
-    expect(getWorkoutSwipeResult({ x: 100, y: 100 }, { x: 130, y: 220 }, 1, 3).reason).toBe('vertical_scroll');
-    expect(getWorkoutSwipeResult({ x: 100, y: 100 }, { x: 240, y: 110 }, 0, 3).reason).toBe('boundary');
+    expect(getWorkoutSwipeResult({ x: 100, y: 100 }, { x: 130, y: 220 }, 1, 3).reason).toBe(
+      'vertical_scroll',
+    );
+    expect(getWorkoutSwipeResult({ x: 100, y: 100 }, { x: 240, y: 110 }, 0, 3).reason).toBe(
+      'boundary',
+    );
   });
 
   it('ignora alvos interativos para nao quebrar inputs', () => {

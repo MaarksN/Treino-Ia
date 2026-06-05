@@ -1,4 +1,8 @@
-import { redactMetadata, redactSensitiveData, redactSensitiveString } from '../../../api/_lib/redact';
+import {
+  redactMetadata,
+  redactSensitiveData,
+  redactSensitiveString,
+} from '../../../api/_lib/redact';
 import type { ObservabilityEvent } from './observability.types';
 
 const OBSERVABILITY_STRING_MAX_LENGTH = 1_000;

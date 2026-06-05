@@ -35,9 +35,14 @@ import {
 } from '../utils/retentionUtils';
 import { apiFetch } from '../utils/apiFetch';
 
-type SupabaseErrorLike = { message?: string; details?: string; hint?: string; code?: string } | null | undefined;
+type SupabaseErrorLike =
+  | { message?: string; details?: string; hint?: string; code?: string }
+  | null
+  | undefined;
 
-const DEFAULT_REMINDERS: Array<Pick<RetentionReminder, 'reminder_type' | 'enabled' | 'channel' | 'schedule' | 'message'>> = [
+const DEFAULT_REMINDERS: Array<
+  Pick<RetentionReminder, 'reminder_type' | 'enabled' | 'channel' | 'schedule' | 'message'>
+> = [
   {
     reminder_type: 'workout',
     enabled: true,
@@ -81,12 +86,37 @@ const DEFAULT_HEALTH_INTEGRATIONS: Array<{
   data_mode: RetentionDataMode;
   scopes: string[];
 }> = [
-  { provider: 'apple_health', status: 'needs_config', data_mode: 'native', scopes: ['workouts', 'sleep', 'active_energy'] },
-  { provider: 'google_fit', status: 'needs_config', data_mode: 'oauth', scopes: ['activity', 'sleep', 'heart_rate'] },
-  { provider: 'health_connect', status: 'needs_config', data_mode: 'native', scopes: ['steps', 'sleep', 'heart_rate'] },
+  {
+    provider: 'apple_health',
+    status: 'needs_config',
+    data_mode: 'native',
+    scopes: ['workouts', 'sleep', 'active_energy'],
+  },
+  {
+    provider: 'google_fit',
+    status: 'needs_config',
+    data_mode: 'oauth',
+    scopes: ['activity', 'sleep', 'heart_rate'],
+  },
+  {
+    provider: 'health_connect',
+    status: 'needs_config',
+    data_mode: 'native',
+    scopes: ['steps', 'sleep', 'heart_rate'],
+  },
   { provider: 'ble_hr', status: 'needs_config', data_mode: 'ble', scopes: ['heart_rate'] },
-  { provider: 'garmin', status: 'needs_config', data_mode: 'csv', scopes: ['workouts', 'heart_rate'] },
-  { provider: 'fitbit', status: 'needs_config', data_mode: 'oauth', scopes: ['activity', 'sleep', 'heartrate'] },
+  {
+    provider: 'garmin',
+    status: 'needs_config',
+    data_mode: 'csv',
+    scopes: ['workouts', 'heart_rate'],
+  },
+  {
+    provider: 'fitbit',
+    status: 'needs_config',
+    data_mode: 'oauth',
+    scopes: ['activity', 'sleep', 'heartrate'],
+  },
   { provider: 'strava', status: 'needs_config', data_mode: 'oauth', scopes: ['activity:read_all'] },
 ];
 
@@ -97,7 +127,10 @@ const BADGE_DEFINITIONS = [
     description: 'Registrou o primeiro treino no backend.',
     emoji: '1',
     category: 'consistency',
-    condition: (input: { streak: RetentionStreak; metrics: ReturnType<typeof buildRetentionMetrics> }) => input.metrics.workoutsThisWeek > 0 || input.streak.best_daily_streak > 0,
+    condition: (input: {
+      streak: RetentionStreak;
+      metrics: ReturnType<typeof buildRetentionMetrics>;
+    }) => input.metrics.workoutsThisWeek > 0 || input.streak.best_daily_streak > 0,
   },
   {
     id: 'streak_7_backend',
@@ -121,7 +154,10 @@ const BADGE_DEFINITIONS = [
     description: 'Bateu a meta diaria de hidratacao.',
     emoji: 'ml',
     category: 'recovery',
-    condition: (input: { profile: RetentionProfile; metrics: ReturnType<typeof buildRetentionMetrics> }) => input.metrics.hydrationTodayMl >= input.profile.hydration_goal_ml,
+    condition: (input: {
+      profile: RetentionProfile;
+      metrics: ReturnType<typeof buildRetentionMetrics>;
+    }) => input.metrics.hydrationTodayMl >= input.profile.hydration_goal_ml,
   },
   {
     id: 'sleep_goal_backend',
@@ -129,7 +165,10 @@ const BADGE_DEFINITIONS = [
     description: 'Registrou media de sono dentro da meta.',
     emoji: 'zz',
     category: 'recovery',
-    condition: (input: { profile: RetentionProfile; metrics: ReturnType<typeof buildRetentionMetrics> }) => input.metrics.sleepAverageMinutes >= input.profile.sleep_goal_minutes,
+    condition: (input: {
+      profile: RetentionProfile;
+      metrics: ReturnType<typeof buildRetentionMetrics>;
+    }) => input.metrics.sleepAverageMinutes >= input.profile.sleep_goal_minutes,
   },
   {
     id: 'challenge_30_backend',
@@ -137,13 +176,18 @@ const BADGE_DEFINITIONS = [
     description: 'Concluiu um desafio de 30 dias.',
     emoji: '30',
     category: 'challenge',
-    condition: (input: { challenges: RetentionChallenge[] }) => input.challenges.some(challenge => challenge.duration_days === 30 && challenge.status === 'completed'),
+    condition: (input: { challenges: RetentionChallenge[] }) =>
+      input.challenges.some(
+        (challenge) => challenge.duration_days === 30 && challenge.status === 'completed',
+      ),
   },
 ];
 
 function assertSupabaseConfigured(): void {
   if (!isSupabaseConfigured) {
-    throw new Error('Supabase nao configurado. Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.');
+    throw new Error(
+      'Supabase nao configurado. Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.',
+    );
   }
 }
 
@@ -213,10 +257,10 @@ async function ensureRetentionDefaults(userId: string): Promise<void> {
     .eq('user_id', userId);
   assertNoError(remindersError);
 
-  const reminderTypes = new Set((existingReminders ?? []).map(row => String(row.reminder_type)));
-  const missingReminders = DEFAULT_REMINDERS
-    .filter(reminder => !reminderTypes.has(reminder.reminder_type))
-    .map(reminder => ({ ...reminder, user_id: userId }));
+  const reminderTypes = new Set((existingReminders ?? []).map((row) => String(row.reminder_type)));
+  const missingReminders = DEFAULT_REMINDERS.filter(
+    (reminder) => !reminderTypes.has(reminder.reminder_type),
+  ).map((reminder) => ({ ...reminder, user_id: userId }));
 
   if (missingReminders.length) {
     const { error } = await supabase.from('habit_reminders').insert(missingReminders);
@@ -229,10 +273,10 @@ async function ensureRetentionDefaults(userId: string): Promise<void> {
     .eq('user_id', userId);
   assertNoError(integrationError);
 
-  const providers = new Set((existingIntegrations ?? []).map(row => String(row.provider)));
-  const missingIntegrations = DEFAULT_HEALTH_INTEGRATIONS
-    .filter(integration => !providers.has(integration.provider))
-    .map(integration => ({ ...integration, user_id: userId }));
+  const providers = new Set((existingIntegrations ?? []).map((row) => String(row.provider)));
+  const missingIntegrations = DEFAULT_HEALTH_INTEGRATIONS.filter(
+    (integration) => !providers.has(integration.provider),
+  ).map((integration) => ({ ...integration, user_id: userId }));
 
   if (missingIntegrations.length) {
     const { error } = await supabase.from('health_integrations').insert(missingIntegrations);
@@ -257,16 +301,50 @@ async function loadCoreState(userId: string) {
   ] = await Promise.all([
     supabase.from('retention_profiles').select('*').eq('user_id', userId).single(),
     supabase.from('user_streaks').select('*').eq('user_id', userId).single(),
-    supabase.from('habit_events').select('*').eq('user_id', userId).order('event_date', { ascending: false }).order('created_at', { ascending: false }).limit(240),
+    supabase
+      .from('habit_events')
+      .select('*')
+      .eq('user_id', userId)
+      .order('event_date', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(240),
     supabase.from('habit_reminders').select('*').eq('user_id', userId).order('reminder_type'),
-    supabase.from('consistency_challenges').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(40),
-    supabase.from('retention_badges').select('*').eq('user_id', userId).order('unlocked_at', { ascending: false }),
+    supabase
+      .from('consistency_challenges')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(40),
+    supabase
+      .from('retention_badges')
+      .select('*')
+      .eq('user_id', userId)
+      .order('unlocked_at', { ascending: false }),
     supabase.from('onboarding_progress').select('*').eq('user_id', userId).maybeSingle(),
-    supabase.from('automated_checkins').select('*').eq('user_id', userId).order('scheduled_for', { ascending: false }).limit(30),
-    supabase.from('alternative_workouts').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(20),
-    supabase.from('workout_calendar_items').select('*').eq('user_id', userId).order('scheduled_for', { ascending: true }).limit(60),
+    supabase
+      .from('automated_checkins')
+      .select('*')
+      .eq('user_id', userId)
+      .order('scheduled_for', { ascending: false })
+      .limit(30),
+    supabase
+      .from('alternative_workouts')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(20),
+    supabase
+      .from('workout_calendar_items')
+      .select('*')
+      .eq('user_id', userId)
+      .order('scheduled_for', { ascending: true })
+      .limit(60),
     supabase.from('health_integrations').select('*').eq('user_id', userId).order('provider'),
-    supabase.from('white_label_tenants').select('*').eq('owner_id', userId).order('created_at', { ascending: false }),
+    supabase
+      .from('white_label_tenants')
+      .select('*')
+      .eq('owner_id', userId)
+      .order('created_at', { ascending: false }),
   ]);
 
   [
@@ -285,13 +363,27 @@ async function loadCoreState(userId: string) {
   ].forEach(assertNoError);
 
   const tenants = (tenantsResult.data ?? []) as WhiteLabelTenant[];
-  const tenantIds = tenants.map(tenant => tenant.id);
+  const tenantIds = tenants.map((tenant) => tenant.id);
 
   const [studentsResult, assessmentsResult, messagesResult] = tenantIds.length
     ? await Promise.all([
-        supabase.from('tenant_students').select('*').in('tenant_id', tenantIds).order('assigned_at', { ascending: false }),
-        supabase.from('student_assessments').select('*').in('tenant_id', tenantIds).order('created_at', { ascending: false }).limit(40),
-        supabase.from('student_messages').select('*').in('tenant_id', tenantIds).order('created_at', { ascending: false }).limit(40),
+        supabase
+          .from('tenant_students')
+          .select('*')
+          .in('tenant_id', tenantIds)
+          .order('assigned_at', { ascending: false }),
+        supabase
+          .from('student_assessments')
+          .select('*')
+          .in('tenant_id', tenantIds)
+          .order('created_at', { ascending: false })
+          .limit(40),
+        supabase
+          .from('student_messages')
+          .select('*')
+          .in('tenant_id', tenantIds)
+          .order('created_at', { ascending: false })
+          .limit(40),
       ])
     : [
         { data: [], error: null },
@@ -328,19 +420,19 @@ async function syncRetentionBadges(
   challenges: RetentionChallenge[],
   existing: RetentionBadge[],
 ): Promise<RetentionBadge[]> {
-  const existingIds = new Set(existing.map(badge => badge.badge_id));
+  const existingIds = new Set(existing.map((badge) => badge.badge_id));
   const input = { profile, streak, metrics, challenges };
-  const missing = BADGE_DEFINITIONS
-    .filter(definition => !existingIds.has(definition.id) && definition.condition(input))
-    .map(definition => ({
-      user_id: userId,
-      badge_id: definition.id,
-      badge_name: definition.name,
-      badge_description: definition.description,
-      emoji: definition.emoji,
-      category: definition.category,
-      source: 'retention_service',
-    }));
+  const missing = BADGE_DEFINITIONS.filter(
+    (definition) => !existingIds.has(definition.id) && definition.condition(input),
+  ).map((definition) => ({
+    user_id: userId,
+    badge_id: definition.id,
+    badge_name: definition.name,
+    badge_description: definition.description,
+    emoji: definition.emoji,
+    category: definition.category,
+    source: 'retention_service',
+  }));
 
   if (!missing.length) return existing;
 
@@ -350,14 +442,20 @@ async function syncRetentionBadges(
     .select('*');
   assertNoError(error);
 
-  return [...(data ?? []) as RetentionBadge[], ...existing];
+  return [...((data ?? []) as RetentionBadge[]), ...existing];
 }
 
 async function refreshDerivedRetentionState(userId: string): Promise<void> {
   const { events, profile, challenges, badges } = await loadCoreState(userId);
   const derivedStreak = buildRetentionStreakFromEvents(userId, events);
   const challengesWithProgress = attachChallengeProgress(challenges, events);
-  const metrics = buildRetentionMetrics(profile, derivedStreak, events, challengesWithProgress, badges.length);
+  const metrics = buildRetentionMetrics(
+    profile,
+    derivedStreak,
+    events,
+    challengesWithProgress,
+    badges.length,
+  );
 
   const { error: streakError } = await supabase
     .from('user_streaks')
@@ -365,8 +463,8 @@ async function refreshDerivedRetentionState(userId: string): Promise<void> {
   assertNoError(streakError);
 
   const completedChallengeIds = challengesWithProgress
-    .filter(challenge => challenge.status === 'completed')
-    .map(challenge => challenge.id);
+    .filter((challenge) => challenge.status === 'completed')
+    .map((challenge) => challenge.id);
 
   if (completedChallengeIds.length) {
     const { error } = await supabase
@@ -377,14 +475,25 @@ async function refreshDerivedRetentionState(userId: string): Promise<void> {
     assertNoError(error);
   }
 
-  await syncRetentionBadges(userId, profile, derivedStreak, metrics, challengesWithProgress, badges);
+  await syncRetentionBadges(
+    userId,
+    profile,
+    derivedStreak,
+    metrics,
+    challengesWithProgress,
+    badges,
+  );
 
   await supabase
     .from('social_profiles')
     .update({
       current_streak: derivedStreak.daily_streak,
       best_streak: derivedStreak.best_daily_streak,
-      total_workouts: events.filter(event => event.event_type === 'workout_completed' || event.event_type === 'alternative_workout_completed').length,
+      total_workouts: events.filter(
+        (event) =>
+          event.event_type === 'workout_completed' ||
+          event.event_type === 'alternative_workout_completed',
+      ).length,
       updated_at: new Date().toISOString(),
     })
     .eq('id', userId);
@@ -398,7 +507,13 @@ export async function fetchRetentionHubState(): Promise<RetentionHubState> {
 
   const state = await loadCoreState(userId);
   const challenges = attachChallengeProgress(state.challenges, state.events);
-  const metrics = buildRetentionMetrics(state.profile, state.streak, state.events, challenges, state.badges.length);
+  const metrics = buildRetentionMetrics(
+    state.profile,
+    state.streak,
+    state.events,
+    challenges,
+    state.badges.length,
+  );
 
   return {
     dataMode: 'supabase',
@@ -433,15 +548,18 @@ export async function saveConsistencyGoal(input: {
 
   const { data, error } = await supabase
     .from('retention_profiles')
-    .upsert({
-      user_id: userId,
-      consistency_workouts_per_week: input.workoutsPerWeek,
-      consistency_checkins_per_week: input.checkinsPerWeek,
-      hydration_goal_ml: input.hydrationGoalMl,
-      sleep_goal_minutes: input.sleepGoalMinutes,
-      preferred_workout_time: input.preferredWorkoutTime,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'user_id' })
+    .upsert(
+      {
+        user_id: userId,
+        consistency_workouts_per_week: input.workoutsPerWeek,
+        consistency_checkins_per_week: input.checkinsPerWeek,
+        hydration_goal_ml: input.hydrationGoalMl,
+        sleep_goal_minutes: input.sleepGoalMinutes,
+        preferred_workout_time: input.preferredWorkoutTime,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id' },
+    )
     .select('*')
     .single();
 
@@ -462,15 +580,18 @@ export async function saveReminder(input: {
 
   const { data, error } = await supabase
     .from('habit_reminders')
-    .upsert({
-      user_id: userId,
-      reminder_type: input.reminderType,
-      enabled: input.enabled,
-      channel: input.channel,
-      schedule: input.schedule,
-      message: sanitizeShortText(input.message, 220),
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'user_id,reminder_type' })
+    .upsert(
+      {
+        user_id: userId,
+        reminder_type: input.reminderType,
+        enabled: input.enabled,
+        channel: input.channel,
+        schedule: input.schedule,
+        message: sanitizeShortText(input.message, 220),
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,reminder_type' },
+    )
     .select('*')
     .single();
 
@@ -509,7 +630,9 @@ export async function recordHabitEvent(input: {
   return data as RetentionHabitEvent;
 }
 
-export async function startConsistencyChallenge(durationDays: 7 | 14 | 30): Promise<RetentionChallenge> {
+export async function startConsistencyChallenge(
+  durationDays: 7 | 14 | 30,
+): Promise<RetentionChallenge> {
   assertSupabaseConfigured();
   const userId = await getCurrentUserId();
   const start = normalizeIsoDate(new Date());
@@ -550,15 +673,18 @@ export async function saveOnboardingProgress(input: {
 
   const { data, error } = await supabase
     .from('onboarding_progress')
-    .upsert({
-      user_id: userId,
-      current_step: input.currentStep,
-      total_steps: input.totalSteps,
-      payload: input.payload ?? {},
-      completed,
-      completed_at: completed ? new Date().toISOString() : null,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'user_id' })
+    .upsert(
+      {
+        user_id: userId,
+        current_step: input.currentStep,
+        total_steps: input.totalSteps,
+        payload: input.payload ?? {},
+        completed,
+        completed_at: completed ? new Date().toISOString() : null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id' },
+    )
     .select('*')
     .single();
 
@@ -672,16 +798,19 @@ export async function updateHealthIntegration(input: {
 
   const { data, error } = await supabase
     .from('health_integrations')
-    .upsert({
-      user_id: userId,
-      provider: input.provider,
-      status: input.status,
-      data_mode: input.dataMode,
-      scopes: input.scopes ?? [],
-      error_message: input.errorMessage ?? null,
-      last_sync_at: input.status === 'connected' ? new Date().toISOString() : null,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'user_id,provider' })
+    .upsert(
+      {
+        user_id: userId,
+        provider: input.provider,
+        status: input.status,
+        data_mode: input.dataMode,
+        scopes: input.scopes ?? [],
+        error_message: input.errorMessage ?? null,
+        last_sync_at: input.status === 'connected' ? new Date().toISOString() : null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,provider' },
+    )
     .select('*')
     .single();
 
@@ -689,7 +818,9 @@ export async function updateHealthIntegration(input: {
   return data as HealthIntegration;
 }
 
-export async function startHealthOAuth(provider: Extract<IntegrationProvider, 'google_fit' | 'fitbit' | 'strava'>): Promise<{
+export async function startHealthOAuth(
+  provider: Extract<IntegrationProvider, 'google_fit' | 'fitbit' | 'strava'>,
+): Promise<{
   provider: string;
   dataMode: 'oauth';
   authUrl: string;
@@ -748,15 +879,18 @@ export async function saveWhiteLabelTenant(input: {
 
   const { data, error } = await supabase
     .from('white_label_tenants')
-    .upsert({
-      owner_id: userId,
-      brand_name: brandName,
-      slug: createSlug(brandName),
-      primary_color: input.primaryColor,
-      logo_url: input.logoUrl?.trim() || null,
-      support_email: input.supportEmail?.trim() || null,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'owner_id,slug' })
+    .upsert(
+      {
+        owner_id: userId,
+        brand_name: brandName,
+        slug: createSlug(brandName),
+        primary_color: input.primaryColor,
+        logo_url: input.logoUrl?.trim() || null,
+        support_email: input.supportEmail?.trim() || null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'owner_id,slug' },
+    )
     .select('*')
     .single();
 

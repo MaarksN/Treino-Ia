@@ -51,10 +51,13 @@ describe('gamificationService', () => {
 
     const result = await recordGamificationEvent('mission_completed' as any);
     expect(result.profile?.xp).toBe(150);
-    expect(global.fetch).toHaveBeenCalledWith('/api/gamification/event', expect.objectContaining({
-      method: 'POST',
-      body: JSON.stringify({ eventType: 'mission_completed' as any }),
-    }));
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/api/gamification/event',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ eventType: 'mission_completed' as any }),
+      }),
+    );
   });
 
   it('handles API errors correctly', async () => {
@@ -63,6 +66,8 @@ describe('gamificationService', () => {
       json: async () => ({ error: 'Insufficient funds' }),
     });
 
-    await expect(recordGamificationEvent('item_purchased' as any)).rejects.toThrow('Insufficient funds');
+    await expect(recordGamificationEvent('item_purchased' as any)).rejects.toThrow(
+      'Insufficient funds',
+    );
   });
 });

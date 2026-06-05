@@ -57,7 +57,13 @@ Vars opcionais no GitHub Actions:
 - `STRIPE_SMOKE_PLAN_ID` (padrao `pro`)
 - `STRIPE_SMOKE_INTERVAL` (padrao `month`)
 - `GEMINI_SMOKE_EXPECT_SUCCESS` (padrao `false`)
+- `RATE_LIMIT_SMOKE_EXPECT_429` (padrao `false`; use `true` apenas quando a funcao publicada mantem bucket estavel no run)
 - `OAUTH_TOKEN_SECURITY_MODE` (padrao `plaintext_blocked`)
+
+Smokes reais adicionais, executados somente com usuarios descartaveis de staging:
+
+- `npm run smoke:tenant-ab`: exige `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `TENANT_A_ACCESS_TOKEN` e `TENANT_B_ACCESS_TOKEN`.
+- `npm run smoke:compliance`: exige `STAGING_APP_URL` e `SUPABASE_TEST_ACCESS_TOKEN`; a etapa destrutiva de erasure exige tambem `COMPLIANCE_ERASURE_ACCESS_TOKEN` e `COMPLIANCE_SMOKE_CONFIRM_ERASURE=DELETE_STAGING_USER`.
 
 Nao use o workflow `Vercel Deploy` para validar beta privado: ele publica producao (`--prod`) e deve ficar reservado para go-live/rollback aprovado.
 

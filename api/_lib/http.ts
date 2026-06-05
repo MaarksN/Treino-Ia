@@ -26,7 +26,7 @@ const requestCorrelationIds = new WeakMap<Request, string>();
 function splitOrigins(value?: string): string[] {
   return (value ?? '')
     .split(',')
-    .map(origin => origin.trim().replace(/\/+$/, ''))
+    .map((origin) => origin.trim().replace(/\/+$/, ''))
     .filter(Boolean);
 }
 
@@ -61,8 +61,10 @@ function isLocalDevelopmentOrigin(origin: string): boolean {
 
   try {
     const parsed = new URL(origin);
-    return ['localhost', '127.0.0.1', '::1'].includes(parsed.hostname)
-      && (parsed.protocol === 'http:' || parsed.protocol === 'https:');
+    return (
+      ['localhost', '127.0.0.1', '::1'].includes(parsed.hostname) &&
+      (parsed.protocol === 'http:' || parsed.protocol === 'https:')
+    );
   } catch {
     return false;
   }
@@ -74,9 +76,9 @@ export function getAllowedApiOrigins(request?: Request): Set<string> {
   const appOrigin = getApplicationOrigin(request);
   if (appOrigin) origins.add(appOrigin);
 
-  splitOrigins(process.env.CORS_ALLOWED_ORIGINS).forEach(origin => origins.add(origin));
-  splitOrigins(process.env.API_ALLOWED_ORIGINS).forEach(origin => origins.add(origin));
-  splitOrigins(process.env.OAUTH_REDIRECT_ALLOWED_ORIGINS).forEach(origin => origins.add(origin));
+  splitOrigins(process.env.CORS_ALLOWED_ORIGINS).forEach((origin) => origins.add(origin));
+  splitOrigins(process.env.API_ALLOWED_ORIGINS).forEach((origin) => origins.add(origin));
+  splitOrigins(process.env.OAUTH_REDIRECT_ALLOWED_ORIGINS).forEach((origin) => origins.add(origin));
 
   return origins;
 }
@@ -92,7 +94,9 @@ export function resolveAllowedApiOrigin(request?: Request): string | null {
 }
 
 export function getTrustedRequestOrigin(request: Request): string {
-  return resolveAllowedApiOrigin(request) ?? getApplicationOrigin(request) ?? new URL(request.url).origin;
+  return (
+    resolveAllowedApiOrigin(request) ?? getApplicationOrigin(request) ?? new URL(request.url).origin
+  );
 }
 
 function appendVary(headers: Headers, value: string) {
@@ -102,13 +106,27 @@ function appendVary(headers: Headers, value: string) {
     return;
   }
 
-  const values = new Set(current.split(',').map(item => item.trim()).filter(Boolean));
-  value.split(',').map(item => item.trim()).filter(Boolean).forEach(item => values.add(item));
+  const values = new Set(
+    current
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean),
+  );
+  value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .forEach((item) => values.add(item));
   headers.set('vary', Array.from(values).join(', '));
 }
 
 function appendHeaderList(value: string, required: string): string {
-  const values = new Set(value.split(',').map(item => item.trim()).filter(Boolean));
+  const values = new Set(
+    value
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean),
+  );
   values.add(required);
   return Array.from(values).join(', ');
 }
@@ -120,9 +138,8 @@ export function getCorrelationId(request?: Request): string {
   if (cached) return cached;
 
   const incoming = request.headers.get(CORRELATION_ID_HEADER)?.trim();
-  const correlationId = incoming && CORRELATION_ID_PATTERN.test(incoming)
-    ? incoming
-    : crypto.randomUUID();
+  const correlationId =
+    incoming && CORRELATION_ID_PATTERN.test(incoming) ? incoming : crypto.randomUUID();
 
   requestCorrelationIds.set(request, correlationId);
   return correlationId;
@@ -142,7 +159,9 @@ export function applyCorsHeaders(
   response.headers.set('access-control-allow-methods', options.methods ?? DEFAULT_CORS_METHODS);
   response.headers.set(
     'access-control-allow-headers',
-    options.headers ? appendHeaderList(options.headers, CORRELATION_ID_HEADER) : DEFAULT_CORS_HEADERS,
+    options.headers
+      ? appendHeaderList(options.headers, CORRELATION_ID_HEADER)
+      : DEFAULT_CORS_HEADERS,
   );
   response.headers.set('access-control-expose-headers', DEFAULT_EXPOSED_HEADERS);
   response.headers.set(CORRELATION_ID_HEADER, options.correlationId ?? getCorrelationId(request));
@@ -151,12 +170,7 @@ export function applyCorsHeaders(
   return response;
 }
 
-export function json(
-  body: unknown,
-  status = 200,
-  request?: Request,
-  corsOptions?: CorsOptions,
-) {
+export function json(body: unknown, status = 200, request?: Request, corsOptions?: CorsOptions) {
   const response = new Response(JSON.stringify(body), {
     status,
     headers: {
@@ -249,9 +263,11 @@ export function handleApiError(error: unknown, request?: Request) {
 
   console.error('API unexpected error', {
     correlationId,
-    error: redactSensitiveData(error instanceof Error
-      ? { name: error.name, message: error.message, stack: error.stack }
-      : error),
+    error: redactSensitiveData(
+      error instanceof Error
+        ? { name: error.name, message: error.message, stack: error.stack }
+        : error,
+    ),
   });
 
   return json(

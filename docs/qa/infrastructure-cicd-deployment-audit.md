@@ -19,14 +19,14 @@ Status: PARTIAL
 
 ## Tabela obrigatoria
 
-| Item | Local | Teste | Staging | Producao |
-|---|---|---|---|---|
-| Banco | Supabase migrations versionadas | `schema:drift` PASS | BLOCKED sem env | BLOCKED |
-| Variaveis | `.env.example` completo | preflight FAIL sem env | BLOCKED | BLOCKED |
-| Migrations | 16 SQL | nao aplicadas localmente | BLOCKED | BLOCKED |
-| Storage | Supabase previsto | NOT TESTED | BLOCKED | BLOCKED |
-| Monitoramento | Sentry/PostHog previsto | NOT TESTED real | BLOCKED | BLOCKED |
-| Backup | docs DR | NOT TESTED | BLOCKED | BLOCKED |
+| Item          | Local                           | Teste                    | Staging         | Producao |
+| ------------- | ------------------------------- | ------------------------ | --------------- | -------- |
+| Banco         | Supabase migrations versionadas | `schema:drift` PASS      | BLOCKED sem env | BLOCKED  |
+| Variaveis     | `.env.example` completo         | preflight FAIL sem env   | BLOCKED         | BLOCKED  |
+| Migrations    | 16 SQL                          | nao aplicadas localmente | BLOCKED         | BLOCKED  |
+| Storage       | Supabase previsto               | NOT TESTED               | BLOCKED         | BLOCKED  |
+| Monitoramento | Sentry/PostHog previsto         | NOT TESTED real          | BLOCKED         | BLOCKED  |
+| Backup        | docs DR                         | NOT TESTED               | BLOCKED         | BLOCKED  |
 
 ## Deploy
 

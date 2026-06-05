@@ -4,7 +4,7 @@ import type { ProgressionSuggestion } from '../rules/progressionRules';
 
 export function useApplyProgressionSuggestion(
   suggestion: ProgressionSuggestion | null,
-  onApplyLoad: (newLoad: number) => void
+  onApplyLoad: (newLoad: number) => void,
 ) {
   const { track } = useAnalytics();
   const [isDismissed, setIsDismissed] = useState(false);

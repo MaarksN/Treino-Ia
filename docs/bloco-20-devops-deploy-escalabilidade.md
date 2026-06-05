@@ -38,28 +38,28 @@ docs/bloco-20-devops-deploy-escalabilidade.md
 
 ## Tabela dos 20 itens
 
-| # | Item | Prioridade sugerida |
-|---:|---|---|
-| 1 | Deploy automatizado Vercel (CI/CD via GitHub Actions) | MVP / Base |
-| 2 | Variáveis de ambiente seguras (.env + Vercel secrets) | MVP / Base |
-| 3 | Edge Functions para proxy da Gemini API | MVP / Base |
-| 4 | Supabase como backend (auth, DB, storage, realtime) | MVP / Base |
-| 5 | Row Level Security (RLS) por usuário no Supabase | MVP / Base |
-| 6 | CDN para assets (imagens, GIFs) via Supabase Storage | Premium / V2 |
-| 7 | Monitoramento de erros com Sentry | MVP / Base |
-| 8 | Analytics de uso com PostHog (open source) | MVP / Base |
-| 9 | Lighthouse CI: score mínimo 90 | MVP / Base |
-| 10 | Testes unitários com Vitest nos utils críticos | MVP / Base |
-| 11 | Testes E2E com Playwright nas jornadas principais | MVP / Base |
-| 12 | Storybook para documentação de componentes | Premium / V2 |
-| 13 | Versionamento semântico (semver) + CHANGELOG automático | Premium / V2 |
-| 14 | Feature flags para rollout gradual | MVP / Base |
-| 15 | Relatório de bundle size (vite-bundle-visualizer) | Premium / V2 |
-| 16 | Cache HTTP nas chamadas à IA (evitar re-geração) | Premium / V2 |
-| 17 | Queue de jobs para PDF/relatórios pesados | Premium / V2 |
-| 18 | Multi-tenant: academias com domínio próprio | Roadmap / Futuro |
-| 19 | Plano de disaster recovery (backup + restore em 1h) | Premium / V2 |
-| 20 | Documentação técnica completa (README, ADRs, API docs) | MVP / Base |
+|   # | Item                                                    | Prioridade sugerida |
+| --: | ------------------------------------------------------- | ------------------- |
+|   1 | Deploy automatizado Vercel (CI/CD via GitHub Actions)   | MVP / Base          |
+|   2 | Variáveis de ambiente seguras (.env + Vercel secrets)   | MVP / Base          |
+|   3 | Edge Functions para proxy da Gemini API                 | MVP / Base          |
+|   4 | Supabase como backend (auth, DB, storage, realtime)     | MVP / Base          |
+|   5 | Row Level Security (RLS) por usuário no Supabase        | MVP / Base          |
+|   6 | CDN para assets (imagens, GIFs) via Supabase Storage    | Premium / V2        |
+|   7 | Monitoramento de erros com Sentry                       | MVP / Base          |
+|   8 | Analytics de uso com PostHog (open source)              | MVP / Base          |
+|   9 | Lighthouse CI: score mínimo 90                          | MVP / Base          |
+|  10 | Testes unitários com Vitest nos utils críticos          | MVP / Base          |
+|  11 | Testes E2E com Playwright nas jornadas principais       | MVP / Base          |
+|  12 | Storybook para documentação de componentes              | Premium / V2        |
+|  13 | Versionamento semântico (semver) + CHANGELOG automático | Premium / V2        |
+|  14 | Feature flags para rollout gradual                      | MVP / Base          |
+|  15 | Relatório de bundle size (vite-bundle-visualizer)       | Premium / V2        |
+|  16 | Cache HTTP nas chamadas à IA (evitar re-geração)        | Premium / V2        |
+|  17 | Queue de jobs para PDF/relatórios pesados               | Premium / V2        |
+|  18 | Multi-tenant: academias com domínio próprio             | Roadmap / Futuro    |
+|  19 | Plano de disaster recovery (backup + restore em 1h)     | Premium / V2        |
+|  20 | Documentação técnica completa (README, ADRs, API docs)  | MVP / Base          |
 
 ## Organização por prioridade
 
@@ -117,7 +117,9 @@ docs/bloco-20-devops-deploy-escalabilidade.md
 
 ```tsx
 // Exemplo conceitual de rota/tela para o Bloco 20
-{currentView === 'bloco-20' && <DevopsDeployEscalabilidadeHub />}
+{
+  currentView === 'bloco-20' && <DevopsDeployEscalabilidadeHub />;
+}
 ```
 
 ## Resultado esperado

@@ -1,11 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  Activity,
-  Bluetooth,
-  BluetoothOff,
-  Heart,
-  Zap,
-} from 'lucide-react';
+import { Activity, Bluetooth, BluetoothOff, Heart, Zap } from 'lucide-react';
 import {
   CartesianGrid,
   Line,
@@ -51,20 +45,20 @@ function getZoneIndex(bpm: number, maxHR: number) {
 
 function getZoneCounts(readings: HeartRateReading[], maxHR: number) {
   return [
-    readings.filter(reading => (reading.bpm / maxHR) * 100 < 60).length,
-    readings.filter(reading => {
+    readings.filter((reading) => (reading.bpm / maxHR) * 100 < 60).length,
+    readings.filter((reading) => {
       const pct = (reading.bpm / maxHR) * 100;
       return pct >= 60 && pct < 70;
     }).length,
-    readings.filter(reading => {
+    readings.filter((reading) => {
       const pct = (reading.bpm / maxHR) * 100;
       return pct >= 70 && pct < 80;
     }).length,
-    readings.filter(reading => {
+    readings.filter((reading) => {
       const pct = (reading.bpm / maxHR) * 100;
       return pct >= 80 && pct < 90;
     }).length,
-    readings.filter(reading => (reading.bpm / maxHR) * 100 >= 90).length,
+    readings.filter((reading) => (reading.bpm / maxHR) * 100 >= 90).length,
   ];
 }
 
@@ -85,7 +79,9 @@ export function WearableSync({ profile, onSessionComplete }: Props) {
   const age = profile.age || 30;
   const weight = profile.weight || 75;
   const maxHR = 220 - age;
-  const isMale = !String(profile.gender || '').toLowerCase().includes('fem');
+  const isMale = !String(profile.gender || '')
+    .toLowerCase()
+    .includes('fem');
   const zone = getZoneIndex(currentBPM || Math.round(maxHR * 0.5), maxHR);
   const chartData = readings.slice(-60).map((reading, index) => ({ t: index, bpm: reading.bpm }));
   const zoneCounts = getZoneCounts(readings, maxHR);
@@ -103,9 +99,12 @@ export function WearableSync({ profile, onSessionComplete }: Props) {
     };
   }, [sessionStart]);
 
-  useEffect(() => () => {
-    disconnectHeartRateMonitor().catch(() => {});
-  }, []);
+  useEffect(
+    () => () => {
+      disconnectHeartRateMonitor().catch(() => {});
+    },
+    [],
+  );
 
   const handleConnect = async () => {
     setConnecting(true);
@@ -113,9 +112,9 @@ export function WearableSync({ profile, onSessionComplete }: Props) {
 
     try {
       readingsRef.current = [];
-      const name = await connectHeartRateMonitor(reading => {
+      const name = await connectHeartRateMonitor((reading) => {
         readingsRef.current = [...readingsRef.current, reading];
-        setReadings(previous => [...previous.slice(-120), reading]);
+        setReadings((previous) => [...previous.slice(-120), reading]);
         setCurrentBPM(reading.bpm);
       });
 
@@ -136,8 +135,8 @@ export function WearableSync({ profile, onSessionComplete }: Props) {
     if (sessionStart && readingsRef.current.length > 0) {
       const all = readingsRef.current;
       const avgHR = Math.round(all.reduce((sum, reading) => sum + reading.bpm, 0) / all.length);
-      const maxBPM = Math.max(...all.map(reading => reading.bpm));
-      const minBPM = Math.min(...all.map(reading => reading.bpm));
+      const maxBPM = Math.max(...all.map((reading) => reading.bpm));
+      const minBPM = Math.min(...all.map((reading) => reading.bpm));
       const durationMin = Math.max(1, elapsed / 60);
       const session: WearableSession = {
         id: crypto.randomUUID(),
@@ -169,184 +168,245 @@ export function WearableSync({ profile, onSessionComplete }: Props) {
     <div className="bg-brand-gray border border-white/10 rounded-2xl p-5">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-white font-bold text-lg">Monitor de Frequência Cardíaca</h3>
-        {connected
-          ? <Bluetooth size={20} className="text-brand-neon" />
-          : <BluetoothOff size={20} className="text-brand-muted" />}
+        {connected ? (
+          <Bluetooth size={20} className="text-brand-neon" />
+        ) : (
+          <BluetoothOff size={20} className="text-brand-muted" />
+        )}
       </div>
 
       <PremiumFeatureGate feature="wearable_sync">
-      <div className="flex gap-2 mb-4">
-        {(['live', 'history'] as const).map(item => (
-          <button
-            key={item}
-            type="button"
-            onClick={() => setTab(item)}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${tab === item ? 'bg-brand-neon text-brand-dark' : 'bg-white/10 text-brand-muted'}`}
-          >
-            {item === 'live' ? 'Ao vivo' : 'Histórico'}
-          </button>
-        ))}
-      </div>
-
-      {tab === 'live' && (
-        <div className="space-y-4">
-          {!isBluetoothSupported() && (
-            <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl">
-              <p className="text-red-400 text-sm">Web Bluetooth requer Chrome/Edge em Android ou Desktop. Não é suportado em Safari/iOS.</p>
-            </div>
-          )}
-
-          {!connected ? (
+        <div className="flex gap-2 mb-4">
+          {(['live', 'history'] as const).map((item) => (
             <button
+              key={item}
               type="button"
-              onClick={handleConnect}
-              disabled={connecting || !isBluetoothSupported()}
-              className="w-full py-4 bg-brand-neon text-brand-dark font-black rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
+              onClick={() => setTab(item)}
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${tab === item ? 'bg-brand-neon text-brand-dark' : 'bg-white/10 text-brand-muted'}`}
             >
-              <Bluetooth size={18} />
-              {connecting ? 'Conectando...' : 'Conectar monitor Bluetooth'}
+              {item === 'live' ? 'Ao vivo' : 'Histórico'}
             </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleDisconnect}
-              className="w-full py-4 bg-red-500/20 border border-red-500/40 text-red-400 font-black rounded-xl"
-            >
-              Encerrar sessão e salvar
-            </button>
-          )}
+          ))}
+        </div>
 
-          {error && <p className="text-red-400 text-sm">{error}</p>}
-
-          {connected && (
-            <div className="space-y-4">
-              <div className="flex items-stretch justify-between gap-3">
-                <div
-                  className="flex flex-col items-center flex-1 p-4 bg-brand-dark rounded-xl border"
-                  style={{ borderColor: `${ZONE_COLORS[zone]}50` }}
-                >
-                  <Heart size={28} style={{ color: ZONE_COLORS[zone] }} className="mb-1" />
-                  <p className="text-5xl font-black tabular-nums" style={{ color: ZONE_COLORS[zone] }}>
-                    {currentBPM}
-                  </p>
-                  <p className="text-brand-muted text-xs mt-1">BPM</p>
-                  <p className="text-xs font-bold mt-1" style={{ color: ZONE_COLORS[zone] }}>
-                    {ZONE_NAMES[zone]}
-                  </p>
-                </div>
-
-                <div className="flex flex-col gap-2 flex-1 min-w-0">
-                  <div className="p-3 bg-brand-dark rounded-xl border border-white/10 text-center">
-                    <Activity size={16} className="mx-auto mb-1 text-brand-neon" />
-                    <p className="text-brand-neon font-black text-xl tabular-nums">{formatElapsed(elapsed)}</p>
-                    <p className="text-brand-muted text-xs">Duração</p>
-                  </div>
-                  <div className="p-3 bg-brand-dark rounded-xl border border-white/10 text-center">
-                    <Zap size={16} className="mx-auto mb-1 text-orange-400" />
-                    <p className="text-orange-400 font-black text-xl tabular-nums">
-                      {Math.round(estimateCalories(readings, weight, age, isMale, elapsed / 60))}
-                    </p>
-                    <p className="text-brand-muted text-xs">Calorias</p>
-                  </div>
-                </div>
+        {tab === 'live' && (
+          <div className="space-y-4">
+            {!isBluetoothSupported() && (
+              <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl">
+                <p className="text-red-400 text-sm">
+                  Web Bluetooth requer Chrome/Edge em Android ou Desktop. Não é suportado em
+                  Safari/iOS.
+                </p>
               </div>
+            )}
 
-              {chartData.length > 1 && (
-                <div className="h-36">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                      <XAxis hide />
-                      <YAxis domain={['auto', 'auto']} stroke="#9ca9bb" tick={{ fontSize: 10 }} width={30} />
-                      <Tooltip
-                        contentStyle={{ background: '#1c1b19', border: 'none', borderRadius: 8 }}
-                        formatter={(value) => [`${Number(value ?? 0)} BPM`]}
-                        labelFormatter={() => ''}
-                      />
-                      <ReferenceLine y={maxHR * 0.6} stroke={ZONE_COLORS[0]} strokeDasharray="4 4" />
-                      <ReferenceLine y={maxHR * 0.7} stroke={ZONE_COLORS[1]} strokeDasharray="4 4" />
-                      <ReferenceLine y={maxHR * 0.8} stroke={ZONE_COLORS[2]} strokeDasharray="4 4" />
-                      <ReferenceLine y={maxHR * 0.9} stroke={ZONE_COLORS[3]} strokeDasharray="4 4" />
-                      <Line type="monotone" dataKey="bpm" stroke={ZONE_COLORS[zone]} strokeWidth={2} dot={false} />
-                    </LineChart>
-                  </ResponsiveContainer>
+            {!connected ? (
+              <button
+                type="button"
+                onClick={handleConnect}
+                disabled={connecting || !isBluetoothSupported()}
+                className="w-full py-4 bg-brand-neon text-brand-dark font-black rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <Bluetooth size={18} />
+                {connecting ? 'Conectando...' : 'Conectar monitor Bluetooth'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleDisconnect}
+                className="w-full py-4 bg-red-500/20 border border-red-500/40 text-red-400 font-black rounded-xl"
+              >
+                Encerrar sessão e salvar
+              </button>
+            )}
+
+            {error && <p className="text-red-400 text-sm">{error}</p>}
+
+            {connected && (
+              <div className="space-y-4">
+                <div className="flex items-stretch justify-between gap-3">
+                  <div
+                    className="flex flex-col items-center flex-1 p-4 bg-brand-dark rounded-xl border"
+                    style={{ borderColor: `${ZONE_COLORS[zone]}50` }}
+                  >
+                    <Heart size={28} style={{ color: ZONE_COLORS[zone] }} className="mb-1" />
+                    <p
+                      className="text-5xl font-black tabular-nums"
+                      style={{ color: ZONE_COLORS[zone] }}
+                    >
+                      {currentBPM}
+                    </p>
+                    <p className="text-brand-muted text-xs mt-1">BPM</p>
+                    <p className="text-xs font-bold mt-1" style={{ color: ZONE_COLORS[zone] }}>
+                      {ZONE_NAMES[zone]}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-2 flex-1 min-w-0">
+                    <div className="p-3 bg-brand-dark rounded-xl border border-white/10 text-center">
+                      <Activity size={16} className="mx-auto mb-1 text-brand-neon" />
+                      <p className="text-brand-neon font-black text-xl tabular-nums">
+                        {formatElapsed(elapsed)}
+                      </p>
+                      <p className="text-brand-muted text-xs">Duração</p>
+                    </div>
+                    <div className="p-3 bg-brand-dark rounded-xl border border-white/10 text-center">
+                      <Zap size={16} className="mx-auto mb-1 text-orange-400" />
+                      <p className="text-orange-400 font-black text-xl tabular-nums">
+                        {Math.round(estimateCalories(readings, weight, age, isMale, elapsed / 60))}
+                      </p>
+                      <p className="text-brand-muted text-xs">Calorias</p>
+                    </div>
+                  </div>
                 </div>
-              )}
 
-              <div>
-                <p className="text-xs text-brand-muted uppercase tracking-widest mb-2">Zonas de frequência cardíaca</p>
-                <div className="space-y-1.5">
-                  {ZONE_NAMES.map((name, index) => {
-                    const total = readings.length || 1;
-                    const pct = Math.round((zoneCounts[index] / total) * 100);
-                    return (
-                      <div key={name} className="flex items-center gap-2">
-                        <span className="text-xs w-24" style={{ color: ZONE_COLORS[index] }}>{name}</span>
-                        <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+                {chartData.length > 1 && (
+                  <div className="h-36">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                        <XAxis hide />
+                        <YAxis
+                          domain={['auto', 'auto']}
+                          stroke="#9ca9bb"
+                          tick={{ fontSize: 10 }}
+                          width={30}
+                        />
+                        <Tooltip
+                          contentStyle={{ background: '#1c1b19', border: 'none', borderRadius: 8 }}
+                          formatter={(value) => [`${Number(value ?? 0)} BPM`]}
+                          labelFormatter={() => ''}
+                        />
+                        <ReferenceLine
+                          y={maxHR * 0.6}
+                          stroke={ZONE_COLORS[0]}
+                          strokeDasharray="4 4"
+                        />
+                        <ReferenceLine
+                          y={maxHR * 0.7}
+                          stroke={ZONE_COLORS[1]}
+                          strokeDasharray="4 4"
+                        />
+                        <ReferenceLine
+                          y={maxHR * 0.8}
+                          stroke={ZONE_COLORS[2]}
+                          strokeDasharray="4 4"
+                        />
+                        <ReferenceLine
+                          y={maxHR * 0.9}
+                          stroke={ZONE_COLORS[3]}
+                          strokeDasharray="4 4"
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="bpm"
+                          stroke={ZONE_COLORS[zone]}
+                          strokeWidth={2}
+                          dot={false}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+
+                <div>
+                  <p className="text-xs text-brand-muted uppercase tracking-widest mb-2">
+                    Zonas de frequência cardíaca
+                  </p>
+                  <div className="space-y-1.5">
+                    {ZONE_NAMES.map((name, index) => {
+                      const total = readings.length || 1;
+                      const pct = Math.round((zoneCounts[index] / total) * 100);
+                      return (
+                        <div key={name} className="flex items-center gap-2">
+                          <span className="text-xs w-24" style={{ color: ZONE_COLORS[index] }}>
+                            {name}
+                          </span>
+                          <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all"
+                              style={{ width: `${pct}%`, background: ZONE_COLORS[index] }}
+                            />
+                          </div>
+                          <span className="text-xs text-brand-muted tabular-nums w-8 text-right">
+                            {pct}%
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <p className="text-xs text-brand-muted text-center">
+                  Dispositivo: <strong className="text-white">{deviceName}</strong>
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === 'history' && (
+          <div className="space-y-3">
+            {sessions.length === 0 && (
+              <p className="text-brand-muted text-sm text-center py-6">
+                Nenhuma sessão registrada ainda.
+              </p>
+            )}
+            {[...sessions]
+              .reverse()
+              .slice(0, 10)
+              .map((session) => {
+                const duration = session.endedAt
+                  ? Math.round((session.endedAt - session.startedAt) / 60000)
+                  : 0;
+                const values = Object.values(session.hrZones);
+                const total = values.reduce((sum, count) => sum + count, 0) || 1;
+
+                return (
+                  <div
+                    key={session.id}
+                    className="p-4 bg-brand-dark rounded-xl border border-white/10"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <p className="text-white font-semibold text-sm">{session.deviceName}</p>
+                        <p className="text-brand-muted text-xs">
+                          {new Date(session.startedAt).toLocaleDateString('pt-BR')} · {duration}min
+                        </p>
+                      </div>
+                      <div className="flex gap-3 text-right">
+                        <div>
+                          <p className="text-red-400 font-bold text-lg tabular-nums">
+                            {session.avgHR}
+                          </p>
+                          <p className="text-brand-muted text-xs">avg BPM</p>
+                        </div>
+                        <div>
+                          <p className="text-orange-400 font-bold text-lg tabular-nums">
+                            {session.calories || '—'}
+                          </p>
+                          <p className="text-brand-muted text-xs">kcal</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      {ZONE_NAMES.map((name, index) => {
+                        const pct = Math.round((values[index] / total) * 100);
+                        return pct > 0 ? (
                           <div
-                            className="h-full rounded-full transition-all"
+                            key={name}
+                            className="h-2 rounded-full"
+                            title={`${name}: ${pct}%`}
                             style={{ width: `${pct}%`, background: ZONE_COLORS[index] }}
                           />
-                        </div>
-                        <span className="text-xs text-brand-muted tabular-nums w-8 text-right">{pct}%</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <p className="text-xs text-brand-muted text-center">Dispositivo: <strong className="text-white">{deviceName}</strong></p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {tab === 'history' && (
-        <div className="space-y-3">
-          {sessions.length === 0 && (
-            <p className="text-brand-muted text-sm text-center py-6">Nenhuma sessão registrada ainda.</p>
-          )}
-          {[...sessions].reverse().slice(0, 10).map(session => {
-            const duration = session.endedAt ? Math.round((session.endedAt - session.startedAt) / 60000) : 0;
-            const values = Object.values(session.hrZones);
-            const total = values.reduce((sum, count) => sum + count, 0) || 1;
-
-            return (
-              <div key={session.id} className="p-4 bg-brand-dark rounded-xl border border-white/10">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <p className="text-white font-semibold text-sm">{session.deviceName}</p>
-                    <p className="text-brand-muted text-xs">{new Date(session.startedAt).toLocaleDateString('pt-BR')} · {duration}min</p>
-                  </div>
-                  <div className="flex gap-3 text-right">
-                    <div>
-                      <p className="text-red-400 font-bold text-lg tabular-nums">{session.avgHR}</p>
-                      <p className="text-brand-muted text-xs">avg BPM</p>
-                    </div>
-                    <div>
-                      <p className="text-orange-400 font-bold text-lg tabular-nums">{session.calories || '—'}</p>
-                      <p className="text-brand-muted text-xs">kcal</p>
+                        ) : null;
+                      })}
                     </div>
                   </div>
-                </div>
-                <div className="flex gap-1">
-                  {ZONE_NAMES.map((name, index) => {
-                    const pct = Math.round((values[index] / total) * 100);
-                    return pct > 0 ? (
-                      <div
-                        key={name}
-                        className="h-2 rounded-full"
-                        title={`${name}: ${pct}%`}
-                        style={{ width: `${pct}%`, background: ZONE_COLORS[index] }}
-                      />
-                    ) : null;
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+                );
+              })}
+          </div>
+        )}
       </PremiumFeatureGate>
     </div>
   );

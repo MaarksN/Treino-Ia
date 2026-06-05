@@ -25,6 +25,8 @@
     "smoke:supabase:social": "node tests/social-real-smoke.mjs",
     "preflight:sprint3": "node scripts/preflight-sprint3-env.mjs",
     "smoke:sprint3": "node scripts/smoke-sprint3-integrations.mjs",
+    "smoke:tenant-ab": "node scripts/smoke-tenant-ab-isolation.mjs",
+    "smoke:compliance": "node scripts/smoke-compliance-real.mjs",
     "test:a11y": "playwright test tests/e2e/accessibility.spec.ts",
     "analyze": "vite build --mode analyze",
     "validate": "npm run typecheck && npm run test && npm run build"
