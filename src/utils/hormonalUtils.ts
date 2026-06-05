@@ -36,29 +36,44 @@ export function getPhaseForDate(date: string, cycles: CycleEntry[]): CycleDay | 
   if (cycleMod <= last.periodLengthDays) {
     phase = 'menstrual';
     energyExpected = 'baixa';
-    trainingRecommendation = 'Atividade leve: mobilidade, caminhada e treino de baixa intensidade. Evite esforço máximo.';
+    trainingRecommendation =
+      'Atividade leve: mobilidade, caminhada e treino de baixa intensidade. Evite esforço máximo.';
     nutritionTip = 'Aumente ferro, magnésio e ômega-3 para apoiar energia e conforto.';
   } else if (cycleMod <= 13) {
     phase = 'folicular';
     energyExpected = 'moderada';
-    trainingRecommendation = 'Fase boa para construir: treine força com progressão de carga e boa técnica.';
+    trainingRecommendation =
+      'Fase boa para construir: treine força com progressão de carga e boa técnica.';
     nutritionTip = 'Aumente carboidratos complexos para sustentar treinos mais intensos.';
   } else if (cycleMod <= 16) {
     phase = 'ovulação';
     energyExpected = 'máxima';
-    trainingRecommendation = 'Pico de performance: boa janela para PRs, HIIT e alta intensidade, mantendo técnica sólida.';
+    trainingRecommendation =
+      'Pico de performance: boa janela para PRs, HIIT e alta intensidade, mantendo técnica sólida.';
     nutritionTip = 'Priorize proteína e hidratação para aproveitar a fase de maior potência.';
   } else {
     phase = 'lútea';
     energyExpected = cycleMod <= last.cycleLengthDays - 4 ? 'moderada' : 'baixa';
-    trainingRecommendation = 'Fase lútea: fadiga pode subir. Priorize treinos moderados, técnica e recovery.';
-    nutritionTip = 'Vontade de carboidrato pode aumentar. Prefira aveia, batata-doce e reduza excesso de sal.';
+    trainingRecommendation =
+      'Fase lútea: fadiga pode subir. Priorize treinos moderados, técnica e recovery.';
+    nutritionTip =
+      'Vontade de carboidrato pode aumentar. Prefira aveia, batata-doce e reduza excesso de sal.';
   }
 
-  return { date, phase, dayOfCycle: cycleMod, energyExpected, trainingRecommendation, nutritionTip };
+  return {
+    date,
+    phase,
+    dayOfCycle: cycleMod,
+    energyExpected,
+    trainingRecommendation,
+    nutritionTip,
+  };
 }
 
-export const PHASE_CONFIG: Record<MenstrualPhase, { label: string; emoji: string; color: string; bg: string; border: string }> = {
+export const PHASE_CONFIG: Record<
+  MenstrualPhase,
+  { label: string; emoji: string; color: string; bg: string; border: string }
+> = {
   menstrual: {
     label: 'Menstrual',
     emoji: '🌑',

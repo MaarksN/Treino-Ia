@@ -16,40 +16,48 @@ export default async function handler(request: Request) {
 
     // Fallback if not configured properly
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-       return json({
-         planId: 'free',
-         billingStatus: 'free',
-         isPremium: false,
-         entitlements: getEntitlementsForPlan('free'),
-         subscription: null,
-         usage: {
-           aiRequestsThisMonth: 0,
-           exportsThisMonth: 0,
-           prCount: 0,
-           bestStreak: 0,
-         },
-         dataMode: 'not_configured'
-       }, 200, request);
+      return json(
+        {
+          planId: 'free',
+          billingStatus: 'free',
+          isPremium: false,
+          entitlements: getEntitlementsForPlan('free'),
+          subscription: null,
+          usage: {
+            aiRequestsThisMonth: 0,
+            exportsThisMonth: 0,
+            prCount: 0,
+            bestStreak: 0,
+          },
+          dataMode: 'not_configured',
+        },
+        200,
+        request,
+      );
     }
 
     const entitlement = await getServerEntitlement(user.id);
     return json(entitlement, 200, request);
   } catch (error) {
     if ((error as any).status === 500 && (error as any).message?.includes('not configured')) {
-        return json({
-           planId: 'free',
-           billingStatus: 'free',
-           isPremium: false,
-           entitlements: getEntitlementsForPlan('free'),
-           subscription: null,
-           usage: {
-             aiRequestsThisMonth: 0,
-             exportsThisMonth: 0,
-             prCount: 0,
-             bestStreak: 0,
-           },
-           dataMode: 'not_configured'
-        }, 200, request);
+      return json(
+        {
+          planId: 'free',
+          billingStatus: 'free',
+          isPremium: false,
+          entitlements: getEntitlementsForPlan('free'),
+          subscription: null,
+          usage: {
+            aiRequestsThisMonth: 0,
+            exportsThisMonth: 0,
+            prCount: 0,
+            bestStreak: 0,
+          },
+          dataMode: 'not_configured',
+        },
+        200,
+        request,
+      );
     }
     return handleApiError(error, request);
   }

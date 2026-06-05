@@ -8,7 +8,10 @@ describe('caffeineImpactService', () => {
     expect(entries[0].mg).toBe(1000);
   });
   it('alerts near sleep', () => {
-    const result = estimateCaffeineImpact([{ mg: 150, loggedAt: new Date('2026-01-01T20:00:00Z').getTime() }], 23);
+    const result = estimateCaffeineImpact(
+      [{ mg: 150, loggedAt: new Date('2026-01-01T20:00:00Z').getTime() }],
+      23,
+    );
     expect(result.message).toContain('próxima do sono');
   });
 });

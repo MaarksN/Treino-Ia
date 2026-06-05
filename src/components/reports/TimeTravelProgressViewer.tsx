@@ -17,14 +17,18 @@ export function TimeTravelProgressViewer({ history }: Props) {
           <History className="h-6 w-6" />
         </div>
         <div>
-          <h3 className="font-display text-2xl uppercase text-brand-light">Time-Travel Retrospective</h3>
+          <h3 className="font-display text-2xl uppercase text-brand-light">
+            Time-Travel Retrospective
+          </h3>
           <p className="font-mono text-xs text-brand-light/70">{result.message}</p>
         </div>
       </div>
 
       {!result.hasEnoughData ? (
         <div className="rounded-[16px] border border-dashed border-brand-light/20 p-8 text-center">
-          <p className="font-mono text-sm text-brand-light/60">Histórico insuficiente para viagem no tempo.</p>
+          <p className="font-mono text-sm text-brand-light/60">
+            Histórico insuficiente para viagem no tempo.
+          </p>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -40,7 +44,9 @@ export function TimeTravelProgressViewer({ history }: Props) {
                 </div>
                 <div className="flex justify-between font-mono text-sm">
                   <span className="text-brand-light/70">Volume Total:</span>
-                  <span className="text-brand-light">{snapshot.totalVolume.toLocaleString('pt-BR')} kg</span>
+                  <span className="text-brand-light">
+                    {snapshot.totalVolume.toLocaleString('pt-BR')} kg
+                  </span>
                 </div>
               </div>
             </div>

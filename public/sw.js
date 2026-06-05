@@ -10,20 +10,22 @@ const APP_SHELL = [
   '/icons/icon-512.png',
 ];
 
-self.addEventListener('install', event => {
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(APP_SHELL))
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => cache.addAll(APP_SHELL))
       .then(() => self.skipWaiting()),
   );
 });
 
-self.addEventListener('activate', event => {
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys()
-      .then(keys =>
+    caches
+      .keys()
+      .then((keys) =>
         Promise.all(
-          keys.map(key => {
+          keys.map((key) => {
             if (![CACHE_NAME, DATA_CACHE_NAME].includes(key)) {
               return caches.delete(key);
             }
@@ -37,7 +39,7 @@ self.addEventListener('activate', event => {
   );
 });
 
-self.addEventListener('fetch', event => {
+self.addEventListener('fetch', (event) => {
   const { request } = event;
 
   if (request.method !== 'GET') {
@@ -73,7 +75,7 @@ self.addEventListener('fetch', event => {
   event.respondWith(cacheFirst(request));
 });
 
-self.addEventListener('push', event => {
+self.addEventListener('push', (event) => {
   let data = {
     title: 'Treino App',
     body: 'Hora de evoluir no treino.',
@@ -96,12 +98,13 @@ self.addEventListener('push', event => {
       body: data.body,
       icon: '/icons/icon-192.png',
       badge: '/icons/icon-192.png',
-      actions: data.type === 'HYDRATION_REMINDER'
-        ? [
-          { action: 'hydrate-250', title: '+250ml' },
-          { action: 'hydrate-500', title: '+500ml' },
-        ]
-        : data.actions,
+      actions:
+        data.type === 'HYDRATION_REMINDER'
+          ? [
+              { action: 'hydrate-250', title: '+250ml' },
+              { action: 'hydrate-500', title: '+500ml' },
+            ]
+          : data.actions,
       data: {
         type: data.type || 'DEFAULT',
         url: data.url || '/',
@@ -110,7 +113,7 @@ self.addEventListener('push', event => {
   );
 });
 
-self.addEventListener('notificationclick', event => {
+self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   const quickHydration = getHydrationAmountFromAction(event.action);
@@ -119,29 +122,28 @@ self.addEventListener('notificationclick', event => {
     : event.notification.data?.url || '/';
 
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then(clientList => {
-        if (quickHydration && clientList.length) {
-          clientList.forEach(client => {
-            client.postMessage({ type: 'HYDRATION_QUICK_ADD', amountMl: quickHydration });
-          });
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      if (quickHydration && clientList.length) {
+        clientList.forEach((client) => {
+          client.postMessage({ type: 'HYDRATION_QUICK_ADD', amountMl: quickHydration });
+        });
 
-          return undefined;
+        return undefined;
+      }
+
+      for (const client of clientList) {
+        if ('focus' in client) {
+          client.navigate(url);
+          return client.focus();
         }
+      }
 
-        for (const client of clientList) {
-          if ('focus' in client) {
-            client.navigate(url);
-            return client.focus();
-          }
-        }
-
-        return clients.openWindow(url);
-      }),
+      return clients.openWindow(url);
+    }),
   );
 });
 
-self.addEventListener('sync', event => {
+self.addEventListener('sync', (event) => {
   if (event.tag === 'treino-app-sync') {
     event.waitUntil(notifyClients({ type: 'BACKGROUND_SYNC_REQUESTED' }));
   }
@@ -186,15 +188,18 @@ async function networkOnly(request, url) {
     return await fetch(request);
   } catch {
     if (url.origin === self.location.origin && url.pathname.startsWith('/api/')) {
-      return new Response(JSON.stringify({
-        error: 'Network unavailable',
-      }), {
-        status: 503,
-        headers: {
-          'content-type': 'application/json; charset=utf-8',
-          'cache-control': 'no-store',
+      return new Response(
+        JSON.stringify({
+          error: 'Network unavailable',
+        }),
+        {
+          status: 503,
+          headers: {
+            'content-type': 'application/json; charset=utf-8',
+            'cache-control': 'no-store',
+          },
         },
-      });
+      );
     }
 
     return caches.match('/offline.html');
@@ -203,8 +208,10 @@ async function networkOnly(request, url) {
 
 // Keep this aligned with src/services/pwa/cachePolicy.ts.
 function shouldBypassCache(request, url) {
-  return hasAuthorizationHeader(request) ||
-    (url.origin === self.location.origin && url.pathname.startsWith('/api/'));
+  return (
+    hasAuthorizationHeader(request) ||
+    (url.origin === self.location.origin && url.pathname.startsWith('/api/'))
+  );
 }
 
 function hasAuthorizationHeader(request) {
@@ -212,10 +219,9 @@ function hasAuthorizationHeader(request) {
 }
 
 function notifyClients(message) {
-  return self.clients.matchAll({ includeUncontrolled: true })
-    .then(clients => {
-      clients.forEach(client => client.postMessage(message));
-    });
+  return self.clients.matchAll({ includeUncontrolled: true }).then((clients) => {
+    clients.forEach((client) => client.postMessage(message));
+  });
 }
 
 function getHydrationAmountFromAction(action) {

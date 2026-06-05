@@ -27,6 +27,7 @@ export function calculateEcoLiftingImpact(history: WorkoutSession[]): EcoLifting
   return {
     score,
     badges,
-    message: 'Seu compromisso com o treino regular também é um compromisso com a longevidade. Continue adotando práticas sustentáveis, como usar garrafa reutilizável e evitar deslocamentos motorizados curtos.',
+    message:
+      'Seu compromisso com o treino regular também é um compromisso com a longevidade. Continue adotando práticas sustentáveis, como usar garrafa reutilizável e evitar deslocamentos motorizados curtos.',
   };
 }

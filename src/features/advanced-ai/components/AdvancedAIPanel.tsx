@@ -52,7 +52,9 @@ export function AdvancedAIPanel() {
 
         <div className="space-y-6">
           <div className="rounded-[24px] border-2 border-brand-light/20 p-5">
-            <h3 className="mb-3 font-mono text-sm uppercase text-brand-light">Personalidade do Coach</h3>
+            <h3 className="mb-3 font-mono text-sm uppercase text-brand-light">
+              Personalidade do Coach
+            </h3>
             <div className="flex gap-2">
               {(['technical', 'motivator', 'friendly'] as AIPersonalityType[]).map((p) => (
                 <button
@@ -92,7 +94,10 @@ export function AdvancedAIPanel() {
           <div className="rounded-[24px] border-2 border-brand-light/20 p-5">
             <h3 className="mb-2 font-mono text-sm uppercase text-brand-light">Form Checker API</h3>
             <p className="font-mono text-xs text-brand-light/60">
-              Status: {formCheckStatus.isAvailable ? 'Disponível' : `Indisponível (${formCheckStatus.blockedReason})`}
+              Status:{' '}
+              {formCheckStatus.isAvailable
+                ? 'Disponível'
+                : `Indisponível (${formCheckStatus.blockedReason})`}
             </p>
           </div>
         </div>

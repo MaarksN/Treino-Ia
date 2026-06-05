@@ -20,7 +20,9 @@ describe('observabilityRedaction', () => {
     expect(redacted.access_token).toBe('[REDACTED]');
     expect(redacted.refresh_token).toBe('[REDACTED]');
     expect((redacted.nested as Record<string, unknown>).apiKey).toBe('[REDACTED]');
-    expect(redactObservabilityString('Authorization: Bearer abc123')).toBe('Authorization: Bearer [REDACTED]');
+    expect(redactObservabilityString('Authorization: Bearer abc123')).toBe(
+      'Authorization: Bearer [REDACTED]',
+    );
   });
 
   it('redacts email phone cpf and OAuth query fields', () => {

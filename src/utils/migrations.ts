@@ -1,4 +1,9 @@
-import { LEGACY_KEYS, STORAGE_KEYS, StorageEnvelope, CURRENT_STORAGE_VERSION } from './storageSchema';
+import {
+  LEGACY_KEYS,
+  STORAGE_KEYS,
+  StorageEnvelope,
+  CURRENT_STORAGE_VERSION,
+} from './storageSchema';
 
 function safeParse<T>(data: string | null): T | null {
   if (!data) return null;

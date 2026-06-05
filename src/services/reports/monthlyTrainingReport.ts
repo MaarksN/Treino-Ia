@@ -23,10 +23,15 @@ export interface TrainingPeriodReport {
   highlights: string[];
 }
 
-export function buildMonthlyTrainingReport(month: string, sessions: WorkoutSession[]): MonthlyTrainingReport {
+export function buildMonthlyTrainingReport(
+  month: string,
+  sessions: WorkoutSession[],
+): MonthlyTrainingReport {
   const totalVolume = sessions.reduce((sum, session) => sum + session.totalVolume, 0);
   const averageDurationMinutes = sessions.length
-    ? Math.round(sessions.reduce((sum, session) => sum + session.durationMinutes, 0) / sessions.length)
+    ? Math.round(
+        sessions.reduce((sum, session) => sum + session.durationMinutes, 0) / sessions.length,
+      )
     : 0;
 
   const highlights = [
@@ -57,9 +62,9 @@ function formatPeriodLabel(period: TrainingReportPeriod, reference: Date) {
 export function filterWorkoutSessionsByPeriod(
   sessions: WorkoutSession[],
   period: TrainingReportPeriod,
-  reference = new Date()
+  reference = new Date(),
 ) {
-  return sessions.filter(session => {
+  return sessions.filter((session) => {
     const date = new Date(session.completedAt);
     return period === 'month' ? isSameMonth(date, reference) : isSameYear(date, reference);
   });
@@ -68,11 +73,14 @@ export function filterWorkoutSessionsByPeriod(
 export function buildTrainingPeriodReport(
   period: TrainingReportPeriod,
   sessions: WorkoutSession[],
-  reference = new Date()
+  reference = new Date(),
 ): TrainingPeriodReport {
   const scopedSessions = filterWorkoutSessionsByPeriod(sessions, period, reference);
   const totalVolume = scopedSessions.reduce((sum, session) => sum + session.totalVolume, 0);
-  const totalDurationMinutes = scopedSessions.reduce((sum, session) => sum + session.durationMinutes, 0);
+  const totalDurationMinutes = scopedSessions.reduce(
+    (sum, session) => sum + session.durationMinutes,
+    0,
+  );
   const averageDurationMinutes = scopedSessions.length
     ? Math.round(totalDurationMinutes / scopedSessions.length)
     : 0;
@@ -81,7 +89,7 @@ export function buildTrainingPeriodReport(
         scopedSessions.reduce((sum, session) => {
           if (!session.totalExercises) return sum;
           return sum + (session.completedExercises / session.totalExercises) * 100;
-        }, 0) / scopedSessions.length
+        }, 0) / scopedSessions.length,
       )
     : 0;
 
@@ -89,9 +97,11 @@ export function buildTrainingPeriodReport(
     acc[session.focus] = (acc[session.focus] ?? 0) + 1;
     return acc;
   }, {});
-  const topFocus = Object.entries(focusCounts)
-    .sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'Sem foco dominante';
-  const activeDays = new Set(scopedSessions.map(session => new Date(session.completedAt).toDateString())).size;
+  const topFocus =
+    Object.entries(focusCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'Sem foco dominante';
+  const activeDays = new Set(
+    scopedSessions.map((session) => new Date(session.completedAt).toDateString()),
+  ).size;
 
   const highlights = scopedSessions.length
     ? [

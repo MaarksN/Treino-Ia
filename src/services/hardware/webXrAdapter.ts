@@ -11,11 +11,14 @@ export function useWebXrCapability() {
     // Check if WebXR is available
     const nav = navigator as any;
     if (nav.xr && nav.xr.isSessionSupported) {
-      nav.xr.isSessionSupported('immersive-ar').then((supported: boolean) => {
-        setIsSupported(supported);
-      }).catch(() => {
-        setIsSupported(false);
-      });
+      nav.xr
+        .isSessionSupported('immersive-ar')
+        .then((supported: boolean) => {
+          setIsSupported(supported);
+        })
+        .catch(() => {
+          setIsSupported(false);
+        });
     } else {
       setIsSupported(false);
     }

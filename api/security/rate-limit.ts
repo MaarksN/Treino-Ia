@@ -18,7 +18,7 @@ export default async function handler(request: Request) {
   const key = `ai:${ip}`;
   const limit = 30;
   const windowMs = 60 * 1000;
-  const hits = (buckets.get(key) || []).filter(hit => now - hit < windowMs);
+  const hits = (buckets.get(key) || []).filter((hit) => now - hit < windowMs);
 
   if (hits.length >= limit) {
     return json({ allowed: false, remaining: 0, resetAt: hits[0] + windowMs }, 429, request);
@@ -27,5 +27,9 @@ export default async function handler(request: Request) {
   hits.push(now);
   buckets.set(key, hits);
 
-  return json({ allowed: true, remaining: limit - hits.length, resetAt: hits[0] + windowMs }, 200, request);
+  return json(
+    { allowed: true, remaining: limit - hits.length, resetAt: hits[0] + windowMs },
+    200,
+    request,
+  );
 }

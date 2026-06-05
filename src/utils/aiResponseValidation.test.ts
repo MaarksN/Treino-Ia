@@ -8,7 +8,7 @@ describe('aiResponseValidation', () => {
         muscleGroups: [{ group: 'Peito', weeklySets: 12, reason: 'Volume moderado.' }],
         summary: 'Volume semanal validado.',
       }),
-      isWeeklyVolumeRecommendation
+      isWeeklyVolumeRecommendation,
     );
 
     expect(result.ok).toBe(true);

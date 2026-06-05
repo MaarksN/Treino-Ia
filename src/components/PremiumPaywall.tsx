@@ -49,9 +49,7 @@ export function PremiumPaywall({ trigger, onClose }: PremiumPaywallProps) {
       <div className="w-full max-w-5xl max-h-[92vh] overflow-y-auto bg-brand-gray border border-white/10 rounded-3xl p-6 shadow-2xl">
         <div className="flex items-start justify-between gap-4 mb-6">
           <div>
-            <p className="text-brand-neon text-xs uppercase tracking-[0.25em] font-bold">
-              Premium
-            </p>
+            <p className="text-brand-neon text-xs uppercase tracking-[0.25em] font-bold">Premium</p>
 
             <h2 className="text-3xl font-black text-white mt-2">
               {trigger.title ?? `Desbloqueie ${featureName}`}
@@ -75,9 +73,7 @@ export function PremiumPaywall({ trigger, onClose }: PremiumPaywallProps) {
         <PricingTable compact />
 
         <div className="mt-6 rounded-2xl bg-brand-neon/10 border border-brand-neon/20 p-4">
-          <p className="text-brand-neon font-black">
-            Entitlement validado no servidor
-          </p>
+          <p className="text-brand-neon font-black">Entitlement validado no servidor</p>
           <p className="text-sm text-white/70 mt-1">
             Alterar localStorage, DOM ou estado React não libera recursos premium.
           </p>
@@ -113,7 +109,10 @@ export function PremiumFeatureGate({
         const next = await fetchBillingEntitlement();
         if (active) setEntitlement(next);
       } catch (loadError) {
-        if (active) setError(loadError instanceof Error ? loadError.message : 'Falha ao validar entitlement.');
+        if (active)
+          setError(
+            loadError instanceof Error ? loadError.message : 'Falha ao validar entitlement.',
+          );
       } finally {
         if (active) setLoading(false);
       }
@@ -159,9 +158,7 @@ export function PremiumFeatureGate({
             </div>
 
             <div className="flex-1">
-              <h3 className="font-black text-white">
-                {PREMIUM_FEATURE_LABELS[feature]} bloqueado
-              </h3>
+              <h3 className="font-black text-white">{PREMIUM_FEATURE_LABELS[feature]} bloqueado</h3>
 
               <p className="text-sm text-brand-muted mt-1">
                 {error || `Requer entitlement ${requiredEntitlement} confirmado pelo servidor.`}

@@ -11,7 +11,14 @@ import {
 } from '../services/nutritionService';
 import { MealLogger } from './MealLogger';
 
-const MEAL_TYPES: MealEntry['mealType'][] = ['Café da manhã', 'Almoço', 'Jantar', 'Lanche', 'Pré-treino', 'Pós-treino'];
+const MEAL_TYPES: MealEntry['mealType'][] = [
+  'Café da manhã',
+  'Almoço',
+  'Jantar',
+  'Lanche',
+  'Pré-treino',
+  'Pós-treino',
+];
 const MEAL_KEY = '@TreinoApp:meals';
 const MACRO_KEY = '@TreinoApp:macros';
 const SUPP_KEY = '@TreinoApp:supplements';
@@ -39,9 +46,15 @@ interface Props {
 export function NutritionPanel({ profile }: Props) {
   const [tab, setTab] = useState<NutriTab>('macros');
   const [meals, setMeals] = useState<MealEntry[]>(() => loadJSON<MealEntry[]>(MEAL_KEY, []));
-  const [macros, setMacros] = useState<MacroTargets | null>(() => loadJSON<MacroTargets | null>(MACRO_KEY, null));
-  const [supplements, setSupplements] = useState<SupplementEntry[]>(() => loadJSON<SupplementEntry[]>(SUPP_KEY, []));
-  const [favoriteFoods, setFavoriteFoods] = useState<FavoriteFood[]>(() => loadJSON<FavoriteFood[]>(FAVFOOD_KEY, []));
+  const [macros, setMacros] = useState<MacroTargets | null>(() =>
+    loadJSON<MacroTargets | null>(MACRO_KEY, null),
+  );
+  const [supplements, setSupplements] = useState<SupplementEntry[]>(() =>
+    loadJSON<SupplementEntry[]>(SUPP_KEY, []),
+  );
+  const [favoriteFoods, setFavoriteFoods] = useState<FavoriteFood[]>(() =>
+    loadJSON<FavoriteFood[]>(FAVFOOD_KEY, []),
+  );
   const [aiText, setAiText] = useState('');
   const [loading, setLoading] = useState(false);
   const [newMeal, setNewMeal] = useState<Partial<MealEntry>>({ mealType: 'Almoço' });
@@ -127,7 +140,9 @@ export function NutritionPanel({ profile }: Props) {
       setMacros(generated);
       saveJSON(MACRO_KEY, generated);
     } catch {
-      setAiText('Não consegui calcular os macros agora. Verifique a chave Gemini e tente novamente.');
+      setAiText(
+        'Não consegui calcular os macros agora. Verifique a chave Gemini e tente novamente.',
+      );
     } finally {
       setLoading(false);
     }
@@ -164,11 +179,15 @@ export function NutritionPanel({ profile }: Props) {
   };
 
   const today = new Date().toISOString().slice(0, 10);
-  const todayMeals = meals.filter(meal => meal.date === today);
+  const todayMeals = meals.filter((meal) => meal.date === today);
   const todayCalories = todayMeals.reduce((sum, meal) => sum + (meal.estimatedCalories || 0), 0);
   const todayProtein = todayMeals.reduce((sum, meal) => sum + (meal.estimatedProtein || 0), 0);
 
-  const tabs: Array<{ id: NutriTab; label: string; Icon: React.ComponentType<{ className?: string }> }> = [
+  const tabs: Array<{
+    id: NutriTab;
+    label: string;
+    Icon: React.ComponentType<{ className?: string }>;
+  }> = [
     { id: 'macros', label: 'Macros', Icon: Target },
     { id: 'refeicoes', label: 'Refeições', Icon: Apple },
     { id: 'foto', label: 'Foto', Icon: Camera },
@@ -181,7 +200,9 @@ export function NutritionPanel({ profile }: Props) {
     <div className="bg-brand-gray border-2 border-brand-light/10 p-5 shadow-brutal-light">
       <div className="flex items-center gap-2 mb-4">
         <Heart className="w-5 h-5 text-brand-neon" />
-        <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">Nutrição</h3>
+        <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">
+          Nutrição
+        </h3>
       </div>
 
       <div className="flex gap-2 flex-wrap mb-5">
@@ -206,7 +227,11 @@ export function NutritionPanel({ profile }: Props) {
 
       {tab === 'macros' && (
         <div className="space-y-4">
-          <button onClick={handleGenerateMacros} type="button" className="w-full bg-brand-neon text-brand-dark font-black py-3 border-brutal uppercase tracking-widest">
+          <button
+            onClick={handleGenerateMacros}
+            type="button"
+            className="w-full bg-brand-neon text-brand-dark font-black py-3 border-brutal uppercase tracking-widest"
+          >
             {loading ? 'Calculando...' : 'Calcular metas de macros'}
           </button>
 
@@ -217,8 +242,11 @@ export function NutritionPanel({ profile }: Props) {
                 { label: 'Proteína', value: `${macros.protein}g`, color: 'text-brand-neon' },
                 { label: 'Carboidrato', value: `${macros.carbs}g`, color: 'text-blue-400' },
                 { label: 'Gordura', value: `${macros.fat}g`, color: 'text-yellow-400' },
-              ].map(item => (
-                <div key={item.label} className="bg-brand-dark border-2 border-brand-light/10 p-3 text-center">
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="bg-brand-dark border-2 border-brand-light/10 p-3 text-center"
+                >
                   <p className="text-xs text-brand-muted">{item.label}</p>
                   <p className={`text-xl font-black ${item.color}`}>{item.value}</p>
                 </div>
@@ -229,85 +257,191 @@ export function NutritionPanel({ profile }: Props) {
           {todayCalories > 0 && (
             <div className="bg-brand-dark border-2 border-brand-light/10 p-3">
               <p className="text-xs text-brand-muted mb-1">Consumido hoje</p>
-              <p className="text-brand-light font-bold">{todayCalories} kcal | {todayProtein}g proteína</p>
+              <p className="text-brand-light font-bold">
+                {todayCalories} kcal | {todayProtein}g proteína
+              </p>
               {macros && (
                 <div className="mt-2 h-2 bg-white/10 overflow-hidden">
-                  <div className="h-full bg-brand-neon transition-all" style={{ width: `${Math.min((todayCalories / macros.calories) * 100, 100)}%` }} />
+                  <div
+                    className="h-full bg-brand-neon transition-all"
+                    style={{ width: `${Math.min((todayCalories / macros.calories) * 100, 100)}%` }}
+                  />
                 </div>
               )}
             </div>
           )}
 
-          <button onClick={handleNutritionPlan} type="button" className="w-full bg-brand-dark border-2 border-brand-light/10 text-brand-light font-semibold py-3 hover:border-brand-neon transition-colors">
+          <button
+            onClick={handleNutritionPlan}
+            type="button"
+            className="w-full bg-brand-dark border-2 border-brand-light/10 text-brand-light font-semibold py-3 hover:border-brand-neon transition-colors"
+          >
             {loading ? 'Gerando...' : 'Gerar plano nutricional básico'}
           </button>
-          {aiText && <div className="text-sm text-brand-light/80 whitespace-pre-wrap font-mono">{aiText}</div>}
+          {aiText && (
+            <div className="text-sm text-brand-light/80 whitespace-pre-wrap font-mono">
+              {aiText}
+            </div>
+          )}
         </div>
       )}
 
       {tab === 'refeicoes' && (
         <div className="space-y-4">
           <div className="space-y-2 p-4 bg-brand-dark border-2 border-brand-light/10">
-            <select value={newMeal.mealType} onChange={event => setNewMeal(current => ({ ...current, mealType: event.target.value as MealEntry['mealType'] }))} className="w-full bg-brand-gray border-2 border-brand-light/10 px-3 py-2 text-sm text-brand-light outline-none focus:border-brand-neon">
-              {MEAL_TYPES.map(type => <option key={type}>{type}</option>)}
+            <select
+              value={newMeal.mealType}
+              onChange={(event) =>
+                setNewMeal((current) => ({
+                  ...current,
+                  mealType: event.target.value as MealEntry['mealType'],
+                }))
+              }
+              className="w-full bg-brand-gray border-2 border-brand-light/10 px-3 py-2 text-sm text-brand-light outline-none focus:border-brand-neon"
+            >
+              {MEAL_TYPES.map((type) => (
+                <option key={type}>{type}</option>
+              ))}
             </select>
             <input
               placeholder="Descrição rápida da refeição"
               value={newMeal.description || ''}
-              onChange={event => setNewMeal(current => ({ ...current, description: event.target.value }))}
+              onChange={(event) =>
+                setNewMeal((current) => ({ ...current, description: event.target.value }))
+              }
               className="w-full bg-brand-gray border-2 border-brand-light/10 px-3 py-2 text-sm text-brand-light outline-none focus:border-brand-neon"
             />
-            <button onClick={() => addMeal()} type="button" className="inline-flex items-center gap-2 bg-brand-neon text-brand-dark font-bold px-5 py-2 border-brutal text-sm uppercase">
+            <button
+              onClick={() => addMeal()}
+              type="button"
+              className="inline-flex items-center gap-2 bg-brand-neon text-brand-dark font-bold px-5 py-2 border-brutal text-sm uppercase"
+            >
               <Plus className="w-4 h-4" /> Registrar
             </button>
           </div>
 
           <div className="grid md:grid-cols-2 gap-2">
-            <button onClick={async () => { setLoading(true); setAiText(await generatePreWorkoutSuggestion(profile, profile.preferredTime || '18h')); setLoading(false); }} type="button" className="bg-brand-dark border-2 border-brand-light/10 text-brand-light py-2 text-sm hover:border-brand-neon transition-colors">
+            <button
+              onClick={async () => {
+                setLoading(true);
+                setAiText(
+                  await generatePreWorkoutSuggestion(profile, profile.preferredTime || '18h'),
+                );
+                setLoading(false);
+              }}
+              type="button"
+              className="bg-brand-dark border-2 border-brand-light/10 text-brand-light py-2 text-sm hover:border-brand-neon transition-colors"
+            >
               Sugestão pré-treino
             </button>
-            <button onClick={async () => { setLoading(true); setAiText(await generatePostWorkoutSuggestion(profile)); setLoading(false); }} type="button" className="bg-brand-dark border-2 border-brand-light/10 text-brand-light py-2 text-sm hover:border-brand-neon transition-colors">
+            <button
+              onClick={async () => {
+                setLoading(true);
+                setAiText(await generatePostWorkoutSuggestion(profile));
+                setLoading(false);
+              }}
+              type="button"
+              className="bg-brand-dark border-2 border-brand-light/10 text-brand-light py-2 text-sm hover:border-brand-neon transition-colors"
+            >
               Sugestão pós-treino
             </button>
           </div>
 
-          {aiText && <div className="text-sm text-brand-light/80 whitespace-pre-wrap bg-brand-dark p-3 border-2 border-brand-light/10 font-mono">{loading ? 'Gerando...' : aiText}</div>}
+          {aiText && (
+            <div className="text-sm text-brand-light/80 whitespace-pre-wrap bg-brand-dark p-3 border-2 border-brand-light/10 font-mono">
+              {loading ? 'Gerando...' : aiText}
+            </div>
+          )}
           <MealLogger meals={meals} />
         </div>
       )}
 
       {tab === 'foto' && (
         <div className="space-y-4">
-          <p className="text-brand-muted text-sm">Use uma foto do prato para estimar macros automaticamente.</p>
-          <input ref={photoRef} type="file" accept="image/*" capture="environment" onChange={event => event.target.files?.[0] && handlePhotoAnalysis(event.target.files[0])} className="hidden" />
-          <button onClick={() => photoRef.current?.click()} type="button" className="w-full inline-flex items-center justify-center gap-2 bg-brand-neon text-brand-dark font-black py-4 border-brutal uppercase tracking-widest">
+          <p className="text-brand-muted text-sm">
+            Use uma foto do prato para estimar macros automaticamente.
+          </p>
+          <input
+            ref={photoRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={(event) =>
+              event.target.files?.[0] && handlePhotoAnalysis(event.target.files[0])
+            }
+            className="hidden"
+          />
+          <button
+            onClick={() => photoRef.current?.click()}
+            type="button"
+            className="w-full inline-flex items-center justify-center gap-2 bg-brand-neon text-brand-dark font-black py-4 border-brutal uppercase tracking-widest"
+          >
             <Camera className="w-5 h-5" /> Fotografar prato
           </button>
           {loading && <p className="text-brand-muted text-sm">Analisando foto...</p>}
-          {aiText && <div className="text-sm text-brand-light/80 whitespace-pre-wrap bg-brand-dark p-3 border-2 border-brand-light/10 font-mono">{aiText}</div>}
+          {aiText && (
+            <div className="text-sm text-brand-light/80 whitespace-pre-wrap bg-brand-dark p-3 border-2 border-brand-light/10 font-mono">
+              {aiText}
+            </div>
+          )}
         </div>
       )}
 
       {tab === 'favoritos' && (
         <div className="space-y-4">
           <div className="grid md:grid-cols-5 gap-2 p-4 bg-brand-dark border-2 border-brand-light/10">
-            <input placeholder="Alimento" value={newFood.name || ''} onChange={event => setNewFood(current => ({ ...current, name: event.target.value }))} className="md:col-span-2 bg-brand-gray border-2 border-brand-light/10 px-3 py-2 text-sm text-brand-light outline-none focus:border-brand-neon" />
-            {(['calories', 'protein', 'carbs', 'fat'] as const).map(field => (
-              <input key={field} type="number" placeholder={field} value={newFood[field] || ''} onChange={event => setNewFood(current => ({ ...current, [field]: Number(event.target.value) }))} className="bg-brand-gray border-2 border-brand-light/10 px-3 py-2 text-sm text-brand-light outline-none focus:border-brand-neon" />
+            <input
+              placeholder="Alimento"
+              value={newFood.name || ''}
+              onChange={(event) =>
+                setNewFood((current) => ({ ...current, name: event.target.value }))
+              }
+              className="md:col-span-2 bg-brand-gray border-2 border-brand-light/10 px-3 py-2 text-sm text-brand-light outline-none focus:border-brand-neon"
+            />
+            {(['calories', 'protein', 'carbs', 'fat'] as const).map((field) => (
+              <input
+                key={field}
+                type="number"
+                placeholder={field}
+                value={newFood[field] || ''}
+                onChange={(event) =>
+                  setNewFood((current) => ({ ...current, [field]: Number(event.target.value) }))
+                }
+                className="bg-brand-gray border-2 border-brand-light/10 px-3 py-2 text-sm text-brand-light outline-none focus:border-brand-neon"
+              />
             ))}
-            <button onClick={addFavoriteFood} type="button" className="md:col-span-5 bg-brand-neon text-brand-dark font-bold px-5 py-2 border-brutal text-sm uppercase">Salvar favorito</button>
+            <button
+              onClick={addFavoriteFood}
+              type="button"
+              className="md:col-span-5 bg-brand-neon text-brand-dark font-bold px-5 py-2 border-brutal text-sm uppercase"
+            >
+              Salvar favorito
+            </button>
           </div>
           <div className="space-y-2">
-            {favoriteFoods.map(food => (
-              <div key={food.id} className="flex items-center justify-between gap-3 p-3 bg-brand-dark border-2 border-brand-light/10">
+            {favoriteFoods.map((food) => (
+              <div
+                key={food.id}
+                className="flex items-center justify-between gap-3 p-3 bg-brand-dark border-2 border-brand-light/10"
+              >
                 <div>
                   <p className="text-brand-light font-semibold text-sm">{food.name}</p>
-                  <p className="text-brand-muted text-xs">{food.calories} kcal | P {food.protein}g | C {food.carbs}g | G {food.fat}g</p>
+                  <p className="text-brand-muted text-xs">
+                    {food.calories} kcal | P {food.protein}g | C {food.carbs}g | G {food.fat}g
+                  </p>
                 </div>
-                <button onClick={() => addFavoriteMeal(food)} type="button" className="px-3 py-2 bg-brand-neon text-brand-dark text-xs font-black uppercase">Usar</button>
+                <button
+                  onClick={() => addFavoriteMeal(food)}
+                  type="button"
+                  className="px-3 py-2 bg-brand-neon text-brand-dark text-xs font-black uppercase"
+                >
+                  Usar
+                </button>
               </div>
             ))}
-            {favoriteFoods.length === 0 && <p className="text-brand-muted text-sm">Nenhum alimento favorito registrado.</p>}
+            {favoriteFoods.length === 0 && (
+              <p className="text-brand-muted text-sm">Nenhum alimento favorito registrado.</p>
+            )}
           </div>
         </div>
       )}
@@ -315,19 +449,50 @@ export function NutritionPanel({ profile }: Props) {
       {tab === 'suplementos' && (
         <div className="space-y-4">
           <div className="space-y-2 p-4 bg-brand-dark border-2 border-brand-light/10">
-            <input placeholder="Nome do suplemento" value={newSupp.name || ''} onChange={event => setNewSupp(current => ({ ...current, name: event.target.value }))} className="w-full bg-brand-gray border-2 border-brand-light/10 px-3 py-2 text-sm text-brand-light outline-none focus:border-brand-neon" />
-            <input placeholder="Dose" value={newSupp.dose || ''} onChange={event => setNewSupp(current => ({ ...current, dose: event.target.value }))} className="w-full bg-brand-gray border-2 border-brand-light/10 px-3 py-2 text-sm text-brand-light outline-none focus:border-brand-neon" />
-            <input placeholder="Horário" value={newSupp.timing || ''} onChange={event => setNewSupp(current => ({ ...current, timing: event.target.value }))} className="w-full bg-brand-gray border-2 border-brand-light/10 px-3 py-2 text-sm text-brand-light outline-none focus:border-brand-neon" />
-            <button onClick={addSupplement} type="button" className="bg-brand-neon text-brand-dark font-bold px-5 py-2 border-brutal text-sm uppercase">Adicionar</button>
+            <input
+              placeholder="Nome do suplemento"
+              value={newSupp.name || ''}
+              onChange={(event) =>
+                setNewSupp((current) => ({ ...current, name: event.target.value }))
+              }
+              className="w-full bg-brand-gray border-2 border-brand-light/10 px-3 py-2 text-sm text-brand-light outline-none focus:border-brand-neon"
+            />
+            <input
+              placeholder="Dose"
+              value={newSupp.dose || ''}
+              onChange={(event) =>
+                setNewSupp((current) => ({ ...current, dose: event.target.value }))
+              }
+              className="w-full bg-brand-gray border-2 border-brand-light/10 px-3 py-2 text-sm text-brand-light outline-none focus:border-brand-neon"
+            />
+            <input
+              placeholder="Horário"
+              value={newSupp.timing || ''}
+              onChange={(event) =>
+                setNewSupp((current) => ({ ...current, timing: event.target.value }))
+              }
+              className="w-full bg-brand-gray border-2 border-brand-light/10 px-3 py-2 text-sm text-brand-light outline-none focus:border-brand-neon"
+            />
+            <button
+              onClick={addSupplement}
+              type="button"
+              className="bg-brand-neon text-brand-dark font-bold px-5 py-2 border-brutal text-sm uppercase"
+            >
+              Adicionar
+            </button>
           </div>
           <div className="space-y-2">
-            {supplements.map(supplement => (
+            {supplements.map((supplement) => (
               <div key={supplement.id} className="p-3 bg-brand-dark border-2 border-brand-light/10">
                 <p className="text-brand-light font-semibold text-sm">{supplement.name}</p>
-                <p className="text-brand-muted text-xs">{supplement.dose} | {supplement.timing}</p>
+                <p className="text-brand-muted text-xs">
+                  {supplement.dose} | {supplement.timing}
+                </p>
               </div>
             ))}
-            {supplements.length === 0 && <p className="text-brand-muted text-sm">Nenhum suplemento registrado.</p>}
+            {supplements.length === 0 && (
+              <p className="text-brand-muted text-sm">Nenhum suplemento registrado.</p>
+            )}
           </div>
         </div>
       )}
@@ -350,8 +515,14 @@ export function NutritionPanel({ profile }: Props) {
           >
             {loading ? 'Analisando...' : 'Análise semanal de nutrição'}
           </button>
-          {!macros && <p className="text-orange-400 text-sm">Calcule suas metas de macros primeiro.</p>}
-          {aiText && <div className="text-sm text-brand-light/80 whitespace-pre-wrap font-mono">{aiText}</div>}
+          {!macros && (
+            <p className="text-orange-400 text-sm">Calcule suas metas de macros primeiro.</p>
+          )}
+          {aiText && (
+            <div className="text-sm text-brand-light/80 whitespace-pre-wrap font-mono">
+              {aiText}
+            </div>
+          )}
         </div>
       )}
     </div>

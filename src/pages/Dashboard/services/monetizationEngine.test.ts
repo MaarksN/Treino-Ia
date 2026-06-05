@@ -4,7 +4,7 @@ import {
   marketplaceCatalog,
   donationGuard,
   selfBetGuard,
-  payPerWorkoutGuard
+  payPerWorkoutGuard,
 } from './monetizationEngine';
 
 describe('Monetization Engine', () => {

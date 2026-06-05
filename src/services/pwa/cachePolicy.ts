@@ -19,8 +19,7 @@ function getHeader(headers: CachePolicyRequest['headers'], name: string): string
     return match?.[1] ?? null;
   }
 
-  const match = Object.entries(headers)
-    .find(([key]) => key.toLowerCase() === name.toLowerCase());
+  const match = Object.entries(headers).find(([key]) => key.toLowerCase() === name.toLowerCase());
   return match?.[1] ?? null;
 }
 

@@ -23,7 +23,12 @@ const REASONS: Array<{ value: SocialReportReason; label: string }> = [
   { value: 'other', label: 'Outro' },
 ];
 
-export function SocialReportButton({ targetType, targetId, canInteract = true, onAuthRequired }: Props) {
+export function SocialReportButton({
+  targetType,
+  targetId,
+  canInteract = true,
+  onAuthRequired,
+}: Props) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<SocialReportReason>('spam');
   const [details, setDetails] = useState('');
@@ -88,10 +93,10 @@ export function SocialReportButton({ targetType, targetId, canInteract = true, o
 
           <select
             value={reason}
-            onChange={event => setReason(event.target.value as SocialReportReason)}
+            onChange={(event) => setReason(event.target.value as SocialReportReason)}
             className="w-full bg-brand-dark border border-white/10 rounded-xl px-3 py-2 text-white outline-none"
           >
-            {REASONS.map(item => (
+            {REASONS.map((item) => (
               <option key={item.value} value={item.value}>
                 {item.label}
               </option>
@@ -100,7 +105,7 @@ export function SocialReportButton({ targetType, targetId, canInteract = true, o
 
           <textarea
             value={details}
-            onChange={event => setDetails(event.target.value)}
+            onChange={(event) => setDetails(event.target.value)}
             placeholder="Contexto opcional para a equipe de moderação"
             className="mt-2 w-full bg-brand-dark border border-white/10 rounded-xl px-3 py-2 text-white outline-none min-h-20"
             maxLength={1000}

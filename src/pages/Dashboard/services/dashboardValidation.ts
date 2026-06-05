@@ -20,7 +20,7 @@ const profileFormSchema = z.object({
   updatedAt: z.number().optional(),
 });
 
-const numericInputSchema = z.preprocess(value => {
+const numericInputSchema = z.preprocess((value) => {
   if (typeof value === 'number') return value;
   if (typeof value !== 'string') return 0;
   const trimmed = value.trim();
@@ -39,7 +39,7 @@ function clampNumber(value: number, min: number, max: number): number {
 }
 
 function formatIssues(error: z.ZodError): string[] {
-  return error.issues.map(issue => {
+  return error.issues.map((issue) => {
     const field = issue.path.length ? issue.path.join('.') : 'formulario';
     return `${field}: ${issue.message}`;
   });

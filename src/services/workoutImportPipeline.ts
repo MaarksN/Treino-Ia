@@ -32,12 +32,7 @@ export const DEFAULT_WORKOUT_IMPORT_CROP: CropRectPercent = {
   height: 100,
 };
 
-const SUPPORTED_MIME_TYPES = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'application/pdf',
-]);
+const SUPPORTED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'application/pdf']);
 
 const MAX_IMPORT_FILE_BYTES = 12 * 1024 * 1024;
 
@@ -51,7 +46,9 @@ export function isSupportedWorkoutImportMimeType(mimeType: string): boolean {
   return SUPPORTED_MIME_TYPES.has(mimeType);
 }
 
-export function normalizeCropRect(crop: Partial<CropRectPercent> | null | undefined): CropRectPercent {
+export function normalizeCropRect(
+  crop: Partial<CropRectPercent> | null | undefined,
+): CropRectPercent {
   const x = Math.min(99, clampPercent(crop?.x, DEFAULT_WORKOUT_IMPORT_CROP.x));
   const y = Math.min(99, clampPercent(crop?.y, DEFAULT_WORKOUT_IMPORT_CROP.y));
   const width = Math.max(1, clampPercent(crop?.width, DEFAULT_WORKOUT_IMPORT_CROP.width));
@@ -124,7 +121,7 @@ export async function cropImageDataUrl(
 
   const normalizedCrop = normalizeCropRect(crop);
 
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     const image = new Image();
     image.onload = () => {
       const sourceX = Math.round((normalizedCrop.x / 100) * image.width);
@@ -137,7 +134,17 @@ export async function cropImageDataUrl(
       canvas.height = sourceHeight;
       canvas
         .getContext('2d')
-        ?.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
+        ?.drawImage(
+          image,
+          sourceX,
+          sourceY,
+          sourceWidth,
+          sourceHeight,
+          0,
+          0,
+          sourceWidth,
+          sourceHeight,
+        );
 
       resolve(canvas.toDataURL('image/png'));
     };

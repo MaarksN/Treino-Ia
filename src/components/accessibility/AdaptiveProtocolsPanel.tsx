@@ -14,9 +14,7 @@ export function AdaptiveProtocolsPanel() {
   const protocols = getAllProtocols();
 
   const toggleSelection = (id: AdaptiveProtocolId) => {
-    const next = selected.includes(id)
-      ? selected.filter(s => s !== id)
-      : [...selected, id];
+    const next = selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id];
     const saved = saveSelectedProtocols(next);
     setSelected(saved);
   };
@@ -26,7 +24,10 @@ export function AdaptiveProtocolsPanel() {
       className="rounded-[28px] border-2 border-brand-light/20 bg-brand-gray p-6"
       aria-labelledby="adaptive-protocols-title"
     >
-      <h3 id="adaptive-protocols-title" className="font-display text-3xl uppercase text-brand-light">
+      <h3
+        id="adaptive-protocols-title"
+        className="font-display text-3xl uppercase text-brand-light"
+      >
         Protocolos adaptativos
       </h3>
       <p className="mt-1 font-mono text-xs text-brand-muted">
@@ -34,7 +35,7 @@ export function AdaptiveProtocolsPanel() {
       </p>
 
       <div className="mt-4 grid gap-3">
-        {protocols.map(protocol => {
+        {protocols.map((protocol) => {
           const isSelected = selected.includes(protocol.id);
           const isExpanded = expandedId === protocol.id;
 
@@ -82,10 +83,15 @@ export function AdaptiveProtocolsPanel() {
                   <p className="font-mono text-xs text-brand-light/80">{protocol.description}</p>
 
                   <div className="mt-2">
-                    <p className="font-mono text-[10px] font-bold uppercase text-brand-neon">Recomendações</p>
+                    <p className="font-mono text-[10px] font-bold uppercase text-brand-neon">
+                      Recomendações
+                    </p>
                     <ul className="mt-1 space-y-1">
                       {protocol.recommendations.map((rec, i) => (
-                        <li key={i} className="flex items-start gap-2 font-mono text-xs text-brand-muted">
+                        <li
+                          key={i}
+                          className="flex items-start gap-2 font-mono text-xs text-brand-muted"
+                        >
                           <span className="mt-0.5 text-brand-neon">•</span>
                           <span>{rec}</span>
                         </li>
@@ -94,10 +100,15 @@ export function AdaptiveProtocolsPanel() {
                   </div>
 
                   <div className="mt-2">
-                    <p className="font-mono text-[10px] font-bold uppercase text-brand-magenta">Cuidados</p>
+                    <p className="font-mono text-[10px] font-bold uppercase text-brand-magenta">
+                      Cuidados
+                    </p>
                     <ul className="mt-1 space-y-1">
                       {protocol.contraindications.map((ci, i) => (
-                        <li key={i} className="flex items-start gap-2 font-mono text-xs text-brand-muted">
+                        <li
+                          key={i}
+                          className="flex items-start gap-2 font-mono text-xs text-brand-muted"
+                        >
                           <span className="mt-0.5 text-brand-magenta">⚠</span>
                           <span>{ci}</span>
                         </li>
@@ -117,7 +128,8 @@ export function AdaptiveProtocolsPanel() {
 
       {selected.length > 0 && (
         <p className="mt-3 font-mono text-xs text-brand-neon" role="status">
-          {selected.length} protocolo{selected.length !== 1 ? 's' : ''} selecionado{selected.length !== 1 ? 's' : ''}.
+          {selected.length} protocolo{selected.length !== 1 ? 's' : ''} selecionado
+          {selected.length !== 1 ? 's' : ''}.
         </p>
       )}
 

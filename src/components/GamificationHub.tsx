@@ -47,7 +47,11 @@ export function GamificationHub() {
 
     try {
       const result = await recordGamificationEvent(eventType);
-      setMessage(result.skipped ? result.reason ?? 'Evento já registrado.' : 'Evento registrado no servidor.');
+      setMessage(
+        result.skipped
+          ? (result.reason ?? 'Evento já registrado.')
+          : 'Evento registrado no servidor.',
+      );
       await load();
     } catch (eventError) {
       setError(eventError instanceof Error ? eventError.message : 'Falha ao registrar evento.');
@@ -59,16 +63,13 @@ export function GamificationHub() {
   return (
     <div className="min-h-screen bg-brand-dark text-white p-6">
       <header className="max-w-7xl mx-auto mb-8">
-        <p className="text-brand-neon text-xs uppercase tracking-[0.25em] font-bold">
-          Bloco 10
-        </p>
+        <p className="text-brand-neon text-xs uppercase tracking-[0.25em] font-bold">Bloco 10</p>
 
-        <h1 className="text-4xl font-black mt-2">
-          Gamificação Profunda
-        </h1>
+        <h1 className="text-4xl font-black mt-2">Gamificação Profunda</h1>
 
         <p className="text-brand-muted mt-2 max-w-3xl">
-          XP, moedas, streak e ledger carregados do Supabase. O navegador não é mais fonte de verdade.
+          XP, moedas, streak e ledger carregados do Supabase. O navegador não é mais fonte de
+          verdade.
         </p>
       </header>
 
@@ -101,7 +102,8 @@ export function GamificationHub() {
                   </h2>
 
                   <p className="text-brand-muted mt-1">
-                    {state.profile.active_title} · {state.profile.xp} XP total · {state.profile.coins} moedas
+                    {state.profile.active_title} · {state.profile.xp} XP total ·{' '}
+                    {state.profile.coins} moedas
                   </p>
                 </div>
 
@@ -112,7 +114,11 @@ export function GamificationHub() {
                     onClick={() => recordEvent('login')}
                     className="bg-white/10 rounded-2xl px-4 py-3 text-white font-bold flex items-center gap-2 disabled:opacity-50"
                   >
-                    {actionLoading === 'login' ? <Loader2 className="animate-spin" size={16} /> : <Flame size={16} className="text-brand-neon" />}
+                    {actionLoading === 'login' ? (
+                      <Loader2 className="animate-spin" size={16} />
+                    ) : (
+                      <Flame size={16} className="text-brand-neon" />
+                    )}
                     Registrar login
                   </button>
 
@@ -122,7 +128,11 @@ export function GamificationHub() {
                     onClick={() => recordEvent('checkin')}
                     className="bg-brand-neon rounded-2xl px-4 py-3 text-brand-dark font-black flex items-center gap-2 disabled:opacity-50"
                   >
-                    {actionLoading === 'checkin' ? <Loader2 className="animate-spin" size={16} /> : <CalendarCheck size={16} />}
+                    {actionLoading === 'checkin' ? (
+                      <Loader2 className="animate-spin" size={16} />
+                    ) : (
+                      <CalendarCheck size={16} />
+                    )}
                     Check-in
                   </button>
                 </div>
@@ -137,17 +147,22 @@ export function GamificationHub() {
                 </div>
 
                 <div className="h-4 bg-white/10 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-brand-neon"
-                    style={{ width: `${progress.percent}%` }}
-                  />
+                  <div className="h-full bg-brand-neon" style={{ width: `${progress.percent}%` }} />
                 </div>
               </div>
 
               <div className="grid md:grid-cols-4 gap-3 mt-5">
-                <StatCard icon={<Flame />} label="Login streak" value={`${state.profile.login_streak}d`} />
+                <StatCard
+                  icon={<Flame />}
+                  label="Login streak"
+                  value={`${state.profile.login_streak}d`}
+                />
                 <StatCard icon={<Trophy />} label="Season XP" value={state.profile.season_xp} />
-                <StatCard icon={<ShieldCheck />} label="Season level" value={state.profile.season_level} />
+                <StatCard
+                  icon={<ShieldCheck />}
+                  label="Season level"
+                  value={state.profile.season_level}
+                />
                 <StatCard icon={<Coins />} label="Moedas" value={state.profile.coins} />
               </div>
 
@@ -159,13 +174,14 @@ export function GamificationHub() {
             </section>
 
             <section className="bg-brand-gray rounded-3xl border border-white/10 p-5">
-              <h3 className="text-xl font-black text-white mb-4">
-                Ledger de eventos
-              </h3>
+              <h3 className="text-xl font-black text-white mb-4">Ledger de eventos</h3>
 
               <div className="space-y-3">
-                {state.events.map(event => (
-                  <article key={event.id} className="rounded-2xl bg-brand-dark border border-white/10 p-4 flex items-center justify-between gap-3">
+                {state.events.map((event) => (
+                  <article
+                    key={event.id}
+                    className="rounded-2xl bg-brand-dark border border-white/10 p-4 flex items-center justify-between gap-3"
+                  >
                     <div>
                       <p className="font-black text-white">{event.event_type}</p>
                       <p className="text-xs text-brand-muted">
@@ -174,15 +190,14 @@ export function GamificationHub() {
                     </div>
 
                     <p className="text-sm text-brand-neon font-black">
-                      +{event.xp_delta} XP · {event.coin_delta >= 0 ? '+' : ''}{event.coin_delta} moedas
+                      +{event.xp_delta} XP · {event.coin_delta >= 0 ? '+' : ''}
+                      {event.coin_delta} moedas
                     </p>
                   </article>
                 ))}
 
                 {!state.events.length && (
-                  <p className="text-sm text-brand-muted">
-                    Nenhum evento registrado ainda.
-                  </p>
+                  <p className="text-sm text-brand-muted">Nenhum evento registrado ainda.</p>
                 )}
               </div>
             </section>

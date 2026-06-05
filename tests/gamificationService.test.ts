@@ -82,10 +82,13 @@ describe('gamificationService', () => {
 
     const result = await recordGamificationEvent('checkin');
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/gamification/event', expect.objectContaining({
-      method: 'POST',
-      body: JSON.stringify({ eventType: 'checkin' }),
-    }));
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/gamification/event',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ eventType: 'checkin' }),
+      }),
+    );
     const headers = getFetchHeaders(fetchMock);
     expect(headers.get('authorization')).toBe('Bearer supabase-token');
     expect(headers.get('content-type')).toBe('application/json');
@@ -114,10 +117,13 @@ describe('gamificationService', () => {
 
     const result = await recordGamificationEvent('workout_completed', 'workout-1');
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/gamification/event', expect.objectContaining({
-      method: 'POST',
-      body: JSON.stringify({ eventType: 'workout_completed', sourceId: 'workout-1' }),
-    }));
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/gamification/event',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ eventType: 'workout_completed', sourceId: 'workout-1' }),
+      }),
+    );
     expect(result.profile?.coins).toBe(50);
   });
 });

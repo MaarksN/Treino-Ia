@@ -42,8 +42,12 @@ describe('restTimerEngine', () => {
     expect(parsePersistedRestTimerState(null)).toBeNull();
     expect(parsePersistedRestTimerState('')).toBeNull();
     expect(parsePersistedRestTimerState('invalid json')).toBeNull();
-    expect(parsePersistedRestTimerState(JSON.stringify({ endAt: 100, startedAt: 200, duration: 60 }))).toBeNull(); // endAt <= startedAt
-    expect(parsePersistedRestTimerState(JSON.stringify({ endAt: 200, startedAt: 100, duration: -10 }))).toBeNull(); // duration <= 0
+    expect(
+      parsePersistedRestTimerState(JSON.stringify({ endAt: 100, startedAt: 200, duration: 60 })),
+    ).toBeNull(); // endAt <= startedAt
+    expect(
+      parsePersistedRestTimerState(JSON.stringify({ endAt: 200, startedAt: 100, duration: -10 })),
+    ).toBeNull(); // duration <= 0
   });
 
   it('calculates remaining seconds', () => {

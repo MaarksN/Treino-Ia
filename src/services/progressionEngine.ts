@@ -5,11 +5,11 @@ export const ProgressionEngine = {
   getSuggestionsForSession(
     profile: UserProfile,
     history: WorkoutSession[],
-    targetExercises: { id: string; name: string; muscleGroup?: string }[]
+    targetExercises: { id: string; name: string; muscleGroup?: string }[],
   ): ProgressionSuggestion[] {
     // Retorna recomendações para uma lista de exercícios alvo baseada no histórico.
-    return targetExercises.map(exercise => 
-      calculateProgression(exercise.id, exercise.name, history, exercise.muscleGroup)
+    return targetExercises.map((exercise) =>
+      calculateProgression(exercise.id, exercise.name, history, exercise.muscleGroup),
     );
   },
 
@@ -17,8 +17,8 @@ export const ProgressionEngine = {
     exerciseId: string,
     exerciseName: string,
     history: WorkoutSession[],
-    muscleGroup?: string
+    muscleGroup?: string,
   ): ProgressionSuggestion {
     return calculateProgression(exerciseId, exerciseName, history, muscleGroup);
-  }
+  },
 };

@@ -40,7 +40,7 @@ describe('useHydrationStateQuery', () => {
     const mockedResult: HydrationStateResult = {
       data: {
         entries: [{ id: '1', date: '2026-05-24', time: '10:00', amountMl: 250, type: 'água' }],
-        goal: { dailyMl: 2500, remindEveryMinutes: 60 }
+        goal: { dailyMl: 2500, remindEveryMinutes: 60 },
       },
       dataMode: 'mock_dev_only',
       warning: 'mocked health storage',

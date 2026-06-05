@@ -34,28 +34,28 @@ docs/bloco-15-wearables-integracoes-externas.md
 
 ## Tabela dos 20 itens
 
-| # | Item | Prioridade sugerida |
-|---:|---|---|
-| 1 | Integração Apple Health (passos, sono, FC, calorias) | Premium / V2 |
-| 2 | Integração Google Fit / Health Connect (Android) | Premium / V2 |
-| 3 | Importação de dados Garmin via CSV/GPX | MVP / Base |
-| 4 | Importação de dados Polar Flow | Roadmap / Futuro |
-| 5 | Conexão Fitbit API (OAuth2) | Premium / V2 |
-| 6 | Leitura de FC em tempo real (BLE HR monitor) | MVP / Base |
-| 7 | Zona de FC durante treino (5 zonas) | MVP / Base |
-| 8 | Calorias gastas: wearable vs estimativa IA | Premium / V2 |
-| 9 | Export de treino para Strava | Premium / V2 |
-| 10 | Sincronização com Google Calendar (agendamento de treino) | MVP / Base |
-| 11 | Webhook para n8n / Zapier | MVP / Base |
-| 12 | API pública REST (documentada com Swagger) | Premium / V2 |
-| 13 | Importar treinos do Hevy, Strong, Treinador (CSV) | MVP / Base |
-| 14 | Exportar histórico completo em JSON/CSV | MVP / Base |
-| 15 | Widget iOS do treino do dia (via PWA) | Roadmap / Futuro |
-| 16 | Widget Android (home screen shortcut) | Roadmap / Futuro |
-| 17 | Integração com Notion (exportar plano como página) | Premium / V2 |
-| 18 | Conexão WhatsApp Business (envio de plano por mensagem) | Premium / V2 |
-| 19 | QR Code do plano para personal trainer | MVP / Base |
-| 20 | Migração localStorage → Supabase (cloud sync) | MVP / Base |
+|   # | Item                                                      | Prioridade sugerida |
+| --: | --------------------------------------------------------- | ------------------- |
+|   1 | Integração Apple Health (passos, sono, FC, calorias)      | Premium / V2        |
+|   2 | Integração Google Fit / Health Connect (Android)          | Premium / V2        |
+|   3 | Importação de dados Garmin via CSV/GPX                    | MVP / Base          |
+|   4 | Importação de dados Polar Flow                            | Roadmap / Futuro    |
+|   5 | Conexão Fitbit API (OAuth2)                               | Premium / V2        |
+|   6 | Leitura de FC em tempo real (BLE HR monitor)              | MVP / Base          |
+|   7 | Zona de FC durante treino (5 zonas)                       | MVP / Base          |
+|   8 | Calorias gastas: wearable vs estimativa IA                | Premium / V2        |
+|   9 | Export de treino para Strava                              | Premium / V2        |
+|  10 | Sincronização com Google Calendar (agendamento de treino) | MVP / Base          |
+|  11 | Webhook para n8n / Zapier                                 | MVP / Base          |
+|  12 | API pública REST (documentada com Swagger)                | Premium / V2        |
+|  13 | Importar treinos do Hevy, Strong, Treinador (CSV)         | MVP / Base          |
+|  14 | Exportar histórico completo em JSON/CSV                   | MVP / Base          |
+|  15 | Widget iOS do treino do dia (via PWA)                     | Roadmap / Futuro    |
+|  16 | Widget Android (home screen shortcut)                     | Roadmap / Futuro    |
+|  17 | Integração com Notion (exportar plano como página)        | Premium / V2        |
+|  18 | Conexão WhatsApp Business (envio de plano por mensagem)   | Premium / V2        |
+|  19 | QR Code do plano para personal trainer                    | MVP / Base          |
+|  20 | Migração localStorage → Supabase (cloud sync)             | MVP / Base          |
 
 ## Organização por prioridade
 
@@ -113,7 +113,9 @@ docs/bloco-15-wearables-integracoes-externas.md
 
 ```tsx
 // Exemplo conceitual de rota/tela para o Bloco 15
-{currentView === 'bloco-15' && <WearablesIntegracoesExternasHub />}
+{
+  currentView === 'bloco-15' && <WearablesIntegracoesExternasHub />;
+}
 ```
 
 ## Resultado esperado

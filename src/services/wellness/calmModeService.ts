@@ -33,7 +33,13 @@ export function deactivateCalmMode(): CalmModeState {
 export function advanceCalmModeStep(currentState: CalmModeState): CalmModeState {
   if (!currentState.isActive) return currentState;
 
-  const steps: CalmModeState['step'][] = ['breathe', 'sit', 'water', 'reduce_intensity', 'seek_help'];
+  const steps: CalmModeState['step'][] = [
+    'breathe',
+    'sit',
+    'water',
+    'reduce_intensity',
+    'seek_help',
+  ];
   const currentIndex = steps.indexOf(currentState.step);
   const nextStep = currentIndex < steps.length - 1 ? steps[currentIndex + 1] : currentState.step;
 

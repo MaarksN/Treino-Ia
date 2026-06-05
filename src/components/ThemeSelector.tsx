@@ -38,7 +38,7 @@ export function ThemeSelector({ isPremium = false, onThemeChange }: Props) {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {APP_THEMES.map(theme => {
+        {APP_THEMES.map((theme) => {
           const access = getThemeAccess(theme.id, isPremium);
           const locked = !access.allowed;
 

@@ -1,5 +1,5 @@
-import {StrictMode} from 'react';
-import {createRoot} from 'react-dom/client';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 import * as Sentry from '@sentry/react';
 import App from './App.tsx';
 import './index.css';
@@ -31,7 +31,7 @@ if (env.sentryDsn) {
 installGlobalErrorTelemetry();
 installHydrationQuickActionBridge();
 
-registerSW().catch(error => {
+registerSW().catch((error) => {
   console.warn('Falha ao registrar Service Worker:', error);
 });
 

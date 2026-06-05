@@ -136,11 +136,17 @@ const HIDDEN_MISSION_DEFINITIONS: MissionDefinition[] = [
     hint: 'Registre RPE em pelo menos 5 series hoje.',
     rewardLabel: '+30 XP tecnico',
     target: () => 5,
-    progress: ({ todaySessions }) => todaySessions.reduce((sum, session) => (
-      sum + session.exercises.reduce((exerciseSum, exercise) => (
-        exerciseSum + (exercise.sets ?? []).filter(set => Number(set.rpe) > 0).length
-      ), 0)
-    ), 0),
+    progress: ({ todaySessions }) =>
+      todaySessions.reduce(
+        (sum, session) =>
+          sum +
+          session.exercises.reduce(
+            (exerciseSum, exercise) =>
+              exerciseSum + (exercise.sets ?? []).filter((set) => Number(set.rpe) > 0).length,
+            0,
+          ),
+        0,
+      ),
     unit: 'series',
   },
   {
@@ -150,7 +156,8 @@ const HIDDEN_MISSION_DEFINITIONS: MissionDefinition[] = [
     hint: 'Some mais um dia ativo rumo a meta semanal.',
     rewardLabel: '+35 XP de consistencia',
     target: ({ profile }) => Math.max(1, profile.daysPerWeek),
-    progress: ({ currentWeekSessions }) => uniqueDateKeys(currentWeekSessions.map(session => session.completedAt)).length,
+    progress: ({ currentWeekSessions }) =>
+      uniqueDateKeys(currentWeekSessions.map((session) => session.completedAt)).length,
     unit: 'dias',
   },
   {
@@ -160,7 +167,7 @@ const HIDDEN_MISSION_DEFINITIONS: MissionDefinition[] = [
     hint: 'Se ficou alguns dias parado, um treino simples hoje reativa a rotina.',
     rewardLabel: '+45 XP de retomada',
     target: () => 1,
-    progress: ({ todaySessions }) => todaySessions.length > 0 ? 1 : 0,
+    progress: ({ todaySessions }) => (todaySessions.length > 0 ? 1 : 0),
     unit: 'retorno',
   },
 ];
@@ -174,7 +181,7 @@ export function buildGamificationRetentionState(
   const currentWeekSessions = getSessionsInWeek(sortedHistory, today);
   const completeWorkouts = sortedHistory.filter(isCompleteSession).length;
   const feedbackCount = sortedHistory.filter(hasFeedback).length;
-  const activeDays = uniqueDateKeys(sortedHistory.map(session => session.completedAt)).length;
+  const activeDays = uniqueDateKeys(sortedHistory.map((session) => session.completedAt)).length;
 
   return {
     profileTitle: buildProfileTitle(sortedHistory),
@@ -187,7 +194,8 @@ export function buildGamificationRetentionState(
       completeWorkouts,
       feedbackCount,
       activeDays,
-      currentWeekWorkouts: uniqueDateKeys(currentWeekSessions.map(session => session.completedAt)).length,
+      currentWeekWorkouts: uniqueDateKeys(currentWeekSessions.map((session) => session.completedAt))
+        .length,
     },
   };
 }
@@ -202,7 +210,7 @@ export function buildConsistencyLeaderboard(
   const currentWeekStart = getWeekStart(today);
   weeks.set(formatDateKey(currentWeekStart), []);
 
-  history.forEach(session => {
+  history.forEach((session) => {
     const weekStart = getWeekStart(new Date(session.completedAt));
     const key = formatDateKey(weekStart);
     weeks.set(key, [...(weeks.get(key) ?? []), session]);
@@ -211,7 +219,7 @@ export function buildConsistencyLeaderboard(
   const entries = Array.from(weeks.entries()).map(([weekKey, sessions]) => {
     const start = parseDateKey(weekKey);
     const end = addDays(start, 6);
-    const activeDays = uniqueDateKeys(sessions.map(session => session.completedAt)).length;
+    const activeDays = uniqueDateKeys(sessions.map((session) => session.completedAt)).length;
     const completionRate = calculateCompletionRate(sessions);
     const consistencyScore = Math.min(1, activeDays / target) * 76;
     const executionScore = completionRate * 18;
@@ -220,7 +228,9 @@ export function buildConsistencyLeaderboard(
 
     return {
       id: weekKey,
-      label: sameDate(start, currentWeekStart) ? 'Semana atual' : `Semana de ${formatShortDate(start)}`,
+      label: sameDate(start, currentWeekStart)
+        ? 'Semana atual'
+        : `Semana de ${formatShortDate(start)}`,
       rangeLabel: `${formatShortDate(start)} - ${formatShortDate(end)}`,
       workouts: activeDays,
       target,
@@ -245,8 +255,10 @@ export function buildLifestyleBadges(
 ): LifestyleBadgeProgress[] {
   const sorted = sortSessionsOldest(history);
   const currentWeekSessions = getSessionsInWeek(history, today);
-  const currentWeekActiveDays = uniqueDateKeys(currentWeekSessions.map(session => session.completedAt)).length;
-  const activeDays = uniqueDateKeys(history.map(session => session.completedAt)).length;
+  const currentWeekActiveDays = uniqueDateKeys(
+    currentWeekSessions.map((session) => session.completedAt),
+  ).length;
+  const activeDays = uniqueDateKeys(history.map((session) => session.completedAt)).length;
   const completeWorkouts = history.filter(isCompleteSession).length;
   const feedbackCount = history.filter(hasFeedback).length;
 
@@ -319,17 +331,22 @@ export function buildStreakFreezeState(
   history: WorkoutSession[],
   today: Date = new Date(),
 ): StreakFreezeState {
-  const activeKeys = new Set(uniqueDateKeys(history.map(session => session.completedAt)));
+  const activeKeys = new Set(uniqueDateKeys(history.map((session) => session.completedAt)));
   const restDaysAllowance = Math.max(0, 7 - Math.max(1, profile.daysPerWeek));
   const rawDailyStreak = calculateDailyStreak(activeKeys, today, 0).streak;
   const protectedResult = calculateDailyStreak(activeKeys, today, restDaysAllowance);
   const todayKey = formatDateKey(today);
   const yesterdayKey = formatDateKey(addDays(today, -1));
-  const isProtectedToday = !activeKeys.has(todayKey)
-    && restDaysAllowance > 0
-    && (activeKeys.has(yesterdayKey) || protectedResult.streak > rawDailyStreak);
-  const freezesUsed = isProtectedToday ? protectedResult.freezesUsed + 1 : protectedResult.freezesUsed;
-  const protectedDailyStreak = isProtectedToday ? protectedResult.streak + 1 : protectedResult.streak;
+  const isProtectedToday =
+    !activeKeys.has(todayKey) &&
+    restDaysAllowance > 0 &&
+    (activeKeys.has(yesterdayKey) || protectedResult.streak > rawDailyStreak);
+  const freezesUsed = isProtectedToday
+    ? protectedResult.freezesUsed + 1
+    : protectedResult.freezesUsed;
+  const protectedDailyStreak = isProtectedToday
+    ? protectedResult.streak + 1
+    : protectedResult.streak;
   const freezesRemaining = Math.max(0, restDaysAllowance - freezesUsed);
 
   return {
@@ -357,8 +374,9 @@ export function buildProfileTitle(history: WorkoutSession[]): ProfileTitleState 
     return sum + XP_PER_WORKOUT + completionBonus + feedbackBonus;
   }, 0);
   const level = Math.max(1, Math.floor(xp / 300) + 1);
-  const currentTier = [...TITLE_TIERS].reverse().find(tier => level >= tier.level) ?? TITLE_TIERS[0];
-  const nextTier = TITLE_TIERS.find(tier => tier.level > level) ?? null;
+  const currentTier =
+    [...TITLE_TIERS].reverse().find((tier) => level >= tier.level) ?? TITLE_TIERS[0];
+  const nextTier = TITLE_TIERS.find((tier) => tier.level > level) ?? null;
   const currentTierXp = (currentTier.level - 1) * 300;
   const nextTierXp = nextTier ? (nextTier.level - 1) * 300 : currentTierXp;
   const tierSpan = Math.max(1, nextTierXp - currentTierXp);
@@ -378,14 +396,14 @@ export function buildHiddenDailyMissions(
   history: WorkoutSession[],
   today: Date = new Date(),
 ): HiddenDailyMission[] {
-  const todaySessions = history.filter(session => sameDate(new Date(session.completedAt), today));
+  const todaySessions = history.filter((session) => sameDate(new Date(session.completedAt), today));
   const currentWeekSessions = getSessionsInWeek(history, today);
   const input: MissionInput = { profile, history, today, todaySessions, currentWeekSessions };
   const offset = getDayOfYear(today) % HIDDEN_MISSION_DEFINITIONS.length;
 
   return rotate(HIDDEN_MISSION_DEFINITIONS, offset)
     .slice(0, 3)
-    .map(definition => {
+    .map((definition) => {
       const target = Math.max(1, definition.target(input));
       const progress = Math.min(target, definition.progress(input));
       const completed = progress >= target;
@@ -406,7 +424,9 @@ export function buildHiddenDailyMissions(
     });
 }
 
-function createBadge(input: Omit<LifestyleBadgeProgress, 'achieved' | 'percent'>): LifestyleBadgeProgress {
+function createBadge(
+  input: Omit<LifestyleBadgeProgress, 'achieved' | 'percent'>,
+): LifestyleBadgeProgress {
   const progress = Math.min(input.progress, input.target);
   const achieved = progress >= input.target;
 
@@ -472,10 +492,13 @@ function buildFreezeExplanation(
 }
 
 function calculateCompletionRate(sessions: WorkoutSession[]) {
-  const totals = sessions.reduce((acc, session) => ({
-    completed: acc.completed + session.completedExercises,
-    total: acc.total + session.totalExercises,
-  }), { completed: 0, total: 0 });
+  const totals = sessions.reduce(
+    (acc, session) => ({
+      completed: acc.completed + session.completedExercises,
+      total: acc.total + session.totalExercises,
+    }),
+    { completed: 0, total: 0 },
+  );
 
   if (!totals.total) return 0;
   return totals.completed / totals.total;
@@ -492,7 +515,7 @@ function hasFeedback(session: WorkoutSession) {
 function getSessionsInWeek(history: WorkoutSession[], date: Date) {
   const start = getWeekStart(date).getTime();
   const end = addDays(getWeekStart(date), 7).getTime();
-  return history.filter(session => session.completedAt >= start && session.completedAt < end);
+  return history.filter((session) => session.completedAt >= start && session.completedAt < end);
 }
 
 function sortSessionsNewest(history: WorkoutSession[]) {
@@ -508,7 +531,9 @@ function rotate<T>(items: T[], offset: number): T[] {
 }
 
 function uniqueDateKeys(values: Array<number | Date>) {
-  return Array.from(new Set(values.map(value => formatDateKey(value instanceof Date ? value : new Date(value))))).sort();
+  return Array.from(
+    new Set(values.map((value) => formatDateKey(value instanceof Date ? value : new Date(value)))),
+  ).sort();
 }
 
 function getWeekStart(value: Date) {

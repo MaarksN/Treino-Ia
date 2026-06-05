@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { buildPlanGenerationProgress, getPlanGenerationProgressPercent } from './planGenerationProgress';
+import {
+  buildPlanGenerationProgress,
+  getPlanGenerationProgressPercent,
+} from './planGenerationProgress';
 import { type TrainingPlan, type UserProfile, type WorkoutSession } from '../services/database';
 
 const profile: UserProfile = {
@@ -30,8 +33,24 @@ const plan: TrainingPlan = {
       dayName: 'Dia 1',
       focus: 'Superior',
       exercises: [
-        { id: 'e1', name: 'Supino', muscleGroup: 'Peito', sets: 4, reps: '8-12', rest: '90s', notes: '' },
-        { id: 'e2', name: 'Remada', muscleGroup: 'Costas', sets: 4, reps: '8-12', rest: '90s', notes: '' },
+        {
+          id: 'e1',
+          name: 'Supino',
+          muscleGroup: 'Peito',
+          sets: 4,
+          reps: '8-12',
+          rest: '90s',
+          notes: '',
+        },
+        {
+          id: 'e2',
+          name: 'Remada',
+          muscleGroup: 'Costas',
+          sets: 4,
+          reps: '8-12',
+          rest: '90s',
+          notes: '',
+        },
       ],
     },
   ],

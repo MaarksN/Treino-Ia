@@ -6,9 +6,21 @@
  */
 
 export const PANTRY_ITEMS = [
-  'ovos', 'arroz', 'frango', 'banana', 'aveia',
-  'iogurte', 'feijao', 'legumes', 'batata_doce', 'leite',
-  'pao_integral', 'queijo', 'atum', 'pasta_amendoim', 'mel',
+  'ovos',
+  'arroz',
+  'frango',
+  'banana',
+  'aveia',
+  'iogurte',
+  'feijao',
+  'legumes',
+  'batata_doce',
+  'leite',
+  'pao_integral',
+  'queijo',
+  'atum',
+  'pasta_amendoim',
+  'mel',
 ] as const;
 
 export type PantryItemId = (typeof PANTRY_ITEMS)[number];
@@ -23,14 +35,54 @@ export interface MealSuggestion {
 const STORAGE_KEY = '@TreinoIA:nutrition:pantryItems';
 
 const MEAL_RECIPES: MealSuggestion[] = [
-  { name: 'Omelete proteico', ingredients: ['ovos', 'queijo', 'legumes'], timing: 'Pré-treino', description: 'Rico em proteínas, leve e rápido.' },
-  { name: 'Frango com arroz e feijão', ingredients: ['frango', 'arroz', 'feijao'], timing: 'Pós-treino', description: 'Refeição completa para recuperação.' },
-  { name: 'Mingau de aveia com banana', ingredients: ['aveia', 'banana', 'leite'], timing: 'Café da manhã', description: 'Carboidrato complexo para energia sustentada.' },
-  { name: 'Iogurte com banana e mel', ingredients: ['iogurte', 'banana', 'mel'], timing: 'Lanche', description: 'Rápido e nutritivo entre refeições.' },
-  { name: 'Wrap de atum', ingredients: ['atum', 'pao_integral', 'legumes'], timing: 'Almoço', description: 'Proteína magra com fibras.' },
-  { name: 'Batata doce com frango', ingredients: ['batata_doce', 'frango'], timing: 'Pós-treino', description: 'Carboidrato de baixo índice glicêmico com proteína.' },
-  { name: 'Sanduíche proteico', ingredients: ['pao_integral', 'ovos', 'queijo'], timing: 'Lanche', description: 'Pratico para levar ao treino.' },
-  { name: 'Pasta de amendoim com banana', ingredients: ['pasta_amendoim', 'banana', 'pao_integral'], timing: 'Pré-treino', description: 'Gordura boa + carboidrato para energia.' },
+  {
+    name: 'Omelete proteico',
+    ingredients: ['ovos', 'queijo', 'legumes'],
+    timing: 'Pré-treino',
+    description: 'Rico em proteínas, leve e rápido.',
+  },
+  {
+    name: 'Frango com arroz e feijão',
+    ingredients: ['frango', 'arroz', 'feijao'],
+    timing: 'Pós-treino',
+    description: 'Refeição completa para recuperação.',
+  },
+  {
+    name: 'Mingau de aveia com banana',
+    ingredients: ['aveia', 'banana', 'leite'],
+    timing: 'Café da manhã',
+    description: 'Carboidrato complexo para energia sustentada.',
+  },
+  {
+    name: 'Iogurte com banana e mel',
+    ingredients: ['iogurte', 'banana', 'mel'],
+    timing: 'Lanche',
+    description: 'Rápido e nutritivo entre refeições.',
+  },
+  {
+    name: 'Wrap de atum',
+    ingredients: ['atum', 'pao_integral', 'legumes'],
+    timing: 'Almoço',
+    description: 'Proteína magra com fibras.',
+  },
+  {
+    name: 'Batata doce com frango',
+    ingredients: ['batata_doce', 'frango'],
+    timing: 'Pós-treino',
+    description: 'Carboidrato de baixo índice glicêmico com proteína.',
+  },
+  {
+    name: 'Sanduíche proteico',
+    ingredients: ['pao_integral', 'ovos', 'queijo'],
+    timing: 'Lanche',
+    description: 'Pratico para levar ao treino.',
+  },
+  {
+    name: 'Pasta de amendoim com banana',
+    ingredients: ['pasta_amendoim', 'banana', 'pao_integral'],
+    timing: 'Pré-treino',
+    description: 'Gordura boa + carboidrato para energia.',
+  },
 ];
 
 export function sanitizePantryItemId(value: unknown): PantryItemId | null {
@@ -40,7 +92,7 @@ export function sanitizePantryItemId(value: unknown): PantryItemId | null {
 
 export function savePantryItems(ids: PantryItemId[]): PantryItemId[] {
   const sanitized = ids
-    .map(id => sanitizePantryItemId(id))
+    .map((id) => sanitizePantryItemId(id))
     .filter((id): id is PantryItemId => id !== null);
   const unique = Array.from(new Set(sanitized));
   localStorage.setItem(STORAGE_KEY, JSON.stringify(unique));
@@ -53,7 +105,7 @@ export function getPantryItems(): PantryItemId[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown[];
     return parsed
-      .map(item => sanitizePantryItemId(item))
+      .map((item) => sanitizePantryItemId(item))
       .filter((id): id is PantryItemId => id !== null);
   } catch {
     return [];
@@ -62,9 +114,7 @@ export function getPantryItems(): PantryItemId[] {
 
 export function suggestMeals(pantry: PantryItemId[]): MealSuggestion[] {
   if (pantry.length === 0) return [];
-  return MEAL_RECIPES.filter(recipe =>
-    recipe.ingredients.every(ing => pantry.includes(ing)),
-  );
+  return MEAL_RECIPES.filter((recipe) => recipe.ingredients.every((ing) => pantry.includes(ing)));
 }
 
 export function getPantryItemLabel(id: PantryItemId): string {

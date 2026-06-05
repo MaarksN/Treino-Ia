@@ -7,8 +7,8 @@ import { RecoveryCheckin } from '../types';
 vi.mock('../utils/personalization', () => ({
   calculateReadiness: vi.fn((checkin) => ({
     label: checkin.energyLevel > 5 ? 'Pronto' : 'Descanso',
-    score: checkin.energyLevel * 10
-  }))
+    score: checkin.energyLevel * 10,
+  })),
 }));
 
 describe('ReadinessCard', () => {
@@ -24,11 +24,11 @@ describe('ReadinessCard', () => {
       stressLevel: 3,
       sorenessLevel: 2,
       energyLevel: 9,
-      timestamp: 1696982400000
+      timestamp: 1696982400000,
     };
 
     render(<ReadinessCard checkin={mockCheckin} />);
-    
+
     // Check main labels and mocked response
     expect(screen.getByText('Prontidão do dia')).toBeInTheDocument();
     expect(screen.getByText('Pronto')).toBeInTheDocument();

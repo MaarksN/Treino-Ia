@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Flame, Trophy, Zap } from 'lucide-react';
 import { ServerGamificationProfile } from '../services/gamificationService';
@@ -33,26 +32,42 @@ export function StreakTracker({ streak, profile }: Props) {
   return (
     <div className="bg-brand-gray border-2 border-brand-light/10 p-5 shadow-brutal-light">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">Progresso e streak</h3>
-        {atRisk && <span className="px-3 py-1 bg-red-500/10 border-2 border-red-500/30 text-red-400 text-xs font-bold uppercase">Streak em risco</span>}
+        <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">
+          Progresso e streak
+        </h3>
+        {atRisk && (
+          <span className="px-3 py-1 bg-red-500/10 border-2 border-red-500/30 text-red-400 text-xs font-bold uppercase">
+            Streak em risco
+          </span>
+        )}
       </div>
 
       <div className="grid grid-cols-3 gap-3 mb-5">
-        <div className={`flex flex-col items-center p-4 border-2 ${atRisk ? 'border-red-500/30 bg-red-500/5' : 'border-brand-neon/30 bg-brand-neon/5'}`}>
+        <div
+          className={`flex flex-col items-center p-4 border-2 ${atRisk ? 'border-red-500/30 bg-red-500/5' : 'border-brand-neon/30 bg-brand-neon/5'}`}
+        >
           <Flame size={28} className={atRisk ? 'text-red-400' : 'text-brand-neon'} />
-          <p className={`text-3xl font-black tabular-nums mt-1 ${atRisk ? 'text-red-400' : 'text-brand-neon'}`}>{loginStreak}</p>
+          <p
+            className={`text-3xl font-black tabular-nums mt-1 ${atRisk ? 'text-red-400' : 'text-brand-neon'}`}
+          >
+            {loginStreak}
+          </p>
           <p className="text-xs text-brand-muted mt-1 text-center">Dias seguidos</p>
         </div>
 
         <div className="flex flex-col items-center p-4 border-2 border-brand-light/10 bg-brand-dark">
           <Trophy size={28} className="text-yellow-400" />
-          <p className="text-3xl font-black text-yellow-400 tabular-nums mt-1">{streak.longestStreak}</p>
+          <p className="text-3xl font-black text-yellow-400 tabular-nums mt-1">
+            {streak.longestStreak}
+          </p>
           <p className="text-xs text-brand-muted mt-1 text-center">Recorde treinos</p>
         </div>
 
         <div className="flex flex-col items-center p-4 border-2 border-brand-light/10 bg-brand-dark">
           <Zap size={28} className="text-blue-400" />
-          <p className="text-3xl font-black text-blue-400 tabular-nums mt-1">{streak.totalWorkouts}</p>
+          <p className="text-3xl font-black text-blue-400 tabular-nums mt-1">
+            {streak.totalWorkouts}
+          </p>
           <p className="text-xs text-brand-muted mt-1 text-center">Treinos totais</p>
         </div>
       </div>
@@ -72,16 +87,24 @@ export function StreakTracker({ streak, profile }: Props) {
           <span>{xpToNext} XP para o próximo</span>
         </div>
         <div className="h-2.5 bg-white/10 overflow-hidden">
-          <div className="h-full bg-brand-neon transition-all duration-700" style={{ width: `${Math.min(xpPct, 100)}%` }} />
+          <div
+            className="h-full bg-brand-neon transition-all duration-700"
+            style={{ width: `${Math.min(xpPct, 100)}%` }}
+          />
         </div>
       </div>
 
       {(profile?.last_login_at || streak.lastWorkoutDate) && (
         <p className="text-xs text-brand-muted mt-3 text-center">
-          Última atividade: <strong className="text-brand-light">
-            {profile?.last_login_at ? new Date(profile.last_login_at).toLocaleDateString('pt-BR') : streak.lastWorkoutDate}
+          Última atividade:{' '}
+          <strong className="text-brand-light">
+            {profile?.last_login_at
+              ? new Date(profile.last_login_at).toLocaleDateString('pt-BR')
+              : streak.lastWorkoutDate}
           </strong>
-          {daysSince > 0 && Number.isFinite(daysSince) && ` (${daysSince} ${daysSince === 1 ? 'dia' : 'dias'} atrás)`}
+          {daysSince > 0 &&
+            Number.isFinite(daysSince) &&
+            ` (${daysSince} ${daysSince === 1 ? 'dia' : 'dias'} atrás)`}
         </p>
       )}
     </div>

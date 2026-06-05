@@ -15,23 +15,28 @@ describe('Gamification RPC Hardening', () => {
       }
     }
 
-    const functions = [
-      'apply_gamification_event',
-      'purchase_gamification_item',
-      'open_loot_box'
-    ];
+    const functions = ['apply_gamification_event', 'purchase_gamification_item', 'open_loot_box'];
 
     for (const fn of functions) {
       // Check if search_path is set to public (either in CREATE or ALTER)
-      const searchPathRegex = new RegExp(`(ALTER FUNCTION public\\.${fn}.*SET search_path = public|create or replace function ${fn}.*SET search_path = public)`, 'i');
+      const searchPathRegex = new RegExp(
+        `(ALTER FUNCTION public\\.${fn}.*SET search_path = public|create or replace function ${fn}.*SET search_path = public)`,
+        'i',
+      );
       expect(allContent).toMatch(searchPathRegex);
 
       // Check if execute is revoked from public
-      const revokeRegex = new RegExp(`REVOKE EXECUTE ON FUNCTION public\\.${fn}.*FROM PUBLIC, anon, authenticated`, 'i');
+      const revokeRegex = new RegExp(
+        `REVOKE EXECUTE ON FUNCTION public\\.${fn}.*FROM PUBLIC, anon, authenticated`,
+        'i',
+      );
       expect(allContent).toMatch(revokeRegex);
 
       // Check if execute is granted to service_role
-      const grantRegex = new RegExp(`GRANT EXECUTE ON FUNCTION public\\.${fn}.*TO service_role`, 'i');
+      const grantRegex = new RegExp(
+        `GRANT EXECUTE ON FUNCTION public\\.${fn}.*TO service_role`,
+        'i',
+      );
       expect(allContent).toMatch(grantRegex);
     }
   });

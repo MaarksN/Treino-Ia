@@ -40,7 +40,7 @@ const CAFFEINE_STORAGE_KEY = '@TreinoIA:recoveryReadiness:caffeine';
 const SLEEP_STORAGE_KEY = '@TreinoIA:recoveryReadiness:sleep';
 
 function asRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' ? value as Record<string, unknown> : {};
+  return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
 }
 
 function readStorage<T>(key: string, fallback: T, normalize?: (value: unknown) => T): T {
@@ -50,7 +50,7 @@ function readStorage<T>(key: string, fallback: T, normalize?: (value: unknown) =
     const raw = localStorage.getItem(key);
     if (!raw) return fallback;
     const parsed = JSON.parse(raw) as unknown;
-    return normalize ? normalize(parsed) : parsed as T;
+    return normalize ? normalize(parsed) : (parsed as T);
   } catch {
     return fallback;
   }
@@ -75,40 +75,48 @@ function createLocalId(prefix: string) {
 function normalizeCaffeineEntries(value: unknown): CaffeineEntry[] {
   if (!Array.isArray(value)) return [];
 
-  return value.map(item => {
-    const row = asRecord(item);
-    const amountMg = Math.max(0, Math.round(Number(row.amountMg)));
-    const date = typeof row.date === 'string' ? row.date : getDateKey();
-    const consumedAt = typeof row.consumedAt === 'string' ? row.consumedAt.slice(0, 5) : '08:00';
+  return value
+    .map((item) => {
+      const row = asRecord(item);
+      const amountMg = Math.max(0, Math.round(Number(row.amountMg)));
+      const date = typeof row.date === 'string' ? row.date : getDateKey();
+      const consumedAt = typeof row.consumedAt === 'string' ? row.consumedAt.slice(0, 5) : '08:00';
 
-    return {
-      id: typeof row.id === 'string' ? row.id : createLocalId('caffeine'),
-      date,
-      consumedAt,
-      label: typeof row.label === 'string' ? row.label.slice(0, 48) : 'Cafeina',
-      amountMg,
-      createdAt: Number.isFinite(row.createdAt) ? Number(row.createdAt) : Date.now(),
-    };
-  }).filter(entry => entry.amountMg > 0);
+      return {
+        id: typeof row.id === 'string' ? row.id : createLocalId('caffeine'),
+        date,
+        consumedAt,
+        label: typeof row.label === 'string' ? row.label.slice(0, 48) : 'Cafeina',
+        amountMg,
+        createdAt: Number.isFinite(row.createdAt) ? Number(row.createdAt) : Date.now(),
+      };
+    })
+    .filter((entry) => entry.amountMg > 0);
 }
 
 function normalizeSleepLogs(value: unknown): SleepLogEntry[] {
   if (!Array.isArray(value)) return [];
 
-  return value.map(item => {
-    const row = asRecord(item);
-    return {
-      date: typeof row.date === 'string' ? row.date : getDateKey(),
-      sleepHours: normalizeSleepHours(row.sleepHours),
-      updatedAt: Number.isFinite(row.updatedAt) ? Number(row.updatedAt) : Date.now(),
-    };
-  }).filter(entry => entry.sleepHours > 0);
+  return value
+    .map((item) => {
+      const row = asRecord(item);
+      return {
+        date: typeof row.date === 'string' ? row.date : getDateKey(),
+        sleepHours: normalizeSleepHours(row.sleepHours),
+        updatedAt: Number.isFinite(row.updatedAt) ? Number(row.updatedAt) : Date.now(),
+      };
+    })
+    .filter((entry) => entry.sleepHours > 0);
 }
 
-function getStatusClass(status: 'clear' | 'low' | 'moderate' | 'high' | 'none' | 'light' | 'very_high') {
-  if (status === 'high' || status === 'very_high') return 'border-red-400/50 bg-red-500/10 text-red-200';
+function getStatusClass(
+  status: 'clear' | 'low' | 'moderate' | 'high' | 'none' | 'light' | 'very_high',
+) {
+  if (status === 'high' || status === 'very_high')
+    return 'border-red-400/50 bg-red-500/10 text-red-200';
   if (status === 'moderate') return 'border-yellow-300/50 bg-yellow-400/10 text-yellow-100';
-  if (status === 'low' || status === 'light') return 'border-brand-neon/50 bg-brand-neon/10 text-brand-neon';
+  if (status === 'low' || status === 'light')
+    return 'border-brand-neon/50 bg-brand-neon/10 text-brand-neon';
   return 'border-brand-light/20 bg-brand-light/5 text-brand-light/80';
 }
 
@@ -130,8 +138,12 @@ function RecoveryCard({
           {icon}
         </div>
         <div className="min-w-0">
-          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-brand-muted">{eyebrow}</p>
-          <h3 className="mt-1 font-display text-3xl uppercase leading-none text-brand-light">{title}</h3>
+          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-brand-muted">
+            {eyebrow}
+          </p>
+          <h3 className="mt-1 font-display text-3xl uppercase leading-none text-brand-light">
+            {title}
+          </h3>
         </div>
       </div>
       {children}
@@ -142,40 +154,43 @@ function RecoveryCard({
 export function RecoveryReadinessSection({ history }: { history: WorkoutSession[] }) {
   const today = getDateKey();
   const [painCheckin, setPainCheckin] = useState<PainCheckin>(() => {
-    const stored = readStorage(PAIN_STORAGE_KEY, createPainCheckin(today), value => normalizePainCheckin(value as Partial<PainCheckin>));
+    const stored = readStorage(PAIN_STORAGE_KEY, createPainCheckin(today), (value) =>
+      normalizePainCheckin(value as Partial<PainCheckin>),
+    );
     return stored.date === today ? stored : createPainCheckin(today);
   });
   const [painDraft, setPainDraft] = useState<PainRegionMap>(() => ({ ...painCheckin.regions }));
   const [painNotes, setPainNotes] = useState(() => painCheckin.notes);
-  const [caffeineEntries, setCaffeineEntries] = useState<CaffeineEntry[]>(() => (
-    readStorage(CAFFEINE_STORAGE_KEY, [], normalizeCaffeineEntries)
-  ));
-  const [sleepLogs, setSleepLogs] = useState<SleepLogEntry[]>(() => (
-    readStorage(SLEEP_STORAGE_KEY, [], normalizeSleepLogs)
-  ));
-  const todaySleep = sleepLogs.find(log => log.date === today);
+  const [caffeineEntries, setCaffeineEntries] = useState<CaffeineEntry[]>(() =>
+    readStorage(CAFFEINE_STORAGE_KEY, [], normalizeCaffeineEntries),
+  );
+  const [sleepLogs, setSleepLogs] = useState<SleepLogEntry[]>(() =>
+    readStorage(SLEEP_STORAGE_KEY, [], normalizeSleepLogs),
+  );
+  const todaySleep = sleepLogs.find((log) => log.date === today);
   const [sleepHoursInput, setSleepHoursInput] = useState(() => String(todaySleep?.sleepHours ?? 7));
   const [customCaffeineMg, setCustomCaffeineMg] = useState('100');
   const [savedFeedback, setSavedFeedback] = useState('');
 
   const sleepInsight = useMemo(
     () => buildSleepStrengthInsight(sleepLogs, history),
-    [history, sleepLogs]
+    [history, sleepLogs],
   );
   const painSummary = useMemo(() => summarizePainCheckin(painCheckin), [painCheckin]);
   const caffeineSummary = useMemo(
     () => summarizeCaffeine(caffeineEntries, today),
-    [caffeineEntries, today]
+    [caffeineEntries, today],
   );
   const rpeLoad = useMemo(() => calculateAccumulatedRpeLoad(history), [history]);
-  const recoveryMode = useMemo(() => (
-    buildRecoveryModeRecommendation({ history, painCheckin, caffeineEntries })
-  ), [caffeineEntries, history, painCheckin]);
+  const recoveryMode = useMemo(
+    () => buildRecoveryModeRecommendation({ history, painCheckin, caffeineEntries }),
+    [caffeineEntries, history, painCheckin],
+  );
 
-  const todayCaffeineEntries = caffeineEntries.filter(entry => entry.date === today);
+  const todayCaffeineEntries = caffeineEntries.filter((entry) => entry.date === today);
 
   const updatePainDraft = (region: PainRegionKey, value: number) => {
-    setPainDraft(current => ({ ...current, [region]: clampScale(value) }));
+    setPainDraft((current) => ({ ...current, [region]: clampScale(value) }));
   };
 
   const savePainCheckin = () => {
@@ -199,7 +214,7 @@ export function RecoveryReadinessSection({ history }: { history: WorkoutSession[
 
     const next = [
       { date: today, sleepHours, updatedAt: Date.now() },
-      ...sleepLogs.filter(log => log.date !== today),
+      ...sleepLogs.filter((log) => log.date !== today),
     ].slice(0, 60);
 
     setSleepLogs(next);
@@ -230,7 +245,7 @@ export function RecoveryReadinessSection({ history }: { history: WorkoutSession[
   };
 
   const removeCaffeineEntry = (id: string) => {
-    const next = caffeineEntries.filter(entry => entry.id !== id);
+    const next = caffeineEntries.filter((entry) => entry.id !== id);
     setCaffeineEntries(next);
     writeStorage(CAFFEINE_STORAGE_KEY, next);
     setSavedFeedback('Registro de cafeina removido.');
@@ -260,12 +275,15 @@ export function RecoveryReadinessSection({ history }: { history: WorkoutSession[
 
       <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
         <RecoveryCard icon={<Moon className="h-5 w-5" />} eyebrow="Item 31" title="Sono x forca">
-          <div className={`mb-4 rounded-[18px] border-2 px-4 py-3 font-mono text-xs ${sleepInsight.status === 'negative'
-            ? 'border-yellow-300/50 bg-yellow-400/10 text-yellow-100'
-            : sleepInsight.status === 'positive'
-              ? 'border-brand-neon/50 bg-brand-neon/10 text-brand-neon'
-              : 'border-brand-light/20 bg-brand-light/5 text-brand-light/80'
-          }`}>
+          <div
+            className={`mb-4 rounded-[18px] border-2 px-4 py-3 font-mono text-xs ${
+              sleepInsight.status === 'negative'
+                ? 'border-yellow-300/50 bg-yellow-400/10 text-yellow-100'
+                : sleepInsight.status === 'positive'
+                  ? 'border-brand-neon/50 bg-brand-neon/10 text-brand-neon'
+                  : 'border-brand-light/20 bg-brand-light/5 text-brand-light/80'
+            }`}
+          >
             <p className="font-bold uppercase tracking-widest">{sleepInsight.label}</p>
             <p className="mt-2 leading-5">{sleepInsight.message}</p>
           </div>
@@ -278,7 +296,7 @@ export function RecoveryReadinessSection({ history }: { history: WorkoutSession[
                 max={14}
                 step={0.5}
                 value={sleepHoursInput}
-                onChange={event => setSleepHoursInput(event.target.value)}
+                onChange={(event) => setSleepHoursInput(event.target.value)}
                 className="mt-2 w-full rounded-[14px] border-2 border-brand-light/15 bg-brand-gray px-3 py-2 text-brand-light outline-none focus:border-brand-neon"
               />
             </label>
@@ -292,17 +310,24 @@ export function RecoveryReadinessSection({ history }: { history: WorkoutSession[
             </button>
           </div>
           <p className="mt-3 font-mono text-xs text-brand-muted">
-            Amostras pareadas: {sleepInsight.sampleCount} | correlacao: {sleepInsight.correlation.toFixed(2)}
+            Amostras pareadas: {sleepInsight.sampleCount} | correlacao:{' '}
+            {sleepInsight.correlation.toFixed(2)}
           </p>
         </RecoveryCard>
 
-        <RecoveryCard icon={<HeartPulse className="h-5 w-5" />} eyebrow="Item 32" title="Mapa de dor">
-          <div className={`mb-4 rounded-[18px] border-2 px-4 py-3 font-mono text-xs ${getStatusClass(painSummary.status)}`}>
+        <RecoveryCard
+          icon={<HeartPulse className="h-5 w-5" />}
+          eyebrow="Item 32"
+          title="Mapa de dor"
+        >
+          <div
+            className={`mb-4 rounded-[18px] border-2 px-4 py-3 font-mono text-xs ${getStatusClass(painSummary.status)}`}
+          >
             <p className="font-bold uppercase tracking-widest">{painSummary.label}</p>
             <p className="mt-2 leading-5">{painSummary.message}</p>
           </div>
           <div className="space-y-3">
-            {PAIN_REGION_DEFINITIONS.map(region => (
+            {PAIN_REGION_DEFINITIONS.map((region) => (
               <div key={region.key} className="grid grid-cols-[104px_1fr_34px] items-center gap-3">
                 <span className="font-mono text-xs text-brand-muted">{region.label}</span>
                 <input
@@ -311,7 +336,7 @@ export function RecoveryReadinessSection({ history }: { history: WorkoutSession[
                   max={10}
                   step={1}
                   value={painDraft[region.key]}
-                  onChange={event => updatePainDraft(region.key, Number(event.target.value))}
+                  onChange={(event) => updatePainDraft(region.key, Number(event.target.value))}
                   className="w-full accent-brand-magenta"
                 />
                 <span className="text-right font-mono text-xs font-bold text-brand-light">
@@ -323,7 +348,7 @@ export function RecoveryReadinessSection({ history }: { history: WorkoutSession[
           <textarea
             rows={2}
             value={painNotes}
-            onChange={event => setPainNotes(event.target.value.slice(0, 240))}
+            onChange={(event) => setPainNotes(event.target.value.slice(0, 240))}
             placeholder="Notas opcionais"
             className="mt-4 w-full resize-none rounded-[14px] border-2 border-brand-light/15 bg-brand-gray px-3 py-2 font-mono text-xs text-brand-light outline-none placeholder:text-brand-muted focus:border-brand-neon"
           />
@@ -338,12 +363,14 @@ export function RecoveryReadinessSection({ history }: { history: WorkoutSession[
         </RecoveryCard>
 
         <RecoveryCard icon={<Coffee className="h-5 w-5" />} eyebrow="Item 36" title="Cafeina">
-          <div className={`mb-4 rounded-[18px] border-2 px-4 py-3 font-mono text-xs ${getStatusClass(caffeineSummary.level === 'none' ? 'none' : caffeineSummary.level)}`}>
+          <div
+            className={`mb-4 rounded-[18px] border-2 px-4 py-3 font-mono text-xs ${getStatusClass(caffeineSummary.level === 'none' ? 'none' : caffeineSummary.level)}`}
+          >
             <p className="font-bold uppercase tracking-widest">{caffeineSummary.label}</p>
             <p className="mt-2 leading-5">{caffeineSummary.message}</p>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            {CAFFEINE_PRESETS.map(preset => (
+            {CAFFEINE_PRESETS.map((preset) => (
               <button
                 key={preset.label}
                 type="button"
@@ -361,7 +388,7 @@ export function RecoveryReadinessSection({ history }: { history: WorkoutSession[
               min={1}
               max={600}
               value={customCaffeineMg}
-              onChange={event => setCustomCaffeineMg(event.target.value)}
+              onChange={(event) => setCustomCaffeineMg(event.target.value)}
               className="rounded-[14px] border-2 border-brand-light/15 bg-brand-gray px-3 py-2 font-mono text-xs text-brand-light outline-none focus:border-brand-neon"
               aria-label="Cafeina customizada em mg"
             />
@@ -377,14 +404,22 @@ export function RecoveryReadinessSection({ history }: { history: WorkoutSession[
           <div className="mt-4 font-mono text-xs text-brand-muted">
             Total hoje: <span className="text-brand-light">{caffeineSummary.totalMg} mg</span>
             {caffeineSummary.lateMg > 0 && (
-              <span> | tarde: <span className="text-brand-light">{caffeineSummary.lateMg} mg</span></span>
+              <span>
+                {' '}
+                | tarde: <span className="text-brand-light">{caffeineSummary.lateMg} mg</span>
+              </span>
             )}
           </div>
           {todayCaffeineEntries.length > 0 && (
             <div className="mt-3 space-y-2">
-              {todayCaffeineEntries.slice(0, 4).map(entry => (
-                <div key={entry.id} className="flex items-center justify-between gap-2 rounded-[14px] border-2 border-brand-light/10 px-3 py-2 font-mono text-xs text-brand-light/80">
-                  <span>{entry.consumedAt} | {entry.label} | {entry.amountMg} mg</span>
+              {todayCaffeineEntries.slice(0, 4).map((entry) => (
+                <div
+                  key={entry.id}
+                  className="flex items-center justify-between gap-2 rounded-[14px] border-2 border-brand-light/10 px-3 py-2 font-mono text-xs text-brand-light/80"
+                >
+                  <span>
+                    {entry.consumedAt} | {entry.label} | {entry.amountMg} mg
+                  </span>
                   <button
                     type="button"
                     onClick={() => removeCaffeineEntry(entry.id)}
@@ -400,20 +435,24 @@ export function RecoveryReadinessSection({ history }: { history: WorkoutSession[
         </RecoveryCard>
 
         <RecoveryCard icon={<BedDouble className="h-5 w-5" />} eyebrow="Item 37" title="Day off">
-          <div className={`mb-4 rounded-[18px] border-2 px-4 py-3 font-mono text-xs ${recoveryMode.mode === 'day_off'
-            ? 'border-red-400/50 bg-red-500/10 text-red-200'
-            : recoveryMode.mode === 'active_recovery' || recoveryMode.mode === 'adjusted_training'
-              ? 'border-yellow-300/50 bg-yellow-400/10 text-yellow-100'
-              : recoveryMode.mode === 'train'
-                ? 'border-brand-neon/50 bg-brand-neon/10 text-brand-neon'
-                : 'border-brand-light/20 bg-brand-light/5 text-brand-light/80'
-          }`}>
+          <div
+            className={`mb-4 rounded-[18px] border-2 px-4 py-3 font-mono text-xs ${
+              recoveryMode.mode === 'day_off'
+                ? 'border-red-400/50 bg-red-500/10 text-red-200'
+                : recoveryMode.mode === 'active_recovery' ||
+                    recoveryMode.mode === 'adjusted_training'
+                  ? 'border-yellow-300/50 bg-yellow-400/10 text-yellow-100'
+                  : recoveryMode.mode === 'train'
+                    ? 'border-brand-neon/50 bg-brand-neon/10 text-brand-neon'
+                    : 'border-brand-light/20 bg-brand-light/5 text-brand-light/80'
+            }`}
+          >
             <p className="font-bold uppercase tracking-widest">{recoveryMode.label}</p>
             <p className="mt-2 leading-5">{recoveryMode.message}</p>
           </div>
           {recoveryMode.reasons.length > 0 ? (
             <ul className="space-y-2 font-mono text-xs text-brand-light/75">
-              {recoveryMode.reasons.map(reason => (
+              {recoveryMode.reasons.map((reason) => (
                 <li key={reason} className="flex items-center gap-2">
                   <ShieldCheck className="h-4 w-4 text-brand-neon" />
                   {reason}
@@ -427,21 +466,34 @@ export function RecoveryReadinessSection({ history }: { history: WorkoutSession[
           )}
         </RecoveryCard>
 
-        <RecoveryCard icon={<TrendingUp className="h-5 w-5" />} eyebrow="Item 39" title="RPE acumulado">
-          <div className={`mb-4 rounded-[18px] border-2 px-4 py-3 font-mono text-xs ${getStatusClass(rpeLoad.level === 'very_high' ? 'very_high' : rpeLoad.level === 'none' ? 'none' : rpeLoad.level)}`}>
+        <RecoveryCard
+          icon={<TrendingUp className="h-5 w-5" />}
+          eyebrow="Item 39"
+          title="RPE acumulado"
+        >
+          <div
+            className={`mb-4 rounded-[18px] border-2 px-4 py-3 font-mono text-xs ${getStatusClass(rpeLoad.level === 'very_high' ? 'very_high' : rpeLoad.level === 'none' ? 'none' : rpeLoad.level)}`}
+          >
             <p className="font-bold uppercase tracking-widest">{rpeLoad.label}</p>
             <p className="mt-2 leading-5">{rpeLoad.message}</p>
           </div>
           {rpeLoad.totalLoad > 0 && (
-            <div className={`mt-3 mb-4 rounded-[18px] border-2 px-4 py-3 font-mono text-xs ${
-              estimateDomsRisk(rpeLoad.totalLoad, rpeLoad.averageSessionRpe).risk === 'alto'
-                ? 'border-red-400/50 bg-red-500/10 text-red-200'
-                : estimateDomsRisk(rpeLoad.totalLoad, rpeLoad.averageSessionRpe).risk === 'moderado'
-                  ? 'border-yellow-300/50 bg-yellow-400/10 text-yellow-100'
-                  : 'border-green-300/50 bg-green-400/10 text-green-100'
-            }`}>
-              <p className="font-bold uppercase tracking-widest text-brand-light">Item 87: Alarme DMT</p>
-              <p className="mt-1 leading-5">{estimateDomsRisk(rpeLoad.totalLoad, rpeLoad.averageSessionRpe).message}</p>
+            <div
+              className={`mt-3 mb-4 rounded-[18px] border-2 px-4 py-3 font-mono text-xs ${
+                estimateDomsRisk(rpeLoad.totalLoad, rpeLoad.averageSessionRpe).risk === 'alto'
+                  ? 'border-red-400/50 bg-red-500/10 text-red-200'
+                  : estimateDomsRisk(rpeLoad.totalLoad, rpeLoad.averageSessionRpe).risk ===
+                      'moderado'
+                    ? 'border-yellow-300/50 bg-yellow-400/10 text-yellow-100'
+                    : 'border-green-300/50 bg-green-400/10 text-green-100'
+              }`}
+            >
+              <p className="font-bold uppercase tracking-widest text-brand-light">
+                Item 87: Alarme DMT
+              </p>
+              <p className="mt-1 leading-5">
+                {estimateDomsRisk(rpeLoad.totalLoad, rpeLoad.averageSessionRpe).message}
+              </p>
             </div>
           )}
           <div className="mb-3 h-3 overflow-hidden rounded-full border border-brand-light/15 bg-brand-gray">

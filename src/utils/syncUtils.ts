@@ -1,8 +1,4 @@
-import {
-  clearSyncedActions,
-  listOfflineActions,
-  updateOfflineAction,
-} from './offlineQueue';
+import { clearSyncedActions, listOfflineActions, updateOfflineAction } from './offlineQueue';
 import { supabase } from '../services/supabaseClient';
 import { apiFetch } from './apiFetch';
 
@@ -48,7 +44,7 @@ export function saveDashboardSnapshot(userId: string, data: unknown): DashboardS
 export function loadDashboardSnapshot(): DashboardSnapshot | null {
   try {
     const raw = localStorage.getItem(SNAPSHOT_KEY);
-    return raw ? JSON.parse(raw) as DashboardSnapshot : null;
+    return raw ? (JSON.parse(raw) as DashboardSnapshot) : null;
   } catch {
     return null;
   }
@@ -89,8 +85,7 @@ export async function syncOfflineQueue(options?: {
     listOfflineActions('pending'),
     listOfflineActions('failed'),
   ]);
-  const pending = [...pendingRows, ...failedRows]
-    .sort((a, b) => a.createdAt - b.createdAt);
+  const pending = [...pendingRows, ...failedRows].sort((a, b) => a.createdAt - b.createdAt);
 
   let synced = 0;
 

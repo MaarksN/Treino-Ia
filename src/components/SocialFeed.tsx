@@ -105,10 +105,10 @@ export function SocialFeed({ canInteract = true, onAuthRequired }: Props) {
   };
 
   const openComments = async (postId: string) => {
-    setComments(previous => ({ ...previous, [postId]: previous[postId] ?? [] }));
+    setComments((previous) => ({ ...previous, [postId]: previous[postId] ?? [] }));
     try {
       const rows = await listComments(postId);
-      setComments(previous => ({ ...previous, [postId]: rows }));
+      setComments((previous) => ({ ...previous, [postId]: rows }));
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Não foi possível carregar comentários.');
     }
@@ -122,7 +122,7 @@ export function SocialFeed({ canInteract = true, onAuthRequired }: Props) {
 
     try {
       await addComment(postId, text);
-      setCommentText(previous => ({ ...previous, [postId]: '' }));
+      setCommentText((previous) => ({ ...previous, [postId]: '' }));
       await openComments(postId);
       await load();
     } catch (error) {
@@ -156,7 +156,7 @@ export function SocialFeed({ canInteract = true, onAuthRequired }: Props) {
           <div>
             <input
               value={title}
-              onChange={event => setTitle(event.target.value)}
+              onChange={(event) => setTitle(event.target.value)}
               placeholder="O que você conquistou hoje?"
               className="w-full bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white mb-3 outline-none"
               maxLength={140}
@@ -164,7 +164,7 @@ export function SocialFeed({ canInteract = true, onAuthRequired }: Props) {
 
             <textarea
               value={body}
-              onChange={event => setBody(event.target.value)}
+              onChange={(event) => setBody(event.target.value)}
               placeholder="Contexto, sensações ou detalhes do treino..."
               className="w-full bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white min-h-24 outline-none"
               maxLength={1000}
@@ -190,21 +190,21 @@ export function SocialFeed({ canInteract = true, onAuthRequired }: Props) {
             <div className="grid sm:grid-cols-[1fr_100px_100px] gap-3">
               <input
                 value={prExercise}
-                onChange={event => setPrExercise(event.target.value)}
+                onChange={(event) => setPrExercise(event.target.value)}
                 placeholder="Exercício"
                 className="bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none"
                 maxLength={80}
               />
               <input
                 value={prWeight}
-                onChange={event => setPrWeight(event.target.value)}
+                onChange={(event) => setPrWeight(event.target.value)}
                 inputMode="decimal"
                 placeholder="kg"
                 className="bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none"
               />
               <input
                 value={prReps}
-                onChange={event => setPrReps(event.target.value)}
+                onChange={(event) => setPrReps(event.target.value)}
                 inputMode="numeric"
                 placeholder="reps"
                 className="bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none"
@@ -236,20 +236,24 @@ export function SocialFeed({ canInteract = true, onAuthRequired }: Props) {
         </div>
       )}
 
-      {posts.map(post => (
+      {posts.map((post) => (
         <article key={post.id} className="bg-brand-gray rounded-3xl border border-white/10 p-5">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-11 h-11 rounded-xl bg-brand-neon/20 flex items-center justify-center overflow-hidden">
               {post.author?.avatar_url ? (
                 <img src={post.author.avatar_url} alt="" className="w-full h-full object-cover" />
               ) : (
-                <span className="text-brand-neon font-black">{post.author?.display_name?.charAt(0) ?? 'A'}</span>
+                <span className="text-brand-neon font-black">
+                  {post.author?.display_name?.charAt(0) ?? 'A'}
+                </span>
               )}
             </div>
 
             <div>
               <p className="font-bold text-white">{post.author?.display_name ?? 'Atleta'}</p>
-              <p className="text-xs text-brand-muted">@{post.author?.username ?? 'usuario'} · {timeAgo(post.created_at)}</p>
+              <p className="text-xs text-brand-muted">
+                @{post.author?.username ?? 'usuario'} · {timeAgo(post.created_at)}
+              </p>
             </div>
           </div>
 
@@ -258,7 +262,9 @@ export function SocialFeed({ canInteract = true, onAuthRequired }: Props) {
 
           {post.metric_label && (
             <div className="mt-4 rounded-2xl bg-brand-neon/10 border border-brand-neon/20 p-4">
-              <p className="text-xs text-brand-neon uppercase tracking-widest">{post.metric_label}</p>
+              <p className="text-xs text-brand-neon uppercase tracking-widest">
+                {post.metric_label}
+              </p>
               <p className="text-2xl font-black text-white">{post.metric_value}</p>
             </div>
           )}
@@ -273,7 +279,11 @@ export function SocialFeed({ canInteract = true, onAuthRequired }: Props) {
               {post.likes_count ?? 0}
             </button>
 
-            <button type="button" onClick={() => openComments(post.id)} className="text-white/70 hover:text-brand-neon flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => openComments(post.id)}
+              className="text-white/70 hover:text-brand-neon flex items-center gap-2"
+            >
               <MessageCircle size={18} />
               {post.comments_count ?? 0}
             </button>
@@ -287,9 +297,11 @@ export function SocialFeed({ canInteract = true, onAuthRequired }: Props) {
 
           {comments[post.id] && (
             <div className="mt-4 space-y-3">
-              {comments[post.id].map(comment => (
+              {comments[post.id].map((comment) => (
                 <div key={comment.id} className="rounded-2xl bg-white/5 p-3">
-                  <p className="text-xs text-brand-muted">@{comment.author?.username ?? 'usuario'}</p>
+                  <p className="text-xs text-brand-muted">
+                    @{comment.author?.username ?? 'usuario'}
+                  </p>
                   <p className="text-sm text-white">{comment.body}</p>
                   <div className="mt-2">
                     <SocialReportButton
@@ -305,12 +317,18 @@ export function SocialFeed({ canInteract = true, onAuthRequired }: Props) {
               <div className="flex gap-2">
                 <input
                   value={commentText[post.id] ?? ''}
-                  onChange={event => setCommentText(previous => ({ ...previous, [post.id]: event.target.value }))}
+                  onChange={(event) =>
+                    setCommentText((previous) => ({ ...previous, [post.id]: event.target.value }))
+                  }
                   placeholder="Escreva um comentário..."
                   className="flex-1 bg-brand-dark border border-white/10 rounded-xl px-4 py-2 text-white outline-none min-w-0"
                   maxLength={500}
                 />
-                <button type="button" onClick={() => sendComment(post.id)} className="bg-brand-neon text-brand-dark rounded-xl px-4 font-bold">
+                <button
+                  type="button"
+                  onClick={() => sendComment(post.id)}
+                  className="bg-brand-neon text-brand-dark rounded-xl px-4 font-bold"
+                >
                   Enviar
                 </button>
               </div>

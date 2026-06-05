@@ -41,9 +41,13 @@ export async function loadAiMemoryCloud(): Promise<AiMemoryLoadResult> {
 
   if (!sessionData.session?.user) {
     return {
-      data: loadAiMemory().map(note => ({ ...note, dataMode: ensureSafeDataMode('mock_dev_only') })),
+      data: loadAiMemory().map((note) => ({
+        ...note,
+        dataMode: ensureSafeDataMode('mock_dev_only'),
+      })),
       dataMode: ensureSafeDataMode('mock_dev_only'),
-      warning: 'Memoria local apenas para desenvolvimento. Faca login para memoria real de 6 meses.',
+      warning:
+        'Memoria local apenas para desenvolvimento. Faca login para memoria real de 6 meses.',
     };
   }
 
@@ -57,14 +61,17 @@ export async function loadAiMemoryCloud(): Promise<AiMemoryLoadResult> {
 
   if (error) {
     return {
-      data: loadAiMemory().map(note => ({ ...note, dataMode: ensureSafeDataMode('mock_dev_only') })),
+      data: loadAiMemory().map((note) => ({
+        ...note,
+        dataMode: ensureSafeDataMode('mock_dev_only'),
+      })),
       dataMode: ensureSafeDataMode('mock_dev_only'),
       warning: `Supabase indisponivel para memoria de IA: ${error.message}`,
     };
   }
 
   return {
-    data: (data ?? []).map(row => ({
+    data: (data ?? []).map((row) => ({
       id: row.id as string,
       note: row.content as string,
       createdAt: row.created_at as string,
@@ -82,20 +89,21 @@ export async function addAiMemoryCloud(note: string): Promise<AiMemoryLoadResult
     return loadAiMemoryCloud();
   }
 
-  const { error } = await supabase
-    .from('ai_long_term_memory')
-    .insert({
-      user_id: sessionData.session.user.id,
-      memory_type: 'coach_note',
-      content: note,
-      source: 'user',
-      confidence: 0.9,
-    });
+  const { error } = await supabase.from('ai_long_term_memory').insert({
+    user_id: sessionData.session.user.id,
+    memory_type: 'coach_note',
+    content: note,
+    source: 'user',
+    confidence: 0.9,
+  });
 
   if (error) {
     addAiMemory(note);
     return {
-      data: loadAiMemory().map(item => ({ ...item, dataMode: ensureSafeDataMode('mock_dev_only') })),
+      data: loadAiMemory().map((item) => ({
+        ...item,
+        dataMode: ensureSafeDataMode('mock_dev_only'),
+      })),
       dataMode: ensureSafeDataMode('mock_dev_only'),
       warning: `Memoria salva localmente porque Supabase falhou: ${error.message}`,
     };

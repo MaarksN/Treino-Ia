@@ -5,7 +5,10 @@ export interface BinauralBeatSession {
   isActive: boolean;
 }
 
-export const toggleBinauralBeat = (session: BinauralBeatSession | null, type: 'focus' | 'relaxation' | 'recovery'): BinauralBeatSession => {
+export const toggleBinauralBeat = (
+  session: BinauralBeatSession | null,
+  type: 'focus' | 'relaxation' | 'recovery',
+): BinauralBeatSession => {
   if (session && session.isActive && session.type === type) {
     return { ...session, isActive: false };
   }
@@ -23,5 +26,5 @@ export const toggleBinauralBeat = (session: BinauralBeatSession | null, type: 'f
 };
 
 export const getBinauralDisclaimer = (): string => {
-  return "Nota: Sons binaurais são experimentais e não têm eficácia médica comprovada. Use com fones de ouvido para melhor experiência.";
+  return 'Nota: Sons binaurais são experimentais e não têm eficácia médica comprovada. Use com fones de ouvido para melhor experiência.';
 };

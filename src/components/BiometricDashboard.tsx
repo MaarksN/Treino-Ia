@@ -79,7 +79,14 @@ export function BiometricDashboard({ profile }: Props) {
     }
 
     return factors > 0 ? Math.round(score / factors) : 0;
-  }, [avgSleepDuration, avgSleepQuality, data.sleepEntries.length, hydrationPct, lastPose, lastSession]);
+  }, [
+    avgSleepDuration,
+    avgSleepQuality,
+    data.sleepEntries.length,
+    hydrationPct,
+    lastPose,
+    lastSession,
+  ]);
 
   const bioScoreColor = bioScore >= 80 ? '#a3e635' : bioScore >= 60 ? '#fbbf24' : '#ef4444';
   const bioScoreLabel = bioScore >= 80 ? 'Excelente' : bioScore >= 60 ? 'Bom' : 'Atenção';
@@ -122,11 +129,13 @@ export function BiometricDashboard({ profile }: Props) {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-white font-bold text-lg">Saúde Biométrica</h3>
-          <p className="text-brand-muted text-xs">{profile.weight || 75}kg · {profile.age || 30} anos</p>
+          <p className="text-brand-muted text-xs">
+            {profile.weight || 75}kg · {profile.age || 30} anos
+          </p>
         </div>
         <button
           type="button"
-          onClick={() => setRefreshKey(value => value + 1)}
+          onClick={() => setRefreshKey((value) => value + 1)}
           className="p-2 rounded-full text-brand-muted hover:text-brand-neon hover:bg-white/10"
           aria-label="Atualizar biometria"
           title="Atualizar biometria"
@@ -138,7 +147,14 @@ export function BiometricDashboard({ profile }: Props) {
       <div className="flex items-center gap-4 mb-5 p-4 bg-brand-dark rounded-xl border border-white/10">
         <div className="relative w-20 h-20 flex-shrink-0">
           <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-            <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="12" />
+            <circle
+              cx="50"
+              cy="50"
+              r="40"
+              fill="none"
+              stroke="rgba(255,255,255,0.08)"
+              strokeWidth="12"
+            />
             <circle
               cx="50"
               cy="50"
@@ -153,12 +169,16 @@ export function BiometricDashboard({ profile }: Props) {
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <p className="font-black text-xl tabular-nums" style={{ color: bioScoreColor }}>{bioScore}</p>
+            <p className="font-black text-xl tabular-nums" style={{ color: bioScoreColor }}>
+              {bioScore}
+            </p>
           </div>
         </div>
         <div>
           <p className="text-brand-muted text-xs uppercase tracking-widest">Score biométrico</p>
-          <p className="text-white font-black text-2xl" style={{ color: bioScoreColor }}>{bioScoreLabel}</p>
+          <p className="text-white font-black text-2xl" style={{ color: bioScoreColor }}>
+            {bioScoreLabel}
+          </p>
           <p className="text-brand-muted text-xs mt-1">
             Baseado em hidratação, sono, frequência cardíaca e forma
           </p>
@@ -166,7 +186,7 @@ export function BiometricDashboard({ profile }: Props) {
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
-        {cards.map(card => (
+        {cards.map((card) => (
           <div key={card.label} className="p-3 bg-brand-dark rounded-xl border border-white/10">
             <div className="flex items-center gap-2 mb-1" style={{ color: card.color }}>
               {card.icon}
@@ -179,12 +199,19 @@ export function BiometricDashboard({ profile }: Props) {
       </div>
 
       {todayPhase && phaseCfg && (
-        <div className="p-3 rounded-xl border flex items-center gap-3" style={{ background: phaseCfg.bg, borderColor: phaseCfg.border }}>
+        <div
+          className="p-3 rounded-xl border flex items-center gap-3"
+          style={{ background: phaseCfg.bg, borderColor: phaseCfg.border }}
+        >
           <span className="text-3xl">{phaseCfg.emoji}</span>
           <div>
-            <p className="text-xs" style={{ color: phaseCfg.color }}>Fase hormonal · Dia {todayPhase.dayOfCycle}</p>
+            <p className="text-xs" style={{ color: phaseCfg.color }}>
+              Fase hormonal · Dia {todayPhase.dayOfCycle}
+            </p>
             <p className="text-white font-bold">{phaseCfg.label}</p>
-            <p className="text-white/70 text-xs mt-0.5 leading-tight">{truncate(todayPhase.trainingRecommendation, 88)}</p>
+            <p className="text-white/70 text-xs mt-0.5 leading-tight">
+              {truncate(todayPhase.trainingRecommendation, 88)}
+            </p>
           </div>
         </div>
       )}
@@ -192,23 +219,32 @@ export function BiometricDashboard({ profile }: Props) {
       <div className="mt-4 space-y-2">
         {hydrationPct < 50 && (
           <div className="p-2.5 bg-blue-500/10 border border-blue-500/30 rounded-xl">
-            <p className="text-blue-400 text-xs">Hidratação baixa hoje. Beba mais {((data.hydrationGoal.dailyMl - todayHydration) / 1000).toFixed(1)}L.</p>
+            <p className="text-blue-400 text-xs">
+              Hidratação baixa hoje. Beba mais{' '}
+              {((data.hydrationGoal.dailyMl - todayHydration) / 1000).toFixed(1)}L.
+            </p>
           </div>
         )}
         {avgSleepDuration < 360 && data.sleepEntries.length >= 2 && (
           <div className="p-2.5 bg-purple-500/10 border border-purple-500/30 rounded-xl">
-            <p className="text-purple-400 text-xs">Sono abaixo de 6h em média. Isso compromete recovery e síntese proteica.</p>
+            <p className="text-purple-400 text-xs">
+              Sono abaixo de 6h em média. Isso compromete recovery e síntese proteica.
+            </p>
           </div>
         )}
         {lastSession && lastSession.avgHR > 100 && (
           <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded-xl">
-            <p className="text-red-400 text-xs">FC média acima de 100 bpm na última sessão. Considere recovery ativo.</p>
+            <p className="text-red-400 text-xs">
+              FC média acima de 100 bpm na última sessão. Considere recovery ativo.
+            </p>
           </div>
         )}
         {bioScore >= 80 && (
           <div className="p-2.5 bg-brand-neon/10 border border-brand-neon/30 rounded-xl flex items-center gap-2">
             <Activity size={14} className="text-brand-neon" />
-            <p className="text-brand-neon text-xs">Janela corporal favorável para treino de qualidade.</p>
+            <p className="text-brand-neon text-xs">
+              Janela corporal favorável para treino de qualidade.
+            </p>
           </div>
         )}
       </div>

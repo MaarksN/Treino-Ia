@@ -73,13 +73,24 @@ const thumbClass = (on: boolean) =>
 
 function Toggle({ on, onChange }: { on: boolean; onChange: (value: boolean) => void }) {
   return (
-    <button type="button" onClick={() => onChange(!on)} className={toggleClass(on)} aria-pressed={on}>
+    <button
+      type="button"
+      onClick={() => onChange(!on)}
+      className={toggleClass(on)}
+      aria-pressed={on}
+    >
       <span className={thumbClass(on)} />
     </button>
   );
 }
 
-export function SettingsPanel({ plans, history, streak, isPremium = false, onSettingsChange }: Props) {
+export function SettingsPanel({
+  plans,
+  history,
+  streak,
+  isPremium = false,
+  onSettingsChange,
+}: Props) {
   const [settings, setSettings] = useState<AppSettings>(loadSettings);
   const [tab, setTab] = useState<SettingsTab>('geral');
 
@@ -98,7 +109,12 @@ export function SettingsPanel({ plans, history, streak, isPremium = false, onSet
     { id: 'perfil', label: 'Perfil', icon: <User size={16} /> },
   ];
 
-  const SettingRow = ({ icon, label, description, children }: {
+  const SettingRow = ({
+    icon,
+    label,
+    description,
+    children,
+  }: {
     icon: React.ReactNode;
     label: string;
     description?: string;
@@ -121,13 +137,15 @@ export function SettingsPanel({ plans, history, streak, isPremium = false, onSet
       <h3 className="text-white font-bold text-lg mb-4">Configurações</h3>
 
       <div className="flex gap-1 bg-brand-dark rounded-xl p-1 mb-5 overflow-x-auto">
-        {tabs.map(item => (
+        {tabs.map((item) => (
           <button
             key={item.id}
             type="button"
             onClick={() => setTab(item.id)}
             className={`flex-1 flex items-center justify-center gap-1 py-2 px-2 rounded-lg text-xs font-semibold transition-all min-w-[46px] ${
-              tab === item.id ? 'bg-brand-surface text-white shadow' : 'text-brand-muted hover:text-white'
+              tab === item.id
+                ? 'bg-brand-surface text-white shadow'
+                : 'text-brand-muted hover:text-white'
             }`}
           >
             {item.icon}
@@ -138,16 +156,30 @@ export function SettingsPanel({ plans, history, streak, isPremium = false, onSet
 
       {tab === 'geral' && (
         <div>
-          <SettingRow icon={<Volume2 size={16} />} label="Guia por voz" description="Anuncia exercícios e timers">
-            <Toggle on={settings.voiceEnabled} onChange={value => update({ voiceEnabled: value })} />
+          <SettingRow
+            icon={<Volume2 size={16} />}
+            label="Guia por voz"
+            description="Anuncia exercícios e timers"
+          >
+            <Toggle
+              on={settings.voiceEnabled}
+              onChange={(value) => update({ voiceEnabled: value })}
+            />
           </SettingRow>
-          <SettingRow icon={<Vibrate size={16} />} label="Vibração háptica" description="Feedback tátil em ações">
-            <Toggle on={settings.hapticEnabled} onChange={value => update({ hapticEnabled: value })} />
+          <SettingRow
+            icon={<Vibrate size={16} />}
+            label="Vibração háptica"
+            description="Feedback tátil em ações"
+          >
+            <Toggle
+              on={settings.hapticEnabled}
+              onChange={(value) => update({ hapticEnabled: value })}
+            />
           </SettingRow>
           <SettingRow icon={<Scale size={16} />} label="Unidade de peso">
             <select
               value={settings.weightUnit}
-              onChange={event => update({ weightUnit: event.target.value as 'kg' | 'lb' })}
+              onChange={(event) => update({ weightUnit: event.target.value as 'kg' | 'lb' })}
               className="bg-brand-dark border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white outline-none"
             >
               <option value="kg">kg</option>
@@ -159,31 +191,55 @@ export function SettingsPanel({ plans, history, streak, isPremium = false, onSet
 
       {tab === 'treino' && (
         <div>
-          <SettingRow icon={<Timer size={16} />} label="Descanso padrão (seg)" description="Tempo inicial do timer">
+          <SettingRow
+            icon={<Timer size={16} />}
+            label="Descanso padrão (seg)"
+            description="Tempo inicial do timer"
+          >
             <select
               value={settings.defaultRestSeconds}
-              onChange={event => update({ defaultRestSeconds: Number(event.target.value) })}
+              onChange={(event) => update({ defaultRestSeconds: Number(event.target.value) })}
               className="bg-brand-dark border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white outline-none"
             >
-              {[30, 45, 60, 90, 120, 150, 180, 240, 300].map(value => (
-                <option key={value} value={value}>{value}s</option>
+              {[30, 45, 60, 90, 120, 150, 180, 240, 300].map((value) => (
+                <option key={value} value={value}>
+                  {value}s
+                </option>
               ))}
             </select>
           </SettingRow>
-          <SettingRow icon={<Timer size={16} />} label="Auto-iniciar timer" description="Dispara ao concluir série">
-            <Toggle on={settings.autoStartTimer} onChange={value => update({ autoStartTimer: value })} />
+          <SettingRow
+            icon={<Timer size={16} />}
+            label="Auto-iniciar timer"
+            description="Dispara ao concluir série"
+          >
+            <Toggle
+              on={settings.autoStartTimer}
+              onChange={(value) => update({ autoStartTimer: value })}
+            />
           </SettingRow>
-          <SettingRow icon={<Eye size={16} />} label="Mostrar RPE" description="Campo de esforço percebido">
-            <Toggle on={settings.showRPE} onChange={value => update({ showRPE: value })} />
+          <SettingRow
+            icon={<Eye size={16} />}
+            label="Mostrar RPE"
+            description="Campo de esforço percebido"
+          >
+            <Toggle on={settings.showRPE} onChange={(value) => update({ showRPE: value })} />
           </SettingRow>
-          <SettingRow icon={<Trophy size={16} />} label="Badge de PR" description="Destaque ao bater recorde">
-            <Toggle on={settings.showPRBadge} onChange={value => update({ showPRBadge: value })} />
+          <SettingRow
+            icon={<Trophy size={16} />}
+            label="Badge de PR"
+            description="Destaque ao bater recorde"
+          >
+            <Toggle
+              on={settings.showPRBadge}
+              onChange={(value) => update({ showPRBadge: value })}
+            />
           </SettingRow>
         </div>
       )}
 
       {tab === 'visual' && (
-        <ThemeSelector isPremium={isPremium} onThemeChange={themeId => update({ themeId })} />
+        <ThemeSelector isPremium={isPremium} onThemeChange={(themeId) => update({ themeId })} />
       )}
 
       {tab === 'dados' && (
@@ -195,17 +251,26 @@ export function SettingsPanel({ plans, history, streak, isPremium = false, onSet
           <SettingRow icon={<User size={16} />} label="Nome de usuário">
             <input
               value={settings.username}
-              onChange={event => update({ username: event.target.value })}
+              onChange={(event) => update({ username: event.target.value })}
               placeholder="@seuapelido"
               className="bg-brand-dark border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white outline-none w-36 text-right"
             />
           </SettingRow>
-          <SettingRow icon={<Globe size={16} />} label="Perfil público" description="Permite compartilhar conquistas">
-            <Toggle on={settings.publicProfile} onChange={value => update({ publicProfile: value })} />
+          <SettingRow
+            icon={<Globe size={16} />}
+            label="Perfil público"
+            description="Permite compartilhar conquistas"
+          >
+            <Toggle
+              on={settings.publicProfile}
+              onChange={(value) => update({ publicProfile: value })}
+            />
           </SettingRow>
 
           <div className="mt-5 p-4 bg-brand-dark rounded-xl border border-white/10">
-            <p className="text-xs text-brand-muted uppercase tracking-widest mb-3">Estatísticas da conta</p>
+            <p className="text-xs text-brand-muted uppercase tracking-widest mb-3">
+              Estatísticas da conta
+            </p>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <p className="text-brand-muted text-xs">Treinos</p>

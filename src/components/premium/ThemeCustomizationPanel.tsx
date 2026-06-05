@@ -34,15 +34,19 @@ export function ThemeCustomizationPanel() {
       className="rounded-[28px] border-2 border-brand-light/20 bg-brand-gray p-6"
       aria-labelledby="theme-customization-title"
     >
-      <h3 id="theme-customization-title" className="font-display text-3xl uppercase text-brand-light">
+      <h3
+        id="theme-customization-title"
+        className="font-display text-3xl uppercase text-brand-light"
+      >
         Temas premium
       </h3>
       <p className="mt-1 font-mono text-xs text-brand-muted">
-        Preview local de variações visuais. Tema atual: <span className="text-brand-neon">{currentTheme.name}</span>.
+        Preview local de variações visuais. Tema atual:{' '}
+        <span className="text-brand-neon">{currentTheme.name}</span>.
       </p>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        {options.map(option => {
+        {options.map((option) => {
           const isActive = selected === option.variant;
           return (
             <button
@@ -63,7 +67,9 @@ export function ThemeCustomizationPanel() {
                     <span className="ml-2 text-[10px] text-brand-magenta">PREVIEW</span>
                   )}
                 </span>
-                <span className="block font-mono text-[10px] text-brand-muted">{option.description}</span>
+                <span className="block font-mono text-[10px] text-brand-muted">
+                  {option.description}
+                </span>
               </div>
               {isActive && (
                 <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-brand-neon text-xs font-bold text-brand-dark">

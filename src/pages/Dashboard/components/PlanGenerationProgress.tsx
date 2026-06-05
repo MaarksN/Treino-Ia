@@ -1,5 +1,9 @@
 import { CheckCircle2, Loader2 } from 'lucide-react';
-import { type TrainingPlan, type UserProfile, type WorkoutSession } from '../../../services/database';
+import {
+  type TrainingPlan,
+  type UserProfile,
+  type WorkoutSession,
+} from '../../../services/database';
 import {
   buildPlanGenerationProgress,
   getPlanGenerationProgressPercent,
@@ -22,8 +26,12 @@ export function PlanGenerationProgress({ profile, history, plan }: PlanGeneratio
     >
       <div className="mb-5 flex items-center justify-between gap-4">
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.3em] text-brand-neon">Geracao do plano</p>
-          <h2 className="font-display text-4xl uppercase text-brand-light">Recalculando com dados reais</h2>
+          <p className="font-mono text-xs uppercase tracking-[0.3em] text-brand-neon">
+            Geracao do plano
+          </p>
+          <h2 className="font-display text-4xl uppercase text-brand-light">
+            Recalculando com dados reais
+          </h2>
         </div>
         <Loader2 className="h-7 w-7 animate-spin text-brand-neon" />
       </div>
@@ -36,11 +44,16 @@ export function PlanGenerationProgress({ profile, history, plan }: PlanGeneratio
       </div>
 
       <div className="grid gap-3 md:grid-cols-4">
-        {steps.map(step => (
-          <article key={step.id} className="rounded-[20px] border border-brand-light/10 bg-brand-dark/70 p-4">
+        {steps.map((step) => (
+          <article
+            key={step.id}
+            className="rounded-[20px] border border-brand-light/10 bg-brand-dark/70 p-4"
+          >
             <div className="mb-3 flex items-center justify-between gap-3">
               <CheckCircle2 className="h-5 w-5 text-brand-neon" />
-              <span className="font-mono text-[10px] uppercase tracking-widest text-brand-neon">{step.metric}</span>
+              <span className="font-mono text-[10px] uppercase tracking-widest text-brand-neon">
+                {step.metric}
+              </span>
             </div>
             <h3 className="font-display text-2xl uppercase text-brand-light">{step.label}</h3>
             <p className="mt-2 font-mono text-xs leading-5 text-brand-light/70">{step.detail}</p>

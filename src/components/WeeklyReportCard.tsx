@@ -28,7 +28,9 @@ export function WeeklyReportCard({ plans, workoutHistory = [] }: Props) {
       <div className="flex items-center justify-between gap-4 mb-4">
         <div className="flex items-center gap-2">
           <FileText className="text-brand-neon" size={18} />
-          <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">Relatório Semanal</h3>
+          <h3 className="font-display text-2xl uppercase tracking-widest text-brand-light">
+            Relatório Semanal
+          </h3>
         </div>
         <button
           type="button"
@@ -41,7 +43,9 @@ export function WeeklyReportCard({ plans, workoutHistory = [] }: Props) {
       </div>
 
       <div className="text-sm text-brand-light/80 whitespace-pre-wrap font-mono leading-relaxed max-h-80 overflow-y-auto">
-        {loading ? 'Gerando relatório...' : text || 'Clique em gerar para receber a análise da semana.'}
+        {loading
+          ? 'Gerando relatório...'
+          : text || 'Clique em gerar para receber a análise da semana.'}
       </div>
     </div>
   );

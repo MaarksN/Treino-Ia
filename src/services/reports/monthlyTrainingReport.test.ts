@@ -7,9 +7,51 @@ import {
 import { type WorkoutSession } from '../database';
 
 const sessions: WorkoutSession[] = [
-  { id: '1', completedAt: new Date('2026-05-10T12:00:00Z').getTime(), planId: 'p', dayId: 'd', dayName: 'Seg', focus: 'A', durationMinutes: 50, totalVolume: 1000, totalExercises: 5, completedExercises: 5, exercises: [], feedback: '', nextRecommendation: '' },
-  { id: '2', completedAt: new Date('2026-05-11T12:00:00Z').getTime(), planId: 'p', dayId: 'd', dayName: 'Ter', focus: 'B', durationMinutes: 40, totalVolume: 800, totalExercises: 5, completedExercises: 4, exercises: [], feedback: '', nextRecommendation: '' },
-  { id: '3', completedAt: new Date('2026-04-11T12:00:00Z').getTime(), planId: 'p', dayId: 'd', dayName: 'Qua', focus: 'A', durationMinutes: 30, totalVolume: 500, totalExercises: 4, completedExercises: 2, exercises: [], feedback: '', nextRecommendation: '' },
+  {
+    id: '1',
+    completedAt: new Date('2026-05-10T12:00:00Z').getTime(),
+    planId: 'p',
+    dayId: 'd',
+    dayName: 'Seg',
+    focus: 'A',
+    durationMinutes: 50,
+    totalVolume: 1000,
+    totalExercises: 5,
+    completedExercises: 5,
+    exercises: [],
+    feedback: '',
+    nextRecommendation: '',
+  },
+  {
+    id: '2',
+    completedAt: new Date('2026-05-11T12:00:00Z').getTime(),
+    planId: 'p',
+    dayId: 'd',
+    dayName: 'Ter',
+    focus: 'B',
+    durationMinutes: 40,
+    totalVolume: 800,
+    totalExercises: 5,
+    completedExercises: 4,
+    exercises: [],
+    feedback: '',
+    nextRecommendation: '',
+  },
+  {
+    id: '3',
+    completedAt: new Date('2026-04-11T12:00:00Z').getTime(),
+    planId: 'p',
+    dayId: 'd',
+    dayName: 'Qua',
+    focus: 'A',
+    durationMinutes: 30,
+    totalVolume: 500,
+    totalExercises: 4,
+    completedExercises: 2,
+    exercises: [],
+    feedback: '',
+    nextRecommendation: '',
+  },
 ];
 
 describe('monthly training report', () => {
@@ -22,8 +64,12 @@ describe('monthly training report', () => {
   it('filters sessions by month and year', () => {
     const reference = new Date('2026-05-20T12:00:00Z');
 
-    expect(filterWorkoutSessionsByPeriod(sessions, 'month', reference).map(session => session.id)).toEqual(['1', '2']);
-    expect(filterWorkoutSessionsByPeriod(sessions, 'year', reference).map(session => session.id)).toEqual(['1', '2', '3']);
+    expect(
+      filterWorkoutSessionsByPeriod(sessions, 'month', reference).map((session) => session.id),
+    ).toEqual(['1', '2']);
+    expect(
+      filterWorkoutSessionsByPeriod(sessions, 'year', reference).map((session) => session.id),
+    ).toEqual(['1', '2', '3']);
   });
 
   it('builds monthly and annual product reports', () => {

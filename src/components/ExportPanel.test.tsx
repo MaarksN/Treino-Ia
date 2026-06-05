@@ -40,9 +40,7 @@ const plans: WorkoutPlan[] = [
         id: 'day-1',
         dayName: 'Upper A',
         focus: 'Peito e costas',
-        exercises: [
-          { id: 'ex-1', name: 'Supino Reto', sets: 3, reps: '8', rest: '90s' },
-        ],
+        exercises: [{ id: 'ex-1', name: 'Supino Reto', sets: 3, reps: '8', rest: '90s' }],
       },
     ],
   },
@@ -72,12 +70,7 @@ const streak: StreakData = {
 
 function renderExportPanel(overrides: Partial<Parameters<typeof ExportPanel>[0]> = {}) {
   return renderWithProviders(
-    <ExportPanel
-      plans={plans}
-      history={history}
-      streak={streak}
-      {...overrides}
-    />,
+    <ExportPanel plans={plans} history={history} streak={streak} {...overrides} />,
   );
 }
 
@@ -88,7 +81,9 @@ describe('ExportPanel', () => {
     exportMocks.buildAppBackup.mockReturnValue({ version: 1, plans, history, streak });
     exportMocks.generateHistoryCSV.mockReturnValue('date,totalVolume\n2026-05-24,1200');
     exportMocks.generateJSONBackup.mockReturnValue('{"version":1}');
-    exportMocks.generateWorkoutMarkdown.mockReturnValue('# Upper Progressivo\n\n| Exercicio | Series |\n| --- | --- |\n| Supino | **3x8** |');
+    exportMocks.generateWorkoutMarkdown.mockReturnValue(
+      '# Upper Progressivo\n\n| Exercicio | Series |\n| --- | --- |\n| Supino | **3x8** |',
+    );
     exportMocks.importJSONBackup.mockReturnValue({ version: 1, restored: true });
   });
 
@@ -135,7 +130,12 @@ describe('ExportPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: /baixar backup/i }));
 
     expect(exportMocks.buildAppBackup).toHaveBeenCalledWith(plans, history, streak);
-    expect(exportMocks.generateJSONBackup).toHaveBeenCalledWith({ version: 1, plans, history, streak });
+    expect(exportMocks.generateJSONBackup).toHaveBeenCalledWith({
+      version: 1,
+      plans,
+      history,
+      streak,
+    });
     expect(exportMocks.downloadFile).toHaveBeenCalledWith(
       '{"version":1}',
       'treino-app-backup-2026-05-25.json',

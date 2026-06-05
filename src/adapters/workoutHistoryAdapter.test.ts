@@ -33,16 +33,16 @@ describe('workoutHistoryAdapter', () => {
               { setNumber: 1, weight: 80, reps: 10, rpe: 7 },
               { setNumber: 2, weight: 80, reps: 9, rpe: 8 },
               { setNumber: 3, weight: 80, reps: 8, rpe: 9 },
-            ]
-          }
-        ]
-      }
+            ],
+          },
+        ],
+      },
     ];
 
     const result = mapWorkoutHistoryToWorkoutSessions(input);
     expect(result).toHaveLength(1);
     const session = result[0];
-    
+
     expect(session.id).toBe('session-1');
     expect(session.completedAt).toBe(1700000000000);
     expect(session.exercises).toHaveLength(1);
@@ -62,13 +62,8 @@ describe('workoutHistoryAdapter', () => {
     const input = [
       {
         id: 'session-invalid-ex',
-        exercises: [
-          null,
-          undefined,
-          123,
-          { id: 'ex-2', name: 'Valid Ex' }
-        ]
-      }
+        exercises: [null, undefined, 123, { id: 'ex-2', name: 'Valid Ex' }],
+      },
     ];
 
     const result = mapWorkoutHistoryToWorkoutSessions(input);
@@ -83,15 +78,15 @@ describe('workoutHistoryAdapter', () => {
         id: 's1',
         exercises: [
           { exerciseId: 'ex-3', exerciseName: 'Leg Press' },
-          { id: 'ex-4', name: 'Hack Squat' }
-        ]
-      }
+          { id: 'ex-4', name: 'Hack Squat' },
+        ],
+      },
     ];
 
     const result = mapWorkoutHistoryToWorkoutSessions(input);
     expect(result[0].exercises[0].exerciseId).toBe('ex-3');
     expect(result[0].exercises[0].name).toBe('Leg Press');
-    
+
     expect(result[0].exercises[1].exerciseId).toBe('ex-4');
     expect(result[0].exercises[1].name).toBe('Hack Squat');
   });
@@ -101,9 +96,9 @@ describe('workoutHistoryAdapter', () => {
       {
         id: 's2',
         exercises: [
-          { id: 'ex-5' } // No name, no sets, no weight
-        ]
-      }
+          { id: 'ex-5' }, // No name, no sets, no weight
+        ],
+      },
     ];
 
     const result = mapWorkoutHistoryToWorkoutSessions(input);
@@ -121,12 +116,10 @@ describe('workoutHistoryAdapter', () => {
         exercises: [
           {
             id: 'ex-6',
-            sets: [
-              { weight: 50, reps: 12, rpe: 6 }
-            ]
-          }
-        ]
-      }
+            sets: [{ weight: 50, reps: 12, rpe: 6 }],
+          },
+        ],
+      },
     ];
 
     const result = mapWorkoutHistoryToWorkoutSessions(input);
@@ -146,11 +139,11 @@ describe('workoutHistoryAdapter', () => {
             actualWeight: 100,
             rpe: 8,
             setLogs: [
-              { setNumber: 1 } // Missing weight and rpe in log
-            ]
-          }
-        ]
-      }
+              { setNumber: 1 }, // Missing weight and rpe in log
+            ],
+          },
+        ],
+      },
     ];
 
     const result = mapWorkoutHistoryToWorkoutSessions(input);

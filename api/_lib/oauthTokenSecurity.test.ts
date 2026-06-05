@@ -8,7 +8,11 @@ import {
 
 describe('oauthTokenSecurity', () => {
   it('redacts access_token and refresh_token payloads', () => {
-    const redacted = redactOAuthTokenPayload({ access_token: 'a', refresh_token: 'b', nested: { token: 'c' } }) as any;
+    const redacted = redactOAuthTokenPayload({
+      access_token: 'a',
+      refresh_token: 'b',
+      nested: { token: 'c' },
+    }) as any;
     expect(redacted.access_token).toBe('[REDACTED]');
     expect(redacted.refresh_token).toBe('[REDACTED]');
     expect(redacted.nested.token).toBe('[REDACTED]');

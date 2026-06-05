@@ -91,9 +91,7 @@ describe('OnboardingTour', () => {
   });
 
   it('renders correct number of step indicators', () => {
-    const { container } = render(
-      <OnboardingTour onComplete={onComplete} onSkip={onSkip} />,
-    );
+    const { container } = render(<OnboardingTour onComplete={onComplete} onSkip={onSkip} />);
 
     // 7 step dots
     const stepDots = container.querySelectorAll('.rounded-full.transition-all.duration-300');

@@ -1,5 +1,8 @@
 import { memo, useMemo } from 'react';
-import { getCurrentWeeklyChallenge, calculateLocalChallengeProgress } from '../../services/socialContent/weeklyChallengeService';
+import {
+  getCurrentWeeklyChallenge,
+  calculateLocalChallengeProgress,
+} from '../../services/socialContent/weeklyChallengeService';
 import { WorkoutSession } from '../../../../services/database';
 import { Target, Info } from 'lucide-react';
 
@@ -7,9 +10,14 @@ interface WeeklyChallengePanelProps {
   history: WorkoutSession[];
 }
 
-export const WeeklyChallengePanel = memo(function WeeklyChallengePanel({ history }: WeeklyChallengePanelProps) {
+export const WeeklyChallengePanel = memo(function WeeklyChallengePanel({
+  history,
+}: WeeklyChallengePanelProps) {
   const challenge = useMemo(() => getCurrentWeeklyChallenge(), []);
-  const progress = useMemo(() => calculateLocalChallengeProgress(challenge, history), [challenge, history]);
+  const progress = useMemo(
+    () => calculateLocalChallengeProgress(challenge, history),
+    [challenge, history],
+  );
   const progressPercent = Math.min(Math.round((progress / challenge.target) * 100), 100);
 
   return (
@@ -30,7 +38,9 @@ export const WeeklyChallengePanel = memo(function WeeklyChallengePanel({ history
         <div className="mt-4">
           <div className="mb-2 flex justify-between font-mono text-xs text-brand-light/80">
             <span>Progresso Pessoal</span>
-            <span>{Math.round(progress)} / {challenge.target} {challenge.unit}</span>
+            <span>
+              {Math.round(progress)} / {challenge.target} {challenge.unit}
+            </span>
           </div>
           <div className="h-4 w-full rounded-full bg-brand-dark overflow-hidden">
             <div

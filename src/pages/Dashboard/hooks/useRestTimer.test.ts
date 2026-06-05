@@ -49,11 +49,14 @@ describe('useRestTimer', () => {
   });
 
   it('restores a valid persisted timer on mount', () => {
-    localStorage.setItem(REST_TIMER_STORAGE_KEY, JSON.stringify({
-      duration: 30,
-      startedAt: Date.parse('2026-05-25T11:59:45.000Z'),
-      endAt: Date.parse('2026-05-25T12:00:15.000Z'),
-    }));
+    localStorage.setItem(
+      REST_TIMER_STORAGE_KEY,
+      JSON.stringify({
+        duration: 30,
+        startedAt: Date.parse('2026-05-25T11:59:45.000Z'),
+        endAt: Date.parse('2026-05-25T12:00:15.000Z'),
+      }),
+    );
 
     const { result } = renderHook(() => useRestTimer(90));
 

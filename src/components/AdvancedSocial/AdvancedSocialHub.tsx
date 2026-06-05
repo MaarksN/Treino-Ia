@@ -6,7 +6,7 @@ import {
   calculateLocalSkillTree,
   applySocialBlurPolicy,
   RivalMatch,
-  SkillTreeAttribute
+  SkillTreeAttribute,
 } from '../../services/advancedSocial/advancedSocialService';
 
 interface AdvancedSocialHubProps {
@@ -20,13 +20,16 @@ export function AdvancedSocialHub({ profile }: AdvancedSocialHubProps) {
   const skillTree = calculateLocalSkillTree({
     strength: profile.timePerWorkout * 1.5,
     endurance: profile.daysPerWeek * 10,
-    mobility: 20
+    mobility: 20,
   });
 
   const blurredContent = applySocialBlurPolicy('post-123', true, 16);
 
   const handleFindRival = () => {
-    const newRival = findFairRivalPlaceholder(profile.id, profile.level === 'iniciante' ? 1 : profile.level === 'intermediario' ? 5 : 10);
+    const newRival = findFairRivalPlaceholder(
+      profile.id,
+      profile.level === 'iniciante' ? 1 : profile.level === 'intermediario' ? 5 : 10,
+    );
     setRival(newRival);
     setShowRival(true);
   };
@@ -60,13 +63,20 @@ export function AdvancedSocialHub({ profile }: AdvancedSocialHubProps) {
             Rivais Justos
           </h3>
           {!showRival ? (
-            <button onClick={handleFindRival} className="rounded border-2 border-brand-magenta px-4 py-2 font-mono text-xs uppercase text-brand-magenta hover:bg-brand-magenta hover:text-brand-dark">
+            <button
+              onClick={handleFindRival}
+              className="rounded border-2 border-brand-magenta px-4 py-2 font-mono text-xs uppercase text-brand-magenta hover:bg-brand-magenta hover:text-brand-dark"
+            >
               Encontrar Rival
             </button>
           ) : (
             <div className="text-sm text-brand-light">
-              <p>Seu rival: <strong className="text-brand-magenta">{rival?.rivalName}</strong></p>
-              <p className="text-brand-muted">Nível: {rival?.rivalLevel} (Score: {(rival?.matchingScore ?? 0) * 100}%)</p>
+              <p>
+                Seu rival: <strong className="text-brand-magenta">{rival?.rivalName}</strong>
+              </p>
+              <p className="text-brand-muted">
+                Nível: {rival?.rivalLevel} (Score: {(rival?.matchingScore ?? 0) * 100}%)
+              </p>
             </div>
           )}
         </div>
@@ -78,8 +88,11 @@ export function AdvancedSocialHub({ profile }: AdvancedSocialHubProps) {
             Skill Tree
           </h3>
           <ul className="space-y-2 text-sm">
-            {skillTree.map(skill => (
-              <li key={skill.id} className="flex justify-between border-b border-brand-light/5 pb-1">
+            {skillTree.map((skill) => (
+              <li
+                key={skill.id}
+                className="flex justify-between border-b border-brand-light/5 pb-1"
+              >
                 <span className="text-brand-light/80">{skill.name}</span>
                 <span className="font-mono text-brand-neon">Lvl {skill.currentLevel}</span>
               </li>
@@ -94,14 +107,18 @@ export function AdvancedSocialHub({ profile }: AdvancedSocialHubProps) {
             Conteúdo / Replays
           </h3>
           <div className="space-y-3">
-             <div className="rounded border border-brand-light/10 bg-brand-light/5 p-3 text-center">
-                <span className="text-xs text-brand-muted">Replay Holográfico Indisponível (Mocked)</span>
-             </div>
-             {blurredContent.isBlurred && (
-               <div className="rounded border border-brand-magenta/30 bg-brand-magenta/10 p-3 text-center">
-                 <span className="text-xs text-brand-magenta">Conteúdo sensível desfocado. {blurredContent.reason}</span>
-               </div>
-             )}
+            <div className="rounded border border-brand-light/10 bg-brand-light/5 p-3 text-center">
+              <span className="text-xs text-brand-muted">
+                Replay Holográfico Indisponível (Mocked)
+              </span>
+            </div>
+            {blurredContent.isBlurred && (
+              <div className="rounded border border-brand-magenta/30 bg-brand-magenta/10 p-3 text-center">
+                <span className="text-xs text-brand-magenta">
+                  Conteúdo sensível desfocado. {blurredContent.reason}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>

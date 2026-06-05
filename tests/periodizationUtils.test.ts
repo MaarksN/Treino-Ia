@@ -18,13 +18,40 @@ describe('periodizationUtils', () => {
 
   it('soma apenas séries efetivas de exercícios concluídos', () => {
     const rows = calculateWeeklyMuscleVolumes([
-      { exerciseName: 'Supino Reto', muscle: 'Peito', sets: 4, currentLoad: 80, targetReps: 10, actualReps: 10, rpe: 8, completed: true },
-      { exerciseName: 'Crucifixo', muscle: 'Peito', sets: 4, currentLoad: 18, targetReps: 12, actualReps: 12, rpe: 5, completed: true },
-      { exerciseName: 'Puxada Frontal', muscle: 'Costas', sets: 3, currentLoad: 60, targetReps: 10, actualReps: 10, rpe: 8, completed: false },
+      {
+        exerciseName: 'Supino Reto',
+        muscle: 'Peito',
+        sets: 4,
+        currentLoad: 80,
+        targetReps: 10,
+        actualReps: 10,
+        rpe: 8,
+        completed: true,
+      },
+      {
+        exerciseName: 'Crucifixo',
+        muscle: 'Peito',
+        sets: 4,
+        currentLoad: 18,
+        targetReps: 12,
+        actualReps: 12,
+        rpe: 5,
+        completed: true,
+      },
+      {
+        exerciseName: 'Puxada Frontal',
+        muscle: 'Costas',
+        sets: 3,
+        currentLoad: 60,
+        targetReps: 10,
+        actualReps: 10,
+        rpe: 8,
+        completed: false,
+      },
     ]);
 
-    expect(rows.find(row => row.muscle === 'Peito')?.currentVolume).toBe(6);
-    expect(rows.find(row => row.muscle === 'Costas')?.currentVolume).toBe(0);
+    expect(rows.find((row) => row.muscle === 'Peito')?.currentVolume).toBe(6);
+    expect(rows.find((row) => row.muscle === 'Costas')?.currentVolume).toBe(0);
   });
 
   it('sugere progressão, regressão ou troca com base em performance e fadiga', () => {

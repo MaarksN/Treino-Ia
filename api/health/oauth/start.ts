@@ -18,14 +18,18 @@ function getBaseUrl(request: Request): string {
   return new URL(request.url).origin;
 }
 
-
 function getProviderClientId(provider: OAuthProvider): string {
   if (provider === 'google_fit') return process.env.GOOGLE_FIT_CLIENT_ID || '';
   if (provider === 'fitbit') return process.env.FITBIT_CLIENT_ID || '';
   return process.env.STRAVA_CLIENT_ID || '';
 }
 
-function buildAuthUrl(provider: OAuthProvider, clientId: string, redirectUri: string, state: string): string {
+function buildAuthUrl(
+  provider: OAuthProvider,
+  clientId: string,
+  redirectUri: string,
+  state: string,
+): string {
   if (provider === 'google_fit') {
     const params = new URLSearchParams({
       client_id: clientId,
@@ -101,12 +105,16 @@ export default async function handler(request: Request) {
       throw new Error(`Failed to create OAuth state: ${error.message}`);
     }
 
-    return json({
-      provider,
-      dataMode: 'oauth',
-      authUrl: buildAuthUrl(provider, clientId, redirectUri, state),
-      expiresInSeconds: 600,
-    }, 200, request);
+    return json(
+      {
+        provider,
+        dataMode: 'oauth',
+        authUrl: buildAuthUrl(provider, clientId, redirectUri, state),
+        expiresInSeconds: 600,
+      },
+      200,
+      request,
+    );
   } catch (error) {
     return handleApiError(error, request);
   }

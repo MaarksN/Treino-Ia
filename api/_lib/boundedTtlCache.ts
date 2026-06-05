@@ -21,8 +21,9 @@ export function pruneBoundedTtlCache<T extends ExpiringCacheEntry>(
 
   if (cache.size <= options.maxEntries) return;
 
-  const entriesByExpiry = [...cache.entries()]
-    .sort(([, left], [, right]) => left.expiresAt - right.expiresAt);
+  const entriesByExpiry = [...cache.entries()].sort(
+    ([, left], [, right]) => left.expiresAt - right.expiresAt,
+  );
 
   for (const [key] of entriesByExpiry) {
     if (cache.size <= options.maxEntries) return;

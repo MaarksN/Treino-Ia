@@ -67,11 +67,13 @@ describe('buildCompletedDashboardWorkout', () => {
     expect(result.completedExercises).toBe(1);
     expect(result.totalExercises).toBe(1);
     expect(result.totalVolume).toBe(1300);
-    expect(result.completedSession).toEqual(expect.objectContaining({
-      id: 'session-1',
-      feedback: 'Treino bom',
-      nextRecommendation: result.adjustedPlan.nextRecommendation,
-    }));
+    expect(result.completedSession).toEqual(
+      expect.objectContaining({
+        id: 'session-1',
+        feedback: 'Treino bom',
+        nextRecommendation: result.adjustedPlan.nextRecommendation,
+      }),
+    );
     expect(result.finalHistory).toEqual([result.completedSession]);
   });
 

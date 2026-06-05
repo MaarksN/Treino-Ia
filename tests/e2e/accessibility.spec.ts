@@ -12,10 +12,10 @@ test.describe('Accessibility smoke', () => {
     await page.goto('/');
     await expect(page.locator('#root')).toBeVisible({ timeout: 10_000 });
 
-    const results = await new AxeBuilder({ page })
-      .disableRules(['color-contrast'])
-      .analyze();
-    const criticalViolations = results.violations.filter(violation => violation.impact === 'critical');
+    const results = await new AxeBuilder({ page }).disableRules(['color-contrast']).analyze();
+    const criticalViolations = results.violations.filter(
+      (violation) => violation.impact === 'critical',
+    );
 
     expect(criticalViolations).toEqual([]);
   });

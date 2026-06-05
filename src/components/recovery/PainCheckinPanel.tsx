@@ -32,7 +32,7 @@ export function PainCheckinPanel() {
   const [notes, setNotes] = useState(existing.notes);
   const [saved, setSaved] = useState(false);
 
-  const hasAnyPain = Object.values(pain).some(v => v > 0);
+  const hasAnyPain = Object.values(pain).some((v) => v > 0);
   const maxPain = Math.max(...Object.values(pain));
 
   const handleSave = () => {
@@ -43,7 +43,7 @@ export function PainCheckinPanel() {
   };
 
   const handlePainChange = (region: PainRegion, value: number) => {
-    setPain(prev => ({ ...prev, [region]: clampPainLevel(value) }));
+    setPain((prev) => ({ ...prev, [region]: clampPainLevel(value) }));
     setSaved(false);
   };
 
@@ -60,7 +60,7 @@ export function PainCheckinPanel() {
       </p>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        {PAIN_REGIONS.map(region => (
+        {PAIN_REGIONS.map((region) => (
           <label
             key={region}
             className="flex items-center justify-between gap-2 rounded-xl border border-brand-light/10 bg-brand-dark/50 px-3 py-2"
@@ -72,11 +72,13 @@ export function PainCheckinPanel() {
                 min={0}
                 max={10}
                 value={pain[region]}
-                onChange={e => handlePainChange(region, Number(e.target.value))}
+                onChange={(e) => handlePainChange(region, Number(e.target.value))}
                 className="w-20 accent-brand-neon"
                 aria-label={`Dor ${region}: ${pain[region]} de 10`}
               />
-              <span className={`w-6 text-center font-mono text-sm font-bold ${getPainColor(pain[region])}`}>
+              <span
+                className={`w-6 text-center font-mono text-sm font-bold ${getPainColor(pain[region])}`}
+              >
                 {pain[region]}
               </span>
             </div>
@@ -93,7 +95,10 @@ export function PainCheckinPanel() {
           rows={2}
           maxLength={240}
           value={notes}
-          onChange={e => { setNotes(e.target.value); setSaved(false); }}
+          onChange={(e) => {
+            setNotes(e.target.value);
+            setSaved(false);
+          }}
           placeholder="Ex: dor após agachamento pesado ontem..."
           className="mt-1 w-full resize-none rounded-xl border border-brand-light/10 bg-brand-dark px-3 py-2 font-mono text-sm text-brand-light outline-none focus:border-brand-neon"
         />
@@ -102,7 +107,8 @@ export function PainCheckinPanel() {
       {hasAnyPain && maxPain >= 6 && (
         <div className="mt-3 rounded-xl border border-brand-magenta/30 bg-brand-magenta/10 p-3">
           <p className="font-mono text-xs text-brand-magenta">
-            ⚠️ Dor elevada detectada ({maxPain}/10). Considere reduzir volume ou consultar um profissional de saúde.
+            ⚠️ Dor elevada detectada ({maxPain}/10). Considere reduzir volume ou consultar um
+            profissional de saúde.
           </p>
         </div>
       )}
@@ -129,8 +135,8 @@ export function PainCheckinPanel() {
       )}
 
       <InlineNotice type="info" title="Aviso importante">
-        Este check-in é uma ferramenta de automonitoramento. Não constitui diagnóstico médico.
-        Se a dor persistir ou for intensa, procure um profissional de saúde.
+        Este check-in é uma ferramenta de automonitoramento. Não constitui diagnóstico médico. Se a
+        dor persistir ou for intensa, procure um profissional de saúde.
       </InlineNotice>
     </article>
   );

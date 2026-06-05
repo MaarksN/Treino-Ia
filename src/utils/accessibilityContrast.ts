@@ -67,9 +67,13 @@ export const criticalContrastSurfaces: Record<
 export function getContrastRatio(hexA: string, hexB: string): number {
   const parse = (hex: string) => {
     const normalized = hex.replace('#', '');
-    const value = normalized.length === 3
-      ? normalized.split('').map(char => char + char).join('')
-      : normalized;
+    const value =
+      normalized.length === 3
+        ? normalized
+            .split('')
+            .map((char) => char + char)
+            .join('')
+        : normalized;
     const int = Number.parseInt(value, 16);
     return [(int >> 16) & 255, (int >> 8) & 255, int & 255];
   };

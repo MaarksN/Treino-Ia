@@ -43,7 +43,14 @@ const LEGACY_KEYS = {
   sleepEntries: '@TreinoApp:sleep',
 };
 
-const MEAL_TYPES: MealEntry['mealType'][] = ['Café da manhã', 'Almoço', 'Jantar', 'Lanche', 'Pré-treino', 'Pós-treino'];
+const MEAL_TYPES: MealEntry['mealType'][] = [
+  'Café da manhã',
+  'Almoço',
+  'Jantar',
+  'Lanche',
+  'Pré-treino',
+  'Pós-treino',
+];
 const HYDRATION_TYPES: HydrationEntry['type'][] = ['água', 'isotônico', 'whey', 'café', 'outro'];
 const SEVERITIES: InjuryRecord['severity'][] = ['leve', 'moderada', 'grave'];
 
@@ -74,7 +81,7 @@ function readJSON<T>(key: string, fallback: T): T {
 
   try {
     const raw = window.localStorage.getItem(key);
-    return raw ? JSON.parse(raw) as T : fallback;
+    return raw ? (JSON.parse(raw) as T) : fallback;
   } catch {
     return fallback;
   }
@@ -176,10 +183,12 @@ function isUuid(value: string): boolean {
 }
 
 function normalizeSorenessMap(input: Record<string, number>): Record<string, number> {
-  const entries = Object.entries(input || {}).slice(0, 20).map(([region, value]) => [
-    requiredText(region, 'Região', 80),
-    boundedInteger(value, `Dor em ${region}`, 0, 10),
-  ]);
+  const entries = Object.entries(input || {})
+    .slice(0, 20)
+    .map(([region, value]) => [
+      requiredText(region, 'Região', 80),
+      boundedInteger(value, `Dor em ${region}`, 0, 10),
+    ]);
   return Object.fromEntries(entries);
 }
 
@@ -206,7 +215,9 @@ function mapDailyCheckin(row: Record<string, unknown>): DailyCheckin {
     sleepHours: Number(row.sleep_hours),
     sleepQuality: Number(row.sleep_quality),
     stressLevel: Number(row.stress_level),
-    sorenessMap: (row.soreness_map && typeof row.soreness_map === 'object' ? row.soreness_map : {}) as Record<string, number>,
+    sorenessMap: (row.soreness_map && typeof row.soreness_map === 'object'
+      ? row.soreness_map
+      : {}) as Record<string, number>,
     energyLevel: Number(row.energy_level),
     hydrationGlasses: Number(row.hydration_glasses),
     sleepGoalHours: Number(row.sleep_goal_hours),
@@ -230,7 +241,7 @@ export async function loadDailyCheckins(): Promise<HealthResult<DailyCheckin[]>>
     .order('date', { ascending: true });
 
   assertNoError(error, 'Falha ao carregar check-ins.');
-  return supabaseResult((data ?? []).map(row => mapDailyCheckin(row as Record<string, unknown>)));
+  return supabaseResult((data ?? []).map((row) => mapDailyCheckin(row as Record<string, unknown>)));
 }
 
 export async function saveDailyCheckin(input: DailyCheckin): Promise<HealthResult<DailyCheckin>> {
@@ -239,10 +250,11 @@ export async function saveDailyCheckin(input: DailyCheckin): Promise<HealthResul
 
   if (!userId) {
     const current = readDevJSON<DailyCheckin[]>(DEV_KEYS.checkins, [], LEGACY_KEYS.checkins);
-    const index = current.findIndex(item => item.date === checkin.date);
-    const next = index >= 0
-      ? current.map(item => item.date === checkin.date ? checkin : item)
-      : [...current, checkin];
+    const index = current.findIndex((item) => item.date === checkin.date);
+    const next =
+      index >= 0
+        ? current.map((item) => (item.date === checkin.date ? checkin : item))
+        : [...current, checkin];
     writeJSON(DEV_KEYS.checkins, next.slice(-180));
     return mockResult(checkin);
   }
@@ -276,19 +288,26 @@ export async function saveDailyCheckin(input: DailyCheckin): Promise<HealthResul
 
 export function getTodayCheckinFromList(checkins: DailyCheckin[]): DailyCheckin | null {
   const today = new Date().toISOString().slice(0, 10);
-  return checkins.find(checkin => checkin.date === today) ?? null;
+  return checkins.find((checkin) => checkin.date === today) ?? null;
 }
 
 function validateInjury(input: Partial<InjuryRecord>): InjuryRecord {
-  const severity = SEVERITIES.includes(input.severity as InjuryRecord['severity']) ? input.severity as InjuryRecord['severity'] : 'leve';
+  const severity = SEVERITIES.includes(input.severity as InjuryRecord['severity'])
+    ? (input.severity as InjuryRecord['severity'])
+    : 'leve';
   return {
     id: normalizeId(input.id),
     region: requiredText(input.region, 'Região', 80),
     description: requiredText(input.description, 'Descrição', 500),
     severity,
-    startDate: normalizeDate(input.startDate || new Date().toISOString().slice(0, 10), 'Data inicial'),
+    startDate: normalizeDate(
+      input.startDate || new Date().toISOString().slice(0, 10),
+      'Data inicial',
+    ),
     resolved: Boolean(input.resolved),
-    resolvedDate: input.resolvedDate ? normalizeDate(input.resolvedDate, 'Data de resolução') : undefined,
+    resolvedDate: input.resolvedDate
+      ? normalizeDate(input.resolvedDate, 'Data de resolução')
+      : undefined,
     notes: optionalText(input.notes, 1000),
   };
 }
@@ -308,7 +327,10 @@ function mapInjury(row: Record<string, unknown>): InjuryRecord {
 
 export async function loadInjuryRecords(): Promise<HealthResult<InjuryRecord[]>> {
   const userId = await getAuthUserId();
-  if (!userId) return mockResult(readDevJSON<InjuryRecord[]>(DEV_KEYS.injuries, [], LEGACY_KEYS.injuries).map(validateInjury));
+  if (!userId)
+    return mockResult(
+      readDevJSON<InjuryRecord[]>(DEV_KEYS.injuries, [], LEGACY_KEYS.injuries).map(validateInjury),
+    );
 
   const { data, error } = await supabase
     .from('health_injury_records')
@@ -316,15 +338,20 @@ export async function loadInjuryRecords(): Promise<HealthResult<InjuryRecord[]>>
     .order('start_date', { ascending: false });
 
   assertNoError(error, 'Falha ao carregar lesões.');
-  return supabaseResult((data ?? []).map(row => mapInjury(row as Record<string, unknown>)));
+  return supabaseResult((data ?? []).map((row) => mapInjury(row as Record<string, unknown>)));
 }
 
-export async function createInjuryRecord(input: Partial<InjuryRecord>): Promise<HealthResult<InjuryRecord>> {
+export async function createInjuryRecord(
+  input: Partial<InjuryRecord>,
+): Promise<HealthResult<InjuryRecord>> {
   const injury = validateInjury(input);
   const userId = await getAuthUserId();
 
   if (!userId) {
-    const next = [injury, ...readDevJSON<InjuryRecord[]>(DEV_KEYS.injuries, [], LEGACY_KEYS.injuries)].slice(0, 120);
+    const next = [
+      injury,
+      ...readDevJSON<InjuryRecord[]>(DEV_KEYS.injuries, [], LEGACY_KEYS.injuries),
+    ].slice(0, 120);
     writeJSON(DEV_KEYS.injuries, next);
     return mockResult(injury);
   }
@@ -354,8 +381,8 @@ export async function resolveInjuryRecord(id: string): Promise<HealthResult<Inju
   const resolvedDate = new Date().toISOString().slice(0, 10);
 
   if (!userId) {
-    const next = readDevJSON<InjuryRecord[]>(DEV_KEYS.injuries, [], LEGACY_KEYS.injuries).map(injury =>
-      injury.id === id ? { ...injury, resolved: true, resolvedDate } : injury
+    const next = readDevJSON<InjuryRecord[]>(DEV_KEYS.injuries, [], LEGACY_KEYS.injuries).map(
+      (injury) => (injury.id === id ? { ...injury, resolved: true, resolvedDate } : injury),
     );
     writeJSON(DEV_KEYS.injuries, next);
     return mockResult(next);
@@ -392,7 +419,12 @@ function mapSymptom(row: Record<string, unknown>): SymptomRecord {
 
 export async function loadSymptomRecords(): Promise<HealthResult<SymptomRecord[]>> {
   const userId = await getAuthUserId();
-  if (!userId) return mockResult(readDevJSON<SymptomRecord[]>(DEV_KEYS.symptoms, [], LEGACY_KEYS.symptoms).map(validateSymptom));
+  if (!userId)
+    return mockResult(
+      readDevJSON<SymptomRecord[]>(DEV_KEYS.symptoms, [], LEGACY_KEYS.symptoms).map(
+        validateSymptom,
+      ),
+    );
 
   const { data, error } = await supabase
     .from('health_symptom_records')
@@ -401,15 +433,20 @@ export async function loadSymptomRecords(): Promise<HealthResult<SymptomRecord[]
     .limit(120);
 
   assertNoError(error, 'Falha ao carregar sintomas.');
-  return supabaseResult((data ?? []).map(row => mapSymptom(row as Record<string, unknown>)));
+  return supabaseResult((data ?? []).map((row) => mapSymptom(row as Record<string, unknown>)));
 }
 
-export async function createSymptomRecord(input: Partial<SymptomRecord>): Promise<HealthResult<SymptomRecord>> {
+export async function createSymptomRecord(
+  input: Partial<SymptomRecord>,
+): Promise<HealthResult<SymptomRecord>> {
   const symptom = validateSymptom(input);
   const userId = await getAuthUserId();
 
   if (!userId) {
-    const next = [symptom, ...readDevJSON<SymptomRecord[]>(DEV_KEYS.symptoms, [], LEGACY_KEYS.symptoms)].slice(0, 180);
+    const next = [
+      symptom,
+      ...readDevJSON<SymptomRecord[]>(DEV_KEYS.symptoms, [], LEGACY_KEYS.symptoms),
+    ].slice(0, 180);
     writeJSON(DEV_KEYS.symptoms, next);
     return mockResult(symptom);
   }
@@ -441,16 +478,30 @@ function validateMacros(input: MacroTargets): MacroTargets {
 }
 
 function validateMeal(input: Partial<MealEntry>): MealEntry {
-  const mealType = MEAL_TYPES.includes(input.mealType as MealEntry['mealType']) ? input.mealType as MealEntry['mealType'] : 'Almoço';
+  const mealType = MEAL_TYPES.includes(input.mealType as MealEntry['mealType'])
+    ? (input.mealType as MealEntry['mealType'])
+    : 'Almoço';
   return {
     id: normalizeId(input.id),
     date: normalizeDate(input.date || new Date().toISOString().slice(0, 10)),
     mealType,
     description: requiredText(input.description, 'Descrição da refeição', 1000),
-    estimatedCalories: input.estimatedCalories === undefined ? undefined : boundedInteger(input.estimatedCalories, 'Calorias estimadas', 0, 5000),
-    estimatedProtein: input.estimatedProtein === undefined ? undefined : boundedNumber(input.estimatedProtein, 'Proteína estimada', 0, 400),
-    estimatedCarbs: input.estimatedCarbs === undefined ? undefined : boundedNumber(input.estimatedCarbs, 'Carboidratos estimados', 0, 800),
-    estimatedFat: input.estimatedFat === undefined ? undefined : boundedNumber(input.estimatedFat, 'Gordura estimada', 0, 300),
+    estimatedCalories:
+      input.estimatedCalories === undefined
+        ? undefined
+        : boundedInteger(input.estimatedCalories, 'Calorias estimadas', 0, 5000),
+    estimatedProtein:
+      input.estimatedProtein === undefined
+        ? undefined
+        : boundedNumber(input.estimatedProtein, 'Proteína estimada', 0, 400),
+    estimatedCarbs:
+      input.estimatedCarbs === undefined
+        ? undefined
+        : boundedNumber(input.estimatedCarbs, 'Carboidratos estimados', 0, 800),
+    estimatedFat:
+      input.estimatedFat === undefined
+        ? undefined
+        : boundedNumber(input.estimatedFat, 'Gordura estimada', 0, 300),
     aiAnalysis: optionalText(input.aiAnalysis, 4000),
   };
 }
@@ -508,14 +559,26 @@ export async function loadNutritionState(): Promise<HealthResult<NutritionState>
       macros: readDevJSON<MacroTargets | null>(DEV_KEYS.macros, null, LEGACY_KEYS.macros),
       planText: readDevJSON<string>(DEV_KEYS.nutritionPlan, ''),
       meals: readDevJSON<MealEntry[]>(DEV_KEYS.meals, [], LEGACY_KEYS.meals).map(validateMeal),
-      favoriteFoods: readDevJSON<FavoriteFood[]>(DEV_KEYS.favoriteFoods, [], LEGACY_KEYS.favoriteFoods).map(validateFavoriteFood),
+      favoriteFoods: readDevJSON<FavoriteFood[]>(
+        DEV_KEYS.favoriteFoods,
+        [],
+        LEGACY_KEYS.favoriteFoods,
+      ).map(validateFavoriteFood),
     });
   }
 
   const [macroResponse, mealResponse, foodResponse] = await Promise.all([
     supabase.from('nutrition_macro_targets').select('*').maybeSingle(),
-    supabase.from('nutrition_meal_entries').select('*').order('date', { ascending: true }).limit(180),
-    supabase.from('nutrition_favorite_foods').select('*').order('name', { ascending: true }).limit(120),
+    supabase
+      .from('nutrition_meal_entries')
+      .select('*')
+      .order('date', { ascending: true })
+      .limit(180),
+    supabase
+      .from('nutrition_favorite_foods')
+      .select('*')
+      .order('name', { ascending: true })
+      .limit(120),
   ]);
 
   assertNoError(macroResponse.error, 'Falha ao carregar macros.');
@@ -527,8 +590,10 @@ export async function loadNutritionState(): Promise<HealthResult<NutritionState>
   return supabaseResult({
     macros: mapMacros(macroRow),
     planText: macroRow?.plan_text ? String(macroRow.plan_text) : '',
-    meals: (mealResponse.data ?? []).map(row => mapMeal(row as Record<string, unknown>)),
-    favoriteFoods: (foodResponse.data ?? []).map(row => mapFavoriteFood(row as Record<string, unknown>)),
+    meals: (mealResponse.data ?? []).map((row) => mapMeal(row as Record<string, unknown>)),
+    favoriteFoods: (foodResponse.data ?? []).map((row) =>
+      mapFavoriteFood(row as Record<string, unknown>),
+    ),
   });
 }
 
@@ -549,16 +614,19 @@ export async function saveMacroTargets(
 
   const { data, error } = await supabase
     .from('nutrition_macro_targets')
-    .upsert({
-      user_id: userId,
-      profile_goal: requiredText(profileGoal, 'Objetivo', 120),
-      calories: macros.calories,
-      protein: macros.protein,
-      carbs: macros.carbs,
-      fat: macros.fat,
-      plan_text: planText ? sanitizeText(planText).slice(0, 6000) : null,
-      data_source: dataSource,
-    }, { onConflict: 'user_id' })
+    .upsert(
+      {
+        user_id: userId,
+        profile_goal: requiredText(profileGoal, 'Objetivo', 120),
+        calories: macros.calories,
+        protein: macros.protein,
+        carbs: macros.carbs,
+        fat: macros.fat,
+        plan_text: planText ? sanitizeText(planText).slice(0, 6000) : null,
+        data_source: dataSource,
+      },
+      { onConflict: 'user_id' },
+    )
     .select()
     .single();
 
@@ -571,7 +639,9 @@ export async function saveMealEntry(input: Partial<MealEntry>): Promise<HealthRe
   const userId = await getAuthUserId();
 
   if (!userId) {
-    const next = [...readDevJSON<MealEntry[]>(DEV_KEYS.meals, [], LEGACY_KEYS.meals), meal].slice(-240);
+    const next = [...readDevJSON<MealEntry[]>(DEV_KEYS.meals, [], LEGACY_KEYS.meals), meal].slice(
+      -240,
+    );
     writeJSON(DEV_KEYS.meals, next);
     return mockResult(meal);
   }
@@ -598,12 +668,17 @@ export async function saveMealEntry(input: Partial<MealEntry>): Promise<HealthRe
   return supabaseResult(mapMeal(data as Record<string, unknown>));
 }
 
-export async function saveFavoriteFood(input: Partial<FavoriteFood>): Promise<HealthResult<FavoriteFood>> {
+export async function saveFavoriteFood(
+  input: Partial<FavoriteFood>,
+): Promise<HealthResult<FavoriteFood>> {
   const food = validateFavoriteFood(input);
   const userId = await getAuthUserId();
 
   if (!userId) {
-    const next = [...readDevJSON<FavoriteFood[]>(DEV_KEYS.favoriteFoods, [], LEGACY_KEYS.favoriteFoods), food].slice(-160);
+    const next = [
+      ...readDevJSON<FavoriteFood[]>(DEV_KEYS.favoriteFoods, [], LEGACY_KEYS.favoriteFoods),
+      food,
+    ].slice(-160);
     writeJSON(DEV_KEYS.favoriteFoods, next);
     return mockResult(food);
   }
@@ -629,7 +704,12 @@ export async function saveFavoriteFood(input: Partial<FavoriteFood>): Promise<He
 function validateHydrationGoal(input: HydrationGoal): HydrationGoal {
   return {
     dailyMl: boundedInteger(input.dailyMl, 'Meta de hidratação', 250, 10000),
-    remindEveryMinutes: boundedInteger(input.remindEveryMinutes ?? 60, 'Intervalo de lembrete', 0, 720),
+    remindEveryMinutes: boundedInteger(
+      input.remindEveryMinutes ?? 60,
+      'Intervalo de lembrete',
+      0,
+      720,
+    ),
   };
 }
 
@@ -666,8 +746,18 @@ export async function loadHydrationState(): Promise<HealthResult<HydrationState>
   const userId = await getAuthUserId();
   if (!userId) {
     return mockResult({
-      entries: readDevJSON<HydrationEntry[]>(DEV_KEYS.hydrationEntries, [], LEGACY_KEYS.hydrationEntries).map(validateHydrationEntry),
-      goal: validateHydrationGoal(readDevJSON<HydrationGoal>(DEV_KEYS.hydrationGoal, { dailyMl: 2500, remindEveryMinutes: 60 }, LEGACY_KEYS.hydrationGoal)),
+      entries: readDevJSON<HydrationEntry[]>(
+        DEV_KEYS.hydrationEntries,
+        [],
+        LEGACY_KEYS.hydrationEntries,
+      ).map(validateHydrationEntry),
+      goal: validateHydrationGoal(
+        readDevJSON<HydrationGoal>(
+          DEV_KEYS.hydrationGoal,
+          { dailyMl: 2500, remindEveryMinutes: 60 },
+          LEGACY_KEYS.hydrationGoal,
+        ),
+      ),
     });
   }
 
@@ -680,17 +770,24 @@ export async function loadHydrationState(): Promise<HealthResult<HydrationState>
   assertNoError(goalResponse.error, 'Falha ao carregar meta de hidratação.');
 
   return supabaseResult({
-    entries: (entriesResponse.data ?? []).map(row => mapHydrationEntry(row as Record<string, unknown>)),
+    entries: (entriesResponse.data ?? []).map((row) =>
+      mapHydrationEntry(row as Record<string, unknown>),
+    ),
     goal: mapHydrationGoal(goalResponse.data as Record<string, unknown> | null),
   });
 }
 
-export async function saveHydrationEntry(input: HydrationEntry): Promise<HealthResult<HydrationEntry>> {
+export async function saveHydrationEntry(
+  input: HydrationEntry,
+): Promise<HealthResult<HydrationEntry>> {
   const entry = validateHydrationEntry(input);
   const userId = await getAuthUserId();
 
   if (!userId) {
-    const next = [...readDevJSON<HydrationEntry[]>(DEV_KEYS.hydrationEntries, [], LEGACY_KEYS.hydrationEntries), entry].slice(-300);
+    const next = [
+      ...readDevJSON<HydrationEntry[]>(DEV_KEYS.hydrationEntries, [], LEGACY_KEYS.hydrationEntries),
+      entry,
+    ].slice(-300);
     writeJSON(DEV_KEYS.hydrationEntries, next);
     return mockResult(entry);
   }
@@ -712,7 +809,9 @@ export async function saveHydrationEntry(input: HydrationEntry): Promise<HealthR
   return supabaseResult(mapHydrationEntry(data as Record<string, unknown>));
 }
 
-export async function saveHydrationGoal(input: HydrationGoal): Promise<HealthResult<HydrationGoal>> {
+export async function saveHydrationGoal(
+  input: HydrationGoal,
+): Promise<HealthResult<HydrationGoal>> {
   const goal = validateHydrationGoal(input);
   const userId = await getAuthUserId();
 
@@ -723,11 +822,14 @@ export async function saveHydrationGoal(input: HydrationGoal): Promise<HealthRes
 
   const { data, error } = await supabase
     .from('hydration_goals')
-    .upsert({
-      user_id: userId,
-      daily_ml: goal.dailyMl,
-      remind_every_minutes: goal.remindEveryMinutes,
-    }, { onConflict: 'user_id' })
+    .upsert(
+      {
+        user_id: userId,
+        daily_ml: goal.dailyMl,
+        remind_every_minutes: goal.remindEveryMinutes,
+      },
+      { onConflict: 'user_id' },
+    )
     .select()
     .single();
 
@@ -744,8 +846,14 @@ function validateSleepEntry(input: SleepEntry): SleepEntry {
     durationMinutes: boundedInteger(input.durationMinutes, 'Duração do sono', 0, 960),
     quality: boundedInteger(input.quality, 'Qualidade do sono', 1, 5) as SleepEntry['quality'],
     notes: optionalText(input.notes, 1000),
-    deepSleepPct: input.deepSleepPct === undefined ? undefined : boundedNumber(input.deepSleepPct, 'Sono profundo', 0, 100),
-    remSleepPct: input.remSleepPct === undefined ? undefined : boundedNumber(input.remSleepPct, 'Sono REM', 0, 100),
+    deepSleepPct:
+      input.deepSleepPct === undefined
+        ? undefined
+        : boundedNumber(input.deepSleepPct, 'Sono profundo', 0, 100),
+    remSleepPct:
+      input.remSleepPct === undefined
+        ? undefined
+        : boundedNumber(input.remSleepPct, 'Sono REM', 0, 100),
   };
 }
 
@@ -766,7 +874,11 @@ function mapSleepEntry(row: Record<string, unknown>): SleepEntry {
 export async function loadSleepEntries(): Promise<HealthResult<SleepEntry[]>> {
   const userId = await getAuthUserId();
   if (!userId) {
-    return mockResult(readDevJSON<SleepEntry[]>(DEV_KEYS.sleepEntries, [], LEGACY_KEYS.sleepEntries).map(validateSleepEntry));
+    return mockResult(
+      readDevJSON<SleepEntry[]>(DEV_KEYS.sleepEntries, [], LEGACY_KEYS.sleepEntries).map(
+        validateSleepEntry,
+      ),
+    );
   }
 
   const { data, error } = await supabase
@@ -776,7 +888,7 @@ export async function loadSleepEntries(): Promise<HealthResult<SleepEntry[]>> {
     .limit(180);
 
   assertNoError(error, 'Falha ao carregar sono.');
-  return supabaseResult((data ?? []).map(row => mapSleepEntry(row as Record<string, unknown>)));
+  return supabaseResult((data ?? []).map((row) => mapSleepEntry(row as Record<string, unknown>)));
 }
 
 export async function saveSleepEntry(input: SleepEntry): Promise<HealthResult<SleepEntry>> {
@@ -785,8 +897,8 @@ export async function saveSleepEntry(input: SleepEntry): Promise<HealthResult<Sl
 
   if (!userId) {
     const current = readDevJSON<SleepEntry[]>(DEV_KEYS.sleepEntries, [], LEGACY_KEYS.sleepEntries);
-    const next = current.some(item => item.date === entry.date)
-      ? current.map(item => item.date === entry.date ? entry : item)
+    const next = current.some((item) => item.date === entry.date)
+      ? current.map((item) => (item.date === entry.date ? entry : item))
       : [...current, entry];
     writeJSON(DEV_KEYS.sleepEntries, next.slice(-180));
     return mockResult(entry);
@@ -794,18 +906,21 @@ export async function saveSleepEntry(input: SleepEntry): Promise<HealthResult<Sl
 
   const { data, error } = await supabase
     .from('sleep_entries')
-    .upsert({
-      ...(isUuid(entry.id) ? { id: entry.id } : {}),
-      user_id: userId,
-      date: entry.date,
-      bedtime: entry.bedtime,
-      wake_time: entry.wakeTime,
-      duration_minutes: entry.durationMinutes,
-      quality: entry.quality,
-      notes: entry.notes ?? null,
-      deep_sleep_pct: entry.deepSleepPct ?? null,
-      rem_sleep_pct: entry.remSleepPct ?? null,
-    }, { onConflict: 'user_id,date' })
+    .upsert(
+      {
+        ...(isUuid(entry.id) ? { id: entry.id } : {}),
+        user_id: userId,
+        date: entry.date,
+        bedtime: entry.bedtime,
+        wake_time: entry.wakeTime,
+        duration_minutes: entry.durationMinutes,
+        quality: entry.quality,
+        notes: entry.notes ?? null,
+        deep_sleep_pct: entry.deepSleepPct ?? null,
+        rem_sleep_pct: entry.remSleepPct ?? null,
+      },
+      { onConflict: 'user_id,date' },
+    )
     .select()
     .single();
 

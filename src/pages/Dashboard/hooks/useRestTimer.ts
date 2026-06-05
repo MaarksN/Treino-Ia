@@ -36,20 +36,25 @@ export function useRestTimer(defaultSeconds = 90) {
     }
   }, []);
 
-  const startRest = useCallback((seconds = defaultSeconds) => {
-    const state = createRestTimerState(seconds, Date.now(), defaultSeconds);
-    stateRef.current = state;
-    setStatus('running');
-    setRemainingSeconds(state.duration);
-    getStorage()?.setItem(REST_TIMER_STORAGE_KEY, JSON.stringify(state));
-  }, [defaultSeconds]);
+  const startRest = useCallback(
+    (seconds = defaultSeconds) => {
+      const state = createRestTimerState(seconds, Date.now(), defaultSeconds);
+      stateRef.current = state;
+      setStatus('running');
+      setRemainingSeconds(state.duration);
+      getStorage()?.setItem(REST_TIMER_STORAGE_KEY, JSON.stringify(state));
+    },
+    [defaultSeconds],
+  );
 
   const resetRest = useCallback(() => {
     startRest(defaultSeconds);
   }, [defaultSeconds, startRest]);
 
   useEffect(() => {
-    const state = parsePersistedRestTimerState(getStorage()?.getItem(REST_TIMER_STORAGE_KEY) ?? null);
+    const state = parsePersistedRestTimerState(
+      getStorage()?.getItem(REST_TIMER_STORAGE_KEY) ?? null,
+    );
     const remaining = getRestRemainingSeconds(state);
 
     if (state && remaining > 0) {

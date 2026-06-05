@@ -33,28 +33,28 @@ docs/bloco-16-acessibilidade-i18n-inclusao.md
 
 ## Tabela dos 20 itens
 
-| # | Item | Prioridade sugerida |
-|---:|---|---|
-| 1 | Revisão e padronização do PT-BR | MVP / Base |
-| 2 | Tradução EN-US (inglês americano) | Premium / V2 |
-| 3 | Tradução ES (espanhol latino) | Premium / V2 |
-| 4 | Seletor de idioma nas configurações | MVP / Base |
-| 5 | Modo daltônico (Deuteranopia / Protanopia) | Premium / V2 |
-| 6 | Escala de fonte ajustável (S / M / L / XL) | MVP / Base |
-| 7 | Compatibilidade com screen readers (ARIA landmarks) | MVP / Base |
-| 8 | Navegação 100% por teclado | MVP / Base |
-| 9 | Contraste alto: modo WCAG AAA opcional | MVP / Base |
-| 10 | Suporte VoiceOver (iOS) e TalkBack (Android) | Premium / V2 |
-| 11 | Legendas em todos os vídeos demonstrativos | Premium / V2 |
-| 12 | Modo simplificado para idosos (fonte e ícones grandes) | Premium / V2 |
-| 13 | Perfil de limitação física (cadeirante, amputado) | Premium / V2 |
-| 14 | Exercícios adaptados para PCDs por grupo muscular | Premium / V2 |
-| 15 | RTL layout para árabe/hebraico (roadmap futuro) | Roadmap / Futuro |
-| 16 | Alt text em todas as imagens | MVP / Base |
-| 17 | Respeitar prefers-reduced-motion globalmente | MVP / Base |
-| 18 | Foco automático no primeiro campo ao abrir modais | MVP / Base |
-| 19 | Skip link "Ir para conteúdo" em todas as páginas | MVP / Base |
-| 20 | Documentação WCAG (VPAT / relatório de acessibilidade) | Premium / V2 |
+|   # | Item                                                   | Prioridade sugerida |
+| --: | ------------------------------------------------------ | ------------------- |
+|   1 | Revisão e padronização do PT-BR                        | MVP / Base          |
+|   2 | Tradução EN-US (inglês americano)                      | Premium / V2        |
+|   3 | Tradução ES (espanhol latino)                          | Premium / V2        |
+|   4 | Seletor de idioma nas configurações                    | MVP / Base          |
+|   5 | Modo daltônico (Deuteranopia / Protanopia)             | Premium / V2        |
+|   6 | Escala de fonte ajustável (S / M / L / XL)             | MVP / Base          |
+|   7 | Compatibilidade com screen readers (ARIA landmarks)    | MVP / Base          |
+|   8 | Navegação 100% por teclado                             | MVP / Base          |
+|   9 | Contraste alto: modo WCAG AAA opcional                 | MVP / Base          |
+|  10 | Suporte VoiceOver (iOS) e TalkBack (Android)           | Premium / V2        |
+|  11 | Legendas em todos os vídeos demonstrativos             | Premium / V2        |
+|  12 | Modo simplificado para idosos (fonte e ícones grandes) | Premium / V2        |
+|  13 | Perfil de limitação física (cadeirante, amputado)      | Premium / V2        |
+|  14 | Exercícios adaptados para PCDs por grupo muscular      | Premium / V2        |
+|  15 | RTL layout para árabe/hebraico (roadmap futuro)        | Roadmap / Futuro    |
+|  16 | Alt text em todas as imagens                           | MVP / Base          |
+|  17 | Respeitar prefers-reduced-motion globalmente           | MVP / Base          |
+|  18 | Foco automático no primeiro campo ao abrir modais      | MVP / Base          |
+|  19 | Skip link "Ir para conteúdo" em todas as páginas       | MVP / Base          |
+|  20 | Documentação WCAG (VPAT / relatório de acessibilidade) | Premium / V2        |
 
 ## Organização por prioridade
 
@@ -112,7 +112,9 @@ docs/bloco-16-acessibilidade-i18n-inclusao.md
 
 ```tsx
 // Exemplo conceitual de rota/tela para o Bloco 16
-{currentView === 'bloco-16' && <AcessibilidadeI18nInclusaoHub />}
+{
+  currentView === 'bloco-16' && <AcessibilidadeI18nInclusaoHub />;
+}
 ```
 
 ## Resultado esperado

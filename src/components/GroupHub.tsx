@@ -27,14 +27,17 @@ export function GroupHub({ currentProfile }: Props) {
   const [inviteCode, setInviteCode] = useState('');
   const [status, setStatus] = useState('');
 
-  const inviteUrl = useMemo(() => selected ? createGroupInviteUrl(selected.invite_code) : '', [selected]);
+  const inviteUrl = useMemo(
+    () => (selected ? createGroupInviteUrl(selected.invite_code) : ''),
+    [selected],
+  );
 
   const loadGroups = useCallback(async () => {
     try {
       const rows = await listMyGroups();
       setGroups(rows);
       setStatus('');
-      setSelected(current => current || rows[0] || null);
+      setSelected((current) => current || rows[0] || null);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Não foi possível carregar grupos.');
     }
@@ -120,17 +123,25 @@ export function GroupHub({ currentProfile }: Props) {
           Grupos
         </h2>
 
-        {status && <p className="mt-4 rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm text-yellow-300">{status}</p>}
+        {status && (
+          <p className="mt-4 rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm text-yellow-300">
+            {status}
+          </p>
+        )}
 
         <div className="mt-5 space-y-3">
           <input
             value={newGroupName}
-            onChange={event => setNewGroupName(event.target.value)}
+            onChange={(event) => setNewGroupName(event.target.value)}
             placeholder="Nome do novo grupo"
             className="w-full bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none"
           />
 
-          <button type="button" onClick={handleCreateGroup} className="w-full bg-brand-neon text-brand-dark rounded-xl px-4 py-3 font-black flex items-center justify-center gap-2">
+          <button
+            type="button"
+            onClick={handleCreateGroup}
+            className="w-full bg-brand-neon text-brand-dark rounded-xl px-4 py-3 font-black flex items-center justify-center gap-2"
+          >
             <Plus size={16} />
             Criar grupo
           </button>
@@ -139,24 +150,30 @@ export function GroupHub({ currentProfile }: Props) {
         <div className="mt-5 space-y-3">
           <input
             value={inviteCode}
-            onChange={event => setInviteCode(event.target.value)}
+            onChange={(event) => setInviteCode(event.target.value)}
             placeholder="Código de convite"
             className="w-full bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none"
           />
 
-          <button type="button" onClick={handleJoin} className="w-full bg-white/10 text-white rounded-xl px-4 py-3 font-bold">
+          <button
+            type="button"
+            onClick={handleJoin}
+            className="w-full bg-white/10 text-white rounded-xl px-4 py-3 font-bold"
+          >
             Entrar por convite
           </button>
         </div>
 
         <div className="mt-6 space-y-2">
-          {groups.map(group => (
+          {groups.map((group) => (
             <button
               key={group.id}
               type="button"
               onClick={() => setSelected(group)}
               className={`w-full text-left rounded-2xl p-4 border ${
-                selected?.id === group.id ? 'bg-brand-neon/10 border-brand-neon/30' : 'bg-white/5 border-white/10'
+                selected?.id === group.id
+                  ? 'bg-brand-neon/10 border-brand-neon/30'
+                  : 'bg-white/5 border-white/10'
               }`}
             >
               <p className="font-bold text-white">{group.name}</p>
@@ -188,7 +205,7 @@ export function GroupHub({ currentProfile }: Props) {
               </div>
 
               <div className="space-y-3 max-h-[390px] overflow-y-auto">
-                {messages.map(row => (
+                {messages.map((row) => (
                   <div key={row.id} className="rounded-2xl bg-white/5 p-3">
                     <p className="text-xs text-brand-muted">
                       @{row.author?.username ?? 'atleta'} · {timeAgo(row.created_at)}
@@ -196,18 +213,24 @@ export function GroupHub({ currentProfile }: Props) {
                     <p className="text-white">{row.body}</p>
                   </div>
                 ))}
-                {messages.length === 0 && <p className="text-sm text-brand-muted">Nenhuma mensagem ainda.</p>}
+                {messages.length === 0 && (
+                  <p className="text-sm text-brand-muted">Nenhuma mensagem ainda.</p>
+                )}
               </div>
 
               <div className="flex gap-2 mt-5">
                 <input
                   value={message}
-                  onChange={event => setMessage(event.target.value)}
+                  onChange={(event) => setMessage(event.target.value)}
                   placeholder="Mensagem para o grupo..."
                   className="flex-1 bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none min-w-0"
                 />
 
-                <button type="button" onClick={send} className="bg-brand-neon text-brand-dark rounded-xl px-5 font-black flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={send}
+                  className="bg-brand-neon text-brand-dark rounded-xl px-5 font-black flex items-center gap-2"
+                >
                   <MessageCircle size={16} />
                   Enviar
                 </button>

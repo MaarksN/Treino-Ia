@@ -48,14 +48,24 @@ const plan: WorkoutPlan = {
 };
 
 function highFatigueSessions(): WorkoutSession[] {
-  return [{
-    id: 's1',
-    planId: 'p1',
-    dayId: 'd1',
-    completedAt: Date.now(),
-    readiness: { timestamp: Date.now(), sleepHours: 5, sorenessLevel: 5, stressLevel: 5, energyLevel: 3 },
-    logs: [{ exerciseName: 'Supino', date: Date.now(), actualWeight: 80, actualReps: '8', rpe: 9 }],
-  }];
+  return [
+    {
+      id: 's1',
+      planId: 'p1',
+      dayId: 'd1',
+      completedAt: Date.now(),
+      readiness: {
+        timestamp: Date.now(),
+        sleepHours: 5,
+        sorenessLevel: 5,
+        stressLevel: 5,
+        energyLevel: 3,
+      },
+      logs: [
+        { exerciseName: 'Supino', date: Date.now(), actualWeight: 80, actualReps: '8', rpe: 9 },
+      ],
+    },
+  ];
 }
 
 function plateauSessions(): WorkoutSession[] {
@@ -197,7 +207,9 @@ describe('aiPersonalizationService', () => {
   });
 
   it('tempo disponível inválido bloqueia prompt IA', async () => {
-    await expect(adjustWorkoutForAvailableTime(plan, 0)).rejects.toThrow('Tempo disponível inválido.');
+    await expect(adjustWorkoutForAvailableTime(plan, 0)).rejects.toThrow(
+      'Tempo disponível inválido.',
+    );
     expect(generateContent).not.toHaveBeenCalled();
   });
 });

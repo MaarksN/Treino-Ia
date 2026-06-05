@@ -53,7 +53,9 @@ async function smokeSupabaseRls() {
   ];
 
   for (const table of criticalTables) {
-    const { response } = await requestJson(`${supabaseUrl}/rest/v1/${table}?select=*&limit=1`, { headers });
+    const { response } = await requestJson(`${supabaseUrl}/rest/v1/${table}?select=*&limit=1`, {
+      headers,
+    });
     assertStatus(`Supabase anon SELECT ${table}`, response.status, 200);
   }
 
@@ -66,14 +68,22 @@ async function smokeSupabaseRls() {
       metadata_json: {},
     }),
   });
-  assertStatus('Supabase anon INSERT workout_sessions blocked', workoutInsert.response.status, [401, 403]);
+  assertStatus(
+    'Supabase anon INSERT workout_sessions blocked',
+    workoutInsert.response.status,
+    [401, 403],
+  );
 
   const telemetryInsert = await requestJson(`${supabaseUrl}/rest/v1/telemetry_error_events`, {
     method: 'POST',
     headers: { ...headers, 'content-type': 'application/json', prefer: 'return=minimal' },
     body: JSON.stringify({ source: 'sprint3-smoke', message: 'anon insert should fail' }),
   });
-  assertStatus('Supabase anon INSERT telemetry_error_events blocked', telemetryInsert.response.status, [401, 403]);
+  assertStatus(
+    'Supabase anon INSERT telemetry_error_events blocked',
+    telemetryInsert.response.status,
+    [401, 403],
+  );
 
   console.log('PASS supabase-rls');
 }
@@ -107,7 +117,11 @@ async function smokeGemini(appUrl, token) {
   if (optional('GEMINI_SMOKE_EXPECT_SUCCESS') === 'true') {
     assertStatus('Gemini authenticated real call', response.response.status, 200);
   } else {
-    assertStatus('Gemini authenticated controlled status', response.response.status, [200, 402, 429, 500, 502, 503]);
+    assertStatus(
+      'Gemini authenticated controlled status',
+      response.response.status,
+      [200, 402, 429, 500, 502, 503],
+    );
   }
 
   console.log(`PASS gemini status=${response.response.status}`);
@@ -149,6 +163,31 @@ async function smokeStripe(appUrl, token) {
   console.log(`PASS stripe checkout=${checkout.response.status} portal=${portal.response.status}`);
 }
 
+async function smokeRateLimit(appUrl) {
+  const probeIp = `203.0.113.${Math.floor(Math.random() * 200) + 1}`;
+  const first = await requestJson(`${appUrl}/api/security/rate-limit`, {
+    headers: { 'x-forwarded-for': probeIp },
+  });
+  assertStatus('Rate limit first request allowed', first.response.status, 200);
+
+  if (optional('RATE_LIMIT_SMOKE_EXPECT_429') !== 'true') {
+    console.log(`PASS rate-limit first=${first.response.status}`);
+    return;
+  }
+
+  let lastStatus = first.response.status;
+  for (let i = 0; i < 35; i += 1) {
+    const next = await requestJson(`${appUrl}/api/security/rate-limit`, {
+      headers: { 'x-forwarded-for': probeIp },
+    });
+    lastStatus = next.response.status;
+    if (lastStatus === 429) break;
+  }
+
+  assertStatus('Rate limit repeated requests blocked', lastStatus, 429);
+  console.log(`PASS rate-limit repeated=${lastStatus}`);
+}
+
 async function main() {
   await smokeSupabaseRls();
 
@@ -162,6 +201,7 @@ async function main() {
 
   await smokeGemini(appUrl, token);
   await smokeStripe(appUrl, token);
+  await smokeRateLimit(appUrl);
 }
 
 main().catch((error) => {

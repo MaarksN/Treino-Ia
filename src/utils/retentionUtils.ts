@@ -38,7 +38,10 @@ export function uniqueSortedDates(dates: Array<string | Date>): string[] {
   return Array.from(new Set(dates.map(normalizeIsoDate))).sort();
 }
 
-export function calculateDailyStreak(dates: Array<string | Date>, today: string | Date = new Date()): number {
+export function calculateDailyStreak(
+  dates: Array<string | Date>,
+  today: string | Date = new Date(),
+): number {
   const available = new Set(uniqueSortedDates(dates));
   let cursor = toUtcDate(today);
   let count = 0;
@@ -57,11 +60,9 @@ export function calculateBestDailyStreak(dates: Array<string | Date>): number {
   let current = 0;
   let previous: Date | null = null;
 
-  sorted.forEach(dateValue => {
+  sorted.forEach((dateValue) => {
     const currentDate = toUtcDate(dateValue);
-    const consecutive = previous
-      ? currentDate.getTime() - previous.getTime() === DAY_MS
-      : false;
+    const consecutive = previous ? currentDate.getTime() - previous.getTime() === DAY_MS : false;
 
     current = consecutive ? current + 1 : 1;
     best = Math.max(best, current);
@@ -71,7 +72,10 @@ export function calculateBestDailyStreak(dates: Array<string | Date>): number {
   return best;
 }
 
-export function calculateWeeklyStreak(dates: Array<string | Date>, today: string | Date = new Date()): number {
+export function calculateWeeklyStreak(
+  dates: Array<string | Date>,
+  today: string | Date = new Date(),
+): number {
   const weekStarts = new Set(uniqueSortedDates(dates).map(getWeekStartIso));
   let cursor = toUtcDate(getWeekStartIso(today));
   let count = 0;
@@ -91,7 +95,7 @@ export function calculateBestWeeklyStreak(dates: Array<string | Date>): number {
   let current = 0;
   let previous: Date | null = null;
 
-  uniqueWeeks.forEach(weekValue => {
+  uniqueWeeks.forEach((weekValue) => {
     const currentWeek = toUtcDate(weekValue);
     const consecutive = previous
       ? currentWeek.getTime() - previous.getTime() === 7 * DAY_MS
@@ -105,7 +109,10 @@ export function calculateBestWeeklyStreak(dates: Array<string | Date>): number {
   return best;
 }
 
-export function getInactiveDays(lastDate?: string | null, today: string | Date = new Date()): number | null {
+export function getInactiveDays(
+  lastDate?: string | null,
+  today: string | Date = new Date(),
+): number | null {
   if (!lastDate) return null;
   const diff = toUtcDate(today).getTime() - toUtcDate(lastDate).getTime();
   return Math.max(0, Math.floor(diff / DAY_MS));
@@ -117,12 +124,14 @@ export function buildRetentionStreakFromEvents(
   today: string | Date = new Date(),
 ): RetentionStreak {
   const workoutDates = events
-    .filter(event => WORKOUT_EVENT_TYPES.includes(event.event_type))
-    .map(event => event.event_date);
+    .filter((event) => WORKOUT_EVENT_TYPES.includes(event.event_type))
+    .map((event) => event.event_date);
   const lastActivityDate = uniqueSortedDates(workoutDates).at(-1) ?? null;
   const todayIso = normalizeIsoDate(today);
   const weekStart = getWeekStartIso(today);
-  const workoutsThisWeek = workoutDates.filter(date => getWeekStartIso(date) === weekStart).length;
+  const workoutsThisWeek = workoutDates.filter(
+    (date) => getWeekStartIso(date) === weekStart,
+  ).length;
 
   return {
     user_id: userId,
@@ -143,21 +152,22 @@ export function attachChallengeProgress(
 ): RetentionChallenge[] {
   const workoutDates = uniqueSortedDates(
     events
-      .filter(event => WORKOUT_EVENT_TYPES.includes(event.event_type))
-      .map(event => event.event_date),
+      .filter((event) => WORKOUT_EVENT_TYPES.includes(event.event_type))
+      .map((event) => event.event_date),
   );
 
-  return challenges.map(challenge => {
-    const progress = workoutDates.filter(date => (
-      date >= challenge.starts_on && date <= challenge.ends_on
-    )).length;
+  return challenges.map((challenge) => {
+    const progress = workoutDates.filter(
+      (date) => date >= challenge.starts_on && date <= challenge.ends_on,
+    ).length;
 
     return {
       ...challenge,
       progress: Math.min(progress, challenge.target_days),
-      status: progress >= challenge.target_days && challenge.status === 'active'
-        ? 'completed'
-        : challenge.status,
+      status:
+        progress >= challenge.target_days && challenge.status === 'active'
+          ? 'completed'
+          : challenge.status,
     };
   });
 }
@@ -172,26 +182,34 @@ export function buildRetentionMetrics(
 ): RetentionMetrics {
   const todayIso = normalizeIsoDate(today);
   const weekStart = getWeekStartIso(todayIso);
-  const weekEvents = events.filter(event => event.event_date >= weekStart && event.event_date <= todayIso);
+  const weekEvents = events.filter(
+    (event) => event.event_date >= weekStart && event.event_date <= todayIso,
+  );
   const todayHydration = events
-    .filter(event => event.event_type === 'hydration_logged' && event.event_date === todayIso)
+    .filter((event) => event.event_type === 'hydration_logged' && event.event_date === todayIso)
     .reduce((sum, event) => sum + Number(event.amount ?? 0), 0);
   const sleepEvents = events
-    .filter(event => event.event_type === 'sleep_logged' && Number(event.amount ?? 0) > 0)
+    .filter((event) => event.event_type === 'sleep_logged' && Number(event.amount ?? 0) > 0)
     .slice(0, 7);
-  const activeChallenges = challenges.filter(challenge => challenge.status === 'active').length;
-  const completedChallenges = challenges.filter(challenge => challenge.status === 'completed').length;
+  const activeChallenges = challenges.filter((challenge) => challenge.status === 'active').length;
+  const completedChallenges = challenges.filter(
+    (challenge) => challenge.status === 'completed',
+  ).length;
 
   return {
     dailyStreak: streak.daily_streak,
     weeklyStreak: streak.weekly_streak,
     bestDailyStreak: streak.best_daily_streak,
     bestWeeklyStreak: streak.best_weekly_streak,
-    workoutsThisWeek: weekEvents.filter(event => WORKOUT_EVENT_TYPES.includes(event.event_type)).length,
-    checkinsThisWeek: weekEvents.filter(event => event.event_type === 'checkin_completed').length,
+    workoutsThisWeek: weekEvents.filter((event) => WORKOUT_EVENT_TYPES.includes(event.event_type))
+      .length,
+    checkinsThisWeek: weekEvents.filter((event) => event.event_type === 'checkin_completed').length,
     hydrationTodayMl: todayHydration,
     sleepAverageMinutes: sleepEvents.length
-      ? Math.round(sleepEvents.reduce((sum, event) => sum + Number(event.amount ?? 0), 0) / sleepEvents.length)
+      ? Math.round(
+          sleepEvents.reduce((sum, event) => sum + Number(event.amount ?? 0), 0) /
+            sleepEvents.length,
+        )
       : 0,
     activeChallenges,
     completedChallenges,
@@ -205,7 +223,7 @@ export function validateReminderSchedule(type: string, schedule: ReminderSchedul
     throw new Error('Horário do lembrete inválido.');
   }
 
-  if (schedule.daysOfWeek?.some(day => day < 0 || day > 6 || !Number.isInteger(day))) {
+  if (schedule.daysOfWeek?.some((day) => day < 0 || day > 6 || !Number.isInteger(day))) {
     throw new Error('Dias do lembrete devem estar entre 0 e 6.');
   }
 
@@ -213,7 +231,11 @@ export function validateReminderSchedule(type: string, schedule: ReminderSchedul
     throw new Error('Lembrete de hidratação precisa ter intervalo mínimo de 15 minutos.');
   }
 
-  if (type === 'reactivation' && schedule.inactivityDays !== undefined && schedule.inactivityDays < 2) {
+  if (
+    type === 'reactivation' &&
+    schedule.inactivityDays !== undefined &&
+    schedule.inactivityDays < 2
+  ) {
     throw new Error('Reativação automática deve aguardar pelo menos 2 dias de inatividade.');
   }
 }
@@ -222,7 +244,8 @@ export function buildQuickWorkoutPlan(input: QuickWorkoutSuggestionInput): Quick
   const duration = Math.max(8, Math.min(45, Math.round(input.durationMinutes)));
   const goal = String(input.goal || '').toLowerCase();
   const location = String(input.location || '').toLowerCase();
-  const bodyweight = location.includes('casa') || location.includes('home') || location.includes('sem equipamento');
+  const bodyweight =
+    location.includes('casa') || location.includes('home') || location.includes('sem equipamento');
   const focus = goal.includes('força')
     ? 'Força técnica'
     : goal.includes('emag') || goal.includes('condicion')
@@ -232,10 +255,28 @@ export function buildQuickWorkoutPlan(input: QuickWorkoutSuggestionInput): Quick
   const exercises = bodyweight
     ? ['Agachamento livre', 'Flexão inclinada', 'Remada com mochila', 'Ponte de glúteo', 'Prancha']
     : focus === 'Força técnica'
-      ? ['Agachamento goblet', 'Supino com halteres', 'Remada baixa', 'Levantamento terra romeno', 'Farmer walk']
+      ? [
+          'Agachamento goblet',
+          'Supino com halteres',
+          'Remada baixa',
+          'Levantamento terra romeno',
+          'Farmer walk',
+        ]
       : focus === 'Condicionamento'
-        ? ['Bike ou esteira intervalada', 'Kettlebell swing', 'Remada curvada', 'Avanço alternado', 'Prancha dinâmica']
-        : ['Leg press', 'Supino máquina', 'Puxada alta', 'Desenvolvimento halteres', 'Rosca + tríceps corda'];
+        ? [
+            'Bike ou esteira intervalada',
+            'Kettlebell swing',
+            'Remada curvada',
+            'Avanço alternado',
+            'Prancha dinâmica',
+          ]
+        : [
+            'Leg press',
+            'Supino máquina',
+            'Puxada alta',
+            'Desenvolvimento halteres',
+            'Rosca + tríceps corda',
+          ];
 
   return {
     title: `Treino alternativo ${duration}min`,

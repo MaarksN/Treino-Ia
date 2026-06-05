@@ -45,9 +45,10 @@ export function buildHydrationQuickAddUrl(amountMl: number, source = 'pwa-shortc
 
 export function createQuickHydrationEntry(detail: HydrationQuickAddDetail): HydrationEntry {
   const today = new Date().toISOString().slice(0, 10);
-  const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto
-    ? crypto.randomUUID()
-    : `hydration_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  const id =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `hydration_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 
   return {
     id,
@@ -66,9 +67,11 @@ export function persistQuickHydration(detail: HydrationQuickAddDetail): Hydratio
   const entry = createQuickHydrationEntry({ ...detail, amountMl: amount });
   saveHydrationEntry(entry);
 
-  window.dispatchEvent(new CustomEvent(HYDRATION_QUICK_ADD_EVENT, {
-    detail: { entry, source: detail.source },
-  }));
+  window.dispatchEvent(
+    new CustomEvent(HYDRATION_QUICK_ADD_EVENT, {
+      detail: { entry, source: detail.source },
+    }),
+  );
 
   return entry;
 }

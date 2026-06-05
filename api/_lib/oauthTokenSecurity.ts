@@ -11,7 +11,8 @@ const TOKEN_FIELDS = ['access_token', 'refresh_token', 'token'];
 
 export function getOAuthTokenSecurityMode(): OAuthTokenSecurityMode {
   const mode = (process.env.OAUTH_TOKEN_SECURITY_MODE ?? '').trim() as OAuthTokenSecurityMode;
-  if (mode === 'encrypted' || mode === 'plaintext_blocked' || mode === 'plaintext_legacy_guarded') return mode;
+  if (mode === 'encrypted' || mode === 'plaintext_blocked' || mode === 'plaintext_legacy_guarded')
+    return mode;
   return 'not_configured';
 }
 
@@ -38,7 +39,7 @@ export function buildOAuthTokenStorageWarning(mode = getOAuthTokenSecurityMode()
 
 export function sanitizeOAuthTokenRecord(record: Record<string, unknown>): Record<string, unknown> {
   const next = { ...record };
-  TOKEN_FIELDS.forEach(field => {
+  TOKEN_FIELDS.forEach((field) => {
     if (field in next) {
       next[field] = '[REDACTED]';
     }

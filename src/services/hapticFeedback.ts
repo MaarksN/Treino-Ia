@@ -47,7 +47,10 @@ function getCapacitorHaptics(win: Window): HapticsPlugin | null {
   return (win as HapticWindow).Capacitor?.Plugins?.Haptics ?? null;
 }
 
-async function triggerCapacitorHaptic(plugin: HapticsPlugin, kind: HapticFeedbackKind): Promise<boolean> {
+async function triggerCapacitorHaptic(
+  plugin: HapticsPlugin,
+  kind: HapticFeedbackKind,
+): Promise<boolean> {
   if (kind === 'success' && plugin.notification) {
     await plugin.notification({ type: 'SUCCESS' });
     return true;

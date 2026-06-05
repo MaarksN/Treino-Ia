@@ -1,6 +1,27 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Exercise, PersonalRecord, WorkoutPlan, UserProfile, WorkoutHistoryRecord } from '../types';
-import { Dumbbell, Flame, Clock, CheckCircle, Edit2, Save, X, ThumbsUp, ThumbsDown, AlertTriangle, TrendingUp, Smile, Play, Pause, RotateCcw, Zap, ChevronDown, ChevronUp, Video, ChevronRight } from 'lucide-react';
+import {
+  Dumbbell,
+  Flame,
+  Clock,
+  CheckCircle,
+  Edit2,
+  Save,
+  X,
+  ThumbsUp,
+  ThumbsDown,
+  AlertTriangle,
+  TrendingUp,
+  Smile,
+  Play,
+  Pause,
+  RotateCcw,
+  Zap,
+  ChevronDown,
+  ChevronUp,
+  Video,
+  ChevronRight,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LineChart, Line, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 import { suggestExerciseAlternatives, suggestExerciseVariations } from '../services/geminiService';
@@ -13,13 +34,22 @@ interface Props {
   history?: WorkoutPlan[];
   workoutHistory?: WorkoutHistoryRecord[];
   userProfile?: UserProfile;
-  previousStat?: { date: number, weight?: number, reps?: string, rpe?: number } | null;
+  previousStat?: { date: number; weight?: number; reps?: string; rpe?: number } | null;
   previousData?: Exercise | null;
   previousPR?: PersonalRecord | null;
   onUpdate: (updated: Exercise) => void;
 }
 
-export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistory, userProfile, previousStat, previousData, previousPR, onUpdate }) => {
+export const ExerciseCard: React.FC<Props> = ({
+  exercise,
+  history,
+  workoutHistory,
+  userProfile,
+  previousStat,
+  previousData,
+  previousPR,
+  onUpdate,
+}) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState(exercise);
   const libraryEntry = useMemo(() => findExerciseLibraryEntry(exercise.name), [exercise.name]);
@@ -27,13 +57,18 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
     exercise.videoUrl ||
     libraryEntry?.videoUrl ||
     `https://www.youtube.com/results?search_query=${encodeURIComponent(exercise.name + ' execução correta')}`;
-  const pr = useMemo(() => previousPR || getPRForExercise(exercise.name), [exercise.name, previousPR]);
-  
+  const pr = useMemo(
+    () => previousPR || getPRForExercise(exercise.name),
+    [exercise.name, previousPR],
+  );
+
   // Variations State
   const [showVariations, setShowVariations] = useState(false);
-  const [variations, setVariations] = useState<Array<{name: string; description: string; difficulty: string;}>>([]);
+  const [variations, setVariations] = useState<
+    Array<{ name: string; description: string; difficulty: string }>
+  >([]);
   const [loadingVariations, setLoadingVariations] = useState(false);
-  
+
   // Timer State
   const [timerMode, setTimerMode] = useState<'idle' | 'work' | 'rest'>('idle');
   const [time, setTime] = useState(0);
@@ -44,13 +79,15 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
     let interval: NodeJS.Timeout;
     if (timerMode !== 'idle') {
       interval = setInterval(() => {
-        setTime(prev => {
+        setTime((prev) => {
           if (timerMode === 'rest' && prev <= 1) {
             setTimerMode('idle');
             try {
               if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
-              new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(()=>{});
-            } catch(e) {}
+              new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3')
+                .play()
+                .catch(() => {});
+            } catch (e) {}
             return 0;
           }
           return timerMode === 'rest' ? prev - 1 : prev + 1;
@@ -118,7 +155,7 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
     }
     setShowVariations(true);
     if (variations.length > 0) return;
-    
+
     setLoadingVariations(true);
     try {
       const res = await suggestExerciseVariations(exercise.name, userProfile);
@@ -137,13 +174,15 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
       const res = await suggestExerciseAlternatives(
         exercise.name,
         userProfile?.injuries || '',
-        userProfile?.workoutLocation || ''
+        userProfile?.workoutLocation || '',
       );
-      setVariations(res.map(name => ({
-        name,
-        description: `Substituição adaptada para ${exercise.name}.`,
-        difficulty: 'Different Focus',
-      })));
+      setVariations(
+        res.map((name) => ({
+          name,
+          description: `Substituição adaptada para ${exercise.name}.`,
+          difficulty: 'Different Focus',
+        })),
+      );
     } catch (error) {
       console.error(error);
       setVariations([]);
@@ -168,10 +207,20 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
     setSwipeX(0);
   };
 
-  const FeedbackButton = ({ type, icon: Icon, label, activeColor }: { type: Exercise['feedback'], icon: React.ElementType, label: string, activeColor: string }) => {
+  const FeedbackButton = ({
+    type,
+    icon: Icon,
+    label,
+    activeColor,
+  }: {
+    type: Exercise['feedback'];
+    icon: React.ElementType;
+    label: string;
+    activeColor: string;
+  }) => {
     const isActive = exercise.feedback === type;
     return (
-      <button 
+      <button
         onClick={() => updateFeedback(type)}
         title={label}
         className={`p-2 border-2 border-transparent transition-all ${isActive ? activeColor + ' bg-brand-light/10 border-brutal-neon shadow-brutal-neon' : 'text-brand-muted hover:bg-brand-light/5 border-brand-light/10'}`}
@@ -184,11 +233,13 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
 
   const chartData = useMemo(() => {
     if (!workoutHistory) return [];
-    const data: Array<{date: string, weight: number}> = [];
+    const data: Array<{ date: string; weight: number }> = [];
     const chronologicalHistory = [...workoutHistory].sort((a, b) => a.date - b.date);
-    
-    chronologicalHistory.forEach(record => {
-      const pastExc = record.exercises.find(e => e.name.toLowerCase() === exercise.name.toLowerCase() && e.actualWeight !== undefined);
+
+    chronologicalHistory.forEach((record) => {
+      const pastExc = record.exercises.find(
+        (e) => e.name.toLowerCase() === exercise.name.toLowerCase() && e.actualWeight !== undefined,
+      );
       if (pastExc?.actualWeight !== undefined) {
         data.push({
           date: new Date(record.date).toLocaleDateString([], { month: 'short', day: 'numeric' }),
@@ -202,35 +253,74 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
   if (isEditing) {
     return (
       <div className="bg-brand-gray border-brutal-neon p-5 relative shadow-brutal-neon">
-        <h4 className="text-xs uppercase tracking-wider text-brand-neon font-bold mb-4 font-display">Editar Exercício</h4>
+        <h4 className="text-xs uppercase tracking-wider text-brand-neon font-bold mb-4 font-display">
+          Editar Exercício
+        </h4>
         <div className="space-y-4">
           <div>
-            <label className="block text-[10px] uppercase text-brand-muted mb-1 font-bold">Nome do Exercício</label>
-            <input value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})} className="w-full bg-brand-dark px-3 py-2 text-sm border-2 border-brand-light/10 focus:border-brand-neon outline-none font-mono" />
+            <label className="block text-[10px] uppercase text-brand-muted mb-1 font-bold">
+              Nome do Exercício
+            </label>
+            <input
+              value={editForm.name}
+              onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+              className="w-full bg-brand-dark px-3 py-2 text-sm border-2 border-brand-light/10 focus:border-brand-neon outline-none font-mono"
+            />
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <label className="block text-[10px] uppercase text-brand-muted mb-1 font-bold">Séries</label>
-              <input type="number" value={editForm.sets} onChange={e => setEditForm({...editForm, sets: Number(e.target.value)})} className="w-full bg-brand-dark px-3 py-2 text-sm border-2 border-brand-light/10 focus:border-brand-neon outline-none font-mono" />
+              <label className="block text-[10px] uppercase text-brand-muted mb-1 font-bold">
+                Séries
+              </label>
+              <input
+                type="number"
+                value={editForm.sets}
+                onChange={(e) => setEditForm({ ...editForm, sets: Number(e.target.value) })}
+                className="w-full bg-brand-dark px-3 py-2 text-sm border-2 border-brand-light/10 focus:border-brand-neon outline-none font-mono"
+              />
             </div>
             <div>
-              <label className="block text-[10px] uppercase text-brand-muted mb-1 font-bold">Reps</label>
-              <input value={editForm.reps} onChange={e => setEditForm({...editForm, reps: e.target.value})} className="w-full bg-brand-dark px-3 py-2 text-sm border-2 border-brand-light/10 focus:border-brand-neon outline-none font-mono" />
+              <label className="block text-[10px] uppercase text-brand-muted mb-1 font-bold">
+                Reps
+              </label>
+              <input
+                value={editForm.reps}
+                onChange={(e) => setEditForm({ ...editForm, reps: e.target.value })}
+                className="w-full bg-brand-dark px-3 py-2 text-sm border-2 border-brand-light/10 focus:border-brand-neon outline-none font-mono"
+              />
             </div>
             <div>
-              <label className="block text-[10px] uppercase text-brand-muted mb-1 font-bold">Descanso(s)</label>
-              <input value={editForm.rest} onChange={e => setEditForm({...editForm, rest: e.target.value})} className="w-full bg-brand-dark px-3 py-2 text-sm border-2 border-brand-light/10 focus:border-brand-neon outline-none font-mono" />
+              <label className="block text-[10px] uppercase text-brand-muted mb-1 font-bold">
+                Descanso(s)
+              </label>
+              <input
+                value={editForm.rest}
+                onChange={(e) => setEditForm({ ...editForm, rest: e.target.value })}
+                className="w-full bg-brand-dark px-3 py-2 text-sm border-2 border-brand-light/10 focus:border-brand-neon outline-none font-mono"
+              />
             </div>
           </div>
           <div>
-            <label className="block text-[10px] uppercase text-brand-muted mb-1 font-bold">Observações (opcional)</label>
-            <input value={editForm.notes || ''} onChange={e => setEditForm({...editForm, notes: e.target.value})} className="w-full bg-brand-dark px-3 py-2 text-sm border-2 border-brand-light/10 focus:border-brand-neon outline-none font-mono" />
+            <label className="block text-[10px] uppercase text-brand-muted mb-1 font-bold">
+              Observações (opcional)
+            </label>
+            <input
+              value={editForm.notes || ''}
+              onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+              className="w-full bg-brand-dark px-3 py-2 text-sm border-2 border-brand-light/10 focus:border-brand-neon outline-none font-mono"
+            />
           </div>
           <div className="flex space-x-2 pt-2">
-            <button onClick={handleSave} className="flex-1 bg-brand-neon text-brand-dark py-2 border-brutal text-sm font-bold flex items-center justify-center uppercase">
+            <button
+              onClick={handleSave}
+              className="flex-1 bg-brand-neon text-brand-dark py-2 border-brutal text-sm font-bold flex items-center justify-center uppercase"
+            >
               <Save className="w-4 h-4 mr-2" /> Salvar
             </button>
-            <button onClick={handleCancel} className="flex-1 bg-brand-light/10 text-brand-light py-2 border-2 border-brand-light/20 text-sm font-bold flex items-center justify-center hover:bg-brand-light/20 uppercase">
+            <button
+              onClick={handleCancel}
+              className="flex-1 bg-brand-light/10 text-brand-light py-2 border-2 border-brand-light/20 text-sm font-bold flex items-center justify-center hover:bg-brand-light/20 uppercase"
+            >
               <X className="w-4 h-4 mr-2" /> Cancelar
             </button>
           </div>
@@ -240,7 +330,7 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
   }
 
   return (
-    <motion.div 
+    <motion.div
       layout
       drag="x"
       dragConstraints={{ left: 0, right: 0 }}
@@ -252,9 +342,12 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
-      style={{ transform: `translateX(${swipeX}px)`, transition: swipeX === 0 ? 'transform 0.3s' : 'none' }}
+      style={{
+        transform: `translateX(${swipeX}px)`,
+        transition: swipeX === 0 ? 'transform 0.3s' : 'none',
+      }}
       initial={false}
-      animate={{ 
+      animate={{
         borderColor: exercise.completed ? '#ccff00' : 'rgba(255,255,255,0.2)',
         backgroundColor: exercise.completed ? 'rgba(204,255,0,0.02)' : 'var(--color-brand-dark)',
       }}
@@ -278,28 +371,39 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
       <div className="mb-4">
         <div className="flex items-start justify-between mb-1">
           <div className="max-w-[70%]">
-            <h3 className="font-display font-black text-2xl uppercase tracking-tight leading-tight text-brand-light relative z-10">{exercise.name}</h3>
+            <h3 className="font-display font-black text-2xl uppercase tracking-tight leading-tight text-brand-light relative z-10">
+              {exercise.name}
+            </h3>
             {pr && (
               <div className="mt-1 text-[10px] uppercase tracking-widest text-yellow-400 font-black">
                 PR: {pr.weight}kg x {pr.reps} reps
               </div>
             )}
-            <a 
+            <a
               href={executionVideoUrl}
-              target="_blank" rel="noopener noreferrer"
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center text-[10px] uppercase font-bold text-brand-muted hover:text-[#FF0000] transition-colors mt-1"
-              title={libraryEntry ? `${libraryEntry.muscleGroup} - vídeo da biblioteca` : 'Buscar vídeo de execução'}
+              title={
+                libraryEntry
+                  ? `${libraryEntry.muscleGroup} - vídeo da biblioteca`
+                  : 'Buscar vídeo de execução'
+              }
             >
               <Video className="w-3 h-3 mr-1" /> Ver Execução
             </a>
           </div>
           <div className="flex items-center space-x-2 relative z-10">
-            <button onClick={() => setIsEditing(true)} className="p-1.5 text-brand-muted hover:text-brand-magenta transition-colors" title="Editar Exercício">
+            <button
+              onClick={() => setIsEditing(true)}
+              className="p-1.5 text-brand-muted hover:text-brand-magenta transition-colors"
+              title="Editar Exercício"
+            >
               <Edit2 className="w-5 h-5" />
             </button>
-            <motion.button 
+            <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={toggleComplete} 
+              onClick={toggleComplete}
               className={`p-1.5 transition-all border-2 ${exercise.completed ? 'bg-brand-neon text-brand-dark border-brand-dark' : 'bg-transparent text-brand-muted border-brand-light/20 hover:border-brand-neon hover:text-brand-neon'}`}
               title={exercise.completed ? 'Desmarcar' : 'Marcar como concluído'}
             >
@@ -309,7 +413,7 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
         </div>
         {exercise.notes && (
           <p className="text-sm text-brand-muted mt-2 leading-relaxed bg-brand-gray/50 p-2 border-l-4 border-brand-neon">
-            <span className="text-brand-neon font-bold mr-1">⚡</span> 
+            <span className="text-brand-neon font-bold mr-1">⚡</span>
             {exercise.notes}
           </p>
         )}
@@ -330,18 +434,30 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
         </div>
         <div className="col-span-2 bg-brand-gray p-2 md:p-3 border-2 border-brand-neon/30 flex items-center justify-between">
           <div>
-             <p className="text-[10px] text-brand-muted uppercase font-bold tracking-wider mb-1 flex items-center">
-               <Clock className="w-3 h-3 mr-1 text-brand-neon" /> Cronômetro
-             </p>
-             <p className={`font-mono font-bold text-xl ${timerMode === 'rest' ? 'text-brand-magenta animate-pulse' : 'text-brand-neon'}`}>
-               {timerMode === 'idle' ? `${exercise.rest}s REST` : formatTime(time)}
-             </p>
+            <p className="text-[10px] text-brand-muted uppercase font-bold tracking-wider mb-1 flex items-center">
+              <Clock className="w-3 h-3 mr-1 text-brand-neon" /> Cronômetro
+            </p>
+            <p
+              className={`font-mono font-bold text-xl ${timerMode === 'rest' ? 'text-brand-magenta animate-pulse' : 'text-brand-neon'}`}
+            >
+              {timerMode === 'idle' ? `${exercise.rest}s REST` : formatTime(time)}
+            </p>
           </div>
           <div className="flex space-x-2">
-            <button onClick={toggleTimer} className={`p-2 rounded-none border-2 border-brand-neon text-brand-neon hover:bg-brand-neon hover:text-brand-dark transition-colors`}>
-               {timerMode === 'idle' || timerMode === 'rest' ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+            <button
+              onClick={toggleTimer}
+              className={`p-2 rounded-none border-2 border-brand-neon text-brand-neon hover:bg-brand-neon hover:text-brand-dark transition-colors`}
+            >
+              {timerMode === 'idle' || timerMode === 'rest' ? (
+                <Play className="w-4 h-4" />
+              ) : (
+                <Pause className="w-4 h-4" />
+              )}
             </button>
-            <button onClick={resetTimer} className="p-2 border-2 border-brand-light/20 text-brand-light hover:bg-brand-light/10 transition-colors">
+            <button
+              onClick={resetTimer}
+              className="p-2 border-2 border-brand-light/20 text-brand-light hover:bg-brand-light/10 transition-colors"
+            >
               <RotateCcw className="w-4 h-4" />
             </button>
           </div>
@@ -352,23 +468,35 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
         <div className="mb-4 bg-brand-gray/30 border-2 border-brand-light/10 p-4 space-y-3">
           {exercise.executionDetails && (
             <div>
-              <h5 className="font-display uppercase text-brand-neon text-sm tracking-wider mb-1">🔥 Execução:</h5>
-              <p className="text-xs text-brand-light leading-relaxed">{exercise.executionDetails}</p>
+              <h5 className="font-display uppercase text-brand-neon text-sm tracking-wider mb-1">
+                🔥 Execução:
+              </h5>
+              <p className="text-xs text-brand-light leading-relaxed">
+                {exercise.executionDetails}
+              </p>
             </div>
           )}
           {(exercise.concentricPhase || exercise.eccentricPhase) && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-brand-light/10">
               {exercise.concentricPhase && (
-                 <div>
-                   <h5 className="font-display uppercase text-brand-magenta text-sm tracking-wider mb-1">💪 Fase Concêntrica:</h5>
-                   <p className="text-[10px] text-brand-muted leading-relaxed">{exercise.concentricPhase}</p>
-                 </div>
+                <div>
+                  <h5 className="font-display uppercase text-brand-magenta text-sm tracking-wider mb-1">
+                    💪 Fase Concêntrica:
+                  </h5>
+                  <p className="text-[10px] text-brand-muted leading-relaxed">
+                    {exercise.concentricPhase}
+                  </p>
+                </div>
               )}
               {exercise.eccentricPhase && (
-                 <div>
-                   <h5 className="font-display uppercase text-brand-neon text-sm tracking-wider mb-1">🛡️ Fase Excêntrica:</h5>
-                   <p className="text-[10px] text-brand-muted leading-relaxed">{exercise.eccentricPhase}</p>
-                 </div>
+                <div>
+                  <h5 className="font-display uppercase text-brand-neon text-sm tracking-wider mb-1">
+                    🛡️ Fase Excêntrica:
+                  </h5>
+                  <p className="text-[10px] text-brand-muted leading-relaxed">
+                    {exercise.eccentricPhase}
+                  </p>
+                </div>
               )}
             </div>
           )}
@@ -376,7 +504,7 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
       )}
 
       {exercise.completed && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           className="pt-4 border-t-2 border-brand-neon mt-auto overflow-hidden"
@@ -389,19 +517,24 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
           {previousStat && (
             <div className="mb-4 p-2 bg-brand-neon/10 border-l-2 border-brand-neon flex items-center justify-between">
               <div>
-                <p className="text-[10px] text-brand-muted uppercase font-bold">Última Vez ({new Date(previousStat.date).toLocaleDateString()})</p>
+                <p className="text-[10px] text-brand-muted uppercase font-bold">
+                  Última Vez ({new Date(previousStat.date).toLocaleDateString()})
+                </p>
                 <p className="text-sm font-mono font-bold text-brand-light">
-                  {previousStat.weight ? `${previousStat.weight}kg` : '-'} / {previousStat.reps || '-'} reps
+                  {previousStat.weight ? `${previousStat.weight}kg` : '-'} /{' '}
+                  {previousStat.reps || '-'} reps
                 </p>
               </div>
               <button
                 type="button"
-                onClick={() => onUpdate({
-                  ...exercise,
-                  actualWeight: exercise.actualWeight || previousStat.weight,
-                  actualReps: exercise.actualReps || previousStat.reps,
-                  rpe: exercise.rpe || previousStat.rpe,
-                })}
+                onClick={() =>
+                  onUpdate({
+                    ...exercise,
+                    actualWeight: exercise.actualWeight || previousStat.weight,
+                    actualReps: exercise.actualReps || previousStat.reps,
+                    rpe: exercise.rpe || previousStat.rpe,
+                  })
+                }
                 className="text-xs text-brand-neon font-display font-black uppercase tracking-widest text-right hover:text-brand-light transition-colors"
               >
                 Preencher
@@ -412,33 +545,48 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
           {previousData && (
             <div className="mb-4 p-3 bg-brand-light/5 border-2 border-brand-light/10 text-xs text-brand-muted">
               <span className="text-brand-light/60 font-bold uppercase">Ultima vez:</span>{' '}
-              {previousData.actualWeight ? `${previousData.actualWeight}kg` : '-'} x {previousData.actualReps || '-'}
+              {previousData.actualWeight ? `${previousData.actualWeight}kg` : '-'} x{' '}
+              {previousData.actualReps || '-'}
               <button
                 type="button"
                 className="ml-3 text-brand-neon font-bold uppercase hover:text-brand-light transition-colors"
-                onClick={() => onUpdate({
-                  ...exercise,
-                  actualWeight: previousData.actualWeight,
-                  actualReps: previousData.actualReps,
-                  setLogs: previousData.setLogs,
-                })}
+                onClick={() =>
+                  onUpdate({
+                    ...exercise,
+                    actualWeight: previousData.actualWeight,
+                    actualReps: previousData.actualReps,
+                    setLogs: previousData.setLogs,
+                  })
+                }
               >
                 Usar como base
               </button>
             </div>
           )}
-          
+
           {chartData.length > 0 && (
             <div className="mb-4 h-24 w-full relative group">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
                   <XAxis dataKey="date" hide />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: '#000', borderColor: '#ccff00', borderRadius: '0px', fontSize: '12px', fontFamily: 'var(--font-mono)' }}
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#000',
+                      borderColor: '#ccff00',
+                      borderRadius: '0px',
+                      fontSize: '12px',
+                      fontFamily: 'var(--font-mono)',
+                    }}
                     itemStyle={{ color: '#ccff00' }}
                     labelStyle={{ color: '#fff', marginBottom: '4px' }}
                   />
-                  <Line type="stepAfter" dataKey="weight" stroke="#ccff00" strokeWidth={3} dot={{ r: 4, fill: '#000', stroke: '#ccff00', strokeWidth: 2 }} />
+                  <Line
+                    type="stepAfter"
+                    dataKey="weight"
+                    stroke="#ccff00"
+                    strokeWidth={3}
+                    dot={{ r: 4, fill: '#000', stroke: '#ccff00', strokeWidth: 2 }}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -446,34 +594,42 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
             <div>
-              <label className="block text-[10px] uppercase text-brand-muted mb-1 font-bold">Carga Real (kg)</label>
-              <input 
-                type="number" 
-                placeholder="Ex: 20" 
+              <label className="block text-[10px] uppercase text-brand-muted mb-1 font-bold">
+                Carga Real (kg)
+              </label>
+              <input
+                type="number"
+                placeholder="Ex: 20"
                 value={exercise.actualWeight || ''}
-                onChange={e => onUpdate({ ...exercise, actualWeight: Number(e.target.value) })}
+                onChange={(e) => onUpdate({ ...exercise, actualWeight: Number(e.target.value) })}
                 className="w-full bg-brand-dark border-2 border-brand-light/20 px-3 py-2 text-sm font-mono text-brand-neon outline-none focus:border-brand-neon focus:shadow-brutal-neon transition-all"
               />
             </div>
             <div>
-              <label className="block text-[10px] uppercase text-brand-muted mb-1 font-bold">Reps Reais</label>
-              <input 
-                type="text" 
-                placeholder="Ex: 10,10,8" 
+              <label className="block text-[10px] uppercase text-brand-muted mb-1 font-bold">
+                Reps Reais
+              </label>
+              <input
+                type="text"
+                placeholder="Ex: 10,10,8"
                 value={exercise.actualReps || ''}
-                onChange={e => onUpdate({ ...exercise, actualReps: e.target.value })}
+                onChange={(e) => onUpdate({ ...exercise, actualReps: e.target.value })}
                 className="w-full bg-brand-dark border-2 border-brand-light/20 px-3 py-2 text-sm font-mono text-brand-light outline-none focus:border-brand-neon focus:shadow-brutal-neon transition-all"
               />
             </div>
             <div className="col-span-2 md:col-span-1">
-              <label className="block text-[10px] uppercase text-brand-muted mb-1 font-bold">RPE (1-10)</label>
-              <input 
+              <label className="block text-[10px] uppercase text-brand-muted mb-1 font-bold">
+                RPE (1-10)
+              </label>
+              <input
                 type="number"
                 min={1}
                 max={10}
                 placeholder="Ex: 8"
                 value={exercise.rpe || ''}
-                onChange={e => onUpdate({ ...exercise, rpe: Number(e.target.value) || undefined })}
+                onChange={(e) =>
+                  onUpdate({ ...exercise, rpe: Number(e.target.value) || undefined })
+                }
                 className="w-full bg-brand-dark border-2 border-brand-light/20 px-3 py-2 text-sm font-mono text-brand-magenta outline-none focus:border-brand-magenta focus:shadow-brutal-magenta transition-all"
               />
             </div>
@@ -484,10 +640,12 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
           </div>
 
           <div className="mb-4">
-            <label className="block text-[10px] uppercase text-brand-muted mb-1 font-bold">Nota rápida do exercício</label>
+            <label className="block text-[10px] uppercase text-brand-muted mb-1 font-bold">
+              Nota rápida do exercício
+            </label>
             <textarea
               value={exercise.performanceNotes || ''}
-              onChange={e => onUpdate({ ...exercise, performanceNotes: e.target.value })}
+              onChange={(e) => onUpdate({ ...exercise, performanceNotes: e.target.value })}
               placeholder="Ex.: cotovelo incomodou, manter carga, melhorar amplitude..."
               rows={2}
               className="w-full bg-brand-dark border-2 border-brand-light/20 px-3 py-2 text-sm text-brand-light outline-none resize-none placeholder:text-brand-light/30 focus:border-brand-neon transition-colors"
@@ -495,25 +653,51 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
           </div>
 
           <div className="mb-4">
-             <label className="block text-[10px] text-brand-muted mb-1 uppercase font-bold">Como foi o exercício?</label>
-             <div className="flex justify-between gap-2">
-               <FeedbackButton type="easy" icon={Smile} label="Fácil" activeColor="text-brand-neon" />
-               <FeedbackButton type="good" icon={ThumbsUp} label="Ideal" activeColor="text-brand-light" />
-               <FeedbackButton type="hard" icon={ThumbsDown} label="Difícil" activeColor="text-brand-magenta" />
-               <FeedbackButton type="painful" icon={AlertTriangle} label="Dor" activeColor="text-red-500" />
-             </div>
+            <label className="block text-[10px] text-brand-muted mb-1 uppercase font-bold">
+              Como foi o exercício?
+            </label>
+            <div className="flex justify-between gap-2">
+              <FeedbackButton
+                type="easy"
+                icon={Smile}
+                label="Fácil"
+                activeColor="text-brand-neon"
+              />
+              <FeedbackButton
+                type="good"
+                icon={ThumbsUp}
+                label="Ideal"
+                activeColor="text-brand-light"
+              />
+              <FeedbackButton
+                type="hard"
+                icon={ThumbsDown}
+                label="Difícil"
+                activeColor="text-brand-magenta"
+              />
+              <FeedbackButton
+                type="painful"
+                icon={AlertTriangle}
+                label="Dor"
+                activeColor="text-red-500"
+              />
+            </div>
           </div>
 
           <div className="mt-4 pt-4 border-t-2 border-brand-light/10">
-            <button 
+            <button
               onClick={fetchVariations}
               className="w-full flex items-center justify-between px-4 py-3 bg-brand-neon/5 border-2 border-brand-neon/50 text-brand-neon hover:bg-brand-neon/10 transition-colors uppercase font-bold text-xs"
             >
               <div className="flex items-center">
-                <Zap className="w-4 h-4 mr-2" /> 
+                <Zap className="w-4 h-4 mr-2" />
                 Sugestões da IA (Variações)
               </div>
-              {showVariations ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              {showVariations ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
             </button>
 
             <button
@@ -524,10 +708,10 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
               <Zap className="w-4 h-4 mr-2" />
               Substituir com IA
             </button>
-            
+
             <AnimatePresence>
               {showVariations && (
-                <motion.div 
+                <motion.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
@@ -537,32 +721,53 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
                     {loadingVariations ? (
                       <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-brand-light/20 animate-pulse">
                         <Zap className="w-8 h-8 text-brand-neon mb-2" />
-                        <p className="text-xs uppercase font-mono text-brand-muted">Conectando à Forja Neural...</p>
+                        <p className="text-xs uppercase font-mono text-brand-muted">
+                          Conectando à Forja Neural...
+                        </p>
                       </div>
                     ) : variations.length > 0 ? (
                       variations.map((v, i) => (
-                        <div key={i} className="bg-brand-dark border-l-4 border-brand-neon p-3 flex flex-col group">
-                           <div className="flex items-start justify-between mb-1">
-                             <h6 className="font-bold text-sm text-brand-light leading-tight">{v.name}</h6>
-                             <span className={`text-[9px] uppercase font-bold px-2 py-0.5 ml-2 whitespace-nowrap ${v.difficulty === 'Easier' ? 'bg-brand-light/10 text-brand-light' : v.difficulty === 'Harder' ? 'bg-brand-magenta/20 text-brand-magenta' : 'bg-brand-neon/20 text-brand-neon'}`}>
-                               {v.difficulty === 'Easier' ? 'Regressão' : v.difficulty === 'Harder' ? 'Progressão' : 'Alternativa'}
-                             </span>
-                           </div>
-                           <p className="text-xs text-brand-muted mt-1 leading-relaxed">{v.description}</p>
-                           
-                           <button 
-                             onClick={() => {
-                               onUpdate({ ...exercise, name: v.name, executionDetails: v.description });
-                               setShowVariations(false);
-                             }}
-                             className="mt-3 text-xs uppercase font-bold bg-brand-neon/10 text-brand-neon hover:bg-brand-neon hover:text-brand-dark py-1.5 transition-colors opacity-0 group-hover:opacity-100"
-                           >
-                             Trocar Exercício Atual
-                           </button>
+                        <div
+                          key={i}
+                          className="bg-brand-dark border-l-4 border-brand-neon p-3 flex flex-col group"
+                        >
+                          <div className="flex items-start justify-between mb-1">
+                            <h6 className="font-bold text-sm text-brand-light leading-tight">
+                              {v.name}
+                            </h6>
+                            <span
+                              className={`text-[9px] uppercase font-bold px-2 py-0.5 ml-2 whitespace-nowrap ${v.difficulty === 'Easier' ? 'bg-brand-light/10 text-brand-light' : v.difficulty === 'Harder' ? 'bg-brand-magenta/20 text-brand-magenta' : 'bg-brand-neon/20 text-brand-neon'}`}
+                            >
+                              {v.difficulty === 'Easier'
+                                ? 'Regressão'
+                                : v.difficulty === 'Harder'
+                                  ? 'Progressão'
+                                  : 'Alternativa'}
+                            </span>
+                          </div>
+                          <p className="text-xs text-brand-muted mt-1 leading-relaxed">
+                            {v.description}
+                          </p>
+
+                          <button
+                            onClick={() => {
+                              onUpdate({
+                                ...exercise,
+                                name: v.name,
+                                executionDetails: v.description,
+                              });
+                              setShowVariations(false);
+                            }}
+                            className="mt-3 text-xs uppercase font-bold bg-brand-neon/10 text-brand-neon hover:bg-brand-neon hover:text-brand-dark py-1.5 transition-colors opacity-0 group-hover:opacity-100"
+                          >
+                            Trocar Exercício Atual
+                          </button>
                         </div>
                       ))
                     ) : (
-                      <p className="text-xs text-brand-muted text-center py-4">Nenhuma variação encontrada.</p>
+                      <p className="text-xs text-brand-muted text-center py-4">
+                        Nenhuma variação encontrada.
+                      </p>
                     )}
                   </div>
                 </motion.div>
@@ -573,4 +778,4 @@ export const ExerciseCard: React.FC<Props> = ({ exercise, history, workoutHistor
       )}
     </motion.div>
   );
-}
+};

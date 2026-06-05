@@ -11,7 +11,8 @@ export const periodizationService = {
         .eq('profile_id', profileId)
         .single();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 is not found
+      if (error && error.code !== 'PGRST116') {
+        // PGRST116 is not found
         console.error('Error fetching periodization plan:', error);
         return null;
       }
@@ -23,13 +24,16 @@ export const periodizationService = {
     }
   },
 
-  async saveTwelveWeekPlan(profileId: string, planData: TwelveWeekPlan): Promise<UserPeriodizationPlan | null> {
+  async saveTwelveWeekPlan(
+    profileId: string,
+    planData: TwelveWeekPlan,
+  ): Promise<UserPeriodizationPlan | null> {
     try {
       const payload = {
         profile_id: profileId,
         current_week: 1,
         plan_data: planData,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
 
       const { data, error } = await supabase
@@ -58,5 +62,5 @@ export const periodizationService = {
       console.error('Failed to generate and save plan:', error);
       return null;
     }
-  }
+  },
 };

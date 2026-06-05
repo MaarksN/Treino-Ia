@@ -51,9 +51,10 @@ export function getWorkoutSwipeResult(
   }
 
   const action: WorkoutSwipeAction = deltaX < 0 ? 'next' : 'previous';
-  const nextIndex = action === 'next'
-    ? Math.min(totalExercises - 1, currentIndex + 1)
-    : Math.max(0, currentIndex - 1);
+  const nextIndex =
+    action === 'next'
+      ? Math.min(totalExercises - 1, currentIndex + 1)
+      : Math.max(0, currentIndex - 1);
 
   if (nextIndex === currentIndex) {
     return { action: 'none', nextIndex: currentIndex, reason: 'boundary' };

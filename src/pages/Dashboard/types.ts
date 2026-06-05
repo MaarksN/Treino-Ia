@@ -11,7 +11,10 @@ export interface DraftSet {
   suggestedRpe?: string;
 }
 
-export type ActiveExerciseDraft = Omit<WorkoutExerciseLog, 'sets' | 'actualWeight' | 'actualReps' | 'rpe'> & {
+export type ActiveExerciseDraft = Omit<
+  WorkoutExerciseLog,
+  'sets' | 'actualWeight' | 'actualReps' | 'rpe'
+> & {
   sets: DraftSet[];
   exerciseNote?: string;
   intensityTechnique?: ExerciseIntensityTechnique;

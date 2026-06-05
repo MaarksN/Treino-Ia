@@ -12,7 +12,7 @@ import './index.css';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const OnboardingTour = lazy(() =>
-  import('./components/OnboardingTour').then(module => ({ default: module.OnboardingTour })),
+  import('./components/OnboardingTour').then((module) => ({ default: module.OnboardingTour })),
 );
 
 const ONBOARDING_KEY = '@TreinoApp:onboarding';
@@ -31,7 +31,9 @@ const LIGHT_THEME_VARS: Record<string, string> = {
 
 function readOnboardingCompleted(): boolean {
   if (typeof localStorage === 'undefined') return false;
-  return localStorage.getItem(ONBOARDING_KEY) === 'true' || localStorage.getItem(ONBOARDING_KEY) === '1';
+  return (
+    localStorage.getItem(ONBOARDING_KEY) === 'true' || localStorage.getItem(ONBOARDING_KEY) === '1'
+  );
 }
 
 function applyStoredTheme(): void {
@@ -91,10 +93,7 @@ export default function App() {
     <ErrorBoundary section="App">
       <Suspense fallback={<LoadingShell />}>
         {showOnboarding && (
-          <OnboardingTour
-            onComplete={handleCompleteOnboarding}
-            onSkip={handleCompleteOnboarding}
-          />
+          <OnboardingTour onComplete={handleCompleteOnboarding} onSkip={handleCompleteOnboarding} />
         )}
         <Dashboard />
       </Suspense>

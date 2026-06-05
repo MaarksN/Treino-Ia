@@ -36,7 +36,10 @@ export function BottomNav({ items = DEFAULT_ITEMS, activeId, onChange }: BottomN
       aria-label="Navegação móvel"
       className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-brand-dark/95 backdrop-blur md:hidden"
     >
-      <ul className="grid" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
+      <ul
+        className="grid"
+        style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+      >
         {items.map((item) => {
           const Icon = ICONS[item.icon];
           const active = item.id === activeId;

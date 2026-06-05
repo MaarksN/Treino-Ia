@@ -55,7 +55,7 @@ export function saveWearableSession(session: WearableSession) {
 export function calcHRZones(readings: HeartRateReading[], maxHRAge: number): HRZones {
   const zones: HRZones = { zone1: 0, zone2: 0, zone3: 0, zone4: 0, zone5: 0 };
 
-  readings.forEach(reading => {
+  readings.forEach((reading) => {
     const pct = (reading.bpm / maxHRAge) * 100;
     if (pct < 60) zones.zone1 += 1;
     else if (pct < 70) zones.zone2 += 1;
@@ -72,7 +72,7 @@ export function estimateCalories(
   weightKg: number,
   ageYears: number,
   isMale: boolean,
-  durationMin: number
+  durationMin: number,
 ): number {
   const avgHR = readings.length
     ? readings.reduce((sum, reading) => sum + reading.bpm, 0) / readings.length
@@ -81,8 +81,8 @@ export function estimateCalories(
   if (durationMin <= 0) return 0;
 
   const calories = isMale
-    ? ((-55.0969 + (0.6309 * avgHR) + (0.1988 * weightKg) + (0.2017 * ageYears)) / 4.184) * durationMin
-    : ((-20.4022 + (0.4472 * avgHR) - (0.1263 * weightKg) + (0.074 * ageYears)) / 4.184) * durationMin;
+    ? ((-55.0969 + 0.6309 * avgHR + 0.1988 * weightKg + 0.2017 * ageYears) / 4.184) * durationMin
+    : ((-20.4022 + 0.4472 * avgHR - 0.1263 * weightKg + 0.074 * ageYears) / 4.184) * durationMin;
 
   return Math.max(0, Math.round(calories));
 }

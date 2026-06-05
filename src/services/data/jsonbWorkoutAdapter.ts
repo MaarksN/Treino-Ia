@@ -39,9 +39,10 @@ function normalizeExerciseLog(raw: unknown): WorkoutExerciseLog | null {
     completed: Boolean(raw.completed),
     sets: Array.isArray(raw.sets) ? raw.sets : undefined,
     exerciseNote: typeof raw.exerciseNote === 'string' ? raw.exerciseNote : undefined,
-    intensityTechnique: raw.intensityTechnique === 'superset' || raw.intensityTechnique === 'dropset'
-      ? raw.intensityTechnique
-      : 'normal',
+    intensityTechnique:
+      raw.intensityTechnique === 'superset' || raw.intensityTechnique === 'dropset'
+        ? raw.intensityTechnique
+        : 'normal',
     supersetGroupId: typeof raw.supersetGroupId === 'string' ? raw.supersetGroupId : undefined,
     actualWeight: typeof raw.actualWeight === 'number' ? raw.actualWeight : undefined,
     actualReps: typeof raw.actualReps === 'number' ? raw.actualReps : undefined,
@@ -49,7 +50,9 @@ function normalizeExerciseLog(raw: unknown): WorkoutExerciseLog | null {
   };
 }
 
-export function adaptWorkoutSession(row: RawWorkoutSessionRow | null | undefined): WorkoutSession | null {
+export function adaptWorkoutSession(
+  row: RawWorkoutSessionRow | null | undefined,
+): WorkoutSession | null {
   if (!row) return null;
 
   const json = row.record_json;
@@ -69,7 +72,10 @@ export function adaptWorkoutSession(row: RawWorkoutSessionRow | null | undefined
     completedAt: safeNumber(json.completedAt, 0),
     durationMinutes: safeNumber(json.durationMinutes, 0),
     totalVolume: safeNumber(json.totalVolume, row.volume_load ?? 0),
-    completedExercises: safeNumber(json.completedExercises, exercises.filter(e => e.completed).length),
+    completedExercises: safeNumber(
+      json.completedExercises,
+      exercises.filter((e) => e.completed).length,
+    ),
     totalExercises: safeNumber(json.totalExercises, exercises.length),
     feedback: safeString(json.feedback, ''),
     nextRecommendation: safeString(json.nextRecommendation, ''),
@@ -78,7 +84,5 @@ export function adaptWorkoutSession(row: RawWorkoutSessionRow | null | undefined
 }
 
 export function adaptWorkoutSessionList(rows: RawWorkoutSessionRow[]): WorkoutSession[] {
-  return rows
-    .map(row => adaptWorkoutSession(row))
-    .filter((s): s is WorkoutSession => s !== null);
+  return rows.map((row) => adaptWorkoutSession(row)).filter((s): s is WorkoutSession => s !== null);
 }

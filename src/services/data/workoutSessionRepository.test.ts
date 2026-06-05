@@ -101,10 +101,12 @@ describe('workoutSessionRepository', () => {
 
     expect(sessionId).toBe('generated-id');
     expect(supabase.from).toHaveBeenCalledWith('workout_sessions');
-    expect(insert).toHaveBeenCalledWith(expect.objectContaining({
-      user_id: 'user-id-123',
-      plan_id: 'plan-1',
-    }));
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user_id: 'user-id-123',
+        plan_id: 'plan-1',
+      }),
+    );
   });
 
   it('registers an exercise log', async () => {
@@ -119,29 +121,35 @@ describe('workoutSessionRepository', () => {
 
     expect(logId).toBe('generated-id');
     expect(supabase.from).toHaveBeenCalledWith('exercise_logs');
-    expect(insert).toHaveBeenCalledWith(expect.objectContaining({
-      user_id: 'user-id-123',
-      exercise_id: 'ex-1',
-    }));
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user_id: 'user-id-123',
+        exercise_id: 'ex-1',
+      }),
+    );
   });
 
   it('registers set logs', async () => {
-    await workoutSessionRepository.addSetLogs([{
-      exercise_log_id: 'log-1',
-      session_id: 'session-1',
-      set_index: 0,
-      weight: 100,
-      reps: 10,
-      completed: true,
-      is_personal_record: false,
-    }]);
+    await workoutSessionRepository.addSetLogs([
+      {
+        exercise_log_id: 'log-1',
+        session_id: 'session-1',
+        set_index: 0,
+        weight: 100,
+        reps: 10,
+        completed: true,
+        is_personal_record: false,
+      },
+    ]);
 
     expect(supabase.from).toHaveBeenCalledWith('set_logs');
-    expect(insert).toHaveBeenCalledWith([expect.objectContaining({
-      user_id: 'user-id-123',
-      weight: 100,
-      reps: 10,
-    })]);
+    expect(insert).toHaveBeenCalledWith([
+      expect.objectContaining({
+        user_id: 'user-id-123',
+        weight: 100,
+        reps: 10,
+      }),
+    ]);
   });
 
   it('calculates set volume and detects basic personal records', () => {
@@ -189,8 +197,6 @@ describe('workoutSessionRepository', () => {
       { onConflict: 'user_id,legacy_session_id' },
     );
     expect(deleteRows).toHaveBeenCalledTimes(2);
-    expect(deleteRows.mock.invocationCallOrder[1]).toBeLessThan(
-      insert.mock.invocationCallOrder[0],
-    );
+    expect(deleteRows.mock.invocationCallOrder[1]).toBeLessThan(insert.mock.invocationCallOrder[0]);
   });
 });

@@ -35,28 +35,28 @@ docs/bloco-19-personalizacao-avancada-ia.md
 
 ## Tabela dos 20 itens
 
-| # | Item | Prioridade sugerida |
-|---:|---|---|
-| 1 | Personas de coach IA: Rigoroso, Motivador, Técnico, Amigo | MVP / Base |
-| 2 | Memória de longo prazo (IA lembra histórico de 6 meses) | Premium / V2 |
-| 3 | Ajuste automático de carga semana a semana (progressive overload) | MVP / Base |
-| 4 | Periodização IA: Mesociclo → Microciclo automático | Premium / V2 |
-| 5 | Detecção de platô e proposta de variação de estímulo | MVP / Base |
-| 6 | Substituição automática de exercício por lesão reportada | MVP / Base |
-| 7 | Replanejamento por dia perdido ("faltou ontem?") | MVP / Base |
-| 8 | Análise preditiva: quando atingirá o próximo PR? | Premium / V2 |
-| 9 | Recomendação de suplemento personalizada por perfil | Premium / V2 |
-| 10 | Chat com IA coach em linguagem natural (streaming) | MVP / Base |
-| 11 | Modo voz: resposta em áudio (TTS Gemini) | Premium / V2 |
-| 12 | Análise de vídeo de execução (Gemini Vision) | Premium / V2 |
-| 13 | Geração de variações do treino atual (A/B de estímulo) | MVP / Base |
-| 14 | Plano de pico: semanas finais antes de competição | Premium / V2 |
-| 15 | Protocolo de reintrodução pós-pausa (voltou após 30 dias) | MVP / Base |
-| 16 | Relatório trimestral em PDF gerado por IA | Premium / V2 |
-| 17 | Comparação com baseline de usuários similares (anon.) | Roadmap / Futuro |
-| 18 | Notificação preditiva ("você tende a pular às quintas") | Premium / V2 |
-| 19 | Score de consistência com forecast de tendência | MVP / Base |
-| 20 | Modo turbo: treino de 20min com máxima eficiência | MVP / Base |
+|   # | Item                                                              | Prioridade sugerida |
+| --: | ----------------------------------------------------------------- | ------------------- |
+|   1 | Personas de coach IA: Rigoroso, Motivador, Técnico, Amigo         | MVP / Base          |
+|   2 | Memória de longo prazo (IA lembra histórico de 6 meses)           | Premium / V2        |
+|   3 | Ajuste automático de carga semana a semana (progressive overload) | MVP / Base          |
+|   4 | Periodização IA: Mesociclo → Microciclo automático                | Premium / V2        |
+|   5 | Detecção de platô e proposta de variação de estímulo              | MVP / Base          |
+|   6 | Substituição automática de exercício por lesão reportada          | MVP / Base          |
+|   7 | Replanejamento por dia perdido ("faltou ontem?")                  | MVP / Base          |
+|   8 | Análise preditiva: quando atingirá o próximo PR?                  | Premium / V2        |
+|   9 | Recomendação de suplemento personalizada por perfil               | Premium / V2        |
+|  10 | Chat com IA coach em linguagem natural (streaming)                | MVP / Base          |
+|  11 | Modo voz: resposta em áudio (TTS Gemini)                          | Premium / V2        |
+|  12 | Análise de vídeo de execução (Gemini Vision)                      | Premium / V2        |
+|  13 | Geração de variações do treino atual (A/B de estímulo)            | MVP / Base          |
+|  14 | Plano de pico: semanas finais antes de competição                 | Premium / V2        |
+|  15 | Protocolo de reintrodução pós-pausa (voltou após 30 dias)         | MVP / Base          |
+|  16 | Relatório trimestral em PDF gerado por IA                         | Premium / V2        |
+|  17 | Comparação com baseline de usuários similares (anon.)             | Roadmap / Futuro    |
+|  18 | Notificação preditiva ("você tende a pular às quintas")           | Premium / V2        |
+|  19 | Score de consistência com forecast de tendência                   | MVP / Base          |
+|  20 | Modo turbo: treino de 20min com máxima eficiência                 | MVP / Base          |
 
 ## Organização por prioridade
 
@@ -114,7 +114,9 @@ docs/bloco-19-personalizacao-avancada-ia.md
 
 ```tsx
 // Exemplo conceitual de rota/tela para o Bloco 19
-{currentView === 'bloco-19' && <PersonalizacaoAvancadaDeIaHub />}
+{
+  currentView === 'bloco-19' && <PersonalizacaoAvancadaDeIaHub />;
+}
 ```
 
 ## Resultado esperado

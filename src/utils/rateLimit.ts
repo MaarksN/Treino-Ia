@@ -5,8 +5,8 @@ export function checkRateLimit(bucket: string, limit: number, windowMs: number) 
 
   const now = Date.now();
   const raw = localStorage.getItem(RATE_LIMIT_KEY);
-  const all = raw ? JSON.parse(raw) as Record<string, number[]> : {};
-  const hits = (all[bucket] || []).filter(time => now - time < windowMs);
+  const all = raw ? (JSON.parse(raw) as Record<string, number[]>) : {};
+  const hits = (all[bucket] || []).filter((time) => now - time < windowMs);
   const allowed = hits.length < limit;
   const nextHits = allowed ? [...hits, now] : hits;
 

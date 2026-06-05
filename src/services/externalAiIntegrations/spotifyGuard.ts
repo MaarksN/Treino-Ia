@@ -12,6 +12,6 @@ export function checkSpotifyIntegrationGuard(): SpotifyIntegrationState {
   return {
     isConnected: false,
     canUseAiPlaylist: false,
-    status: 'blocked_external_dependency'
+    status: 'blocked_external_dependency',
   };
 }

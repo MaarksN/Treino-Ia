@@ -14,17 +14,17 @@ Status: partial production coverage, reviewed for blocks 16 and 20.
 
 ## WCAG mapping
 
-| Criterion | Status | Evidence |
-|---|---|---|
-| 1.1.1 Non-text Content | Partial | New media must include alt text; current app shell has icon-only controls with text labels nearby. |
-| 1.4.3 Contrast | Partial | High contrast mode exists; full-page audit still required. |
-| 2.1.1 Keyboard | Partial | Native controls are keyboard accessible; drag/swipe gestures need keyboard alternatives. |
-| 2.4.1 Bypass Blocks | Supported | Skip link exists in platform hub. |
-| 2.4.7 Focus Visible | Partial | Browser focus is preserved; custom components need visual regression audit. |
-| 2.5.1 Pointer Gestures | Partial | Swipe features must keep button alternatives. |
-| 3.1.1 Language of Page | Supported | `index.html` declares `pt-BR`. |
-| 3.2.3 Consistent Navigation | Supported | Platform tabs and app sections keep consistent order. |
-| 4.1.2 Name, Role, Value | Partial | Native controls pass; custom generated controls need manual screen-reader test. |
+| Criterion                   | Status    | Evidence                                                                                           |
+| --------------------------- | --------- | -------------------------------------------------------------------------------------------------- |
+| 1.1.1 Non-text Content      | Partial   | New media must include alt text; current app shell has icon-only controls with text labels nearby. |
+| 1.4.3 Contrast              | Partial   | High contrast mode exists; full-page audit still required.                                         |
+| 2.1.1 Keyboard              | Partial   | Native controls are keyboard accessible; drag/swipe gestures need keyboard alternatives.           |
+| 2.4.1 Bypass Blocks         | Supported | Skip link exists in platform hub.                                                                  |
+| 2.4.7 Focus Visible         | Partial   | Browser focus is preserved; custom components need visual regression audit.                        |
+| 2.5.1 Pointer Gestures      | Partial   | Swipe features must keep button alternatives.                                                      |
+| 3.1.1 Language of Page      | Supported | `index.html` declares `pt-BR`.                                                                     |
+| 3.2.3 Consistent Navigation | Supported | Platform tabs and app sections keep consistent order.                                              |
+| 4.1.2 Name, Role, Value     | Partial   | Native controls pass; custom generated controls need manual screen-reader test.                    |
 
 ## Remaining VPAT gaps
 

@@ -1,8 +1,15 @@
 import React, { useState } from 'react';
 import { getFlirCapability, getHrvCapability } from '../../../services/biohacking/biohackingGuards';
-import { toggleBinauralBeat, getBinauralDisclaimer, type BinauralBeatSession } from '../../../services/biohacking/binauralBeatsService';
+import {
+  toggleBinauralBeat,
+  getBinauralDisclaimer,
+  type BinauralBeatSession,
+} from '../../../services/biohacking/binauralBeatsService';
 import { generateRecoverySuggestion } from '../../../services/biohacking/recoverySuggestionsService';
-import { assessChronotype, getTimeBasedSuggestion } from '../../../services/biohacking/chronobiologyService';
+import {
+  assessChronotype,
+  getTimeBasedSuggestion,
+} from '../../../services/biohacking/chronobiologyService';
 import { InlineNotice } from '../../../components/ui/InlineNotice';
 import { Activity, Clock, Headphones, Thermometer, Radio } from 'lucide-react';
 
@@ -12,7 +19,11 @@ export const BiohackingWidget: React.FC = () => {
   const flir = getFlirCapability();
   const hrv = getHrvCapability();
 
-  const recovery = generateRecoverySuggestion({ rpe: 7, muscleSoreness: 5, exhaustionLevel: 'moderate' });
+  const recovery = generateRecoverySuggestion({
+    rpe: 7,
+    muscleSoreness: 5,
+    exhaustionLevel: 'moderate',
+  });
   const chronoProfile = assessChronotype(8); // user wakes up at 8 AM
   const chronoAlert = getTimeBasedSuggestion(chronoProfile, new Date().getHours());
 
@@ -28,20 +39,34 @@ export const BiohackingWidget: React.FC = () => {
         <div className="border border-brand-light/10 bg-brand-gray p-4 rounded-[16px]">
           <div className="flex items-center gap-2 mb-2">
             <Clock className="h-4 w-4 text-brand-magenta" />
-            <h4 className="font-mono text-xs uppercase tracking-widest text-brand-muted">Cronotipo</h4>
+            <h4 className="font-mono text-xs uppercase tracking-widest text-brand-muted">
+              Cronotipo
+            </h4>
           </div>
-          <p className="font-display text-2xl uppercase text-brand-light capitalize mb-2">{chronoProfile.chronotype.replace('_', ' ')}</p>
-          <p className="font-mono text-[10px] leading-5 text-brand-light/70 uppercase tracking-wide">{chronoProfile.currentRecommendation}</p>
-          {chronoAlert && <p className="font-mono text-[10px] mt-2 border border-brand-magenta/50 text-brand-magenta px-2 py-1 rounded bg-brand-magenta/10">{chronoAlert}</p>}
+          <p className="font-display text-2xl uppercase text-brand-light capitalize mb-2">
+            {chronoProfile.chronotype.replace('_', ' ')}
+          </p>
+          <p className="font-mono text-[10px] leading-5 text-brand-light/70 uppercase tracking-wide">
+            {chronoProfile.currentRecommendation}
+          </p>
+          {chronoAlert && (
+            <p className="font-mono text-[10px] mt-2 border border-brand-magenta/50 text-brand-magenta px-2 py-1 rounded bg-brand-magenta/10">
+              {chronoAlert}
+            </p>
+          )}
         </div>
 
         {/* 84 - Sugestão de Banho */}
         <div className="border border-brand-light/10 bg-brand-gray p-4 rounded-[16px]">
           <div className="flex items-center gap-2 mb-2">
             <Thermometer className="h-4 w-4 text-brand-neon" />
-            <h4 className="font-mono text-xs uppercase tracking-widest text-brand-muted">Recuperação</h4>
+            <h4 className="font-mono text-xs uppercase tracking-widest text-brand-muted">
+              Recuperação
+            </h4>
           </div>
-          <p className="font-display text-xl uppercase text-brand-light mb-2">{recovery.description}</p>
+          <p className="font-display text-xl uppercase text-brand-light mb-2">
+            {recovery.description}
+          </p>
           <p className="font-mono text-[9px] text-brand-light/50 italic">{recovery.disclaimer}</p>
         </div>
       </div>
@@ -74,14 +99,14 @@ export const BiohackingWidget: React.FC = () => {
 
       {/* 81 & 82 - Guards (blocked) */}
       <div className="mt-6 pt-4 border-t border-brand-light/10 flex flex-wrap gap-4 font-mono text-[10px] uppercase tracking-widest text-brand-muted">
-         <span className="flex items-center gap-2" title="Integração de hardware pendente">
-            <Radio className="h-3 w-3" />
-            FLIR: {flir.status === 'blocked_external_dependency' ? 'Offline (Guard)' : 'Online'}
-         </span>
-         <span className="flex items-center gap-2" title="Modo pesquisa apenas">
-            <Radio className="h-3 w-3" />
-            HRV Cam: {hrv.status === 'blocked_external_dependency' ? 'Offline (Guard)' : 'Online'}
-         </span>
+        <span className="flex items-center gap-2" title="Integração de hardware pendente">
+          <Radio className="h-3 w-3" />
+          FLIR: {flir.status === 'blocked_external_dependency' ? 'Offline (Guard)' : 'Online'}
+        </span>
+        <span className="flex items-center gap-2" title="Modo pesquisa apenas">
+          <Radio className="h-3 w-3" />
+          HRV Cam: {hrv.status === 'blocked_external_dependency' ? 'Offline (Guard)' : 'Online'}
+        </span>
       </div>
     </div>
   );

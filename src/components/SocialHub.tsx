@@ -8,7 +8,12 @@ import {
   publishWorkoutTemplate,
   upsertMyProfile,
 } from '../services/socialService';
-import { getCurrentAuthUser, onAuthStateChange, signOut, SupabaseAuthUser } from '../services/authService';
+import {
+  getCurrentAuthUser,
+  onAuthStateChange,
+  signOut,
+  SupabaseAuthUser,
+} from '../services/authService';
 import { SocialFeed } from './SocialFeed';
 import { GroupHub } from './GroupHub';
 import { CoachConsole } from './CoachConsole';
@@ -32,7 +37,7 @@ function buildWorkoutTemplatePayload(workoutText: string, currentPlan?: WorkoutP
     dataMode: 'supabase',
     blocks: workoutText
       .split('\n')
-      .map(line => line.trim())
+      .map((line) => line.trim())
       .filter(Boolean)
       .map((line, index) => ({
         order: index + 1,
@@ -125,14 +130,24 @@ export function SocialHub({ currentPlan = null }: Props) {
   useEffect(() => {
     getCurrentAuthUser()
       .then(setAuthUser)
-      .catch(error => setStatus(error instanceof Error ? error.message : 'Não foi possível iniciar sessão social.'));
+      .catch((error) =>
+        setStatus(
+          error instanceof Error ? error.message : 'Não foi possível iniciar sessão social.',
+        ),
+      );
 
     return onAuthStateChange((_event, session) => {
-      setAuthUser(session?.user ? {
-        id: session.user.id,
-        email: session.user.email ?? '',
-        name: String(session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'Atleta'),
-      } : null);
+      setAuthUser(
+        session?.user
+          ? {
+              id: session.user.id,
+              email: session.user.email ?? '',
+              name: String(
+                session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'Atleta',
+              ),
+            }
+          : null,
+      );
     });
   }, []);
 
@@ -142,9 +157,9 @@ export function SocialHub({ currentPlan = null }: Props) {
 
   useEffect(() => {
     if (!currentPlan) return;
-    setTemplateTitle(value => value || currentPlan.planName);
-    setTemplateDescription(value => value || currentPlan.goalDescription);
-    setTemplateGoal(value => value || currentPlan.goalDescription);
+    setTemplateTitle((value) => value || currentPlan.planName);
+    setTemplateDescription((value) => value || currentPlan.goalDescription);
+    setTemplateGoal((value) => value || currentPlan.goalDescription);
   }, [currentPlan]);
 
   const createProfile = async () => {
@@ -229,12 +244,11 @@ export function SocialHub({ currentPlan = null }: Props) {
       <header className="max-w-6xl mx-auto mb-8">
         <div className="flex flex-wrap justify-between gap-4">
           <div>
-            <p className="text-brand-neon font-bold uppercase tracking-[0.25em] text-xs">
-              Bloco 7
-            </p>
+            <p className="text-brand-neon font-bold uppercase tracking-[0.25em] text-xs">Bloco 7</p>
             <h1 className="text-4xl font-black mt-2">Comunidade & Social Real</h1>
             <p className="text-brand-muted mt-2">
-              Feed, grupos, rankings, desafios, coach humano, biblioteca pública e perfil compartilhável.
+              Feed, grupos, rankings, desafios, coach humano, biblioteca pública e perfil
+              compartilhável.
             </p>
           </div>
 
@@ -261,13 +275,14 @@ export function SocialHub({ currentPlan = null }: Props) {
         {!authUser && <SupabaseAuthPanel onAuthenticated={refresh} />}
         {authUser && !profile && (
           <div className="rounded-3xl border border-brand-neon/30 bg-brand-neon/10 p-4 text-sm text-brand-neon">
-            Sessão Supabase ativa. Crie seu perfil social para publicar, seguir atletas, entrar em grupos e usar o coach.
+            Sessão Supabase ativa. Crie seu perfil social para publicar, seguir atletas, entrar em
+            grupos e usar o coach.
           </div>
         )}
       </div>
 
       <nav className="max-w-6xl mx-auto flex flex-wrap gap-2 mb-8">
-        {tabs.map(item => {
+        {tabs.map((item) => {
           const Icon = item.icon;
 
           return (
@@ -287,7 +302,9 @@ export function SocialHub({ currentPlan = null }: Props) {
       </nav>
 
       <main className="max-w-6xl mx-auto">
-        {tab === 'feed' && <SocialFeed canInteract={canInteract} onAuthRequired={requestSocialAuth} />}
+        {tab === 'feed' && (
+          <SocialFeed canInteract={canInteract} onAuthRequired={requestSocialAuth} />
+        )}
         {tab === 'groups' && (
           <PremiumFeatureGate feature="premium_community">
             <GroupHub currentProfile={profile} />
@@ -311,21 +328,21 @@ export function SocialHub({ currentPlan = null }: Props) {
             <div className="grid md:grid-cols-2 gap-3 mt-5">
               <input
                 value={displayName}
-                onChange={event => setDisplayName(event.target.value)}
+                onChange={(event) => setDisplayName(event.target.value)}
                 placeholder="Nome público"
                 className="bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none"
                 maxLength={80}
               />
               <input
                 value={username}
-                onChange={event => setUsername(event.target.value)}
+                onChange={(event) => setUsername(event.target.value)}
                 placeholder="username"
                 className="bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none"
                 maxLength={24}
               />
               <input
                 value={goal}
-                onChange={event => setGoal(event.target.value)}
+                onChange={(event) => setGoal(event.target.value)}
                 placeholder="Objetivo"
                 className="bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none"
                 maxLength={120}
@@ -334,20 +351,24 @@ export function SocialHub({ currentPlan = null }: Props) {
                 <input
                   type="checkbox"
                   checked={isCoach}
-                  onChange={event => setIsCoach(event.target.checked)}
+                  onChange={(event) => setIsCoach(event.target.checked)}
                   className="accent-lime-400"
                 />
                 Sou coach
               </label>
               <textarea
                 value={bio}
-                onChange={event => setBio(event.target.value)}
+                onChange={(event) => setBio(event.target.value)}
                 placeholder="Bio pública"
                 className="md:col-span-2 bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none min-h-24"
                 maxLength={500}
               />
             </div>
-            <button type="button" onClick={createProfile} className="mt-4 bg-brand-neon text-brand-dark rounded-xl px-4 py-3 font-black">
+            <button
+              type="button"
+              onClick={createProfile}
+              className="mt-4 bg-brand-neon text-brand-dark rounded-xl px-4 py-3 font-black"
+            >
               Salvar perfil
             </button>
           </div>
@@ -360,7 +381,7 @@ export function SocialHub({ currentPlan = null }: Props) {
               <div className="flex gap-2">
                 <input
                   value={athleteSearch}
-                  onChange={event => setAthleteSearch(event.target.value)}
+                  onChange={(event) => setAthleteSearch(event.target.value)}
                   placeholder="Buscar por username ou nome"
                   className="flex-1 bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none min-w-0"
                 />
@@ -376,10 +397,12 @@ export function SocialHub({ currentPlan = null }: Props) {
             </div>
 
             <div className="grid lg:grid-cols-2 gap-4">
-              {athletes.map(athlete => (
+              {athletes.map((athlete) => (
                 <PublicProfileCard key={athlete.id} profile={athlete} showQr={false} />
               ))}
-              {athletes.length === 0 && <p className="text-brand-muted">Nenhum atleta público encontrado.</p>}
+              {athletes.length === 0 && (
+                <p className="text-brand-muted">Nenhum atleta público encontrado.</p>
+              )}
             </div>
           </section>
         )}
@@ -403,47 +426,54 @@ export function SocialHub({ currentPlan = null }: Props) {
               <div className="grid md:grid-cols-2 gap-3">
                 <input
                   value={templateTitle}
-                  onChange={event => setTemplateTitle(event.target.value)}
+                  onChange={(event) => setTemplateTitle(event.target.value)}
                   placeholder="Título"
                   className="bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none"
                   maxLength={120}
                 />
                 <input
                   value={templateGoal}
-                  onChange={event => setTemplateGoal(event.target.value)}
+                  onChange={(event) => setTemplateGoal(event.target.value)}
                   placeholder="Objetivo"
                   className="bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none"
                   maxLength={80}
                 />
                 <input
                   value={templateLevel}
-                  onChange={event => setTemplateLevel(event.target.value)}
+                  onChange={(event) => setTemplateLevel(event.target.value)}
                   placeholder="Nível"
                   className="bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none"
                   maxLength={40}
                 />
                 <input
                   value={templateDescription}
-                  onChange={event => setTemplateDescription(event.target.value)}
+                  onChange={(event) => setTemplateDescription(event.target.value)}
                   placeholder="Descrição"
                   className="bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none"
                   maxLength={800}
                 />
                 <textarea
                   value={templateWorkout}
-                  onChange={event => setTemplateWorkout(event.target.value)}
+                  onChange={(event) => setTemplateWorkout(event.target.value)}
                   placeholder="Uma linha por bloco ou exercício do treino"
                   className="md:col-span-2 bg-brand-dark border border-white/10 rounded-xl px-4 py-3 text-white outline-none min-h-28"
                 />
               </div>
-              <button type="button" onClick={publishTemplate} className="mt-3 bg-brand-neon text-brand-dark rounded-xl px-4 py-3 font-black">
+              <button
+                type="button"
+                onClick={publishTemplate}
+                className="mt-3 bg-brand-neon text-brand-dark rounded-xl px-4 py-3 font-black"
+              >
                 Publicar na biblioteca
               </button>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
-              {templates.map(template => (
-                <article key={template.id} className="rounded-3xl bg-white/5 border border-white/10 p-5">
+              {templates.map((template) => (
+                <article
+                  key={template.id}
+                  className="rounded-3xl bg-white/5 border border-white/10 p-5"
+                >
                   <p className="text-xs text-brand-neon uppercase tracking-widest">
                     {template.goal ?? 'geral'} · {template.level ?? 'todos'}
                   </p>
@@ -454,7 +484,9 @@ export function SocialHub({ currentPlan = null }: Props) {
                   </p>
                 </article>
               ))}
-              {templates.length === 0 && <p className="text-brand-muted">Nenhum template público carregado.</p>}
+              {templates.length === 0 && (
+                <p className="text-brand-muted">Nenhum template público carregado.</p>
+              )}
             </div>
           </section>
         )}

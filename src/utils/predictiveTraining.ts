@@ -30,7 +30,11 @@ export function detectPlateau(exercise: string, recentLoads: number[]): PlateauS
   };
 }
 
-export function forecastPr(exercise: string, currentBestKg: number, targetKg: number): PredictivePrForecast {
+export function forecastPr(
+  exercise: string,
+  currentBestKg: number,
+  targetKg: number,
+): PredictivePrForecast {
   const delta = Math.max(0, targetKg - currentBestKg);
   const estimatedWeeks = Math.max(1, Math.ceil(delta / Math.max(1, currentBestKg * 0.025)));
 

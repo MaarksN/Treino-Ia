@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 import { useAppStore } from '../stores/useAppStore';
 import { captureError } from '../utils/errorTelemetry';
-import { 
-  loadTrainingStateFromBackend, 
-  migrateLegacyTrainingStateToBackend 
+import {
+  loadTrainingStateFromBackend,
+  migrateLegacyTrainingStateToBackend,
 } from '../services/legacyTrainingSyncService';
 
 interface UseTrainingSyncOptions {
@@ -49,6 +49,6 @@ export function useTrainingSync({ onGoToDashboard }: UseTrainingSyncOptions) {
 
   return {
     hydrateTrainingState,
-    migrateLegacyTrainingState
+    migrateLegacyTrainingState,
   };
 }

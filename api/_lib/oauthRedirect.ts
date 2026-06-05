@@ -1,7 +1,7 @@
 export function getAllowedRedirectOrigins(baseUrl: string): string[] {
   const configured = (process.env.OAUTH_REDIRECT_ALLOWLIST || '')
     .split(',')
-    .map(value => value.trim())
+    .map((value) => value.trim())
     .filter(Boolean);
 
   return Array.from(new Set([baseUrl, ...configured]));

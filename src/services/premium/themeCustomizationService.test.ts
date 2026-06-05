@@ -13,8 +13,8 @@ describe('themeCustomizationService', () => {
   it('returns all theme preview options', () => {
     const options = getThemePreviewOptions();
     expect(options.length).toBe(4);
-    expect(options.some(o => o.variant === 'neon')).toBe(true);
-    expect(options.some(o => o.variant === 'minimal')).toBe(true);
+    expect(options.some((o) => o.variant === 'neon')).toBe(true);
+    expect(options.some((o) => o.variant === 'minimal')).toBe(true);
   });
 
   it('applies theme variant and persists', () => {

@@ -14,20 +14,26 @@ export function calculateReadiness(checkin: RecoveryCheckin) {
 
 export function detectPlateauHeuristic(sessions: WorkoutSession[], exerciseName: string) {
   const entries = sessions
-    .flatMap(session => session.logs)
-    .filter(log => log.exerciseName.toLowerCase() === exerciseName.toLowerCase() && log.actualWeight)
+    .flatMap((session) => session.logs)
+    .filter(
+      (log) => log.exerciseName.toLowerCase() === exerciseName.toLowerCase() && log.actualWeight,
+    )
     .slice(-4);
 
   if (entries.length < 3) return false;
 
-  const weights = entries.map(entry => entry.actualWeight || 0);
+  const weights = entries.map((entry) => entry.actualWeight || 0);
   return Math.max(...weights) - Math.min(...weights) <= 1;
 }
 
 export function detectHighFatigue(sessions: WorkoutSession[]) {
   const recent = sessions.slice(-5);
-  const highRpeCount = recent.flatMap(session => session.logs).filter(log => (log.rpe || 0) >= 9).length;
-  const painCount = recent.flatMap(session => session.logs).filter(log => log.feedback === 'painful').length;
+  const highRpeCount = recent
+    .flatMap((session) => session.logs)
+    .filter((log) => (log.rpe || 0) >= 9).length;
+  const painCount = recent
+    .flatMap((session) => session.logs)
+    .filter((log) => log.feedback === 'painful').length;
 
   return highRpeCount >= 4 || painCount >= 1;
 }

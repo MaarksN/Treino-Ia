@@ -52,9 +52,7 @@ function walkFiles(dir: string, files: string[] = []): string[] {
 }
 
 function stripComments(source: string): string {
-  return source
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/(^|[^:])\/\/.*$/gm, '$1');
+  return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
 }
 
 function toProjectPath(file: string): string {
@@ -63,7 +61,7 @@ function toProjectPath(file: string): string {
 
 function collectUsages(): Usage[] {
   const usages: Usage[] = [];
-  const sourceFiles = SOURCE_DIRS.flatMap(dir => walkFiles(path.join(ROOT, dir)));
+  const sourceFiles = SOURCE_DIRS.flatMap((dir) => walkFiles(path.join(ROOT, dir)));
 
   for (const file of sourceFiles) {
     const source = stripComments(readFileSync(file, 'utf8'));
@@ -93,16 +91,18 @@ function collectDefinitions() {
     return { tables, rpcs, views };
   }
 
-  for (const file of readdirSync(MIGRATIONS_DIR).filter(item => item.endsWith('.sql'))) {
+  for (const file of readdirSync(MIGRATIONS_DIR).filter((item) => item.endsWith('.sql'))) {
     const sql = readFileSync(path.join(MIGRATIONS_DIR, file), 'utf8');
     let match: RegExpExecArray | null;
 
-    const createTablePattern = /create\s+table\s+(?:if\s+not\s+exists\s+)?(?:public\.)?([a-zA-Z0-9_]+)/gi;
+    const createTablePattern =
+      /create\s+table\s+(?:if\s+not\s+exists\s+)?(?:public\.)?([a-zA-Z0-9_]+)/gi;
     while ((match = createTablePattern.exec(sql))) {
       tables.add(match[1].toLowerCase());
     }
 
-    const createFunctionPattern = /create\s+(?:or\s+replace\s+)?function\s+(?:public\.)?([a-zA-Z0-9_]+)/gi;
+    const createFunctionPattern =
+      /create\s+(?:or\s+replace\s+)?function\s+(?:public\.)?([a-zA-Z0-9_]+)/gi;
     while ((match = createFunctionPattern.exec(sql))) {
       rpcs.add(match[1].toLowerCase());
     }
@@ -133,7 +133,7 @@ function formatMissing(usages: Usage[]): string[] {
 describe('schema drift guard', () => {
   it('keeps Supabase table/RPC usages backed by versioned migrations', () => {
     const definitions = collectDefinitions();
-    const missing = collectUsages().filter(usage => {
+    const missing = collectUsages().filter((usage) => {
       const key = `${usage.kind}:${usage.name}`;
       if (ALLOWLIST[key]) return false;
 

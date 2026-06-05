@@ -9,7 +9,10 @@ export function detectOvertrainingRisk(entries: WellnessEntry[]) {
   const avgSoreness = recent.reduce((sum, item) => sum + item.soreness, 0) / recent.length;
 
   if (avgStress >= 4 && avgEnergy <= 2.5 && avgSoreness >= 4) {
-    return { risk: 'alto' as const, reason: 'Estresse alto, energia baixa e dor muscular persistente.' };
+    return {
+      risk: 'alto' as const,
+      reason: 'Estresse alto, energia baixa e dor muscular persistente.',
+    };
   }
 
   if (avgStress >= 3.5 || avgEnergy <= 3 || avgSoreness >= 3.5) {

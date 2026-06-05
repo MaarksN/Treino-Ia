@@ -36,11 +36,15 @@ export function BiomechanicalDigitalTwin({ muscleLoads }: BiomechanicalDigitalTw
                 style={{ width: `${load.loadPercentage}%` }}
               />
             </div>
-            <span className="w-10 text-right font-mono text-xs text-brand-neon">{load.loadPercentage}%</span>
+            <span className="w-10 text-right font-mono text-xs text-brand-neon">
+              {load.loadPercentage}%
+            </span>
           </div>
         ))}
         {muscleLoads.length === 0 && (
-          <p className="font-mono text-sm text-brand-light/50">Nenhum dado de carga registrado hoje.</p>
+          <p className="font-mono text-sm text-brand-light/50">
+            Nenhum dado de carga registrado hoje.
+          </p>
         )}
       </div>
     </div>

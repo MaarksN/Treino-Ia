@@ -54,16 +54,16 @@ export function normalizeSleepHours(value: unknown): number {
 
 export function createSleepStrengthPairs(
   sleepLogs: SleepLogEntry[],
-  history: WorkoutSession[]
+  history: WorkoutSession[],
 ): SleepStrengthPair[] {
   const sleepByDate = new Map(
     sleepLogs
-      .map(log => [log.date, normalizeSleepHours(log.sleepHours)] as const)
-      .filter(([, sleepHours]) => sleepHours > 0)
+      .map((log) => [log.date, normalizeSleepHours(log.sleepHours)] as const)
+      .filter(([, sleepHours]) => sleepHours > 0),
   );
 
   return history
-    .map(session => {
+    .map((session) => {
       const date = new Date(session.completedAt).toISOString().slice(0, 10);
       const sleepHours = sleepByDate.get(date);
       const strengthScore = Math.round(session.totalVolume);
@@ -82,7 +82,7 @@ export function createSleepStrengthPairs(
 
 export function buildSleepStrengthInsight(
   sleepLogs: SleepLogEntry[],
-  history: WorkoutSession[]
+  history: WorkoutSession[],
 ): SleepStrengthInsight {
   const pairs = createSleepStrengthPairs(sleepLogs, history);
   const correlation = calculateSleepStrengthCorrelation(pairs);
@@ -93,7 +93,8 @@ export function buildSleepStrengthInsight(
       sampleCount: pairs.length,
       correlation: 0,
       label: 'Dados insuficientes',
-      message: 'Registre sono em pelo menos 3 dias com treino finalizado para estimar uma correlacao honesta.',
+      message:
+        'Registre sono em pelo menos 3 dias com treino finalizado para estimar uma correlacao honesta.',
     };
   }
 
@@ -113,7 +114,8 @@ export function buildSleepStrengthInsight(
       sampleCount: pairs.length,
       correlation,
       label: 'Tendencia inversa',
-      message: 'Os dados locais ainda nao mostram melhora de volume junto com mais sono; revise contexto, carga e rotina.',
+      message:
+        'Os dados locais ainda nao mostram melhora de volume junto com mais sono; revise contexto, carga e rotina.',
     };
   }
 

@@ -14,28 +14,62 @@ export interface LandmarkCheckItem {
 }
 
 const LANDMARK_CHECKS: Omit<LandmarkCheckItem, 'present'>[] = [
-  { id: 'main', label: 'Conteúdo principal', selector: 'main', description: 'Elemento <main> presente na página.' },
-  { id: 'nav', label: 'Navegação', selector: 'nav', description: 'Elemento <nav> presente para navegação.' },
-  { id: 'header', label: 'Cabeçalho', selector: 'header', description: 'Elemento <header> presente.' },
-  { id: 'h1', label: 'Título principal', selector: 'h1', description: 'Elemento <h1> único na página.' },
-  { id: 'aria-live', label: 'Região live', selector: '[aria-live]', description: 'Região aria-live para anúncios dinâmicos.' },
-  { id: 'skip-link', label: 'Skip link', selector: 'a[href="#main-content"], a[href="#dashboard-overview"]', description: 'Link para pular para o conteúdo principal.' },
+  {
+    id: 'main',
+    label: 'Conteúdo principal',
+    selector: 'main',
+    description: 'Elemento <main> presente na página.',
+  },
+  {
+    id: 'nav',
+    label: 'Navegação',
+    selector: 'nav',
+    description: 'Elemento <nav> presente para navegação.',
+  },
+  {
+    id: 'header',
+    label: 'Cabeçalho',
+    selector: 'header',
+    description: 'Elemento <header> presente.',
+  },
+  {
+    id: 'h1',
+    label: 'Título principal',
+    selector: 'h1',
+    description: 'Elemento <h1> único na página.',
+  },
+  {
+    id: 'aria-live',
+    label: 'Região live',
+    selector: '[aria-live]',
+    description: 'Região aria-live para anúncios dinâmicos.',
+  },
+  {
+    id: 'skip-link',
+    label: 'Skip link',
+    selector: 'a[href="#main-content"], a[href="#dashboard-overview"]',
+    description: 'Link para pular para o conteúdo principal.',
+  },
 ];
 
 export function runLandmarkAudit(): LandmarkCheckItem[] {
   if (typeof document === 'undefined') {
-    return LANDMARK_CHECKS.map(check => ({ ...check, present: false }));
+    return LANDMARK_CHECKS.map((check) => ({ ...check, present: false }));
   }
 
-  return LANDMARK_CHECKS.map(check => ({
+  return LANDMARK_CHECKS.map((check) => ({
     ...check,
     present: document.querySelector(check.selector) !== null,
   }));
 }
 
-export function getLandmarkScore(checks: LandmarkCheckItem[]): { passed: number; total: number; percentage: number } {
+export function getLandmarkScore(checks: LandmarkCheckItem[]): {
+  passed: number;
+  total: number;
+  percentage: number;
+} {
   const total = checks.length;
-  const passed = checks.filter(c => c.present).length;
+  const passed = checks.filter((c) => c.present).length;
   return {
     passed,
     total,

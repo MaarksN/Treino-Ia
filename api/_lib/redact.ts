@@ -48,19 +48,28 @@ function normalizeKey(key: string): string {
 
 function isSensitiveKey(key: string): boolean {
   const normalized = normalizeKey(key);
-  return SENSITIVE_KEY_PARTS.some(part => normalized.includes(part));
+  return SENSITIVE_KEY_PARTS.some((part) => normalized.includes(part));
 }
 
 function byteLength(value: string): number {
   return new TextEncoder().encode(value).byteLength;
 }
 
-export function redactSensitiveString(value: string, maxLength = DEFAULT_OPTIONS.maxStringLength): string {
+export function redactSensitiveString(
+  value: string,
+  maxLength = DEFAULT_OPTIONS.maxStringLength,
+): string {
   const redacted = value
     .replace(/data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/=\s]+/gi, REDACTED_IMAGE)
     .replace(/(authorization\s*[:=]\s*bearer\s+)[^\s,;"']+/gi, `$1${REDACTED}`)
-    .replace(/([?&](?:token|access_token|refresh_token|apiKey|password|email|cpf|phone|authorization|code|state|cookie|session|secret|prompt)=)[^&#\s]+/gi, `$1${REDACTED}`)
-    .replace(/"((?:access_)?token|refresh_token|apiKey|authorization|password|email|cpf|phone|code|state|cookie|session|secret|prompt)"\s*:\s*"[^"]*"/gi, (_, key: string) => `"${key}":"${REDACTED}"`)
+    .replace(
+      /([?&](?:token|access_token|refresh_token|apiKey|password|email|cpf|phone|authorization|code|state|cookie|session|secret|prompt)=)[^&#\s]+/gi,
+      `$1${REDACTED}`,
+    )
+    .replace(
+      /"((?:access_)?token|refresh_token|apiKey|authorization|password|email|cpf|phone|code|state|cookie|session|secret|prompt)"\s*:\s*"[^"]*"/gi,
+      (_, key: string) => `"${key}":"${REDACTED}"`,
+    )
     .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, REDACTED_EMAIL)
     .replace(/\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/g, REDACTED_CPF)
     .replace(/\b(?:\+?55\s*)?(?:\(?\d{2}\)?\s*)?\d{4,5}-?\d{4}\b/g, REDACTED_PHONE);
@@ -70,7 +79,11 @@ export function redactSensitiveString(value: string, maxLength = DEFAULT_OPTIONS
   return `${redacted.slice(0, maxLength)}...[TRUNCATED]`;
 }
 
-export function redactSensitiveData(value: unknown, options: RedactionOptions = {}, depth = 0): unknown {
+export function redactSensitiveData(
+  value: unknown,
+  options: RedactionOptions = {},
+  depth = 0,
+): unknown {
   const resolved = { ...DEFAULT_OPTIONS, ...options };
 
   if (typeof value === 'string') {
@@ -93,11 +106,14 @@ export function redactSensitiveData(value: unknown, options: RedactionOptions = 
   if (Array.isArray(value)) {
     return value
       .slice(0, resolved.maxArrayItems)
-      .map(item => redactSensitiveData(item, resolved, depth + 1));
+      .map((item) => redactSensitiveData(item, resolved, depth + 1));
   }
 
   if (typeof value === 'object') {
-    const entries = Object.entries(value as Record<string, unknown>).slice(0, resolved.maxObjectKeys);
+    const entries = Object.entries(value as Record<string, unknown>).slice(
+      0,
+      resolved.maxObjectKeys,
+    );
     const output: Record<string, unknown> = {};
 
     for (const [key, entryValue] of entries) {
@@ -117,10 +133,14 @@ export function redactMetadata(
   options: RedactionOptions = {},
 ): Record<string, unknown> {
   const resolved = { ...DEFAULT_OPTIONS, ...options };
-  const redacted = redactSensitiveData(metadata && typeof metadata === 'object' ? metadata : {}, resolved);
-  const safeObject = redacted && typeof redacted === 'object' && !Array.isArray(redacted)
-    ? redacted as Record<string, unknown>
-    : {};
+  const redacted = redactSensitiveData(
+    metadata && typeof metadata === 'object' ? metadata : {},
+    resolved,
+  );
+  const safeObject =
+    redacted && typeof redacted === 'object' && !Array.isArray(redacted)
+      ? (redacted as Record<string, unknown>)
+      : {};
   const serialized = JSON.stringify(safeObject);
 
   if (byteLength(serialized) <= resolved.maxSerializedBytes) {

@@ -40,9 +40,7 @@ export function HighContrastModeToggle() {
           aria-checked={enabled}
           aria-label={`Modo alto contraste: ${enabled ? 'ativado' : 'desativado'}`}
           className={`relative inline-flex h-8 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-neon focus:ring-offset-2 focus:ring-offset-brand-dark ${
-            enabled
-              ? 'border-brand-neon bg-brand-neon'
-              : 'border-brand-light/30 bg-brand-dark'
+            enabled ? 'border-brand-neon bg-brand-neon' : 'border-brand-light/30 bg-brand-dark'
           }`}
         >
           <span
@@ -57,10 +55,13 @@ export function HighContrastModeToggle() {
       </div>
 
       {enabled && (
-        <div className="mt-4 rounded-xl border border-brand-neon/30 bg-brand-neon/10 p-3" role="status">
+        <div
+          className="mt-4 rounded-xl border border-brand-neon/30 bg-brand-neon/10 p-3"
+          role="status"
+        >
           <p className="font-mono text-xs text-brand-neon">
-            Modo alto contraste ativo. As cores foram ajustadas para máxima legibilidade.
-            Desative a qualquer momento usando o botão acima.
+            Modo alto contraste ativo. As cores foram ajustadas para máxima legibilidade. Desative a
+            qualquer momento usando o botão acima.
           </p>
         </div>
       )}

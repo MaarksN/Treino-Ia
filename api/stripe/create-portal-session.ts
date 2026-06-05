@@ -12,20 +12,24 @@ export default async function handler(request: Request) {
 
   try {
     if (!process.env.STRIPE_SECRET_KEY) {
-      return json({ error: BILLING_PROVIDER_NOT_CONFIGURED, dataMode: 'not_configured' }, 503, request);
+      return json(
+        { error: BILLING_PROVIDER_NOT_CONFIGURED, dataMode: 'not_configured' },
+        503,
+        request,
+      );
     }
 
     const user = await requireSupabaseUser(request);
 
     const supabase = getSupabaseAdmin();
     const { data: sub } = await supabase
-        .from('billing_subscriptions')
-        .select('stripe_customer_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      .from('billing_subscriptions')
+      .select('stripe_customer_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
 
     if (!sub?.stripe_customer_id) {
-       return json({ error: 'Nenhum cliente Stripe associado a este usuário.' }, 400, request);
+      return json({ error: 'Nenhum cliente Stripe associado a este usuário.' }, 400, request);
     }
 
     const stripe = getStripeClient();
@@ -39,7 +43,11 @@ export default async function handler(request: Request) {
     return json({ portalUrl: session.url }, 200, request);
   } catch (error) {
     if ((error as any)?.message === BILLING_PROVIDER_NOT_CONFIGURED) {
-      return json({ error: BILLING_PROVIDER_NOT_CONFIGURED, dataMode: 'not_configured' }, 503, request);
+      return json(
+        { error: BILLING_PROVIDER_NOT_CONFIGURED, dataMode: 'not_configured' },
+        503,
+        request,
+      );
     }
     return handleApiError(error, request);
   }

@@ -27,7 +27,7 @@ function writeLocalHistory(history: WorkoutSession[]): void {
 export const legacyWorkoutHistoryAdapter: LegacyWorkoutHistoryAdapter = {
   async saveLegacyJson(session: WorkoutSession) {
     if (!isSupabaseConfigured) {
-      writeLocalHistory([session, ...readLocalHistory().filter(item => item.id !== session.id)]);
+      writeLocalHistory([session, ...readLocalHistory().filter((item) => item.id !== session.id)]);
       return;
     }
 
@@ -60,7 +60,7 @@ export const legacyWorkoutHistoryAdapter: LegacyWorkoutHistoryAdapter = {
     }
 
     return (data ?? [])
-      .map(row => readWorkoutSessionJson(row))
+      .map((row) => readWorkoutSessionJson(row))
       .filter((session): session is WorkoutSession => Boolean(session));
   },
 };

@@ -2,7 +2,6 @@ export type BillingTier = 'free' | 'pro' | 'coach' | 'elite';
 
 export type BillingInterval = 'month' | 'year';
 
-
 export type BillingCatalogPlanId = 'free' | 'pro_monthly' | 'pro_yearly' | 'coach' | 'elite';
 
 export interface BillingPlanCatalogItem {

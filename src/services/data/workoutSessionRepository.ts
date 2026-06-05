@@ -78,13 +78,22 @@ export function calculateSetVolume(set: Pick<RelationalSetLog, 'weight' | 'reps'
   return Math.max(0, toNumber(set.weight)) * Math.max(0, toNumber(set.reps));
 }
 
-export function isPersonalRecord(candidateValue: number, previousBestValue: number | null | undefined): boolean {
-  return Number.isFinite(candidateValue) && candidateValue > 0 && candidateValue > toNumber(previousBestValue);
+export function isPersonalRecord(
+  candidateValue: number,
+  previousBestValue: number | null | undefined,
+): boolean {
+  return (
+    Number.isFinite(candidateValue) &&
+    candidateValue > 0 &&
+    candidateValue > toNumber(previousBestValue)
+  );
 }
 
-function getBestCompletedSet(exercise: WorkoutExerciseLog): { value: number; weight: number; reps: number; rpe?: number } | null {
+function getBestCompletedSet(
+  exercise: WorkoutExerciseLog,
+): { value: number; weight: number; reps: number; rpe?: number } | null {
   const best = (exercise.sets ?? [])
-    .map(set => ({
+    .map((set) => ({
       value: calculateSetVolume({
         weight: toNumber(set.weight),
         reps: toNumber(set.reps),
@@ -123,7 +132,7 @@ export function buildRelationalSession(session: WorkoutSession): RelationalSessi
 
 function mapRelationalRow(row: RelationalWorkoutRow): WorkoutSession {
   const metadata = row.metadata_json ?? {};
-  const exercises = (row.exercise_logs ?? []).map(exercise => ({
+  const exercises = (row.exercise_logs ?? []).map((exercise) => ({
     exerciseId: exercise.exercise_id,
     name: exercise.exercise_name,
     targetSets: toNumber(exercise.target_sets),
@@ -131,7 +140,7 @@ function mapRelationalRow(row: RelationalWorkoutRow): WorkoutSession {
     targetRest: exercise.target_rest ?? '',
     completed: Boolean(exercise.completed),
     exerciseNote: exercise.exercise_note ?? undefined,
-    sets: (exercise.set_logs ?? []).map(set => ({
+    sets: (exercise.set_logs ?? []).map((set) => ({
       weight: toNumber(set.weight),
       reps: toNumber(set.reps),
       rpe: toNumber(set.rpe),
@@ -147,10 +156,14 @@ function mapRelationalRow(row: RelationalWorkoutRow): WorkoutSession {
     completedAt: row.finished_at ? new Date(row.finished_at).getTime() : Date.now(),
     durationMinutes: Math.round(toNumber(row.duration_seconds) / 60),
     totalVolume: toNumber(row.total_volume),
-    completedExercises: toNumber(metadata.completedExercises, exercises.filter(exercise => exercise.completed).length),
+    completedExercises: toNumber(
+      metadata.completedExercises,
+      exercises.filter((exercise) => exercise.completed).length,
+    ),
     totalExercises: toNumber(metadata.totalExercises, exercises.length),
     feedback: typeof metadata.feedback === 'string' ? metadata.feedback : '',
-    nextRecommendation: typeof metadata.nextRecommendation === 'string' ? metadata.nextRecommendation : '',
+    nextRecommendation:
+      typeof metadata.nextRecommendation === 'string' ? metadata.nextRecommendation : '',
     exercises,
   };
 }
@@ -218,7 +231,7 @@ export const workoutSessionRepository = {
     if (!isSupabaseConfigured || sets.length === 0) return;
 
     const userId = await getCurrentUserId();
-    const mappedSets = sets.map(set => ({
+    const mappedSets = sets.map((set) => ({
       user_id: userId,
       ...set,
     }));
@@ -283,19 +296,24 @@ export const workoutSessionRepository = {
 
       if (!exerciseLogId) continue;
 
-      await this.addSetLogs((exercise.sets ?? []).map((set, setIndex) => ({
-        exercise_log_id: exerciseLogId,
-        session_id: sessionId,
-        set_index: setIndex,
-        weight: toNumber(set.weight),
-        reps: toNumber(set.reps),
-        rpe: Number.isFinite(Number(set.rpe)) ? Number(set.rpe) : undefined,
-        completed: exercise.completed,
-        is_personal_record: personalRecord && bestSet?.value === calculateSetVolume({
+      await this.addSetLogs(
+        (exercise.sets ?? []).map((set, setIndex) => ({
+          exercise_log_id: exerciseLogId,
+          session_id: sessionId,
+          set_index: setIndex,
           weight: toNumber(set.weight),
           reps: toNumber(set.reps),
-        }),
-      })));
+          rpe: Number.isFinite(Number(set.rpe)) ? Number(set.rpe) : undefined,
+          completed: exercise.completed,
+          is_personal_record:
+            personalRecord &&
+            bestSet?.value ===
+              calculateSetVolume({
+                weight: toNumber(set.weight),
+                reps: toNumber(set.reps),
+              }),
+        })),
+      );
 
       if (personalRecord && bestSet) {
         await supabase.from('personal_records').insert({
@@ -319,13 +337,15 @@ export const workoutSessionRepository = {
     const userId = await getCurrentUserId();
     const { data, error } = await supabase
       .from('workout_sessions')
-      .select(`
+      .select(
+        `
         *,
         exercise_logs (
           *,
           set_logs (*)
         )
-      `)
+      `,
+      )
       .eq('user_id', userId)
       .eq('status', 'completed')
       .order('finished_at', { ascending: false })

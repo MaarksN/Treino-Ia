@@ -6,15 +6,17 @@ const day: TrainingPlan['days'][number] = {
   id: 'd1',
   dayName: 'Dia 1',
   focus: 'Peito',
-  exercises: [{
-    id: 'supino',
-    name: 'Supino reto',
-    muscleGroup: 'Peitoral',
-    sets: 2,
-    reps: '8-10',
-    rest: '90s',
-    notes: '',
-  }],
+  exercises: [
+    {
+      id: 'supino',
+      name: 'Supino reto',
+      muscleGroup: 'Peitoral',
+      sets: 2,
+      reps: '8-10',
+      rest: '90s',
+      notes: '',
+    },
+  ],
 };
 
 describe('dashboardSession', () => {
@@ -62,14 +64,16 @@ function createSession(volume: number): WorkoutSession {
     totalExercises: 1,
     feedback: '',
     nextRecommendation: '',
-    exercises: [{
-      exerciseId: 'supino',
-      name: 'Supino reto',
-      targetSets: 2,
-      targetReps: '8-10',
-      targetRest: '90s',
-      completed: true,
-      sets: [{ weight: volume / 10, reps: 10, rpe: 8 }],
-    }],
+    exercises: [
+      {
+        exerciseId: 'supino',
+        name: 'Supino reto',
+        targetSets: 2,
+        targetReps: '8-10',
+        targetRest: '90s',
+        completed: true,
+        sets: [{ weight: volume / 10, reps: 10, rpe: 8 }],
+      },
+    ],
   };
 }

@@ -26,7 +26,10 @@ export function formatAiPanelResult(result: unknown): string {
   if (typeof result === 'string') return result;
   if (!result || typeof result !== 'object') return 'Sem resposta estruturada.';
 
-  const maybeStructured = result as { data?: unknown; audit?: { reason?: string; deterministicFlags?: string[] } };
+  const maybeStructured = result as {
+    data?: unknown;
+    audit?: { reason?: string; deterministicFlags?: string[] };
+  };
   if (!('data' in maybeStructured)) return JSON.stringify(result, null, 2);
 
   const flags = maybeStructured.audit?.deterministicFlags?.length

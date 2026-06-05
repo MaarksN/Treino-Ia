@@ -19,13 +19,19 @@ describe('critical localStorage isolation', () => {
 
   it('badges are derived in-memory and not persisted locally', () => {
     const unlocked = evaluateAndUnlockBadges(
-      { currentStreak: 3, longestStreak: 3, lastWorkoutDate: '2026-05-13', totalWorkouts: 3, workoutDates: ['2026-05-11', '2026-05-12', '2026-05-13'] },
+      {
+        currentStreak: 3,
+        longestStreak: 3,
+        lastWorkoutDate: '2026-05-13',
+        totalWorkouts: 3,
+        workoutDates: ['2026-05-11', '2026-05-12', '2026-05-13'],
+      },
       [],
       0,
       0,
       0,
     );
-    expect(unlocked.some(b => b.id === 'streak_3')).toBe(true);
+    expect(unlocked.some((b) => b.id === 'streak_3')).toBe(true);
     expect(setItemSpy).not.toHaveBeenCalled();
   });
 

@@ -1,6 +1,9 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { loadTrainingStateFromBackend, migrateLegacyTrainingStateToBackend } from '../services/legacyTrainingSyncService';
+import {
+  loadTrainingStateFromBackend,
+  migrateLegacyTrainingStateToBackend,
+} from '../services/legacyTrainingSyncService';
 import { useAppStore } from '../stores/useAppStore';
 import type { UserProfile, WorkoutHistoryRecord, WorkoutPlan } from '../types';
 import { captureError } from '../utils/errorTelemetry';

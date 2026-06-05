@@ -43,9 +43,7 @@ export class ErrorBoundary extends Component<Props, State> {
         role="alert"
         className="flex flex-col items-center justify-center gap-4 rounded-xl border border-red-500/30 bg-red-500/10 p-8 text-center"
       >
-        <p className="font-mono text-sm text-brand-magenta">
-          Algo deu errado nesta secao.
-        </p>
+        <p className="font-mono text-sm text-brand-magenta">Algo deu errado nesta secao.</p>
         {import.meta.env.DEV && (
           <pre className="max-w-full overflow-auto rounded bg-black/30 p-3 text-left text-xs text-red-300">
             {this.state.errorMessage}

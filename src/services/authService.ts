@@ -16,7 +16,9 @@ export interface SupabaseAuthUser {
 
 function assertAuthConfigured(): void {
   if (!isSupabaseConfigured) {
-    throw new Error('Supabase Auth não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.');
+    throw new Error(
+      'Supabase Auth não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.',
+    );
   }
 }
 
@@ -36,7 +38,9 @@ function toAuthUser(user: SupabaseUser): SupabaseAuthUser {
   };
 }
 
-export async function signUpWithEmail(credentials: SupabaseAuthCredentials): Promise<SupabaseAuthUser | null> {
+export async function signUpWithEmail(
+  credentials: SupabaseAuthCredentials,
+): Promise<SupabaseAuthUser | null> {
   assertAuthConfigured();
 
   const email = sanitizeEmail(credentials.email);
@@ -94,7 +98,9 @@ export async function getCurrentSession(): Promise<Session | null> {
   return data.session;
 }
 
-export function onAuthStateChange(callback: (event: AuthChangeEvent, session: Session | null) => void): () => void {
+export function onAuthStateChange(
+  callback: (event: AuthChangeEvent, session: Session | null) => void,
+): () => void {
   if (!isSupabaseConfigured) return () => {};
 
   const { data } = supabase.auth.onAuthStateChange(callback);

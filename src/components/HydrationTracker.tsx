@@ -46,7 +46,7 @@ export function HydrationTracker({ weightKg = 75, workoutMinutes = 0 }: Props) {
   const remaining = Math.max(goal.dailyMl - todayMl, 0);
   const suggested = calcHydrationGoal(weightKg, workoutMinutes);
   const today = new Date().toISOString().slice(0, 10);
-  const todayEntries = entries.filter(entry => entry.date === today).reverse();
+  const todayEntries = entries.filter((entry) => entry.date === today).reverse();
 
   useEffect(() => {
     const refreshEntries = () => setEntries(loadHydrationEntries());
@@ -64,15 +64,20 @@ export function HydrationTracker({ weightKg = 75, workoutMinutes = 0 }: Props) {
     let intervalId: number | undefined;
     let cancelled = false;
 
-    Notification.requestPermission().then(permission => {
-      if (cancelled || permission !== 'granted') return;
-      intervalId = window.setInterval(() => {
-        const total = getTodayHydration(loadHydrationEntries());
-        if (total < goal.dailyMl) {
-          void showHydrationReminderNotification(total, goal.dailyMl);
-        }
-      }, goal.remindEveryMinutes * 60 * 1000);
-    }).catch(() => {});
+    Notification.requestPermission()
+      .then((permission) => {
+        if (cancelled || permission !== 'granted') return;
+        intervalId = window.setInterval(
+          () => {
+            const total = getTodayHydration(loadHydrationEntries());
+            if (total < goal.dailyMl) {
+              void showHydrationReminderNotification(total, goal.dailyMl);
+            }
+          },
+          goal.remindEveryMinutes * 60 * 1000,
+        );
+      })
+      .catch(() => {});
 
     return () => {
       cancelled = true;
@@ -106,7 +111,8 @@ export function HydrationTracker({ weightKg = 75, workoutMinutes = 0 }: Props) {
     setShowGoalEdit(false);
   };
 
-  const pctColor = pct >= 100 ? '#a3e635' : pct >= 60 ? '#22d3ee' : pct >= 30 ? '#fbbf24' : '#ef4444';
+  const pctColor =
+    pct >= 100 ? '#a3e635' : pct >= 60 ? '#22d3ee' : pct >= 30 ? '#fbbf24' : '#ef4444';
   const circumference = 2 * Math.PI * 42;
 
   return (
@@ -119,7 +125,14 @@ export function HydrationTracker({ weightKg = 75, workoutMinutes = 0 }: Props) {
       <div className="flex items-center gap-5 mb-5">
         <div className="relative w-28 h-28 flex-shrink-0">
           <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-            <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="10" />
+            <circle
+              cx="50"
+              cy="50"
+              r="42"
+              fill="none"
+              stroke="rgba(255,255,255,0.08)"
+              strokeWidth="10"
+            />
             <circle
               cx="50"
               cy="50"
@@ -148,13 +161,19 @@ export function HydrationTracker({ weightKg = 75, workoutMinutes = 0 }: Props) {
           </div>
           <div>
             <p className="text-brand-muted text-xs">Faltam</p>
-            <p style={{ color: pctColor }} className="font-bold">{(remaining / 1000).toFixed(1)}L</p>
+            <p style={{ color: pctColor }} className="font-bold">
+              {(remaining / 1000).toFixed(1)}L
+            </p>
           </div>
           <div>
             <p className="text-brand-muted text-xs">Sugerido para você</p>
             <p className="text-brand-muted text-sm">{(suggested / 1000).toFixed(1)}L</p>
           </div>
-          <button type="button" onClick={() => setShowGoalEdit(value => !value)} className="text-xs text-brand-neon hover:underline">
+          <button
+            type="button"
+            onClick={() => setShowGoalEdit((value) => !value)}
+            className="text-xs text-brand-neon hover:underline"
+          >
             Editar meta
           </button>
         </div>
@@ -165,24 +184,30 @@ export function HydrationTracker({ weightKg = 75, workoutMinutes = 0 }: Props) {
           <input
             type="number"
             value={newGoalMl}
-            onChange={event => setNewGoalMl(Number(event.target.value))}
+            onChange={(event) => setNewGoalMl(Number(event.target.value))}
             className="flex-1 bg-brand-gray border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none min-w-0"
             placeholder="ml por dia"
           />
-          <button type="button" onClick={saveGoal} className="px-4 bg-brand-neon text-brand-dark font-bold rounded-xl text-sm">
+          <button
+            type="button"
+            onClick={saveGoal}
+            className="px-4 bg-brand-neon text-brand-dark font-bold rounded-xl text-sm"
+          >
             OK
           </button>
         </div>
       )}
 
       <div className="flex gap-2 mb-3 flex-wrap">
-        {TYPE_OPTIONS.map(type => (
+        {TYPE_OPTIONS.map((type) => (
           <button
             key={type}
             type="button"
             onClick={() => setSelectedType(type)}
             className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
-              selectedType === type ? 'bg-brand-neon text-brand-dark' : 'bg-white/10 text-brand-muted'
+              selectedType === type
+                ? 'bg-brand-neon text-brand-dark'
+                : 'bg-white/10 text-brand-muted'
             }`}
           >
             {TYPE_EMOJI[type]} {type}
@@ -191,7 +216,7 @@ export function HydrationTracker({ weightKg = 75, workoutMinutes = 0 }: Props) {
       </div>
 
       <div className="grid grid-cols-4 gap-2 mb-3">
-        {QUICK_OPTIONS.map(option => (
+        {QUICK_OPTIONS.map((option) => (
           <button
             key={option.ml}
             type="button"
@@ -209,11 +234,16 @@ export function HydrationTracker({ weightKg = 75, workoutMinutes = 0 }: Props) {
           type="number"
           placeholder="ml customizado..."
           value={customMl}
-          onChange={event => setCustomMl(event.target.value)}
-          onKeyDown={event => event.key === 'Enter' && handleCustom()}
+          onChange={(event) => setCustomMl(event.target.value)}
+          onKeyDown={(event) => event.key === 'Enter' && handleCustom()}
           className="flex-1 bg-brand-dark border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none min-w-0"
         />
-        <button type="button" onClick={handleCustom} className="px-4 bg-brand-neon text-brand-dark font-bold rounded-xl" aria-label="Adicionar hidratação">
+        <button
+          type="button"
+          onClick={handleCustom}
+          className="px-4 bg-brand-neon text-brand-dark font-bold rounded-xl"
+          aria-label="Adicionar hidratação"
+        >
           <Plus size={16} />
         </button>
       </div>
@@ -221,11 +251,19 @@ export function HydrationTracker({ weightKg = 75, workoutMinutes = 0 }: Props) {
       {todayEntries.length > 0 && (
         <div className="space-y-1.5">
           <p className="text-xs text-brand-muted uppercase tracking-widest mb-2">Hoje</p>
-          {todayEntries.slice(0, 6).map(entry => (
-            <div key={entry.id} className="flex items-center justify-between py-2 border-b border-white/5">
-              <span className="text-sm">{TYPE_EMOJI[entry.type]} <span className="text-brand-muted text-xs">{entry.type}</span></span>
+          {todayEntries.slice(0, 6).map((entry) => (
+            <div
+              key={entry.id}
+              className="flex items-center justify-between py-2 border-b border-white/5"
+            >
+              <span className="text-sm">
+                {TYPE_EMOJI[entry.type]}{' '}
+                <span className="text-brand-muted text-xs">{entry.type}</span>
+              </span>
               <div className="flex items-center gap-3">
-                <span className="text-brand-neon font-bold text-sm tabular-nums">+{entry.amountMl}ml</span>
+                <span className="text-brand-neon font-bold text-sm tabular-nums">
+                  +{entry.amountMl}ml
+                </span>
                 <span className="text-brand-muted text-xs">{entry.time}</span>
               </div>
             </div>

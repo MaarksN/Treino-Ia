@@ -211,7 +211,10 @@ describe('useWorkoutManager', () => {
       historyMigrated: 1,
       skipped: [],
     });
-    vi.mocked(recordGamificationEvent).mockResolvedValue({ skipped: true, reason: 'mocked test event' });
+    vi.mocked(recordGamificationEvent).mockResolvedValue({
+      skipped: true,
+      reason: 'mocked test event',
+    });
     vi.mocked(enqueueOfflineAction).mockResolvedValue({
       id: 'offline-1',
       type: 'WORKOUT_SESSION_COMPLETED',

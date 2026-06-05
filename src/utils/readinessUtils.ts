@@ -22,25 +22,58 @@ export function calculateReadiness(checkin: DailyCheckin): ReadinessScore {
     : 0;
   const sorenessScore = ((10 - avgSoreness) / 10) * 10;
 
-  const total = Math.max(0, Math.min(100, Math.round(sleepScore + energyScore + stressScore + sorenessScore)));
+  const total = Math.max(
+    0,
+    Math.min(100, Math.round(sleepScore + energyScore + stressScore + sorenessScore)),
+  );
 
   if (total >= 80) {
-    return { score: total, label: 'Excelente', color: '#a3e635', recommendation: 'Treino completo', adjustedIntensity: 100 };
+    return {
+      score: total,
+      label: 'Excelente',
+      color: '#a3e635',
+      recommendation: 'Treino completo',
+      adjustedIntensity: 100,
+    };
   }
 
   if (total >= 65) {
-    return { score: total, label: 'Boa', color: '#84cc16', recommendation: 'Treino completo', adjustedIntensity: 90 };
+    return {
+      score: total,
+      label: 'Boa',
+      color: '#84cc16',
+      recommendation: 'Treino completo',
+      adjustedIntensity: 90,
+    };
   }
 
   if (total >= 50) {
-    return { score: total, label: 'Moderada', color: '#f59e0b', recommendation: 'Treino moderado', adjustedIntensity: 75 };
+    return {
+      score: total,
+      label: 'Moderada',
+      color: '#f59e0b',
+      recommendation: 'Treino moderado',
+      adjustedIntensity: 75,
+    };
   }
 
   if (total >= 35) {
-    return { score: total, label: 'Baixa', color: '#fb923c', recommendation: 'Treino leve', adjustedIntensity: 50 };
+    return {
+      score: total,
+      label: 'Baixa',
+      color: '#fb923c',
+      recommendation: 'Treino leve',
+      adjustedIntensity: 50,
+    };
   }
 
-  return { score: total, label: 'Ruim', color: '#ef4444', recommendation: 'Descanso', adjustedIntensity: 20 };
+  return {
+    score: total,
+    label: 'Ruim',
+    color: '#ef4444',
+    recommendation: 'Descanso',
+    adjustedIntensity: 20,
+  };
 }
 
 export function getOvertrainingRisk(checkins: DailyCheckin[]): 'baixo' | 'médio' | 'alto' {
@@ -50,8 +83,8 @@ export function getOvertrainingRisk(checkins: DailyCheckin[]): 'baixo' | 'médio
   const avgEnergy = recent.reduce((sum, checkin) => sum + checkin.energyLevel, 0) / recent.length;
   const avgStress = recent.reduce((sum, checkin) => sum + checkin.stressLevel, 0) / recent.length;
   const avgSleep = recent.reduce((sum, checkin) => sum + checkin.sleepHours, 0) / recent.length;
-  const highSoreness = recent.filter(checkin =>
-    Object.values(checkin.sorenessMap).some(value => value >= 7)
+  const highSoreness = recent.filter((checkin) =>
+    Object.values(checkin.sorenessMap).some((value) => value >= 7),
   ).length;
 
   if (avgEnergy < 4 && avgStress > 7 && highSoreness >= 3) return 'alto';
@@ -73,7 +106,7 @@ export function loadCheckins(): DailyCheckin[] {
 
 export function saveCheckin(checkin: DailyCheckin) {
   const all = loadCheckins();
-  const index = all.findIndex(item => item.date === checkin.date);
+  const index = all.findIndex((item) => item.date === checkin.date);
 
   if (index >= 0) all[index] = checkin;
   else all.push(checkin);
@@ -83,5 +116,5 @@ export function saveCheckin(checkin: DailyCheckin) {
 
 export function getTodayCheckin(): DailyCheckin | null {
   const today = new Date().toISOString().slice(0, 10);
-  return loadCheckins().find(checkin => checkin.date === today) || null;
+  return loadCheckins().find((checkin) => checkin.date === today) || null;
 }

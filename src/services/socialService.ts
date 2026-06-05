@@ -250,31 +250,40 @@ export async function createPersonalRecordPost(input: {
 
   return createAchievementPost({
     title: `PR em ${exerciseName}`,
-    body: input.note ? sanitizeSocialText(input.note, 500) : `Recorde pessoal registrado no treino.`,
+    body: input.note
+      ? sanitizeSocialText(input.note, 500)
+      : `Recorde pessoal registrado no treino.`,
     metricLabel: 'PR',
     metricValue: `${weight}kg x ${reps}`,
   });
 }
 
-export async function createWorkoutSharePost(entry: WorkoutHistoryEntry, streak?: StreakData): Promise<SocialPost> {
+export async function createWorkoutSharePost(
+  entry: WorkoutHistoryEntry,
+  streak?: StreakData,
+): Promise<SocialPost> {
   const prs = entry.prsBroken?.filter(Boolean) ?? [];
   const type: SocialPostType = prs.length ? 'pr' : 'workout';
 
   return createPost({
     type,
-    title: prs.length ? `PR batido: ${prs.slice(0, 2).join(', ')}` : `Treino concluído: ${entry.dayFocus || entry.planName}`,
+    title: prs.length
+      ? `PR batido: ${prs.slice(0, 2).join(', ')}`
+      : `Treino concluído: ${entry.dayFocus || entry.planName}`,
     body: [
       `${entry.completedCount}/${entry.exerciseCount} exercícios concluídos.`,
       entry.durationMinutes ? `${entry.durationMinutes} minutos de sessão.` : '',
       streak ? `${streak.currentStreak} dias de streak.` : '',
-    ].filter(Boolean).join(' '),
+    ]
+      .filter(Boolean)
+      .join(' '),
     metricLabel: entry.totalVolume > 0 ? 'Volume' : undefined,
     metricValue: entry.totalVolume > 0 ? `${entry.totalVolume}kg` : undefined,
   });
 }
 
 async function enrichPosts(posts: SocialPost[]): Promise<SocialPost[]> {
-  const postIds = posts.map(post => post.id);
+  const postIds = posts.map((post) => post.id);
   if (!postIds.length) return posts;
 
   const userId = await getOptionalUserId();
@@ -291,9 +300,11 @@ async function enrichPosts(posts: SocialPost[]): Promise<SocialPost[]> {
   const comments = commentsResult.data as CountRow[] | null;
   const likeCounts = countByPost(likes);
   const commentCounts = countByPost(comments);
-  const likedByMe = new Set(likes.filter(row => row.user_id === userId).map(row => row.post_id));
+  const likedByMe = new Set(
+    likes.filter((row) => row.user_id === userId).map((row) => row.post_id),
+  );
 
-  return posts.map(post => ({
+  return posts.map((post) => ({
     ...post,
     likes_count: likeCounts[post.id] ?? 0,
     comments_count: commentCounts[post.id] ?? 0,
@@ -306,10 +317,12 @@ export async function listFeed(): Promise<SocialPost[]> {
 
   const { data, error } = await supabase
     .from('social_posts')
-    .select(`
+    .select(
+      `
       *,
       author:social_profiles(*)
-    `)
+    `,
+    )
     .eq('visibility', 'public')
     .in('moderation_status', ['visible', 'under_review'])
     .order('created_at', { ascending: false })
@@ -324,10 +337,12 @@ export async function listPostsByAuthor(authorId: string): Promise<SocialPost[]>
 
   const { data, error } = await supabase
     .from('social_posts')
-    .select(`
+    .select(
+      `
       *,
       author:social_profiles(*)
-    `)
+    `,
+    )
     .eq('author_id', authorId)
     .eq('visibility', 'public')
     .in('moderation_status', ['visible', 'under_review'])
@@ -398,10 +413,12 @@ export async function listComments(postId: string): Promise<SocialComment[]> {
 
   const { data, error } = await supabase
     .from('social_post_comments')
-    .select(`
+    .select(
+      `
       *,
       author:social_profiles(*)
-    `)
+    `,
+    )
     .eq('post_id', postId)
     .in('moderation_status', ['visible', 'under_review'])
     .order('created_at', { ascending: true });
@@ -471,18 +488,23 @@ export async function listMyGroups(): Promise<TrainingGroup[]> {
 
   const { data, error } = await supabase
     .from('training_group_members')
-    .select(`
+    .select(
+      `
       role,
       group:training_groups(*)
-    `)
+    `,
+    )
     .eq('user_id', userId)
     .order('joined_at', { ascending: false });
 
   assertNoError(error);
 
-  const rows = (data ?? []) as unknown as Array<{ group: TrainingGroup | null; role: TrainingGroup['my_role'] }>;
+  const rows = (data ?? []) as unknown as Array<{
+    group: TrainingGroup | null;
+    role: TrainingGroup['my_role'];
+  }>;
   return rows
-    .map(item => (item.group ? { ...item.group, my_role: item.role } : null))
+    .map((item) => (item.group ? { ...item.group, my_role: item.role } : null))
     .filter(Boolean) as TrainingGroup[];
 }
 
@@ -491,10 +513,12 @@ export async function listGroupMessages(groupId: string): Promise<TrainingGroupM
 
   const { data, error } = await supabase
     .from('training_group_messages')
-    .select(`
+    .select(
+      `
       *,
       author:social_profiles(*)
-    `)
+    `,
+    )
     .eq('group_id', groupId)
     .order('created_at', { ascending: true })
     .limit(100);
@@ -503,7 +527,10 @@ export async function listGroupMessages(groupId: string): Promise<TrainingGroupM
   return (data ?? []) as TrainingGroupMessage[];
 }
 
-export async function sendGroupMessage(groupId: string, body: string): Promise<TrainingGroupMessage> {
+export async function sendGroupMessage(
+  groupId: string,
+  body: string,
+): Promise<TrainingGroupMessage> {
   assertConfigured();
 
   const userId = await getCurrentUserId();
@@ -569,7 +596,7 @@ export async function listGroupChallenges(groupId: string): Promise<GroupChallen
 
 export async function listGroupLeaderboard(
   groupId: string,
-  metric: 'volume' | 'streak' | 'workouts'
+  metric: 'volume' | 'streak' | 'workouts',
 ): Promise<LeaderboardEntry[]> {
   assertConfigured();
 
@@ -580,7 +607,7 @@ export async function listGroupLeaderboard(
 
   assertNoError(error);
 
-  return ((data ?? []) as LeaderboardEntry[]).map(row => ({
+  return ((data ?? []) as LeaderboardEntry[]).map((row) => ({
     ...row,
     total_volume: Number(row.total_volume ?? 0),
     current_streak: Number(row.current_streak ?? 0),
@@ -595,11 +622,13 @@ export async function listCoachStudents(): Promise<CoachStudent[]> {
 
   const { data, error } = await supabase
     .from('coach_students')
-    .select(`
+    .select(
+      `
       status,
       created_at,
       student:social_profiles(*)
-    `)
+    `,
+    )
     .eq('coach_id', coachId)
     .eq('status', 'active')
     .order('created_at', { ascending: false });
@@ -612,7 +641,7 @@ export async function listCoachStudents(): Promise<CoachStudent[]> {
     created_at: string;
   }>;
 
-  return rows.map(item => ({
+  return rows.map((item) => ({
     student: item.student,
     status: item.status,
     created_at: item.created_at,
@@ -739,10 +768,12 @@ export async function listPublicWorkoutTemplates(): Promise<PublicWorkoutTemplat
 
   const { data, error } = await supabase
     .from('public_workout_templates')
-    .select(`
+    .select(
+      `
       *,
       author:social_profiles(*)
-    `)
+    `,
+    )
     .order('created_at', { ascending: false })
     .in('moderation_status', ['visible', 'under_review'])
     .limit(50);
@@ -783,7 +814,11 @@ export function subscribeToFeed(onChange: () => void): RealtimeChannel {
     .channel('social-feed')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'social_posts' }, onChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'social_post_likes' }, onChange)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'social_post_comments' }, onChange)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'social_post_comments' },
+      onChange,
+    )
     .subscribe();
 }
 
@@ -798,7 +833,7 @@ export function subscribeToGroupMessages(groupId: string, onChange: () => void):
         table: 'training_group_messages',
         filter: `group_id=eq.${groupId}`,
       },
-      onChange
+      onChange,
     )
     .subscribe();
 }
@@ -807,7 +842,7 @@ function readPresence(channel: RealtimeChannel): GroupOnlinePresence[] {
   const state = channel.presenceState<GroupOnlinePresence>();
   return Object.values(state)
     .flat()
-    .map(item => item as GroupOnlinePresence)
+    .map((item) => item as GroupOnlinePresence)
     .sort((a, b) => a.display_name.localeCompare(b.display_name));
 }
 
@@ -834,7 +869,7 @@ export function subscribePresence(
     .on('presence', { event: 'leave' }, () => {
       onPresenceChange?.(readPresence(channel));
     })
-    .subscribe(async status => {
+    .subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
         await channel.track({
           user_id: user.id,

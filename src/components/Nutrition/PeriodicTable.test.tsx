@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { findMicronutrient, MICRONUTRIENTS, PERIODIC_TABLE_EMPTY_MESSAGE } from './PeriodicTable.data';
+import {
+  findMicronutrient,
+  MICRONUTRIENTS,
+  PERIODIC_TABLE_EMPTY_MESSAGE,
+} from './PeriodicTable.data';
 
 describe('PeriodicTable', () => {
   it('keeps the educational empty-state instruction', () => {
@@ -17,7 +21,7 @@ describe('PeriodicTable', () => {
 
   it('keeps a compact catalog for vitamins and minerals', () => {
     expect(MICRONUTRIENTS).toHaveLength(8);
-    expect(MICRONUTRIENTS.some(nutrient => nutrient.category === 'vitamina')).toBe(true);
-    expect(MICRONUTRIENTS.some(nutrient => nutrient.category === 'mineral')).toBe(true);
+    expect(MICRONUTRIENTS.some((nutrient) => nutrient.category === 'vitamina')).toBe(true);
+    expect(MICRONUTRIENTS.some((nutrient) => nutrient.category === 'mineral')).toBe(true);
   });
 });

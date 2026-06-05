@@ -4,7 +4,11 @@ export type SafeAiJsonResult<T> =
   | { ok: true; data: T }
   | { ok: false; reason: 'no_json' | 'invalid_json' | 'invalid_schema'; fallback?: T };
 
-export function safeAiJsonParser<T>(raw: string | undefined, guard: TypeGuard<T>, fallback?: T): SafeAiJsonResult<T> {
+export function safeAiJsonParser<T>(
+  raw: string | undefined,
+  guard: TypeGuard<T>,
+  fallback?: T,
+): SafeAiJsonResult<T> {
   const extracted = extractJson(raw);
   if (!extracted) return { ok: false, reason: 'no_json', fallback };
   try {
@@ -24,6 +28,7 @@ function extractJson(raw: string | undefined): string | null {
   if (firstBrace !== -1 && lastBrace > firstBrace) return trimmed.slice(firstBrace, lastBrace + 1);
   const firstBracket = trimmed.indexOf('[');
   const lastBracket = trimmed.lastIndexOf(']');
-  if (firstBracket !== -1 && lastBracket > firstBracket) return trimmed.slice(firstBracket, lastBracket + 1);
+  if (firstBracket !== -1 && lastBracket > firstBracket)
+    return trimmed.slice(firstBracket, lastBracket + 1);
   return null;
 }

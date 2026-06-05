@@ -4,11 +4,7 @@ import { calculateTdee } from './tdee';
 export function calculateMacroPlan(profile: NutritionProfile): MacroPlan {
   const tdee = calculateTdee(profile);
   const calories =
-    profile.goal === 'cutting'
-      ? tdee - 400
-      : profile.goal === 'bulking'
-        ? tdee + 300
-        : tdee;
+    profile.goal === 'cutting' ? tdee - 400 : profile.goal === 'bulking' ? tdee + 300 : tdee;
 
   const proteinG = Math.round(profile.weightKg * (profile.goal === 'cutting' ? 2.4 : 2.1));
   const fatG = Math.round(profile.weightKg * 0.9);

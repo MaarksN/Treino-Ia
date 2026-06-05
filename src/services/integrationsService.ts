@@ -3,7 +3,12 @@ import { estimateHeartRateZones } from '../utils/calculators';
 
 export const INTEGRATION_CONNECTIONS: IntegrationConnection[] = [
   { provider: 'apple_health', label: 'Apple Health', status: 'needs_config', premium: true },
-  { provider: 'google_fit', label: 'Google Fit / Health Connect', status: 'needs_config', premium: true },
+  {
+    provider: 'google_fit',
+    label: 'Google Fit / Health Connect',
+    status: 'needs_config',
+    premium: true,
+  },
   { provider: 'garmin', label: 'Garmin CSV/GPX', status: 'available', premium: false },
   { provider: 'fitbit', label: 'Fitbit OAuth2', status: 'needs_config', premium: true },
   { provider: 'ble_hr', label: 'Monitor cardiaco BLE', status: 'available', premium: false },

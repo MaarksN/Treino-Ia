@@ -27,22 +27,22 @@ Status: PARTIAL
 - Sem teste real de IDOR/BOLA em staging.
 - Sem teste real de rate limit distribuido.
 - Sem DAST ou scanner OWASP dinamico.
-- Lighthouse security audits falharam por `NO_FCP`, sem resultado aproveitavel.
+- Lighthouse security/best-practices local passou em 2026-06-05; falta repetir contra staging real.
 
 ## OWASP resumo
 
-| Item | Status | Evidencia |
-|---|---|---|
-| Broken Access Control | BLOCKED | RLS estatica existe; IDOR real nao testado |
-| Cryptographic Failures | PARTIAL | Sem secrets hardcoded; OAuth encryption real nao validada |
-| Injection | PARTIAL | Supabase client/queries tipadas; sem fuzz real |
-| Insecure Design | PARTIAL | docs/ADRs existem; staging nao validado |
-| Security Misconfiguration | PARTIAL | headers existem; preflight env falhou |
-| Vulnerable Components | PASS local | npm audit 0 |
-| Auth Failures | PARTIAL | unit tests 401; auth real bloqueado |
-| Integrity Failures | PARTIAL | CI existe; branch protection nao verificada |
-| Logging Failures | PARTIAL | correlation id/redaction existem; Sentry real bloqueado |
-| SSRF/Path Traversal | NOT TESTED | nao houve DAST |
+| Item                      | Status     | Evidencia                                                 |
+| ------------------------- | ---------- | --------------------------------------------------------- |
+| Broken Access Control     | BLOCKED    | RLS estatica existe; IDOR real nao testado                |
+| Cryptographic Failures    | PARTIAL    | Sem secrets hardcoded; OAuth encryption real nao validada |
+| Injection                 | PARTIAL    | Supabase client/queries tipadas; sem fuzz real            |
+| Insecure Design           | PARTIAL    | docs/ADRs existem; staging nao validado                   |
+| Security Misconfiguration | PARTIAL    | headers existem; preflight env falhou                     |
+| Vulnerable Components     | PASS local | npm audit 0                                               |
+| Auth Failures             | PARTIAL    | unit tests 401; auth real bloqueado                       |
+| Integrity Failures        | PARTIAL    | CI existe; branch protection nao verificada               |
+| Logging Failures          | PARTIAL    | correlation id/redaction existem; Sentry real bloqueado   |
+| SSRF/Path Traversal       | NOT TESTED | nao houve DAST                                            |
 
 ## Decisao
 

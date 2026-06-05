@@ -13,9 +13,7 @@ export function AdaptivePathwaysPanel() {
   const pathways = getAllPathways();
 
   const toggleSelection = (id: AdaptivePathwayId) => {
-    const next = selected.includes(id)
-      ? selected.filter(s => s !== id)
-      : [...selected, id];
+    const next = selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id];
     const saved = saveSelectedPathways(next);
     setSelected(saved);
   };
@@ -36,7 +34,7 @@ export function AdaptivePathwaysPanel() {
         <p className="mt-4 font-mono text-sm text-brand-muted">Nenhuma trilha disponível.</p>
       ) : (
         <div className="mt-4 grid gap-3">
-          {pathways.map(pathway => {
+          {pathways.map((pathway) => {
             const isSelected = selected.includes(pathway.id);
             const isExpanded = expandedId === pathway.id;
 
@@ -84,7 +82,10 @@ export function AdaptivePathwaysPanel() {
                     <p className="font-mono text-xs text-brand-light/80">{pathway.description}</p>
                     <ul className="mt-2 space-y-1">
                       {pathway.tips.map((tip, i) => (
-                        <li key={i} className="flex items-start gap-2 font-mono text-xs text-brand-muted">
+                        <li
+                          key={i}
+                          className="flex items-start gap-2 font-mono text-xs text-brand-muted"
+                        >
                           <span className="mt-0.5 text-brand-neon">•</span>
                           <span>{tip}</span>
                         </li>
@@ -103,7 +104,8 @@ export function AdaptivePathwaysPanel() {
 
       {selected.length > 0 && (
         <p className="mt-3 font-mono text-xs text-brand-neon" role="status">
-          {selected.length} trilha{selected.length !== 1 ? 's' : ''} selecionada{selected.length !== 1 ? 's' : ''}.
+          {selected.length} trilha{selected.length !== 1 ? 's' : ''} selecionada
+          {selected.length !== 1 ? 's' : ''}.
         </p>
       )}
 

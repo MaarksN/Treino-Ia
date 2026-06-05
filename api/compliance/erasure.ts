@@ -24,7 +24,11 @@ export default async function handler(request: Request) {
     const rateLimit = await checkRateLimit(userId, 2, 60 * 60 * 1000, 'compliance_erasure');
 
     if (!rateLimit.allowed) {
-      return json({ error: 'Too many compliance erasure requests.', resetAt: rateLimit.resetAt }, 429, request);
+      return json(
+        { error: 'Too many compliance erasure requests.', resetAt: rateLimit.resetAt },
+        429,
+        request,
+      );
     }
 
     // First try cancelling stripe subscription if it exists

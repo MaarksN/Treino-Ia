@@ -16,14 +16,14 @@ describe('screenReaderSupportService', () => {
   it('returns all landmark checks', () => {
     const checks = runLandmarkAudit();
     expect(checks.length).toBeGreaterThanOrEqual(5);
-    expect(checks.every(c => typeof c.present === 'boolean')).toBe(true);
+    expect(checks.every((c) => typeof c.present === 'boolean')).toBe(true);
   });
 
   it('detects present landmarks', () => {
     document.body.innerHTML = '<main></main><nav></nav>';
     const checks = runLandmarkAudit();
-    const mainCheck = checks.find(c => c.id === 'main');
-    const navCheck = checks.find(c => c.id === 'nav');
+    const mainCheck = checks.find((c) => c.id === 'main');
+    const navCheck = checks.find((c) => c.id === 'nav');
     expect(mainCheck?.present).toBe(true);
     expect(navCheck?.present).toBe(true);
   });

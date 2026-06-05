@@ -29,7 +29,7 @@ export function createActiveDraft(
   day: TrainingPlan['days'][number],
   history: WorkoutSession[],
 ): ActiveExerciseDraft[] {
-  return day.exercises.map(exercise => {
+  return day.exercises.map((exercise) => {
     const suggestion = suggestInitialExerciseDraft(exercise.id, history);
     const plateau = detectSimplePlateau(exercise.id, history);
 
@@ -61,12 +61,14 @@ export function createActiveDraft(
   });
 }
 
-export function readStarterUser(storage: ReadableStorage | null = getReadableStorage()): StarterUser | null {
+export function readStarterUser(
+  storage: ReadableStorage | null = getReadableStorage(),
+): StarterUser | null {
   if (!storage) return null;
 
   try {
     const raw = storage.getItem(STARTER_USER_KEY);
-    return raw ? JSON.parse(raw) as StarterUser : null;
+    return raw ? (JSON.parse(raw) as StarterUser) : null;
   } catch {
     return null;
   }

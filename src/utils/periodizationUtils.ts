@@ -24,16 +24,38 @@ export const DEFAULT_LANDMARKS: MuscleVolumeLandmark[] = [
 export function inferMuscleGroup(exerciseName: string): MuscleGroup {
   const name = exerciseName.toLowerCase();
 
-  if (name.includes('supino') || name.includes('crucifixo') || name.includes('peito')) return 'Peito';
-  if (name.includes('remada') || name.includes('puxada') || name.includes('barra') || name.includes('costas')) return 'Costas';
-  if (name.includes('agachamento') || name.includes('leg') || name.includes('extensora')) return 'Quadríceps';
-  if (name.includes('stiff') || name.includes('terra') || name.includes('flexora')) return 'Posteriores';
-  if (name.includes('gluteo') || name.includes('glúteo') || name.includes('hip thrust')) return 'Glúteos';
-  if (name.includes('desenvolvimento') || name.includes('elevação lateral') || name.includes('ombro')) return 'Ombros';
+  if (name.includes('supino') || name.includes('crucifixo') || name.includes('peito'))
+    return 'Peito';
+  if (
+    name.includes('remada') ||
+    name.includes('puxada') ||
+    name.includes('barra') ||
+    name.includes('costas')
+  )
+    return 'Costas';
+  if (name.includes('agachamento') || name.includes('leg') || name.includes('extensora'))
+    return 'Quadríceps';
+  if (name.includes('stiff') || name.includes('terra') || name.includes('flexora'))
+    return 'Posteriores';
+  if (name.includes('gluteo') || name.includes('glúteo') || name.includes('hip thrust'))
+    return 'Glúteos';
+  if (
+    name.includes('desenvolvimento') ||
+    name.includes('elevação lateral') ||
+    name.includes('ombro')
+  )
+    return 'Ombros';
   if (name.includes('rosca') || name.includes('biceps') || name.includes('bíceps')) return 'Bíceps';
-  if (name.includes('triceps') || name.includes('tríceps') || name.includes('francês') || name.includes('corda')) return 'Tríceps';
+  if (
+    name.includes('triceps') ||
+    name.includes('tríceps') ||
+    name.includes('francês') ||
+    name.includes('corda')
+  )
+    return 'Tríceps';
   if (name.includes('panturrilha')) return 'Panturrilhas';
-  if (name.includes('prancha') || name.includes('abdominal') || name.includes('core')) return 'Core';
+  if (name.includes('prancha') || name.includes('abdominal') || name.includes('core'))
+    return 'Core';
 
   return 'Peito';
 }
@@ -87,19 +109,18 @@ export function classifyVolume(
 export function calculateWeeklyMuscleVolumes(
   performances: TrainingExercisePerformance[],
 ): MuscleVolumeLandmark[] {
-  const rows = DEFAULT_LANDMARKS.map(item => ({ ...item, currentVolume: 0 }));
+  const rows = DEFAULT_LANDMARKS.map((item) => ({ ...item, currentVolume: 0 }));
 
   for (const exercise of performances) {
     if (exercise.completed === false) continue;
 
     const muscle = exercise.muscle ?? inferMuscleGroup(exercise.exerciseName);
-    const row = rows.find(item => item.muscle === muscle);
+    const row = rows.find((item) => item.muscle === muscle);
 
     if (!row) continue;
 
-    const effectiveSets = exercise.rpe >= 6
-      ? exercise.sets
-      : Math.max(1, Math.round(exercise.sets * 0.5));
+    const effectiveSets =
+      exercise.rpe >= 6 ? exercise.sets : Math.max(1, Math.round(exercise.sets * 0.5));
     row.currentVolume += effectiveSets;
   }
 
@@ -116,9 +137,7 @@ export function createLoadSuggestion(
   performance: TrainingExercisePerformance,
   fatigueScore: number,
 ): LoadSuggestion {
-  const rir =
-    performance.rir ??
-    Math.max(0, Math.round(10 - performance.rpe));
+  const rir = performance.rir ?? Math.max(0, Math.round(10 - performance.rpe));
 
   if (performance.pain) {
     return {

@@ -20,7 +20,7 @@ export const CAFFEINE_PRESETS = [
   { label: 'Pre-treino', amountMg: 200 },
 ] as const;
 
-export type PainRegionKey = typeof PAIN_REGION_DEFINITIONS[number]['key'];
+export type PainRegionKey = (typeof PAIN_REGION_DEFINITIONS)[number]['key'];
 export type PainRegionMap = Record<PainRegionKey, number>;
 
 export interface PainCheckin {
@@ -101,7 +101,9 @@ export function clampScale(value: unknown, min = 0, max = 10): number {
   return Math.min(max, Math.max(min, Math.round(parsed)));
 }
 
-export function normalizePainCheckin(checkin: Partial<PainCheckin> | null | undefined): PainCheckin {
+export function normalizePainCheckin(
+  checkin: Partial<PainCheckin> | null | undefined,
+): PainCheckin {
   const base = createPainCheckin(checkin?.date || getDateKey());
   const regions = createEmptyPainMap();
 
@@ -120,18 +122,17 @@ export function normalizePainCheckin(checkin: Partial<PainCheckin> | null | unde
 
 export function summarizePainCheckin(checkin: PainCheckin | null | undefined): PainSummary {
   const normalized = normalizePainCheckin(checkin);
-  const values = PAIN_REGION_DEFINITIONS.map(region => normalized.regions[region.key]);
+  const values = PAIN_REGION_DEFINITIONS.map((region) => normalized.regions[region.key]);
   const average = values.length
     ? Number((values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(1))
     : 0;
   const max = values.length ? Math.max(...values) : 0;
-  const activeRegions = PAIN_REGION_DEFINITIONS
-    .map(region => ({
-      key: region.key,
-      label: region.label,
-      intensity: normalized.regions[region.key],
-    }))
-    .filter(region => region.intensity > 0)
+  const activeRegions = PAIN_REGION_DEFINITIONS.map((region) => ({
+    key: region.key,
+    label: region.label,
+    intensity: normalized.regions[region.key],
+  }))
+    .filter((region) => region.intensity > 0)
     .sort((a, b) => b.intensity - a.intensity);
 
   if (max >= 7) {
@@ -141,7 +142,8 @@ export function summarizePainCheckin(checkin: PainCheckin | null | undefined): P
       activeRegions,
       status: 'high',
       label: 'Dor alta',
-      message: 'Sinalize cautela e considere reduzir impacto hoje. Isto nao substitui avaliacao profissional.',
+      message:
+        'Sinalize cautela e considere reduzir impacto hoje. Isto nao substitui avaliacao profissional.',
     };
   }
 
@@ -177,11 +179,8 @@ export function summarizePainCheckin(checkin: PainCheckin | null | undefined): P
   };
 }
 
-export function summarizeCaffeine(
-  entries: CaffeineEntry[],
-  date = getDateKey()
-): CaffeineSummary {
-  const todayEntries = entries.filter(entry => entry.date === date && entry.amountMg > 0);
+export function summarizeCaffeine(entries: CaffeineEntry[], date = getDateKey()): CaffeineSummary {
+  const todayEntries = entries.filter((entry) => entry.date === date && entry.amountMg > 0);
   const totalMg = todayEntries.reduce((sum, entry) => sum + entry.amountMg, 0);
   const lateMg = todayEntries.reduce((sum, entry) => {
     const hour = Number(entry.consumedAt.slice(0, 2));
@@ -237,11 +236,11 @@ export function summarizeCaffeine(
 
 function sessionAverageRpe(session: WorkoutSession): number {
   const rpeValues = session.exercises
-    .flatMap(exercise => {
-      if (exercise.sets?.length) return exercise.sets.map(set => set.rpe);
+    .flatMap((exercise) => {
+      if (exercise.sets?.length) return exercise.sets.map((set) => set.rpe);
       return [exercise.rpe ?? 0];
     })
-    .filter(value => Number.isFinite(value) && value > 0);
+    .filter((value) => Number.isFinite(value) && value > 0);
 
   if (!rpeValues.length) return 0;
   return rpeValues.reduce((sum, value) => sum + value, 0) / rpeValues.length;
@@ -250,10 +249,10 @@ function sessionAverageRpe(session: WorkoutSession): number {
 export function calculateAccumulatedRpeLoad(
   history: WorkoutSession[],
   now = Date.now(),
-  windowDays = 7
+  windowDays = 7,
 ): RpeLoadSummary {
   const cutoff = now - windowDays * DAY_MS;
-  const recentSessions = history.filter(session => session.completedAt >= cutoff);
+  const recentSessions = history.filter((session) => session.completedAt >= cutoff);
   let totalLoad = 0;
   let rpeSum = 0;
   let sessionCount = 0;

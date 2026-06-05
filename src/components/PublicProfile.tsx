@@ -34,8 +34,12 @@ export function PublicProfile({ profile, onToggleVisibility }: Props) {
             <UserRound size={22} className="text-brand-neon" />
           </div>
           <div className="min-w-0">
-            <p className="text-white font-black text-lg truncate">{profile.username || '@atleta'}</p>
-            <p className="text-brand-muted text-xs">{profile.isPublic ? 'Perfil público' : 'Perfil privado'}</p>
+            <p className="text-white font-black text-lg truncate">
+              {profile.username || '@atleta'}
+            </p>
+            <p className="text-brand-muted text-xs">
+              {profile.isPublic ? 'Perfil público' : 'Perfil privado'}
+            </p>
           </div>
         </div>
         {onToggleVisibility && (
@@ -82,8 +86,11 @@ export function PublicProfile({ profile, onToggleVisibility }: Props) {
         <p className="text-xs uppercase tracking-widest text-brand-muted mb-2">Badges</p>
         {profile.badges.length ? (
           <div className="flex flex-wrap gap-2">
-            {profile.badges.map(badge => (
-              <span key={badge} className="px-2 py-1 rounded-full text-xs bg-brand-neon/10 text-brand-neon border border-brand-neon/30">
+            {profile.badges.map((badge) => (
+              <span
+                key={badge}
+                className="px-2 py-1 rounded-full text-xs bg-brand-neon/10 text-brand-neon border border-brand-neon/30"
+              >
                 {badge}
               </span>
             ))}

@@ -18,12 +18,7 @@ export type HabitEventType =
   | 'alternative_workout_completed'
   | 'coach_message_sent';
 
-export type ReminderType =
-  | 'workout'
-  | 'hydration'
-  | 'sleep'
-  | 'checkin'
-  | 'reactivation';
+export type ReminderType = 'workout' | 'hydration' | 'sleep' | 'checkin' | 'reactivation';
 
 export type ReminderChannel = 'push' | 'email' | 'whatsapp' | 'in_app';
 

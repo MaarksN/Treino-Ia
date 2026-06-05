@@ -56,9 +56,7 @@ test.describe('Onboarding flow', () => {
     await expect(tourOverlay).not.toBeVisible({ timeout: 5_000 });
 
     // Onboarding key should be persisted
-    const onboardingDone = await page.evaluate(() =>
-      localStorage.getItem('@TreinoApp:onboarding'),
-    );
+    const onboardingDone = await page.evaluate(() => localStorage.getItem('@TreinoApp:onboarding'));
     expect(onboardingDone).toBe('true');
 
     expect(errors).toEqual([]);
@@ -78,9 +76,7 @@ test.describe('Onboarding flow', () => {
     await expect(tourOverlay).not.toBeVisible({ timeout: 5_000 });
 
     // Onboarding key should be persisted
-    const onboardingDone = await page.evaluate(() =>
-      localStorage.getItem('@TreinoApp:onboarding'),
-    );
+    const onboardingDone = await page.evaluate(() => localStorage.getItem('@TreinoApp:onboarding'));
     expect(onboardingDone).toBe('true');
 
     expect(errors).toEqual([]);

@@ -52,7 +52,7 @@ function readJSON<T>(key: string, fallback: T): T {
 
   try {
     const raw = window.localStorage.getItem(key);
-    return raw ? JSON.parse(raw) as T : fallback;
+    return raw ? (JSON.parse(raw) as T) : fallback;
   } catch {
     return fallback;
   }
@@ -87,7 +87,12 @@ function assertJsonSize(value: unknown, maxLength: number, label: string): void 
   }
 }
 
-function boundedNumber(value: unknown, fallback: number, min = 0, max = Number.MAX_SAFE_INTEGER): number {
+function boundedNumber(
+  value: unknown,
+  fallback: number,
+  min = 0,
+  max = Number.MAX_SAFE_INTEGER,
+): number {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
   return Math.min(max, Math.max(min, parsed));
@@ -106,7 +111,7 @@ function normalizeUser(user: User | null): User | null {
     name: normalizeText(user.name, 'Atleta', 160),
     email: normalizeText(user.email, '', 240).toLowerCase(),
     avatarUrl: user.avatarUrl ? sanitizeText(user.avatarUrl).slice(0, 1200) : undefined,
-    profile: user.profile ? normalizeProfile(user.profile) ?? undefined : undefined,
+    profile: user.profile ? (normalizeProfile(user.profile) ?? undefined) : undefined,
   };
 }
 
@@ -121,7 +126,8 @@ function normalizeProfile(profile: UserProfile | null): UserProfile | null {
     gender: normalizeText(next.gender, 'nao informado', 80),
     weight: boundedNumber(next.weight, 70, 20, 350),
     height: boundedNumber(next.height, 170, 80, 240),
-    bodyFatPercent: next.bodyFatPercent === undefined ? undefined : boundedNumber(next.bodyFatPercent, 0, 3, 80),
+    bodyFatPercent:
+      next.bodyFatPercent === undefined ? undefined : boundedNumber(next.bodyFatPercent, 0, 3, 80),
     experienceLevel: normalizeText(next.experienceLevel, 'iniciante', 100),
     goal: normalizeText(next.goal, 'saude', 160),
     secondaryGoal: next.secondaryGoal ? normalizeText(next.secondaryGoal, '', 160) : undefined,
@@ -134,11 +140,19 @@ function normalizeProfile(profile: UserProfile | null): UserProfile | null {
     sleepHours: next.sleepHours ? normalizeText(next.sleepHours, '', 80) : undefined,
     stressLevel: next.stressLevel ? normalizeText(next.stressLevel, '', 80) : undefined,
     preferredMethods: Array.isArray(next.preferredMethods)
-      ? next.preferredMethods.slice(0, 20).map(item => normalizeText(item, '', 80)).filter(Boolean)
+      ? next.preferredMethods
+          .slice(0, 20)
+          .map((item) => normalizeText(item, '', 80))
+          .filter(Boolean)
       : undefined,
     weakPoints: next.weakPoints ? normalizeText(next.weakPoints, '', 1000) : undefined,
-    timePerWorkout: next.timePerWorkout === undefined ? undefined : Math.round(boundedNumber(next.timePerWorkout, 60, 10, 240)),
-    workoutLocation: next.workoutLocation ? normalizeText(next.workoutLocation, '', 160) : undefined,
+    timePerWorkout:
+      next.timePerWorkout === undefined
+        ? undefined
+        : Math.round(boundedNumber(next.timePerWorkout, 60, 10, 240)),
+    workoutLocation: next.workoutLocation
+      ? normalizeText(next.workoutLocation, '', 160)
+      : undefined,
     secondaryFocus: next.secondaryFocus ? normalizeText(next.secondaryFocus, '', 160) : undefined,
   };
 
@@ -215,7 +229,12 @@ function collectValid<T, R>(
 function normalizeLegacyState(state: LegacyTrainingState): NormalizedLegacyTrainingState {
   const profile = normalizeProfile(state.profile || state.user?.profile || null);
   const planResult = collectValid(state.plans || [], MAX_PLANS_TO_SYNC, normalizePlan, 'Plano');
-  const historyResult = collectValid(state.history || [], MAX_HISTORY_TO_SYNC, normalizeHistoryRecord, 'Historico');
+  const historyResult = collectValid(
+    state.history || [],
+    MAX_HISTORY_TO_SYNC,
+    normalizeHistoryRecord,
+    'Historico',
+  );
 
   return {
     user: normalizeUser(state.user),
@@ -226,7 +245,9 @@ function normalizeLegacyState(state: LegacyTrainingState): NormalizedLegacyTrain
   };
 }
 
-function mockResult(result: Omit<LegacyTrainingMigrationResult, 'dataMode' | 'warning'>): LegacyTrainingMigrationResult {
+function mockResult(
+  result: Omit<LegacyTrainingMigrationResult, 'dataMode' | 'warning'>,
+): LegacyTrainingMigrationResult {
   return {
     ...result,
     dataMode: ensureSafeDataMode('mock_dev_only'),
@@ -260,7 +281,10 @@ function persistMockState(
     profile: state.profile || current.profile,
     plans: state.plans.length ? state.plans : current.plans,
     history: state.history.length ? state.history : current.history,
-    migrations: [{ ...migration, createdAt: new Date().toISOString() }, ...current.migrations].slice(0, 50),
+    migrations: [
+      { ...migration, createdAt: new Date().toISOString() },
+      ...current.migrations,
+    ].slice(0, 50),
   });
 }
 
@@ -339,17 +363,23 @@ export async function loadTrainingStateFromBackend(): Promise<LegacyTrainingStat
     profile: mapProfileRow(profileResult.data as Record<string, unknown> | null),
     plans,
     history: ((historyResult.data || []) as Array<Record<string, unknown>>).map(mapHistoryRow),
-    currentPlanId: planRows.find(row => row.is_current === true)?.id as string | undefined || plans[0]?.id,
+    currentPlanId:
+      (planRows.find((row) => row.is_current === true)?.id as string | undefined) || plans[0]?.id,
   };
 }
 
-export async function persistUserProfileToBackend(profile: UserProfile): Promise<PersistResult & { profile: UserProfile }> {
+export async function persistUserProfileToBackend(
+  profile: UserProfile,
+): Promise<PersistResult & { profile: UserProfile }> {
   const normalized = normalizeProfile(profile);
   if (!normalized) throw new Error('Perfil invalido para sincronizacao.');
 
   const userId = await getAuthUserId();
   if (!userId) {
-    const state = normalizeLegacyState({ ...loadLegacyTrainingStateFromLocalStorage(), profile: normalized });
+    const state = normalizeLegacyState({
+      ...loadLegacyTrainingStateFromLocalStorage(),
+      profile: normalized,
+    });
     const migration = mockResult({
       profileMigrated: true,
       plansMigrated: 0,
@@ -357,16 +387,23 @@ export async function persistUserProfileToBackend(profile: UserProfile): Promise
       skipped: state.skipped,
     });
     persistMockState(state, migration);
-    return { dataMode: ensureSafeDataMode('mock_dev_only'), warning: DEV_WARNING, profile: normalized };
+    return {
+      dataMode: ensureSafeDataMode('mock_dev_only'),
+      warning: DEV_WARNING,
+      profile: normalized,
+    };
   }
 
-  const { error } = await supabase.from('training_user_profiles').upsert({
-    user_id: userId,
-    profile_json: normalized,
-    profile_goal: normalized.goal,
-    profile_name: normalized.id || null,
-    updated_at: new Date().toISOString(),
-  }, { onConflict: 'user_id' });
+  const { error } = await supabase.from('training_user_profiles').upsert(
+    {
+      user_id: userId,
+      profile_json: normalized,
+      profile_goal: normalized.goal,
+      profile_name: normalized.id || null,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'user_id' },
+  );
 
   assertNoError(error, 'Falha ao salvar perfil no Supabase.');
   return { dataMode: 'supabase', profile: normalized };
@@ -385,7 +422,10 @@ export async function persistWorkoutPlansToBackend(
 
   const userId = await getAuthUserId();
   if (!userId) {
-    const state = normalizeLegacyState({ ...loadLegacyTrainingStateFromLocalStorage(), plans: normalized.plans });
+    const state = normalizeLegacyState({
+      ...loadLegacyTrainingStateFromLocalStorage(),
+      plans: normalized.plans,
+    });
     const migration = mockResult({
       profileMigrated: false,
       plansMigrated: normalized.plans.length,
@@ -403,7 +443,7 @@ export async function persistWorkoutPlansToBackend(
 
   if (normalized.plans.length) {
     const fallbackCurrentId = currentPlanId || normalized.plans[0]?.id;
-    const rows = normalized.plans.map(plan => ({
+    const rows = normalized.plans.map((plan) => ({
       user_id: userId,
       id: plan.id,
       plan_name: plan.planName,
@@ -414,7 +454,9 @@ export async function persistWorkoutPlansToBackend(
       updated_at: new Date().toISOString(),
     }));
 
-    const { error } = await supabase.from('training_workout_plans').upsert(rows, { onConflict: 'user_id,id' });
+    const { error } = await supabase
+      .from('training_workout_plans')
+      .upsert(rows, { onConflict: 'user_id,id' });
     assertNoError(error, 'Falha ao salvar planos no Supabase.');
   }
 
@@ -437,7 +479,10 @@ export async function persistWorkoutHistoryToBackend(
 
   const userId = await getAuthUserId();
   if (!userId) {
-    const state = normalizeLegacyState({ ...loadLegacyTrainingStateFromLocalStorage(), history: normalized.history });
+    const state = normalizeLegacyState({
+      ...loadLegacyTrainingStateFromLocalStorage(),
+      history: normalized.history,
+    });
     const migration = mockResult({
       profileMigrated: false,
       plansMigrated: 0,
@@ -454,7 +499,7 @@ export async function persistWorkoutHistoryToBackend(
   }
 
   if (normalized.history.length) {
-    const rows = normalized.history.map(record => ({
+    const rows = normalized.history.map((record) => ({
       user_id: userId,
       id: record.id,
       workout_date: new Date(record.date).toISOString(),
@@ -468,7 +513,9 @@ export async function persistWorkoutHistoryToBackend(
       updated_at: new Date().toISOString(),
     }));
 
-    const { error } = await supabase.from('training_workout_history_records').upsert(rows, { onConflict: 'user_id,id' });
+    const { error } = await supabase
+      .from('training_workout_history_records')
+      .upsert(rows, { onConflict: 'user_id,id' });
     assertNoError(error, 'Falha ao salvar historico no Supabase.');
   }
 

@@ -20,7 +20,9 @@ type PipVideoElement = HTMLVideoElement & {
 };
 
 function hasSourceElement(video: HTMLVideoElement): boolean {
-  return Array.from(video.querySelectorAll('source')).some(source => Boolean(source.getAttribute('src')?.trim()));
+  return Array.from(video.querySelectorAll('source')).some((source) =>
+    Boolean(source.getAttribute('src')?.trim()),
+  );
 }
 
 export function hasRealVideoMedia(video: HTMLVideoElement | null | undefined): boolean {
@@ -35,7 +37,7 @@ export function isPictureInPictureSupported(doc: Document = document): boolean {
 
 export function findPictureInPictureVideo(root: ParentNode = document): HTMLVideoElement | null {
   const videos = Array.from(root.querySelectorAll('video'));
-  return videos.find(video => hasRealVideoMedia(video)) ?? null;
+  return videos.find((video) => hasRealVideoMedia(video)) ?? null;
 }
 
 export function getPictureInPictureGuard(

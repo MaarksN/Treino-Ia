@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { clearSensitiveLocalData, exportLocalPrivacyData, getPrivacyLocalOnlyNotice, listLocalPrivacyCategories } from './privacyConsentService';
+import {
+  clearSensitiveLocalData,
+  exportLocalPrivacyData,
+  getPrivacyLocalOnlyNotice,
+  listLocalPrivacyCategories,
+} from './privacyConsentService';
 
 describe('privacyConsentService', () => {
   beforeEach(() => localStorage.clear());
@@ -7,7 +12,7 @@ describe('privacyConsentService', () => {
   it('lists known local categories', () => {
     localStorage.setItem('@TreinoApp:bodyMetrics', JSON.stringify([{ weight: 80 }]));
     const categories = listLocalPrivacyCategories();
-    expect(categories.some(item => item.key === '@TreinoApp:bodyMetrics')).toBe(true);
+    expect(categories.some((item) => item.key === '@TreinoApp:bodyMetrics')).toBe(true);
   });
 
   it('exports sanitized local json and keeps out-of-scope untouched', () => {

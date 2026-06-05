@@ -106,7 +106,8 @@ export function getAudioNoteGuard(): AudioNoteGuard {
   }
 
   const recorderWindow = window as WindowWithMediaRecorder;
-  const hasAudioCaptureApi = typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices?.getUserMedia);
+  const hasAudioCaptureApi =
+    typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices?.getUserMedia);
   if (!recorderWindow.MediaRecorder || !hasAudioCaptureApi) {
     return {
       status: 'unsupported',
@@ -118,6 +119,7 @@ export function getAudioNoteGuard(): AudioNoteGuard {
   return {
     status: 'available',
     canRecord: true,
-    reason: 'O navegador suporta gravacao real; UI de captura ainda fica atras de permissao explicita.',
+    reason:
+      'O navegador suporta gravacao real; UI de captura ainda fica atras de permissao explicita.',
   };
 }

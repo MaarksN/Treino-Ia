@@ -35,7 +35,10 @@ export const CurrentPlanConsistencyHelper = {
       }
     } catch (err: any) {
       // In case of any unhandled error in the save process
-      return { status: 'failed', error: err?.message || 'Unknown error occurred while saving plan.' };
+      return {
+        status: 'failed',
+        error: err?.message || 'Unknown error occurred while saving plan.',
+      };
     }
-  }
+  },
 };

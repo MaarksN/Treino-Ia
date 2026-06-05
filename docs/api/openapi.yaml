@@ -4,8 +4,12 @@ info:
   version: 0.1.0
   description: API contracts for billing, AI proxy, compliance, offline sync, gamification, health integrations, telemetry, and webhooks. All API responses expose X-Correlation-ID for support and incident triage.
 servers:
-  - url: https://example.vercel.app
-    description: Production
+  - url: https://{deploymentHost}
+    description: Staging/production Vercel deployment. Replace the default example with the validated URL from the latest Vercel Preview or production deploy evidence.
+    variables:
+      deploymentHost:
+        default: staging.treinoia.example
+        description: Example placeholder only; do not treat as validated production evidence.
   - url: http://localhost:3000
     description: Local Vite/Vercel dev
 security:
@@ -15,9 +19,9 @@ paths:
     get:
       summary: Load server-side plan, subscription status, and entitlements.
       responses:
-        "200":
+        '200':
           description: Entitlement summary.
-        "401":
+        '401':
           description: Missing or invalid Supabase session.
   /api/stripe/create-checkout-session:
     post:
@@ -37,13 +41,13 @@ paths:
                   type: string
                   enum: [month, year]
       responses:
-        "200":
+        '200':
           description: Checkout URL and Stripe session id.
   /api/stripe/create-portal-session:
     post:
       summary: Create a Stripe customer portal session.
       responses:
-        "200":
+        '200':
           description: Portal URL.
   /api/stripe/webhook:
     post:
@@ -56,9 +60,9 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Event accepted.
-        "400":
+        '400':
           description: Invalid signature.
   /api/gemini-proxy:
     post:
@@ -70,11 +74,11 @@ paths:
             schema:
               type: object
       responses:
-        "200":
+        '200':
           description: Gemini API response.
-        "402":
+        '402':
           description: Free plan monthly AI limit reached.
-        "429":
+        '429':
           description: Per-minute rate limit reached.
   /api/sync/offline-actions:
     post:
@@ -102,7 +106,7 @@ paths:
                 createdAt:
                   type: number
       responses:
-        "200":
+        '200':
           description: Action stored.
   /api/telemetry/errors:
     post:
@@ -125,33 +129,33 @@ paths:
                     type: object
                     required: [message, source]
       responses:
-        "200":
+        '200':
           description: Events stored.
   /api/compliance/export:
     post:
       summary: Export all portable user data for LGPD/GDPR data portability.
       responses:
-        "200":
+        '200':
           description: Aggregated JSON export for the authenticated user.
-        "401":
+        '401':
           description: Missing or invalid Supabase session.
   /api/compliance/erasure:
     post:
       summary: Cancel connected billing and physically erase the authenticated user.
       responses:
-        "200":
+        '200':
           description: User data deletion was orchestrated.
-        "401":
+        '401':
           description: Missing or invalid Supabase session.
-        "500":
+        '500':
           description: Physical deletion failed.
   /api/gamification/state:
     get:
       summary: Load server-side gamification profile, ledger, missions, cosmetics, season, clan, and avatar state.
       responses:
-        "200":
+        '200':
           description: Gamification state.
-        "401":
+        '401':
           description: Missing or invalid Supabase session.
   /api/gamification/event:
     post:
@@ -182,20 +186,20 @@ paths:
                 cost:
                   type: number
       responses:
-        "200":
+        '200':
           description: Event applied or safely skipped.
-        "400":
+        '400':
           description: Invalid event payload.
-        "409":
+        '409':
           description: Duplicate or conflicting event.
   /api/security/rate-limit:
     get:
       summary: Lightweight per-IP rate limit probe for security smoke tests.
       security: []
       responses:
-        "200":
+        '200':
           description: Request is allowed.
-        "429":
+        '429':
           description: Rate limit exceeded.
   /api/jobs/create:
     post:
@@ -214,7 +218,7 @@ paths:
                 payload:
                   type: object
       responses:
-        "202":
+        '202':
           description: Job queued.
   /api/health/oauth/start:
     post:
@@ -233,19 +237,19 @@ paths:
                 redirectTo:
                   type: string
       responses:
-        "200":
+        '200':
           description: Provider authorization URL and expiration.
   /api/health/oauth/callback:
     get:
       summary: Health provider OAuth callback.
       responses:
-        "302":
+        '302':
           description: Redirect back to the application.
   /api/health/sync:
     post:
       summary: Trigger health data sync for connected providers.
       responses:
-        "200":
+        '200':
           description: Sync job created.
   /api/retention/worker:
     get:
@@ -253,18 +257,18 @@ paths:
       security:
         - cronSecret: []
       responses:
-        "200":
+        '200':
           description: Retention jobs processed.
-        "401":
+        '401':
           description: Invalid worker secret.
     post:
       summary: Process scheduled retention check-ins and habit reminders.
       security:
         - cronSecret: []
       responses:
-        "200":
+        '200':
           description: Retention jobs processed.
-        "401":
+        '401':
           description: Invalid worker secret.
 components:
   securitySchemes:

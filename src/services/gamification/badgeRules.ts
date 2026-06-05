@@ -12,6 +12,10 @@ export function getLifestyleBadges(input: LifestyleBadgeInput): string[] {
   return badges;
 }
 
-export function canApplyStreakFreeze(currentStreak: number, freezeTokens: number, missedDays: number): boolean {
+export function canApplyStreakFreeze(
+  currentStreak: number,
+  freezeTokens: number,
+  missedDays: number,
+): boolean {
   return currentStreak > 0 && freezeTokens > 0 && missedDays === 1;
 }

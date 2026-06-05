@@ -22,7 +22,8 @@ export function generateLocalWeeklyInsights(sessions: WorkoutSession[]): WeeklyI
   if (detectHighFatigue(sessions)) {
     insights.push({
       title: 'Fadiga alta',
-      description: 'Há sinais recentes de RPE muito alto ou dor. Vale considerar redução de volume.',
+      description:
+        'Há sinais recentes de RPE muito alto ou dor. Vale considerar redução de volume.',
       severity: 'warning',
     });
   }

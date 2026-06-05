@@ -45,7 +45,7 @@ export function FatigueMonitor({ initialSnapshot }: Props) {
   }, [snapshot]);
 
   const update = (key: keyof typeof snapshot, value: number) => {
-    setSnapshot(prev => ({
+    setSnapshot((prev) => ({
       ...prev,
       [key]: value,
     }));
@@ -71,7 +71,7 @@ export function FatigueMonitor({ initialSnapshot }: Props) {
             min={0}
             max={100}
             suffix="%"
-            onChange={value => update('readiness', value)}
+            onChange={(value) => update('readiness', value)}
           />
 
           <Field
@@ -80,7 +80,7 @@ export function FatigueMonitor({ initialSnapshot }: Props) {
             min={0}
             max={10}
             suffix="/10"
-            onChange={value => update('soreness', value)}
+            onChange={(value) => update('soreness', value)}
           />
 
           <Field
@@ -89,7 +89,7 @@ export function FatigueMonitor({ initialSnapshot }: Props) {
             min={0}
             max={10}
             suffix="/10"
-            onChange={value => update('sleep', value)}
+            onChange={(value) => update('sleep', value)}
           />
 
           <Field
@@ -98,7 +98,7 @@ export function FatigueMonitor({ initialSnapshot }: Props) {
             min={0}
             max={10}
             suffix="/10"
-            onChange={value => update('stress', value)}
+            onChange={(value) => update('stress', value)}
           />
         </div>
 
@@ -133,9 +133,7 @@ export function FatigueMonitor({ initialSnapshot }: Props) {
                 <AlertTriangle size={16} />
                 Auto deload recomendado
               </p>
-              <p className="text-sm mt-1">
-                Reduza 30-50% do volume e mantenha técnica perfeita.
-              </p>
+              <p className="text-sm mt-1">Reduza 30-50% do volume e mantenha técnica perfeita.</p>
             </div>
           )}
 
@@ -168,7 +166,10 @@ function Field({ label, value, min, max, suffix, onChange }: FieldProps) {
     <label className="block">
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-bold text-white">{label}</span>
-        <span className="text-sm text-brand-neon">{value}{suffix}</span>
+        <span className="text-sm text-brand-neon">
+          {value}
+          {suffix}
+        </span>
       </div>
 
       <input
@@ -176,7 +177,7 @@ function Field({ label, value, min, max, suffix, onChange }: FieldProps) {
         min={min}
         max={max}
         value={value}
-        onChange={event => onChange(Number(event.target.value))}
+        onChange={(event) => onChange(Number(event.target.value))}
         className="w-full"
       />
     </label>

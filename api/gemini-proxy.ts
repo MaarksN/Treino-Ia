@@ -3,14 +3,19 @@ import { getServerEntitlement, incrementUsageCounter } from './_lib/billing-enti
 import { checkRateLimit } from './_lib/distributedRateLimit';
 import { fetchWithTimeout } from './_lib/fetchWithTimeout';
 import { applyCorsHeaders, handleApiError, HttpError, json, requireEnv } from './_lib/http';
-import { isTransientFetchError, retryWithBackoff, shouldRetryGeminiStatus } from './_lib/retryPolicy';
+import {
+  isTransientFetchError,
+  retryWithBackoff,
+  shouldRetryGeminiStatus,
+} from './_lib/retryPolicy';
 import { requireSupabaseUser } from './_lib/server-supabase';
 
 export const config = {
   runtime: 'edge',
 };
 
-const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent';
+const GEMINI_ENDPOINT =
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent';
 const FREE_AI_REQUEST_LIMIT = 10;
 const RATE_WINDOW_MS = 60_000;
 const FREE_RATE_LIMIT = 20;
@@ -80,7 +85,7 @@ async function sha256(value: string) {
   const bytes = new TextEncoder().encode(value);
   const hash = await crypto.subtle.digest('SHA-256', bytes);
   return Array.from(new Uint8Array(hash))
-    .map(byte => byte.toString(16).padStart(2, '0'))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
     .join('');
 }
 
@@ -117,28 +122,36 @@ export default async function handler(request: Request) {
     }
 
     if (cached && cached.expiresAt > Date.now()) {
-      return withCorsHeaders(new Response(cached.body, {
-        status: cached.status,
-        headers: {
-          'content-type': cached.contentType,
-          'cache-control': 'private, no-store',
-          'x-treino-ai-cache': 'hit',
-        },
-      }), request);
+      return withCorsHeaders(
+        new Response(cached.body, {
+          status: cached.status,
+          headers: {
+            'content-type': cached.contentType,
+            'cache-control': 'private, no-store',
+            'x-treino-ai-cache': 'hit',
+          },
+        }),
+        request,
+      );
     }
 
     const response = await retryWithBackoff(
-      () => fetchWithTimeout(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: bodyText,
-      }, {
-        timeoutMs: GEMINI_TIMEOUT_MS,
-      }),
+      () =>
+        fetchWithTimeout(
+          `${GEMINI_ENDPOINT}?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: bodyText,
+          },
+          {
+            timeoutMs: GEMINI_TIMEOUT_MS,
+          },
+        ),
       {
         maxRetries: GEMINI_MAX_RETRIES,
         baseDelayMs: GEMINI_RETRY_BASE_DELAY_MS,
-        shouldRetryResult: result => shouldRetryGeminiStatus(result.status),
+        shouldRetryResult: (result) => shouldRetryGeminiStatus(result.status),
         shouldRetryError: isTransientFetchError,
       },
     ).catch(() => {
@@ -153,33 +166,46 @@ export default async function handler(request: Request) {
     const contentType = response.headers.get('content-type') ?? 'application/json';
 
     if (!response.ok) {
-      return cors({
-        error: response.status >= 500
-          ? 'AI provider temporarily unavailable.'
-          : 'Gemini request was rejected.',
-      }, response.status >= 500 ? 502 : response.status, request);
+      return cors(
+        {
+          error:
+            response.status >= 500
+              ? 'AI provider temporarily unavailable.'
+              : 'Gemini request was rejected.',
+        },
+        response.status >= 500 ? 502 : response.status,
+        request,
+      );
     }
 
     if (response.ok && cacheable) {
-      setBoundedTtlCacheEntry(responseCache, cacheKey, {
-        body: responseText,
-        contentType,
-        expiresAt: Date.now() + CACHE_TTL_MS,
-        status: response.status,
-      }, {
-        maxEntries: MAX_RESPONSE_CACHE_ENTRIES,
-        now: Date.now(),
-      });
+      setBoundedTtlCacheEntry(
+        responseCache,
+        cacheKey,
+        {
+          body: responseText,
+          contentType,
+          expiresAt: Date.now() + CACHE_TTL_MS,
+          status: response.status,
+        },
+        {
+          maxEntries: MAX_RESPONSE_CACHE_ENTRIES,
+          now: Date.now(),
+        },
+      );
     }
 
-    return withCorsHeaders(new Response(responseText, {
-      status: response.status,
-      headers: {
-        'content-type': contentType,
-        'cache-control': 'private, no-store',
-        'x-treino-ai-cache': 'miss',
-      },
-    }), request);
+    return withCorsHeaders(
+      new Response(responseText, {
+        status: response.status,
+        headers: {
+          'content-type': contentType,
+          'cache-control': 'private, no-store',
+          'x-treino-ai-cache': 'miss',
+        },
+      }),
+      request,
+    );
   } catch (error) {
     const response = handleApiError(error, request);
     return withCorsHeaders(response, request);

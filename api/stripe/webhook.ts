@@ -1,6 +1,10 @@
 import { handleApiError, json, HttpError } from '../_lib/http';
 import { BILLING_PROVIDER_NOT_CONFIGURED, getStripeClient } from '../_lib/stripe-client';
-import { recordStripeWebhookEvent, upsertSubscriptionFromCheckoutSession, upsertSubscriptionFromStripeSubscription } from '../_lib/billing-store';
+import {
+  recordStripeWebhookEvent,
+  upsertSubscriptionFromCheckoutSession,
+  upsertSubscriptionFromStripeSubscription,
+} from '../_lib/billing-store';
 
 export const config = {
   runtime: 'nodejs',

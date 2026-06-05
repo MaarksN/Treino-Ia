@@ -115,7 +115,7 @@ const PATHWAYS: Record<AdaptivePathwayId, AdaptivePathway> = {
 const STORAGE_KEY = '@TreinoIA:accessibility:selectedPathways';
 
 export function getAllPathways(): AdaptivePathway[] {
-  return ADAPTIVE_PATHWAY_IDS.map(id => PATHWAYS[id]);
+  return ADAPTIVE_PATHWAY_IDS.map((id) => PATHWAYS[id]);
 }
 
 export function getPathwayById(id: AdaptivePathwayId): AdaptivePathway | null {
@@ -131,7 +131,7 @@ export function sanitizePathwayId(value: unknown): AdaptivePathwayId | null {
 
 export function saveSelectedPathways(ids: AdaptivePathwayId[]): AdaptivePathwayId[] {
   const sanitized = ids
-    .map(id => sanitizePathwayId(id))
+    .map((id) => sanitizePathwayId(id))
     .filter((id): id is AdaptivePathwayId => id !== null);
   const unique = Array.from(new Set(sanitized));
   localStorage.setItem(STORAGE_KEY, JSON.stringify(unique));
@@ -144,7 +144,7 @@ export function getSelectedPathways(): AdaptivePathwayId[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown[];
     return parsed
-      .map(item => sanitizePathwayId(item))
+      .map((item) => sanitizePathwayId(item))
       .filter((id): id is AdaptivePathwayId => id !== null);
   } catch {
     return [];

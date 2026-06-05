@@ -1,6 +1,11 @@
 import type { WorkoutSession, WorkoutExerciseLog, ExerciseSet } from '../services/database';
 
-export type ProgressionAction = 'increase' | 'maintain' | 'decrease' | 'deload' | 'insufficient_data';
+export type ProgressionAction =
+  | 'increase'
+  | 'maintain'
+  | 'decrease'
+  | 'deload'
+  | 'insufficient_data';
 export type ProgressionConfidence = 'low' | 'medium' | 'high';
 
 export type ProgressionSuggestion = {
@@ -16,16 +21,16 @@ export type ProgressionSuggestion = {
 
 // Configurações de incremento por grupo muscular (estimativa)
 const INCREMENT_RULES: Record<string, number> = {
-  'Peito': 2.5,
-  'Costas': 2.5,
-  'Quadríceps': 5,
-  'Posteriores': 5,
-  'Glúteos': 5,
-  'Ombros': 1,
-  'Bíceps': 1,
-  'Tríceps': 1,
-  'Panturrilhas': 2.5,
-  'Core': 0, // Normalmente peso corporal
+  Peito: 2.5,
+  Costas: 2.5,
+  Quadríceps: 5,
+  Posteriores: 5,
+  Glúteos: 5,
+  Ombros: 1,
+  Bíceps: 1,
+  Tríceps: 1,
+  Panturrilhas: 2.5,
+  Core: 0, // Normalmente peso corporal
 };
 
 const DEFAULT_INCREMENT = 2; // Default de 2kg se não achar o grupo
@@ -34,7 +39,7 @@ export function calculateProgression(
   exerciseId: string,
   exerciseName: string,
   history: WorkoutSession[],
-  muscleGroup?: string
+  muscleGroup?: string,
 ): ProgressionSuggestion {
   if (!history || history.length === 0) {
     return {
@@ -48,8 +53,10 @@ export function calculateProgression(
 
   // Filtrar apenas logs deste exercício no histórico
   const exerciseLogs: WorkoutExerciseLog[] = [];
-  history.forEach(session => {
-    const log = session.exercises?.find(l => l.exerciseId === exerciseId || l.name === exerciseName);
+  history.forEach((session) => {
+    const log = session.exercises?.find(
+      (l) => l.exerciseId === exerciseId || l.name === exerciseName,
+    );
     if (log) {
       exerciseLogs.push(log);
     }
@@ -67,11 +74,11 @@ export function calculateProgression(
 
   // Ordenar logs por data mais recente primeiro (assumindo completedAt na session, não temos date no WorkoutExerciseLog isolado, então assumimos que a ordem de history já é decrescente ou precisamos mapear com a data da session)
   // Mas como não temos session date diretamente no log, vamos assumir que history já está do mais recente para o mais antigo,
-  // ou passamos a data da sessão junto. Como não temos isso aqui e estamos apenas pegando o primeiro que apareceu no histórico 
+  // ou passamos a data da sessão junto. Como não temos isso aqui e estamos apenas pegando o primeiro que apareceu no histórico
   // (assumindo que `history` é passado mais recente primeiro):
   const lastLog = exerciseLogs[0];
   const previousLoad = lastLog.actualWeight || 0;
-  
+
   if (previousLoad <= 0) {
     return {
       exerciseId,
@@ -99,10 +106,13 @@ export function calculateProgression(
   }
 
   // Falhou se rpe for 10 (estimativa já que não temos o campo failed no ExerciseSet de database.types.ts)
-  const failedSets = sets.filter(s => s.rpe >= 10).length;
-  const avgRpe = sets.reduce((acc, curr) => acc + (curr.rpe || 0), 0) / sets.length || lastLog.rpe || 0;
-  
-  const increment = muscleGroup ? (INCREMENT_RULES[muscleGroup] ?? DEFAULT_INCREMENT) : DEFAULT_INCREMENT;
+  const failedSets = sets.filter((s) => s.rpe >= 10).length;
+  const avgRpe =
+    sets.reduce((acc, curr) => acc + (curr.rpe || 0), 0) / sets.length || lastLog.rpe || 0;
+
+  const increment = muscleGroup
+    ? (INCREMENT_RULES[muscleGroup] ?? DEFAULT_INCREMENT)
+    : DEFAULT_INCREMENT;
 
   if (failedSets > 0) {
     // Falhou, sugerir redução ou manutenção (deload se falhas repetidas)

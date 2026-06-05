@@ -50,7 +50,7 @@ export function InfrastructureHub() {
 
     await syncOfflineQueue({
       endpoint: '/api/sync/offline-actions',
-      onSynced: count => {
+      onSynced: (count) => {
         setSyncMessage(`${count} acao(oes) sincronizada(s).`);
       },
       onError: () => {
@@ -83,17 +83,13 @@ export function InfrastructureHub() {
   return (
     <div className="min-h-screen bg-brand-dark text-white p-6">
       <header className="max-w-7xl mx-auto mb-8">
-        <p className="text-brand-neon text-xs uppercase tracking-[0.25em] font-bold">
-          Bloco 11
-        </p>
+        <p className="text-brand-neon text-xs uppercase tracking-[0.25em] font-bold">Bloco 11</p>
 
-        <h1 className="text-4xl font-black mt-2">
-          Infraestrutura Premium
-        </h1>
+        <h1 className="text-4xl font-black mt-2">Infraestrutura Premium</h1>
 
         <p className="text-brand-muted mt-2 max-w-3xl">
-          PWA, offline-first, service worker, push, fila local, sync multi-device,
-          snapshot do dashboard e telemetria de erros.
+          PWA, offline-first, service worker, push, fila local, sync multi-device, snapshot do
+          dashboard e telemetria de erros.
         </p>
       </header>
 
@@ -107,11 +103,7 @@ export function InfrastructureHub() {
             value={isStandalone() ? 'Sim' : 'Nao'}
           />
 
-          <StatusCard
-            icon={<Database />}
-            label="Fila offline"
-            value={queueCount}
-          />
+          <StatusCard icon={<Database />} label="Fila offline" value={queueCount} />
 
           <StatusCard
             icon={<HardDrive />}
@@ -119,19 +111,13 @@ export function InfrastructureHub() {
             value={snapshotVersion ? `v${snapshotVersion}` : 'Nao salvo'}
           />
 
-          <StatusCard
-            icon={<AlertTriangle />}
-            label="Erros locais"
-            value={errorsCount}
-          />
+          <StatusCard icon={<AlertTriangle />} label="Erros locais" value={errorsCount} />
         </section>
 
         <section className="bg-brand-gray rounded-3xl border border-white/10 p-5">
           <div className="flex items-center gap-2 mb-5">
             <Server className="text-brand-neon" />
-            <h2 className="text-2xl font-black text-white">
-              Acoes de infraestrutura
-            </h2>
+            <h2 className="text-2xl font-black text-white">Acoes de infraestrutura</h2>
           </div>
 
           <div className="flex flex-wrap gap-3">
@@ -172,9 +158,7 @@ export function InfrastructureHub() {
             </button>
           </div>
 
-          {syncMessage && (
-            <p className="text-brand-neon text-sm mt-4">{syncMessage}</p>
-          )}
+          {syncMessage && <p className="text-brand-neon text-sm mt-4">{syncMessage}</p>}
         </section>
 
         <PushCenter />
@@ -182,9 +166,7 @@ export function InfrastructureHub() {
         <section className="bg-brand-gray rounded-3xl border border-white/10 p-5">
           <div className="flex items-center gap-2 mb-4">
             <Activity className="text-brand-neon" />
-            <h2 className="text-2xl font-black text-white">
-              Cobertura dos itens 211-230
-            </h2>
+            <h2 className="text-2xl font-black text-white">Cobertura dos itens 211-230</h2>
           </div>
 
           <div className="grid md:grid-cols-2 gap-3">
@@ -209,8 +191,11 @@ export function InfrastructureHub() {
               '228. IndexedDB para fila local',
               '229. Snapshot local do dashboard',
               '230. Telemetria de erros',
-            ].map(item => (
-              <div key={item} className="rounded-2xl bg-brand-dark border border-white/10 p-4 text-white/80">
+            ].map((item) => (
+              <div
+                key={item}
+                className="rounded-2xl bg-brand-dark border border-white/10 p-4 text-white/80"
+              >
                 {item}
               </div>
             ))}

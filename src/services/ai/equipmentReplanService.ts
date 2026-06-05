@@ -37,26 +37,17 @@ const ADAPTATION_MAP: Partial<Record<EquipmentId, string[]>> = {
     'Supino com halteres, remada unilateral, desenvolvimento.',
     'Variações unilaterais para equilíbrio muscular.',
   ],
-  barra: [
-    'Agachamento, levantamento terra, supino reto.',
-    'Progressão linear de carga semanal.',
-  ],
+  barra: ['Agachamento, levantamento terra, supino reto.', 'Progressão linear de carga semanal.'],
   elasticos: [
     'Puxadas, extensões e rotações com faixas.',
     'Ideal para aquecimento e trabalho de mobilidade.',
   ],
-  banco: [
-    'Supino inclinado, declinado e reto.',
-    'Step-ups e bulgarian split squats.',
-  ],
+  banco: ['Supino inclinado, declinado e reto.', 'Step-ups e bulgarian split squats.'],
   maquinas: [
     'Leg press, cadeira extensora, puxada.',
     'Máquinas guiadas são ótimas para iniciantes.',
   ],
-  kettlebell: [
-    'Swing, clean, Turkish get-up.',
-    'Exercícios funcionais de corpo inteiro.',
-  ],
+  kettlebell: ['Swing, clean, Turkish get-up.', 'Exercícios funcionais de corpo inteiro.'],
 };
 
 export function sanitizeEquipmentId(value: unknown): EquipmentId | null {
@@ -66,7 +57,7 @@ export function sanitizeEquipmentId(value: unknown): EquipmentId | null {
 
 export function saveSelectedEquipment(ids: EquipmentId[]): EquipmentId[] {
   const sanitized = ids
-    .map(id => sanitizeEquipmentId(id))
+    .map((id) => sanitizeEquipmentId(id))
     .filter((id): id is EquipmentId => id !== null);
   const unique = Array.from(new Set(sanitized));
   localStorage.setItem(STORAGE_KEY, JSON.stringify(unique));
@@ -79,7 +70,7 @@ export function getSelectedEquipment(): EquipmentId[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown[];
     return parsed
-      .map(item => sanitizeEquipmentId(item))
+      .map((item) => sanitizeEquipmentId(item))
       .filter((id): id is EquipmentId => id !== null);
   } catch {
     return [];
@@ -109,7 +100,8 @@ export function generateAdaptation(equipment: EquipmentId[]): EquipmentAdaptatio
   return {
     equipment,
     suggestions,
-    disclaimer: 'Sugestões são educacionais e baseadas em equipamentos informados manualmente. Reconhecimento visual por IA não está ativo.',
+    disclaimer:
+      'Sugestões são educacionais e baseadas em equipamentos informados manualmente. Reconhecimento visual por IA não está ativo.',
   };
 }
 

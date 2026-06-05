@@ -22,17 +22,31 @@ function isSameUtcDay(value?: string | null) {
   if (!value) return false;
   const then = new Date(value);
   const now = new Date();
-  return then.getUTCFullYear() === now.getUTCFullYear() && then.getUTCMonth() === now.getUTCMonth() && then.getUTCDate() === now.getUTCDate();
+  return (
+    then.getUTCFullYear() === now.getUTCFullYear() &&
+    then.getUTCMonth() === now.getUTCMonth() &&
+    then.getUTCDate() === now.getUTCDate()
+  );
 }
 function isYesterdayUtc(value?: string | null) {
   if (!value) return false;
   const then = new Date(value);
   const yesterday = new Date();
   yesterday.setUTCDate(yesterday.getUTCDate() - 1);
-  return then.getUTCFullYear() === yesterday.getUTCFullYear() && then.getUTCMonth() === yesterday.getUTCMonth() && then.getUTCDate() === yesterday.getUTCDate();
+  return (
+    then.getUTCFullYear() === yesterday.getUTCFullYear() &&
+    then.getUTCMonth() === yesterday.getUTCMonth() &&
+    then.getUTCDate() === yesterday.getUTCDate()
+  );
 }
 
-async function ensureUniqueSourceEvent(supabase: ReturnType<typeof getSupabaseAdmin>, userId: string, eventType: string, sourceId?: string | null, period: string = '') {
+async function ensureUniqueSourceEvent(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  userId: string,
+  eventType: string,
+  sourceId?: string | null,
+  period: string = '',
+) {
   const normalizedKey = normalizeEventKey(eventType, sourceId);
   const idempotencyKey = buildIdempotencyKey(userId, eventType, sourceId, period);
 
@@ -73,9 +87,13 @@ export default async function handler(request: Request) {
       .select('last_login_at,last_checkin_at,login_streak,coins')
       .single();
 
-    if (currentError) throw new Error(`Failed to load gamification profile: ${currentError.message}`);
+    if (currentError)
+      throw new Error(`Failed to load gamification profile: ${currentError.message}`);
 
-    if ((eventType === 'checkin' || eventType === 'daily_checkin') && isSameUtcDay(current.last_checkin_at)) {
+    if (
+      (eventType === 'checkin' || eventType === 'daily_checkin') &&
+      isSameUtcDay(current.last_checkin_at)
+    ) {
       return json({ skipped: true, reason: 'Check-in already recorded today' }, 200, request);
     }
     if (eventType === 'login' && isSameUtcDay(current.last_login_at)) {
@@ -83,7 +101,7 @@ export default async function handler(request: Request) {
     }
 
     if (eventType === 'checkin' || eventType === 'daily_checkin' || eventType === 'login') {
-       await ensureUniqueSourceEvent(supabase, user.id, eventType, null, getDailyPeriod());
+      await ensureUniqueSourceEvent(supabase, user.id, eventType, null, getDailyPeriod());
     }
 
     if (eventType === 'mission_claimed') {
@@ -100,7 +118,8 @@ export default async function handler(request: Request) {
         .maybeSingle();
       if (missionError) throw new Error(`Failed to load mission: ${missionError.message}`);
       if (!mission) throw new HttpError(404, 'Mission not found.');
-      if (mission.status === 'claimed') return json({ skipped: true, reason: 'Mission already claimed' }, 200, request);
+      if (mission.status === 'claimed')
+        return json({ skipped: true, reason: 'Mission already claimed' }, 200, request);
       if (mission.status !== 'completed') throw new HttpError(400, 'Mission is not completed yet');
 
       const { error: updateMissionError } = await supabase
@@ -109,10 +128,15 @@ export default async function handler(request: Request) {
         .eq('id', missionId)
         .eq('user_id', user.id)
         .neq('status', 'claimed');
-      if (updateMissionError) throw new Error(`Failed to claim mission: ${updateMissionError.message}`);
+      if (updateMissionError)
+        throw new Error(`Failed to claim mission: ${updateMissionError.message}`);
 
       const { data: profile, error: eventError } = await supabase.rpc('apply_gamification_event', {
-        p_user_id: user.id, p_event_type: eventType, p_source_id: missionId, p_xp_delta: mission.xp_reward, p_coin_delta: mission.coin_reward,
+        p_user_id: user.id,
+        p_event_type: eventType,
+        p_source_id: missionId,
+        p_xp_delta: mission.xp_reward,
+        p_coin_delta: mission.coin_reward,
         p_metadata: { origin: 'api', eventType, missionId, idempotencyKey },
       });
       if (eventError) throw new Error(`Failed to apply gamification event: ${eventError.message}`);
@@ -122,16 +146,31 @@ export default async function handler(request: Request) {
     if (eventType === 'cosmetic_purchased') {
       const cosmeticId = sourceId;
       if (!cosmeticId) throw new HttpError(400, 'cosmetic_purchased exige sourceId (cosmetic id).');
-      const cost = typeof body.cost === 'number' && Number.isFinite(body.cost) ? Math.max(0, Math.floor(body.cost)) : 0;
+      const cost =
+        typeof body.cost === 'number' && Number.isFinite(body.cost)
+          ? Math.max(0, Math.floor(body.cost))
+          : 0;
       if (cost <= 0) throw new HttpError(400, 'Cosmetic cost must be a positive integer.');
-      if ((current.coins ?? 0) < cost) throw new HttpError(409, 'Saldo insuficiente para comprar cosmético.');
+      if ((current.coins ?? 0) < cost)
+        throw new HttpError(409, 'Saldo insuficiente para comprar cosmético.');
 
       const { data: existingCosmetic, error: existingError } = await supabase
-        .from('gamification_cosmetics').select('cosmetic_id').eq('user_id', user.id).eq('cosmetic_id', cosmeticId).maybeSingle();
-      if (existingError) throw new Error(`Failed to verify cosmetic ownership: ${existingError.message}`);
-      if (existingCosmetic) return json({ skipped: true, reason: 'Cosmetic already unlocked' }, 200, request);
+        .from('gamification_cosmetics')
+        .select('cosmetic_id')
+        .eq('user_id', user.id)
+        .eq('cosmetic_id', cosmeticId)
+        .maybeSingle();
+      if (existingError)
+        throw new Error(`Failed to verify cosmetic ownership: ${existingError.message}`);
+      if (existingCosmetic)
+        return json({ skipped: true, reason: 'Cosmetic already unlocked' }, 200, request);
 
-      const idempotencyKey = await ensureUniqueSourceEvent(supabase, user.id, eventType, cosmeticId);
+      const idempotencyKey = await ensureUniqueSourceEvent(
+        supabase,
+        user.id,
+        eventType,
+        cosmeticId,
+      );
 
       const { error: insertError } = await supabase
         .from('gamification_cosmetics')
@@ -139,7 +178,11 @@ export default async function handler(request: Request) {
       if (insertError) throw new Error(`Failed to unlock cosmetic: ${insertError.message}`);
 
       const { data: profile, error: eventError } = await supabase.rpc('apply_gamification_event', {
-        p_user_id: user.id, p_event_type: eventType, p_source_id: cosmeticId, p_xp_delta: 0, p_coin_delta: -cost,
+        p_user_id: user.id,
+        p_event_type: eventType,
+        p_source_id: cosmeticId,
+        p_xp_delta: 0,
+        p_coin_delta: -cost,
         p_metadata: { origin: 'api', eventType, cosmeticId, cost, idempotencyKey },
       });
       if (eventError) throw new Error(`Failed to apply gamification event: ${eventError.message}`);
@@ -149,10 +192,10 @@ export default async function handler(request: Request) {
     let resolvedSourceId = sourceId;
     let idempotencyKey;
     if (eventType !== 'checkin' && eventType !== 'daily_checkin' && eventType !== 'login') {
-        idempotencyKey = await ensureUniqueSourceEvent(supabase, user.id, eventType, sourceId);
+      idempotencyKey = await ensureUniqueSourceEvent(supabase, user.id, eventType, sourceId);
     } else {
-        idempotencyKey = buildIdempotencyKey(user.id, eventType, null, getDailyPeriod());
-        resolvedSourceId = idempotencyKey;
+      idempotencyKey = buildIdempotencyKey(user.id, eventType, null, getDailyPeriod());
+      resolvedSourceId = idempotencyKey;
     }
 
     const { data: profile, error: eventError } = await supabase.rpc('apply_gamification_event', {
@@ -165,7 +208,17 @@ export default async function handler(request: Request) {
     });
     if (eventError) throw new Error(`Failed to apply gamification event: ${eventError.message}`);
 
-    const patch = eventType === 'login' ? { last_login_at: new Date().toISOString(), login_streak: isYesterdayUtc(current.last_login_at) ? Number(current.login_streak ?? 0) + 1 : 1 } : (eventType === 'checkin' || eventType === 'daily_checkin') ? { last_checkin_at: new Date().toISOString() } : null;
+    const patch =
+      eventType === 'login'
+        ? {
+            last_login_at: new Date().toISOString(),
+            login_streak: isYesterdayUtc(current.last_login_at)
+              ? Number(current.login_streak ?? 0) + 1
+              : 1,
+          }
+        : eventType === 'checkin' || eventType === 'daily_checkin'
+          ? { last_checkin_at: new Date().toISOString() }
+          : null;
     if (!patch) return json({ profile }, 200, request);
 
     const { data: updated, error: updateError } = await supabase
@@ -174,7 +227,8 @@ export default async function handler(request: Request) {
       .eq('user_id', user.id)
       .select('*')
       .single();
-    if (updateError) throw new Error(`Failed to update gamification profile: ${updateError.message}`);
+    if (updateError)
+      throw new Error(`Failed to update gamification profile: ${updateError.message}`);
     return json({ profile: updated ?? profile }, 200, request);
   } catch (error) {
     return handleApiError(error, request);

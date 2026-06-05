@@ -21,7 +21,7 @@ const rawEnv = {
 };
 
 const optionalEnvString = <T extends z.ZodTypeAny>(schema: T) =>
-  z.preprocess(value => (value === '' ? undefined : value), schema.optional());
+  z.preprocess((value) => (value === '' ? undefined : value), schema.optional());
 
 function isAbsoluteUrlOrRootRelativePath(value: string) {
   if (value.startsWith('/')) return true;

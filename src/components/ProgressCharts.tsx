@@ -1,5 +1,13 @@
 import React from 'react';
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { WorkoutHistoryRecord, WorkoutPlan } from '../types';
 import { getExerciseHistoryData } from '../services/analyticsService';
 
@@ -16,8 +24,12 @@ export function ProgressCharts({ plans, workoutHistory = [], exerciseName }: Pro
     <div className="bg-brand-gray border-2 border-brand-light/10 p-5 h-80 shadow-brutal-light">
       <div className="flex items-start justify-between gap-4 mb-4">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-brand-muted font-bold">Evolução por exercício</p>
-          <h3 className="text-brand-light font-display text-2xl uppercase tracking-widest">{exerciseName}</h3>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-brand-muted font-bold">
+            Evolução por exercício
+          </p>
+          <h3 className="text-brand-light font-display text-2xl uppercase tracking-widest">
+            {exerciseName}
+          </h3>
         </div>
       </div>
 
@@ -28,11 +40,29 @@ export function ProgressCharts({ plans, workoutHistory = [], exerciseName }: Pro
             <XAxis dataKey="label" stroke="#4B6B99" tick={{ fontSize: 11 }} />
             <YAxis stroke="#4B6B99" tick={{ fontSize: 11 }} />
             <Tooltip
-              contentStyle={{ backgroundColor: '#050A1F', borderColor: '#00F0FF', color: '#AEE0FF' }}
+              contentStyle={{
+                backgroundColor: '#050A1F',
+                borderColor: '#00F0FF',
+                color: '#AEE0FF',
+              }}
               labelStyle={{ color: '#AEE0FF' }}
             />
-            <Line type="monotone" dataKey="weight" name="Carga" stroke="#00F0FF" strokeWidth={3} dot={{ r: 4 }} />
-            <Line type="monotone" dataKey="rpe" name="RPE" stroke="#FF003C" strokeWidth={2} dot={{ r: 3 }} />
+            <Line
+              type="monotone"
+              dataKey="weight"
+              name="Carga"
+              stroke="#00F0FF"
+              strokeWidth={3}
+              dot={{ r: 4 }}
+            />
+            <Line
+              type="monotone"
+              dataKey="rpe"
+              name="RPE"
+              stroke="#FF003C"
+              strokeWidth={2}
+              dot={{ r: 3 }}
+            />
           </LineChart>
         </ResponsiveContainer>
       ) : (

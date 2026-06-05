@@ -79,7 +79,11 @@ export function updateWorkoutStreak(): WorkoutStreak {
   const today = new Date().toDateString();
   const current = getJSON<WorkoutStreak>(STORAGE_KEYS.streak, { count: 0, lastDate: null });
   const currentCount = current.count ?? current.currentStreak ?? 0;
-  const currentLastDate = current.lastDate || (current.lastWorkoutDate ? new Date(`${current.lastWorkoutDate}T00:00:00`).toDateString() : null);
+  const currentLastDate =
+    current.lastDate ||
+    (current.lastWorkoutDate
+      ? new Date(`${current.lastWorkoutDate}T00:00:00`).toDateString()
+      : null);
 
   if (currentLastDate === today) {
     return { ...current, count: currentCount, lastDate: currentLastDate };
@@ -98,7 +102,7 @@ export function updateWorkoutStreak(): WorkoutStreak {
   next.longestStreak = Math.max(current.longestStreak ?? 0, next.count);
   next.lastWorkoutDate = isoToday;
   next.totalWorkouts = current.workoutDates?.includes(isoToday)
-    ? current.totalWorkouts ?? current.workoutDates.length
+    ? (current.totalWorkouts ?? current.workoutDates.length)
     : (current.totalWorkouts ?? current.workoutDates?.length ?? 0) + 1;
   next.workoutDates = current.workoutDates?.includes(isoToday)
     ? current.workoutDates

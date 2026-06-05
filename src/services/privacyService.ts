@@ -32,7 +32,9 @@ export function loadCookieConsent(): CookieConsentState {
   };
 }
 
-export function saveCookieConsent(consent: Omit<CookieConsentState, 'necessary' | 'updatedAt' | 'policyVersion'>) {
+export function saveCookieConsent(
+  consent: Omit<CookieConsentState, 'necessary' | 'updatedAt' | 'policyVersion'>,
+) {
   const next: CookieConsentState = {
     necessary: true,
     ...consent,
@@ -49,8 +51,8 @@ export function exportPrivacyData() {
   const exportable: Record<string, unknown> = {};
 
   Object.keys(localStorage)
-    .filter(key => key.startsWith('@TreinoApp:'))
-    .forEach(key => {
+    .filter((key) => key.startsWith('@TreinoApp:'))
+    .forEach((key) => {
       exportable[key] = localStorage.getItem(key);
     });
 
@@ -63,8 +65,8 @@ export function exportPrivacyData() {
 
 export function deleteLocalAccountData() {
   Object.keys(localStorage)
-    .filter(key => key.startsWith('@TreinoApp:'))
-    .forEach(key => localStorage.removeItem(key));
+    .filter((key) => key.startsWith('@TreinoApp:'))
+    .forEach((key) => localStorage.removeItem(key));
 
   logAuditEvent('privacy.local_data_deleted', 'Dados locais removidos neste dispositivo.');
 }

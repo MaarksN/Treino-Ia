@@ -10,6 +10,7 @@ export interface PartnerTokenGuardResponse {
 export function checkPartnerTokenAvailability(): PartnerTokenGuardResponse {
   return {
     isBlocked: true,
-    message: 'Tokens reais via QR Code exigem backend e parceria física validada. Recurso atualmente bloqueado para evitar promessas de benefícios não existentes.',
+    message:
+      'Tokens reais via QR Code exigem backend e parceria física validada. Recurso atualmente bloqueado para evitar promessas de benefícios não existentes.',
   };
 }

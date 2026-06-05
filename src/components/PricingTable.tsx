@@ -26,7 +26,9 @@ export function PricingTable({ currentPlanId = 'free', onCheckoutStart, compact 
       const session = await createCheckoutSession(planId, interval);
       window.location.assign(session.checkoutUrl);
     } catch (checkoutError) {
-      setError(checkoutError instanceof Error ? checkoutError.message : 'Falha ao criar checkout Stripe.');
+      setError(
+        checkoutError instanceof Error ? checkoutError.message : 'Falha ao criar checkout Stripe.',
+      );
       setLoadingPlan(null);
     }
   };
@@ -35,12 +37,8 @@ export function PricingTable({ currentPlanId = 'free', onCheckoutStart, compact 
     <section className="space-y-5">
       {!compact && (
         <div className="text-center">
-          <p className="text-brand-neon text-xs uppercase tracking-[0.25em] font-bold">
-            Premium
-          </p>
-          <h2 className="text-3xl font-black text-white mt-2">
-            Escolha seu plano
-          </h2>
+          <p className="text-brand-neon text-xs uppercase tracking-[0.25em] font-bold">Premium</p>
+          <h2 className="text-3xl font-black text-white mt-2">Escolha seu plano</h2>
           <p className="text-brand-muted mt-2">
             Checkout real via Stripe. O app só libera entitlements após webhook validado.
           </p>
@@ -48,7 +46,7 @@ export function PricingTable({ currentPlanId = 'free', onCheckoutStart, compact 
       )}
 
       <div className="flex w-fit rounded-xl border border-white/10 bg-white/5 p-1">
-        {(['month', 'year'] as const).map(option => (
+        {(['month', 'year'] as const).map((option) => (
           <button
             key={option}
             type="button"
@@ -65,7 +63,7 @@ export function PricingTable({ currentPlanId = 'free', onCheckoutStart, compact 
       </div>
 
       <div className="grid md:grid-cols-4 gap-4">
-        {BILLING_PLANS.map(plan => {
+        {BILLING_PLANS.map((plan) => {
           const isCurrent = currentPlanId === plan.id;
           const price = interval === 'year' ? plan.annualPrice : plan.monthlyPrice;
           const highlighted = plan.id === 'pro';
@@ -90,7 +88,9 @@ export function PricingTable({ currentPlanId = 'free', onCheckoutStart, compact 
                 <div>
                   <h3 className="text-xl font-black text-white">{plan.name}</h3>
                   <p className="text-sm text-brand-muted mt-1">
-                    {plan.planLimit === 'unlimited' ? 'Planos ilimitados' : `${plan.planLimit} planos ativos`}
+                    {plan.planLimit === 'unlimited'
+                      ? 'Planos ilimitados'
+                      : `${plan.planLimit} planos ativos`}
                   </p>
                 </div>
 
@@ -112,7 +112,7 @@ export function PricingTable({ currentPlanId = 'free', onCheckoutStart, compact 
               </div>
 
               <div className="mt-5 space-y-2">
-                {plan.features.map(feature => (
+                {plan.features.map((feature) => (
                   <p key={feature} className="text-sm text-white/85 flex items-start gap-2">
                     <Check className="text-brand-neon shrink-0 mt-0.5" size={16} />
                     {feature}
@@ -125,9 +125,7 @@ export function PricingTable({ currentPlanId = 'free', onCheckoutStart, compact 
                 disabled={isCurrent || plan.id === 'free' || loading}
                 onClick={() => startCheckout(plan.id)}
                 className={`w-full mt-6 rounded-xl py-3 font-black flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-60 ${
-                  highlighted
-                    ? 'bg-brand-neon text-brand-dark'
-                    : 'bg-white/10 text-white'
+                  highlighted ? 'bg-brand-neon text-brand-dark' : 'bg-white/10 text-white'
                 }`}
               >
                 {loading && <Loader2 className="animate-spin" size={16} />}
@@ -146,4 +144,3 @@ export function PricingTable({ currentPlanId = 'free', onCheckoutStart, compact 
     </section>
   );
 }
-

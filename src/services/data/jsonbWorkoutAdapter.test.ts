@@ -18,7 +18,14 @@ describe('jsonbWorkoutAdapter', () => {
         feedback: 'Bom',
         nextRecommendation: 'Subir carga',
         exercises: [
-          { exerciseId: 'e1', name: 'Agachamento', targetSets: 3, targetReps: '10', targetRest: '90s', completed: true },
+          {
+            exerciseId: 'e1',
+            name: 'Agachamento',
+            targetSets: 3,
+            targetReps: '10',
+            targetRest: '90s',
+            completed: true,
+          },
         ],
       },
     });
@@ -60,7 +67,14 @@ describe('jsonbWorkoutAdapter', () => {
       record_json: {
         id: 's3',
         exercises: [
-          { exerciseId: 'e1', name: 'Supino', targetSets: 3, targetReps: '10', targetRest: '60s', completed: false },
+          {
+            exerciseId: 'e1',
+            name: 'Supino',
+            targetSets: 3,
+            targetReps: '10',
+            targetRest: '60s',
+            completed: false,
+          },
           'not-an-exercise',
           null,
           42,

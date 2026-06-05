@@ -81,7 +81,9 @@ describe('legacyTrainingSyncService', () => {
       historyMigrated: 1,
     });
 
-    expect(window.localStorage.getItem('@TreinoApp:legacyTrainingBackend:mock_dev_only')).toContain('profileMigrated');
+    expect(window.localStorage.getItem('@TreinoApp:legacyTrainingBackend:mock_dev_only')).toContain(
+      'profileMigrated',
+    );
   });
 
   it('persists plan and history sync attempts with explicit mock_dev_only metadata', async () => {

@@ -30,7 +30,10 @@ function createSupabaseMock(overrides: Record<string, unknown> = {}) {
   const missionsBuilder = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
-    maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'm1', status: 'completed', xp_reward: 30, coin_reward: 5 }, error: null }),
+    maybeSingle: vi.fn().mockResolvedValue({
+      data: { id: 'm1', status: 'completed', xp_reward: 30, coin_reward: 5 },
+      error: null,
+    }),
     update: vi.fn().mockReturnThis(),
     neq: vi.fn().mockReturnThis(),
   };
@@ -69,7 +72,11 @@ describe('gamification event API', () => {
     const { mock } = createSupabaseMock();
     getSupabaseAdmin.mockReturnValue(mock);
     const { default: handler } = await import('../api/gamification/event');
-    const req = new Request('http://localhost/api/gamification/event', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ eventType: 'hacked' }) });
+    const req = new Request('http://localhost/api/gamification/event', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ eventType: 'hacked' }),
+    });
     const res = await handler(req);
     expect(res.status).toBe(400);
   });
@@ -94,10 +101,17 @@ describe('gamification event API', () => {
 
   it('enforces mission claim idempotency when already claimed', async () => {
     const { mock, missionsBuilder } = createSupabaseMock();
-    missionsBuilder.maybeSingle.mockResolvedValue({ data: { id: 'm1', status: 'claimed', xp_reward: 30, coin_reward: 5 }, error: null });
+    missionsBuilder.maybeSingle.mockResolvedValue({
+      data: { id: 'm1', status: 'claimed', xp_reward: 30, coin_reward: 5 },
+      error: null,
+    });
     getSupabaseAdmin.mockReturnValue(mock);
     const { default: handler } = await import('../api/gamification/event');
-    const req = new Request('http://localhost/api/gamification/event', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ eventType: 'mission_claimed', sourceId: 'm1' }) });
+    const req = new Request('http://localhost/api/gamification/event', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ eventType: 'mission_claimed', sourceId: 'm1' }),
+    });
     const res = await handler(req);
     const body = await res.json();
     expect(res.status).toBe(200);
@@ -106,10 +120,17 @@ describe('gamification event API', () => {
 
   it('blocks cosmetic purchase with insufficient balance', async () => {
     const { mock, profileBuilder } = createSupabaseMock();
-    profileBuilder.single.mockResolvedValue({ data: { last_login_at: null, last_checkin_at: null, login_streak: 0, coins: 5 }, error: null });
+    profileBuilder.single.mockResolvedValue({
+      data: { last_login_at: null, last_checkin_at: null, login_streak: 0, coins: 5 },
+      error: null,
+    });
     getSupabaseAdmin.mockReturnValue(mock);
     const { default: handler } = await import('../api/gamification/event');
-    const req = new Request('http://localhost/api/gamification/event', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ eventType: 'cosmetic_purchased', sourceId: 'skin-1', cost: 50 }) });
+    const req = new Request('http://localhost/api/gamification/event', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ eventType: 'cosmetic_purchased', sourceId: 'skin-1', cost: 50 }),
+    });
     const res = await handler(req);
     expect(res.status).toBe(409);
   });

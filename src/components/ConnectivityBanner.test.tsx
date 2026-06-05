@@ -5,11 +5,11 @@ import { getOfflineQueueCount } from '../utils/offlineQueue';
 import { syncOfflineQueue } from '../utils/syncUtils';
 
 vi.mock('../utils/offlineQueue', () => ({
-  getOfflineQueueCount: vi.fn()
+  getOfflineQueueCount: vi.fn(),
 }));
 
 vi.mock('../utils/syncUtils', () => ({
-  syncOfflineQueue: vi.fn()
+  syncOfflineQueue: vi.fn(),
 }));
 
 describe('ConnectivityBanner', () => {
@@ -18,7 +18,7 @@ describe('ConnectivityBanner', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getOfflineQueueCount).mockResolvedValue(0);
-    
+
     // Save original property and mock it to true by default
     originalOnLine = navigator.onLine;
     Object.defineProperty(navigator, 'onLine', {
@@ -38,7 +38,7 @@ describe('ConnectivityBanner', () => {
     await act(async () => {
       render(<ConnectivityBanner />);
     });
-    
+
     expect(screen.getByText('Online - sincronizacao ativa')).toBeInTheDocument();
     expect(screen.getByText('0 pendente(s)')).toBeInTheDocument();
   });
@@ -54,7 +54,7 @@ describe('ConnectivityBanner', () => {
     await act(async () => {
       render(<ConnectivityBanner />);
     });
-    
+
     expect(screen.getByText('Offline - acoes salvas na fila local')).toBeInTheDocument();
     expect(screen.getByText('5 pendente(s)')).toBeInTheDocument();
   });
@@ -63,7 +63,7 @@ describe('ConnectivityBanner', () => {
     await act(async () => {
       render(<ConnectivityBanner />);
     });
-    
+
     expect(screen.getByText('Online - sincronizacao ativa')).toBeInTheDocument();
 
     await act(async () => {
@@ -82,7 +82,7 @@ describe('ConnectivityBanner', () => {
     await act(async () => {
       render(<ConnectivityBanner />);
     });
-    
+
     expect(screen.getByText('Offline - acoes salvas na fila local')).toBeInTheDocument();
 
     // Trigger online event

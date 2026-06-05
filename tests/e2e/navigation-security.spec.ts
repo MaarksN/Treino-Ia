@@ -42,7 +42,14 @@ test.describe('Navigation & routing', () => {
   });
 
   test('core routes load directly', async ({ page }) => {
-    for (const route of ['/hoje', '/plano', '/treino/ativo', '/historico', '/conta', '/assinatura']) {
+    for (const route of [
+      '/hoje',
+      '/plano',
+      '/treino/ativo',
+      '/historico',
+      '/conta',
+      '/assinatura',
+    ]) {
       const response = await page.goto(route);
       expect(response?.status()).toBe(200);
       await expect(page.locator('#root')).toBeVisible({ timeout: 10_000 });
@@ -94,10 +101,7 @@ test.describe('Security checks', () => {
 
     // Filter out known benign errors (Supabase client init with placeholder)
     const critical = jsErrors.filter(
-      (e) =>
-        !e.includes('supabase') &&
-        !e.includes('Failed to fetch') &&
-        !e.includes('net::ERR'),
+      (e) => !e.includes('supabase') && !e.includes('Failed to fetch') && !e.includes('net::ERR'),
     );
     expect(critical).toEqual([]);
   });
@@ -134,9 +138,6 @@ test.describe('PWA & HTML semantics', () => {
     await expect(charset).toHaveAttribute('charset', 'UTF-8');
 
     const viewport = page.locator('meta[name="viewport"]');
-    await expect(viewport).toHaveAttribute(
-      'content',
-      'width=device-width, initial-scale=1.0',
-    );
+    await expect(viewport).toHaveAttribute('content', 'width=device-width, initial-scale=1.0');
   });
 });

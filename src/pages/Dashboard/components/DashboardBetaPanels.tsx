@@ -1,80 +1,126 @@
 import { lazy, Suspense } from 'react';
 import { ErrorBoundary } from '../../../components/ErrorBoundary';
 import { Skeleton } from '../../../components/ui/Skeleton';
-import { type TrainingPlan, type UserProfile, type WorkoutSession } from '../../../services/database';
+import {
+  type TrainingPlan,
+  type UserProfile,
+  type WorkoutSession,
+} from '../../../services/database';
 import { GamificationRetentionPanel } from './GamificationRetentionPanel';
 import { RecoveryReadinessSection } from './RecoveryReadinessSection';
 import { type GamificationRetentionState } from '../services/gamificationRetentionEngine';
 import { type RemoteGamifiedState } from '../services/remoteGamifiedEngine';
 
 const NutritionLifestyleHub = lazy(() =>
-  import('../../../components/NutritionLifestyleHub').then(module => ({ default: module.NutritionLifestyleHub })),
+  import('../../../components/NutritionLifestyleHub').then((module) => ({
+    default: module.NutritionLifestyleHub,
+  })),
 );
 const AdvancedSocialHub = lazy(() =>
-  import('../../../components/AdvancedSocial/AdvancedSocialHub').then(module => ({ default: module.AdvancedSocialHub })),
+  import('../../../components/AdvancedSocial/AdvancedSocialHub').then((module) => ({
+    default: module.AdvancedSocialHub,
+  })),
 );
 const BiohackingWidget = lazy(() =>
-  import('./BiohackingWidget').then(module => ({ default: module.BiohackingWidget })),
+  import('./BiohackingWidget').then((module) => ({ default: module.BiohackingWidget })),
 );
 const RemoteGamifiedPanel = lazy(() =>
-  import('./RemoteGamified').then(module => ({ default: module.RemoteGamifiedPanel })),
+  import('./RemoteGamified').then((module) => ({ default: module.RemoteGamifiedPanel })),
 );
 const CalmModePanel = lazy(() =>
-  import('../../../components/wellness/CalmModePanel').then(module => ({ default: module.CalmModePanel })),
+  import('../../../components/wellness/CalmModePanel').then((module) => ({
+    default: module.CalmModePanel,
+  })),
 );
 const EcoLiftingPanel = lazy(() =>
-  import('../../../components/sustainability/EcoLiftingPanel').then(module => ({ default: module.EcoLiftingPanel })),
+  import('../../../components/sustainability/EcoLiftingPanel').then((module) => ({
+    default: module.EcoLiftingPanel,
+  })),
 );
 const BossFightCancellationPreview = lazy(() =>
-  import('../../../components/monetization/BossFightCancellationPreview').then(module => ({ default: module.BossFightCancellationPreview })),
+  import('../../../components/monetization/BossFightCancellationPreview').then((module) => ({
+    default: module.BossFightCancellationPreview,
+  })),
 );
 const PartnerTokenPreview = lazy(() =>
-  import('../../../components/partners/PartnerTokenPreview').then(module => ({ default: module.PartnerTokenPreview })),
+  import('../../../components/partners/PartnerTokenPreview').then((module) => ({
+    default: module.PartnerTokenPreview,
+  })),
 );
 const TimeTravelProgressViewer = lazy(() =>
-  import('../../../components/reports/TimeTravelProgressViewer').then(module => ({ default: module.TimeTravelProgressViewer })),
+  import('../../../components/reports/TimeTravelProgressViewer').then((module) => ({
+    default: module.TimeTravelProgressViewer,
+  })),
 );
 const PainCheckinPanel = lazy(() =>
-  import('../../../components/recovery/PainCheckinPanel').then(module => ({ default: module.PainCheckinPanel })),
+  import('../../../components/recovery/PainCheckinPanel').then((module) => ({
+    default: module.PainCheckinPanel,
+  })),
 );
 const AdaptivePathwaysPanel = lazy(() =>
-  import('../../../components/accessibility/AdaptivePathwaysPanel').then(module => ({ default: module.AdaptivePathwaysPanel })),
+  import('../../../components/accessibility/AdaptivePathwaysPanel').then((module) => ({
+    default: module.AdaptivePathwaysPanel,
+  })),
 );
 const HighContrastModeToggle = lazy(() =>
-  import('../../../components/accessibility/HighContrastModeToggle').then(module => ({ default: module.HighContrastModeToggle })),
+  import('../../../components/accessibility/HighContrastModeToggle').then((module) => ({
+    default: module.HighContrastModeToggle,
+  })),
 );
 const ScreenReaderSupportPanel = lazy(() =>
-  import('../../../components/accessibility/ScreenReaderSupportPanel').then(module => ({ default: module.ScreenReaderSupportPanel })),
+  import('../../../components/accessibility/ScreenReaderSupportPanel').then((module) => ({
+    default: module.ScreenReaderSupportPanel,
+  })),
 );
 const PlainLanguagePanel = lazy(() =>
-  import('../../../components/accessibility/PlainLanguagePanel').then(module => ({ default: module.PlainLanguagePanel })),
+  import('../../../components/accessibility/PlainLanguagePanel').then((module) => ({
+    default: module.PlainLanguagePanel,
+  })),
 );
 const AdaptiveProtocolsPanel = lazy(() =>
-  import('../../../components/accessibility/AdaptiveProtocolsPanel').then(module => ({ default: module.AdaptiveProtocolsPanel })),
+  import('../../../components/accessibility/AdaptiveProtocolsPanel').then((module) => ({
+    default: module.AdaptiveProtocolsPanel,
+  })),
 );
 const ThemeCustomizationPanel = lazy(() =>
-  import('../../../components/premium/ThemeCustomizationPanel').then(module => ({ default: module.ThemeCustomizationPanel })),
+  import('../../../components/premium/ThemeCustomizationPanel').then((module) => ({
+    default: module.ThemeCustomizationPanel,
+  })),
 );
 const PictureInPicturePanel = lazy(() =>
-  import('../../../components/media/PictureInPicturePanel').then(module => ({ default: module.PictureInPicturePanel })),
+  import('../../../components/media/PictureInPicturePanel').then((module) => ({
+    default: module.PictureInPicturePanel,
+  })),
 );
 const WorkoutImportPanel = lazy(() =>
-  import('../../../components/media/WorkoutImportPanel').then(module => ({ default: module.WorkoutImportPanel })),
+  import('../../../components/media/WorkoutImportPanel').then((module) => ({
+    default: module.WorkoutImportPanel,
+  })),
 );
 const FormCheckerPreviewPanel = lazy(() =>
-  import('../../../components/ai/FormCheckerPreviewPanel').then(module => ({ default: module.FormCheckerPreviewPanel })),
+  import('../../../components/ai/FormCheckerPreviewPanel').then((module) => ({
+    default: module.FormCheckerPreviewPanel,
+  })),
 );
 const EquipmentReplanPanel = lazy(() =>
-  import('../../../components/ai/EquipmentReplanPanel').then(module => ({ default: module.EquipmentReplanPanel })),
+  import('../../../components/ai/EquipmentReplanPanel').then((module) => ({
+    default: module.EquipmentReplanPanel,
+  })),
 );
 const PantryPlannerPanel = lazy(() =>
-  import('../../../components/Nutrition/PantryPlannerPanel').then(module => ({ default: module.PantryPlannerPanel })),
+  import('../../../components/Nutrition/PantryPlannerPanel').then((module) => ({
+    default: module.PantryPlannerPanel,
+  })),
 );
 const LongevitySignalPanel = lazy(() =>
-  import('../../../components/wellness/LongevitySignalPanel').then(module => ({ default: module.LongevitySignalPanel })),
+  import('../../../components/wellness/LongevitySignalPanel').then((module) => ({
+    default: module.LongevitySignalPanel,
+  })),
 );
 const WebXRPreviewPanel = lazy(() =>
-  import('../../../components/xr/WebXRPreviewPanel').then(module => ({ default: module.WebXRPreviewPanel })),
+  import('../../../components/xr/WebXRPreviewPanel').then((module) => ({
+    default: module.WebXRPreviewPanel,
+  })),
 );
 
 interface DashboardBetaPanelsProps {
@@ -133,7 +179,12 @@ export function DashboardBetaPanels({
         <div id="dashboard-nutrition" className="scroll-mt-24">
           <ErrorBoundary section="NutritionLifestyleHub">
             <Suspense fallback={<LazyPanelFallback />}>
-              <NutritionLifestyleHub profile={profile} plan={plan} history={history} showAdvanced={flags.advancedWellness} />
+              <NutritionLifestyleHub
+                profile={profile}
+                plan={plan}
+                history={history}
+                showAdvanced={flags.advancedWellness}
+              />
             </Suspense>
           </ErrorBoundary>
         </div>
@@ -161,7 +212,9 @@ export function DashboardBetaPanels({
       {flags.advancedWellness && (
         <section className="mb-8 space-y-6">
           <div className="border-b-2 border-brand-light/10 pb-4">
-            <h2 className="font-display text-4xl uppercase text-brand-light">Bem-estar, Sustentabilidade & Retrospectiva</h2>
+            <h2 className="font-display text-4xl uppercase text-brand-light">
+              Bem-estar, Sustentabilidade & Retrospectiva
+            </h2>
           </div>
           <Suspense fallback={<LazyPanelFallback />}>
             <CalmModePanel />
@@ -174,7 +227,9 @@ export function DashboardBetaPanels({
       {flags.accessibility && (
         <section id="dashboard-accessibility" className="mb-8 scroll-mt-24 space-y-6">
           <div className="border-b-2 border-brand-light/10 pb-4">
-            <h2 className="font-display text-4xl uppercase text-brand-light">Acessibilidade &amp; Bem-estar</h2>
+            <h2 className="font-display text-4xl uppercase text-brand-light">
+              Acessibilidade &amp; Bem-estar
+            </h2>
           </div>
           <Suspense fallback={<LazyPanelFallback />}>
             <PainCheckinPanel />
@@ -192,7 +247,9 @@ export function DashboardBetaPanels({
       {(flags.premiumUx || flags.mediaEnhancements || flags.workoutImport) && (
         <section className="mb-8 space-y-6">
           <div className="border-b-2 border-brand-light/10 pb-4">
-            <h2 className="font-display text-4xl uppercase text-brand-light">Dados, Premium UX &amp; Midia</h2>
+            <h2 className="font-display text-4xl uppercase text-brand-light">
+              Dados, Premium UX &amp; Midia
+            </h2>
           </div>
           <Suspense fallback={<LazyPanelFallback />}>
             {(flags.premiumUx || flags.mediaEnhancements) && (
@@ -209,7 +266,9 @@ export function DashboardBetaPanels({
       {flags.advancedAi && (
         <section className="mb-8 space-y-6">
           <div className="border-b-2 border-brand-light/10 pb-4">
-            <h2 className="font-display text-4xl uppercase text-brand-light">IA, Habitos &amp; Tecnologias Futuras</h2>
+            <h2 className="font-display text-4xl uppercase text-brand-light">
+              IA, Habitos &amp; Tecnologias Futuras
+            </h2>
           </div>
           <Suspense fallback={<LazyPanelFallback />}>
             <div className="grid gap-6 md:grid-cols-2">
@@ -232,7 +291,9 @@ export function DashboardBetaPanels({
       {(flags.premiumIntegrations || flags.partnerTokens) && (
         <section className="mb-8 space-y-6">
           <div className="border-b-2 border-brand-light/10 pb-4">
-            <h2 className="font-display text-4xl uppercase text-brand-light">Integracoes comerciais internas</h2>
+            <h2 className="font-display text-4xl uppercase text-brand-light">
+              Integracoes comerciais internas
+            </h2>
           </div>
           <Suspense fallback={<LazyPanelFallback />}>
             <div className="grid gap-6 md:grid-cols-2">

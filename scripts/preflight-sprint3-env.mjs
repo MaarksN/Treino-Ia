@@ -14,7 +14,12 @@ const isProductionLike = ['staging', 'preview', 'production'].includes(envName);
 const groups = [
   {
     label: 'Public runtime',
-    names: ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY', 'VITE_GEMINI_PROXY_URL', 'VITE_SENTRY_DSN'],
+    names: [
+      'VITE_SUPABASE_URL',
+      'VITE_SUPABASE_ANON_KEY',
+      'VITE_GEMINI_PROXY_URL',
+      'VITE_SENTRY_DSN',
+    ],
   },
   {
     label: 'Server Supabase',
@@ -43,7 +48,13 @@ const groups = [
   },
   {
     label: 'Sentry release',
-    names: ['SENTRY_AUTH_TOKEN', 'SENTRY_ORG', 'SENTRY_PROJECT', 'SENTRY_RELEASE', 'SENTRY_DEPLOY_ENV'],
+    names: [
+      'SENTRY_AUTH_TOKEN',
+      'SENTRY_ORG',
+      'SENTRY_PROJECT',
+      'SENTRY_RELEASE',
+      'SENTRY_DEPLOY_ENV',
+    ],
   },
   {
     label: 'Origin allowlist',
@@ -105,8 +116,10 @@ function validateOrigins() {
       }
 
       const isLocal = ['localhost', '127.0.0.1', '::1'].includes(url.hostname);
-      if (isProductionLike && isLocal) failures.push(`${name}: localhost is not allowed for ${envName}`);
-      if (isProductionLike && url.protocol !== 'https:') failures.push(`${name}: ${origin} must use https for ${envName}`);
+      if (isProductionLike && isLocal)
+        failures.push(`${name}: localhost is not allowed for ${envName}`);
+      if (isProductionLike && url.protocol !== 'https:')
+        failures.push(`${name}: ${origin} must use https for ${envName}`);
     }
   }
 
@@ -128,7 +141,9 @@ function validateOauthMode() {
   if (mode === 'encrypted') {
     const key = env.HEALTH_OAUTH_TOKEN_ENCRYPTION_KEY;
     if (!key) {
-      failures.push('HEALTH_OAUTH_TOKEN_ENCRYPTION_KEY: required when OAUTH_TOKEN_SECURITY_MODE=encrypted');
+      failures.push(
+        'HEALTH_OAUTH_TOKEN_ENCRYPTION_KEY: required when OAUTH_TOKEN_SECURITY_MODE=encrypted',
+      );
       return;
     }
 
@@ -142,7 +157,9 @@ function validateOauthMode() {
   }
 
   if (mode === 'plaintext_blocked') {
-    warnings.push('OAuth token storage is plaintext_blocked; external health OAuth flows must remain disabled');
+    warnings.push(
+      'OAuth token storage is plaintext_blocked; external health OAuth flows must remain disabled',
+    );
   }
 
   passes.push('OAuth token security mode checked');
@@ -152,17 +169,22 @@ function validatePublicSecrets() {
   const forbiddenPublicNames = Object.keys(env).filter((name) => {
     if (!name.startsWith('VITE_')) return false;
     if (allowedPublicEnv.has(name)) return false;
-    return /(SECRET|SERVICE_ROLE|GEMINI_API_KEY|STRIPE|WEBHOOK|AUTH_TOKEN|ACCESS_TOKEN|OAUTH|ENCRYPTION|DB_URL)/i.test(name);
+    return /(SECRET|SERVICE_ROLE|GEMINI_API_KEY|STRIPE|WEBHOOK|AUTH_TOKEN|ACCESS_TOKEN|OAUTH|ENCRYPTION|DB_URL)/i.test(
+      name,
+    );
   });
 
   if (forbiddenPublicNames.length) {
-    failures.push(`Public env exposes server-side secret names: ${forbiddenPublicNames.join(', ')}`);
+    failures.push(
+      `Public env exposes server-side secret names: ${forbiddenPublicNames.join(', ')}`,
+    );
   } else {
     passes.push('No forbidden VITE_* secret names found in current env');
   }
 
   const example = readFileSync('.env.example', 'utf8');
-  const forbiddenExamplePattern = /^VITE_.*(SECRET|SERVICE_ROLE|GEMINI_API_KEY|STRIPE|WEBHOOK|AUTH_TOKEN|ACCESS_TOKEN|OAUTH|ENCRYPTION|DB_URL)/im;
+  const forbiddenExamplePattern =
+    /^VITE_.*(SECRET|SERVICE_ROLE|GEMINI_API_KEY|STRIPE|WEBHOOK|AUTH_TOKEN|ACCESS_TOKEN|OAUTH|ENCRYPTION|DB_URL)/im;
   if (forbiddenExamplePattern.test(example)) {
     failures.push('.env.example contains forbidden VITE_* secret-like key');
   } else {

@@ -19,10 +19,10 @@ describe('viewStore', () => {
 
   it('initializes view correctly if not previously initialized', () => {
     const state = useViewStore.getState();
-    
+
     // Act
     state.initializeView(VIEWS.DASHBOARD);
-    
+
     // Assert
     const updatedState = useViewStore.getState();
     expect(updatedState.initialized).toBe(true);
@@ -32,10 +32,10 @@ describe('viewStore', () => {
   it('ignores initializeView if already initialized', () => {
     // Setup
     useViewStore.getState().initializeView(VIEWS.DASHBOARD);
-    
+
     // Act (attempt to re-initialize with different view)
     useViewStore.getState().initializeView(VIEWS.HOME);
-    
+
     // Assert
     const updatedState = useViewStore.getState();
     expect(updatedState.view).toBe(VIEWS.DASHBOARD); // Should remain DASHBOARD
@@ -44,7 +44,7 @@ describe('viewStore', () => {
   it('forces a view change via setView regardless of initialization state', () => {
     // Act
     useViewStore.getState().setView(VIEWS.SOCIAL);
-    
+
     // Assert
     const updatedState = useViewStore.getState();
     expect(updatedState.initialized).toBe(true);

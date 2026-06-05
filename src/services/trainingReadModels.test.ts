@@ -45,7 +45,9 @@ describe('trainingReadModels', () => {
       plan_json: plan,
     });
     expect(readTrainingPlanJson({ plan_json: plan })).toEqual(plan);
-    expect(readTrainingPlanJson({ plan_json: { ...plan, days: undefined } as unknown as TrainingPlan })).toBeNull();
+    expect(
+      readTrainingPlanJson({ plan_json: { ...plan, days: undefined } as unknown as TrainingPlan }),
+    ).toBeNull();
   });
 
   it('maps workout history JSONB rows with relational summary fields', () => {

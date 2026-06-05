@@ -1,8 +1,4 @@
-import {
-  type TrainingPlan,
-  type UserProfile,
-  type WorkoutSession,
-} from './trainingTypes';
+import { type TrainingPlan, type UserProfile, type WorkoutSession } from './trainingTypes';
 
 export interface TrainingProfileRow {
   profile_json?: Partial<UserProfile> | null;
@@ -29,7 +25,9 @@ export function buildTrainingProfileUpsert(userId: string, profile: UserProfile)
   };
 }
 
-export function readTrainingProfileJson(row: TrainingProfileRow | null | undefined): Partial<UserProfile> | null {
+export function readTrainingProfileJson(
+  row: TrainingProfileRow | null | undefined,
+): Partial<UserProfile> | null {
   return isRecord(row?.profile_json) ? row.profile_json : null;
 }
 
@@ -66,7 +64,9 @@ export function buildWorkoutHistoryUpsert(userId: string, session: WorkoutSessio
   };
 }
 
-export function readWorkoutSessionJson(row: TrainingHistoryRow | null | undefined): WorkoutSession | null {
+export function readWorkoutSessionJson(
+  row: TrainingHistoryRow | null | undefined,
+): WorkoutSession | null {
   const session = row?.record_json;
   if (!isRecord(session) || typeof session.id !== 'string') return null;
   return session as WorkoutSession;

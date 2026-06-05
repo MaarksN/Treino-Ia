@@ -45,10 +45,10 @@ Evidencias encontradas por `rg`:
 - `src/services/legacyTrainingSyncService.ts:8`: chave local `mock_dev_only`.
 - `src/components/GlobalFeed.tsx:4`: `FAKE_POSTS`.
 - `src/components/platform/AdvancedPlatformHub.tsx:611`: URL `https://example.com/n8n/treino`.
-- `src/components\ActiveWorkoutView.tsx:108`: unico `eslint-disable-line react-hooks/exhaustive-deps`.
+- Nenhum `eslint-disable-line react-hooks/exhaustive-deps` restante em `src/components/ActiveWorkoutView.tsx`.
 
 ## Testes existentes
 
-- Quick scan contou 202 arquivos `*.test.*`/`*.spec.*`.
-- Vitest executou 196 arquivos e 770 testes.
+- Quick scan contou 200 arquivos `*.test.*`/`*.spec.*` apos remover testes duplicados antigos.
+- Vitest executou 194 arquivos e 763 testes.
 - Playwright executou 21 testes E2E locais.

@@ -29,13 +29,15 @@ const strategies: Record<TrainingLevel, Strategy> = {
     volume: 'Médio (14 a 18 séries/músculo)',
     frequency: '4x a 5x na semana (AB ou ABC)',
     focus: 'Progressão de carga',
-    aiRecommendation: 'Registre carga e reps. A progressão deve ser pequena, constante e mensurável.',
+    aiRecommendation:
+      'Registre carga e reps. A progressão deve ser pequena, constante e mensurável.',
   },
   avancado: {
     volume: 'Alto (18 a 22 séries/músculo)',
     frequency: '5x a 6x na semana (ABCDE/PPL)',
     focus: 'Periodização ondulatória',
-    aiRecommendation: 'Use semanas de estímulo forte alternadas com controle de fadiga e deload planejado.',
+    aiRecommendation:
+      'Use semanas de estímulo forte alternadas com controle de fadiga e deload planejado.',
   },
 };
 
@@ -73,7 +75,10 @@ const splitByDays: Record<number, Array<{ focus: FocusKey; label: string }>> = {
   ],
 };
 
-const gymExercises: Record<FocusKey, Array<Omit<ExercisePrescription, 'id' | 'sets' | 'reps' | 'rest' | 'notes'>>> = {
+const gymExercises: Record<
+  FocusKey,
+  Array<Omit<ExercisePrescription, 'id' | 'sets' | 'reps' | 'rest' | 'notes'>>
+> = {
   full: [
     { name: 'Agachamento livre', muscleGroup: 'Pernas' },
     { name: 'Supino reto', muscleGroup: 'Peito' },
@@ -118,7 +123,10 @@ const gymExercises: Record<FocusKey, Array<Omit<ExercisePrescription, 'id' | 'se
   ],
 };
 
-const homeExercises: Record<FocusKey, Array<Omit<ExercisePrescription, 'id' | 'sets' | 'reps' | 'rest' | 'notes'>>> = {
+const homeExercises: Record<
+  FocusKey,
+  Array<Omit<ExercisePrescription, 'id' | 'sets' | 'reps' | 'rest' | 'notes'>>
+> = {
   full: [
     { name: 'Agachamento com peso corporal', muscleGroup: 'Pernas' },
     { name: 'Flexão de braço', muscleGroup: 'Peito' },
@@ -239,15 +247,13 @@ function buildDays(profile: UserProfile): TrainingPlan['days'] {
 
 function buildWeeklySplit(daysPerWeek: number) {
   const split = splitByDays[Math.min(6, Math.max(1, daysPerWeek))];
-  return split.map(day => day.label).join(' / ');
+  return split.map((day) => day.label).join(' / ');
 }
 
 function getExerciseRpe(exercise: WorkoutExerciseLog) {
   if (typeof exercise.rpe === 'number') return exercise.rpe;
 
-  const setRpes = exercise.sets
-    ?.map(set => set.rpe)
-    .filter(rpe => Number.isFinite(rpe)) ?? [];
+  const setRpes = exercise.sets?.map((set) => set.rpe).filter((rpe) => Number.isFinite(rpe)) ?? [];
 
   if (!setRpes.length) return 0;
   return setRpes.reduce((sum, rpe) => sum + rpe, 0) / setRpes.length;
@@ -259,10 +265,12 @@ function buildAdaptiveRecommendation(profile: UserProfile, history: WorkoutSessi
     return `Primeira semana: execute ${profile.daysPerWeek} treinos, registre carga/reps e termine cada série com técnica limpa.`;
   }
 
-  const completionRate = last.totalExercises > 0 ? last.completedExercises / last.totalExercises : 0;
-  const completedLogs = last.exercises.filter(exercise => exercise.completed);
+  const completionRate =
+    last.totalExercises > 0 ? last.completedExercises / last.totalExercises : 0;
+  const completedLogs = last.exercises.filter((exercise) => exercise.completed);
   const avgRpe = completedLogs.length
-    ? completedLogs.reduce((sum, exercise) => sum + getExerciseRpe(exercise), 0) / completedLogs.length
+    ? completedLogs.reduce((sum, exercise) => sum + getExerciseRpe(exercise), 0) /
+      completedLogs.length
     : 0;
 
   // Se tivermos histórico suficiente (mais de 1 sessão), podemos usar dados mais ricos de progressão.
@@ -286,7 +294,10 @@ function buildAdaptiveRecommendation(profile: UserProfile, history: WorkoutSessi
   return 'Ajuste automático: mantenha o plano e tente melhorar uma variável pequena no próximo treino: carga, reps ou controle.';
 }
 
-export function calculateTrainingPlan(profile: UserProfile, history: WorkoutSession[] = []): TrainingPlan {
+export function calculateTrainingPlan(
+  profile: UserProfile,
+  history: WorkoutSession[] = [],
+): TrainingPlan {
   const strategy = strategies[profile.level] ?? strategies.intermediario;
   const days = buildDays(profile);
   const weeklySplit = buildWeeklySplit(profile.daysPerWeek);

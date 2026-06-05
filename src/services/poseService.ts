@@ -20,7 +20,7 @@ export function savePoseAnalysis(analysis: PoseAnalysis) {
 export function calcAngle(
   a: { x: number; y: number },
   b: { x: number; y: number },
-  c: { x: number; y: number }
+  c: { x: number; y: number },
 ): number {
   const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
   let angle = Math.abs((radians * 180) / Math.PI);
@@ -99,14 +99,14 @@ export const EXERCISE_RULES: ExerciseRule[] = [
 
 export function analyzeAngles(
   landmarks: Array<{ x: number; y: number; z?: number; visibility?: number }>,
-  rule: ExerciseRule
+  rule: ExerciseRule,
 ): { formScore: number; issues: string[]; tips: string[]; keyAngles: Record<string, number> } {
   const issues: string[] = [];
   const tips: string[] = [];
   const keyAngles: Record<string, number> = {};
   let totalScore = 100;
 
-  rule.keyAngles.forEach(check => {
+  rule.keyAngles.forEach((check) => {
     const [ai, bi, ci] = check.landmarkIndices;
     const a = landmarks[ai];
     const b = landmarks[bi];

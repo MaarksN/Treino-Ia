@@ -2,6 +2,8 @@
 
 Status: NO-GO gaps
 
+Atualizacao 2026-06-05: ver `docs/qa/technical-debt-execution-2026-06-05.md`. `format:check`, E2E local, a11y local e LHCI passaram nesta execucao; os bloqueios de producao restantes dependem de staging real, secrets e ensaios operacionais fora do repositorio.
+
 ## Estrutura
 
 - Staging URL nao fornecida nem validada.
@@ -35,9 +37,9 @@ Status: NO-GO gaps
 
 ## Testes
 
-- `format:check` falha em 717 arquivos.
 - Coverage global abaixo de 60%.
-- Lighthouse CI falha com `NO_FCP`.
+- `jscpd` ainda reporta 43 clones, acima da meta ideal `<30`.
+- `ts-prune` ainda lista exports suspeitos para triagem.
 - Smokes reais bloqueados.
 
 ## Deploy e operacao
@@ -56,5 +58,5 @@ Status: NO-GO gaps
 5. Stripe sandbox passa checkout, portal e webhook assinado/idempotente.
 6. Gemini proxy passa com auth, entitlement, rate limit e chave real.
 7. Backup/restore documentado e executado.
-8. `format:check` PASS ou gate formal removido/escopado com justificativa.
-9. Lighthouse CI PASS ou metricas alternativas documentadas.
+8. Reduzir/aceitar formalmente clones restantes e exports suspeitos.
+9. Smokes reais PASS em staging estrito.

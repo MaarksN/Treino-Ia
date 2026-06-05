@@ -56,7 +56,7 @@ export function HormonalCycleTracker() {
         <h3 className="text-white font-display text-2xl uppercase">Ciclo Hormonal</h3>
         <button
           type="button"
-          onClick={() => setShowForm(value => !value)}
+          onClick={() => setShowForm((value) => !value)}
           className="text-xs text-brand-neon border border-brand-neon/30 px-3 py-1.5 rounded-full hover:bg-brand-neon/10 transition-all font-mono uppercase tracking-widest"
         >
           + Registrar ciclo
@@ -66,34 +66,40 @@ export function HormonalCycleTracker() {
       {showForm && (
         <div className="mb-4 p-4 bg-brand-dark rounded-xl border border-white/10 space-y-3">
           <div>
-            <p className="text-xs text-brand-muted mb-1 font-mono uppercase tracking-widest">Início do ciclo atual</p>
+            <p className="text-xs text-brand-muted mb-1 font-mono uppercase tracking-widest">
+              Início do ciclo atual
+            </p>
             <input
               type="date"
               value={startDate}
-              onChange={event => setStartDate(event.target.value)}
+              onChange={(event) => setStartDate(event.target.value)}
               className="w-full bg-brand-gray border border-white/10 rounded-[12px] px-3 py-2 text-sm text-white outline-none focus:border-brand-neon"
             />
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <p className="text-xs text-brand-muted mb-1 font-mono uppercase tracking-widest">Duração</p>
+              <p className="text-xs text-brand-muted mb-1 font-mono uppercase tracking-widest">
+                Duração
+              </p>
               <input
                 type="number"
                 value={cycleLen}
                 min={21}
                 max={40}
-                onChange={event => setCycleLen(Number(event.target.value))}
+                onChange={(event) => setCycleLen(Number(event.target.value))}
                 className="w-full bg-brand-gray border border-white/10 rounded-[12px] px-3 py-2 text-sm text-white outline-none focus:border-brand-neon"
               />
             </div>
             <div>
-              <p className="text-xs text-brand-muted mb-1 font-mono uppercase tracking-widest">Menstruação</p>
+              <p className="text-xs text-brand-muted mb-1 font-mono uppercase tracking-widest">
+                Menstruação
+              </p>
               <input
                 type="number"
                 value={periodLen}
                 min={2}
                 max={10}
-                onChange={event => setPeriodLen(Number(event.target.value))}
+                onChange={(event) => setPeriodLen(Number(event.target.value))}
                 className="w-full bg-brand-gray border border-white/10 rounded-[12px] px-3 py-2 text-sm text-white outline-none focus:border-brand-neon"
               />
             </div>
@@ -117,30 +123,48 @@ export function HormonalCycleTracker() {
       ) : (
         <div className="space-y-4">
           <InlineNotice type="info" title="Educacional">
-            Estas estimativas ajudam no manejo de fadiga, mas não substituem acompanhamento ginecológico ou métodos contraceptivos reais.
+            Estas estimativas ajudam no manejo de fadiga, mas não substituem acompanhamento
+            ginecológico ou métodos contraceptivos reais.
           </InlineNotice>
           {todayPhase && cfg && (
-            <div className="p-4 rounded-xl border" style={{ background: cfg.bg, borderColor: cfg.border }}>
+            <div
+              className="p-4 rounded-xl border"
+              style={{ background: cfg.bg, borderColor: cfg.border }}
+            >
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-4xl">{cfg.emoji}</span>
                 <div>
-                  <p className="text-[10px] font-mono uppercase tracking-widest" style={{ color: cfg.color }}>
+                  <p
+                    className="text-[10px] font-mono uppercase tracking-widest"
+                    style={{ color: cfg.color }}
+                  >
                     Fase atual · Dia {todayPhase.dayOfCycle}
                   </p>
                   <p className="text-white font-display text-2xl uppercase mt-1">{cfg.label}</p>
                 </div>
                 <div className="ml-auto text-right">
-                  <p className="text-[10px] font-mono text-brand-muted uppercase tracking-widest">Energia</p>
-                  <p className="font-bold font-mono text-sm uppercase mt-1" style={{ color: cfg.color }}>{todayPhase.energyExpected}</p>
+                  <p className="text-[10px] font-mono text-brand-muted uppercase tracking-widest">
+                    Energia
+                  </p>
+                  <p
+                    className="font-bold font-mono text-sm uppercase mt-1"
+                    style={{ color: cfg.color }}
+                  >
+                    {todayPhase.energyExpected}
+                  </p>
                 </div>
               </div>
               <div className="space-y-2">
                 <div className="p-3 bg-black/20 rounded-lg">
-                  <p className="font-mono text-[10px] text-brand-muted uppercase tracking-widest mb-1">Treino recomendado</p>
+                  <p className="font-mono text-[10px] text-brand-muted uppercase tracking-widest mb-1">
+                    Treino recomendado
+                  </p>
                   <p className="text-white text-sm">{todayPhase.trainingRecommendation}</p>
                 </div>
                 <div className="p-3 bg-black/20 rounded-lg">
-                  <p className="font-mono text-[10px] text-brand-muted uppercase tracking-widest mb-1">Nutrição</p>
+                  <p className="font-mono text-[10px] text-brand-muted uppercase tracking-widest mb-1">
+                    Nutrição
+                  </p>
                   <p className="text-white text-sm">{todayPhase.nutritionTip}</p>
                 </div>
               </div>
@@ -148,9 +172,11 @@ export function HormonalCycleTracker() {
           )}
 
           <div>
-            <p className="font-mono text-[10px] text-brand-muted uppercase tracking-widest mb-2">Próximos 28 dias</p>
+            <p className="font-mono text-[10px] text-brand-muted uppercase tracking-widest mb-2">
+              Próximos 28 dias
+            </p>
             <div className="grid grid-cols-7 gap-1">
-              {upcoming.map(day => {
+              {upcoming.map((day) => {
                 const phaseCfg = PHASE_CONFIG[day.phase];
                 const isToday = day.date === today;
                 return (
@@ -158,7 +184,11 @@ export function HormonalCycleTracker() {
                     key={day.date}
                     title={`${day.date}: ${phaseCfg.label}`}
                     className={`aspect-square rounded-lg flex items-center justify-center text-xs font-bold border transition-all ${isToday ? 'ring-2 ring-brand-light scale-110 z-10 shadow-lg' : ''}`}
-                    style={{ background: phaseCfg.bg, borderColor: phaseCfg.border, color: phaseCfg.color }}
+                    style={{
+                      background: phaseCfg.bg,
+                      borderColor: phaseCfg.border,
+                      color: phaseCfg.color,
+                    }}
                   >
                     {new Date(`${day.date}T00:00:00`).getDate()}
                   </div>
@@ -166,10 +196,12 @@ export function HormonalCycleTracker() {
               })}
             </div>
             <div className="flex gap-3 mt-3 flex-wrap">
-              {Object.values(PHASE_CONFIG).map(phase => (
+              {Object.values(PHASE_CONFIG).map((phase) => (
                 <div key={phase.label} className="flex items-center gap-1">
                   <div className="w-3 h-3 rounded-sm" style={{ background: phase.color }} />
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-brand-muted">{phase.label}</span>
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-brand-muted">
+                    {phase.label}
+                  </span>
                 </div>
               ))}
             </div>

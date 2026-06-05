@@ -16,6 +16,6 @@ describe('App bootstrap does not restore critical state from localStorage', () =
 
   it('keeps only non-sensitive local preferences', () => {
     expect(appSource).toContain("localStorage.getItem('@TreinoApp:theme')");
-    expect(appSource).toContain("localStorage.getItem(ONBOARDING_KEY)");
+    expect(appSource).toContain('localStorage.getItem(ONBOARDING_KEY)');
   });
 });

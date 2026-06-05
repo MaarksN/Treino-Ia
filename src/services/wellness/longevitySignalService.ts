@@ -48,7 +48,9 @@ function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, Math.round(value)));
 }
 
-function normalizeInput(input: WorkoutSession[] | LongevitySignalInput): Required<LongevitySignalInput> {
+function normalizeInput(
+  input: WorkoutSession[] | LongevitySignalInput,
+): Required<LongevitySignalInput> {
   if (Array.isArray(input)) {
     return {
       history: input,
@@ -68,10 +70,14 @@ function normalizeInput(input: WorkoutSession[] | LongevitySignalInput): Require
   };
 }
 
-function getTrainingConsistency(history: WorkoutSession[], recentWeeks: number, now: number): number {
+function getTrainingConsistency(
+  history: WorkoutSession[],
+  recentWeeks: number,
+  now: number,
+): number {
   if (history.length === 0) return 0;
   const windowMs = recentWeeks * 7 * DAY_MS;
-  const recent = history.filter(session => now - session.completedAt < windowMs);
+  const recent = history.filter((session) => now - session.completedAt < windowMs);
   const expectedSessions = recentWeeks * 3;
   return clamp((recent.length / expectedSessions) * 100, 0, 100);
 }
@@ -79,7 +85,7 @@ function getTrainingConsistency(history: WorkoutSession[], recentWeeks: number, 
 function getSleepScore(entries: LongevitySleepEntry[]): number {
   if (entries.length === 0) return 50;
   const recent = [...entries]
-    .filter(entry => entry.durationMinutes > 0)
+    .filter((entry) => entry.durationMinutes > 0)
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(-7);
 
@@ -87,19 +93,30 @@ function getSleepScore(entries: LongevitySleepEntry[]): number {
 
   const avgDuration = recent.reduce((sum, entry) => sum + entry.durationMinutes, 0) / recent.length;
   const durationScore = clamp((avgDuration / 420) * 100, 0, 100);
-  const qualityEntries = recent.filter(entry => typeof entry.quality === 'number');
+  const qualityEntries = recent.filter((entry) => typeof entry.quality === 'number');
   const qualityScore = qualityEntries.length
-    ? clamp((qualityEntries.reduce((sum, entry) => sum + (entry.quality ?? 0), 0) / qualityEntries.length / 5) * 100, 0, 100)
+    ? clamp(
+        (qualityEntries.reduce((sum, entry) => sum + (entry.quality ?? 0), 0) /
+          qualityEntries.length /
+          5) *
+          100,
+        0,
+        100,
+      )
     : 70;
 
   return clamp(durationScore * 0.7 + qualityScore * 0.3, 0, 100);
 }
 
-function getHydrationScore(entries: LongevityHydrationEntry[], hydrationGoalMl: number, now: number): number {
+function getHydrationScore(
+  entries: LongevityHydrationEntry[],
+  hydrationGoalMl: number,
+  now: number,
+): number {
   if (entries.length === 0) return 40;
   const today = new Date(now).toISOString().slice(0, 10);
   const todayMl = entries
-    .filter(entry => entry.date === today)
+    .filter((entry) => entry.date === today)
     .reduce((sum, entry) => sum + entry.amountMl, 0);
 
   if (todayMl <= 0) return 40;
@@ -120,10 +137,11 @@ function getRecoveryBalance(history: WorkoutSession[]): number {
 }
 
 function extractRpeValues(session: WorkoutSession): number[] {
-  return session.exercises.flatMap(exercise => {
-    const setRpes = exercise.sets
-      ?.map(set => set.rpe)
-      .filter(rpe => Number.isFinite(rpe) && rpe > 0 && rpe <= 10) ?? [];
+  return session.exercises.flatMap((exercise) => {
+    const setRpes =
+      exercise.sets
+        ?.map((set) => set.rpe)
+        .filter((rpe) => Number.isFinite(rpe) && rpe > 0 && rpe <= 10) ?? [];
 
     if (setRpes.length) return setRpes;
     return Number.isFinite(exercise.rpe) && (exercise.rpe ?? 0) > 0 && (exercise.rpe ?? 0) <= 10
@@ -133,12 +151,12 @@ function extractRpeValues(session: WorkoutSession): number[] {
 }
 
 function getRpeBalance(history: WorkoutSession[], now: number): number {
-  const recent = history.filter(session => now - session.completedAt <= 14 * DAY_MS);
+  const recent = history.filter((session) => now - session.completedAt <= 14 * DAY_MS);
   const rpeValues = recent.flatMap(extractRpeValues);
   if (rpeValues.length === 0) return 60;
 
   const avgRpe = rpeValues.reduce((sum, rpe) => sum + rpe, 0) / rpeValues.length;
-  const veryHighShare = rpeValues.filter(rpe => rpe >= 9).length / rpeValues.length;
+  const veryHighShare = rpeValues.filter((rpe) => rpe >= 9).length / rpeValues.length;
 
   if (avgRpe >= 9 || veryHighShare >= 0.5) return 25;
   if (avgRpe >= 8) return 45;
@@ -146,7 +164,9 @@ function getRpeBalance(history: WorkoutSession[], now: number): number {
   return 95;
 }
 
-export function calculateLongevitySignal(input: WorkoutSession[] | LongevitySignalInput): LongevitySignal {
+export function calculateLongevitySignal(
+  input: WorkoutSession[] | LongevitySignalInput,
+): LongevitySignal {
   const normalized = normalizeInput(input);
   const factors: LongevityFactor[] = [
     {
@@ -168,7 +188,11 @@ export function calculateLongevitySignal(input: WorkoutSession[] | LongevitySign
     {
       id: 'hydration',
       name: 'Hidratação',
-      score: getHydrationScore(normalized.hydrationEntries, normalized.hydrationGoalMl, normalized.now),
+      score: getHydrationScore(
+        normalized.hydrationEntries,
+        normalized.hydrationGoalMl,
+        normalized.now,
+      ),
       maxScore: 100,
       description: 'Progresso de hoje frente à meta local de hidratação.',
     },
@@ -188,7 +212,9 @@ export function calculateLongevitySignal(input: WorkoutSession[] | LongevitySign
     },
   ];
 
-  const consistencyScore = Math.round(factors.reduce((sum, factor) => sum + factor.score, 0) / factors.length);
+  const consistencyScore = Math.round(
+    factors.reduce((sum, factor) => sum + factor.score, 0) / factors.length,
+  );
   let level: LongevitySignal['level'];
   let label: string;
 

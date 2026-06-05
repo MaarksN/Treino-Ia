@@ -56,8 +56,12 @@ const ExerciseCard = memo(function ExerciseCard({
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-brand-muted">{exercise.muscleGroup}</p>
-          <h3 className="mt-2 font-display text-4xl uppercase leading-none text-brand-light">{exercise.name}</h3>
+          <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-brand-muted">
+            {exercise.muscleGroup}
+          </p>
+          <h3 className="mt-2 font-display text-4xl uppercase leading-none text-brand-light">
+            {exercise.name}
+          </h3>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <button
@@ -106,10 +110,12 @@ const ExerciseCard = memo(function ExerciseCard({
           </span>
           <select
             value={technique}
-            onChange={event => onTechniqueChange(index, event.target.value as ExerciseIntensityTechnique)}
+            onChange={(event) =>
+              onTechniqueChange(index, event.target.value as ExerciseIntensityTechnique)
+            }
             className="w-full rounded-[16px] border border-brand-light/15 bg-brand-gray px-3 py-3 font-mono text-xs uppercase tracking-widest text-brand-light outline-none transition-colors focus:border-brand-neon"
           >
-            {techniqueOptions.map(option => (
+            {techniqueOptions.map((option) => (
               <option key={option} value={option}>
                 {getExerciseTechniqueLabel(option)}
               </option>
@@ -122,7 +128,7 @@ const ExerciseCard = memo(function ExerciseCard({
           </span>
           <textarea
             value={exercise.notes}
-            onChange={event => onNotesChange(index, event.target.value)}
+            onChange={(event) => onNotesChange(index, event.target.value)}
             rows={3}
             className="mt-2 min-h-20 w-full resize-none rounded-[16px] border border-brand-light/15 bg-brand-gray px-3 py-3 font-mono text-xs leading-5 text-brand-light outline-none transition-colors placeholder:text-brand-muted focus:border-brand-neon"
             placeholder="Ajuste técnico, preferência, cuidado ou dica para este exercício."
@@ -166,17 +172,25 @@ export const WeeklyPlan = memo(function WeeklyPlan({
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
-  const handleDrop = useCallback((targetIndex: number) => {
-    if (draggedIndex === null) return;
-    onMoveExercise(draggedIndex, targetIndex);
-    setDraggedIndex(null);
-  }, [draggedIndex, onMoveExercise]);
+  const handleDrop = useCallback(
+    (targetIndex: number) => {
+      if (draggedIndex === null) return;
+      onMoveExercise(draggedIndex, targetIndex);
+      setDraggedIndex(null);
+    },
+    [draggedIndex, onMoveExercise],
+  );
 
   return (
-    <section id="dashboard-plan" className="mb-8 rounded-[28px] border-4 border-brand-light bg-brand-gray p-6 shadow-[8px_8px_0_var(--color-brand-light)] md:p-8 scroll-mt-24">
+    <section
+      id="dashboard-plan"
+      className="mb-8 rounded-[28px] border-4 border-brand-light bg-brand-gray p-6 shadow-[8px_8px_0_var(--color-brand-light)] md:p-8 scroll-mt-24"
+    >
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.35em] text-brand-neon">Plano semanal</p>
+          <p className="font-mono text-xs uppercase tracking-[0.35em] text-brand-neon">
+            Plano semanal
+          </p>
           <h2 className="font-display text-5xl uppercase text-brand-light">{plan.planName}</h2>
         </div>
         {selectedDay && (
@@ -204,8 +218,12 @@ export const WeeklyPlan = memo(function WeeklyPlan({
                 : 'border-brand-light/15 bg-brand-dark text-brand-light hover:-translate-y-0.5 hover:border-brand-neon'
             }`}
           >
-            <span className="block font-mono text-[10px] uppercase tracking-widest opacity-70">{day.dayName}</span>
-            <span className="mt-1 block font-display text-3xl uppercase leading-none">{day.focus}</span>
+            <span className="block font-mono text-[10px] uppercase tracking-widest opacity-70">
+              {day.dayName}
+            </span>
+            <span className="mt-1 block font-display text-3xl uppercase leading-none">
+              {day.focus}
+            </span>
           </button>
         ))}
       </div>

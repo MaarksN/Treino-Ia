@@ -4,32 +4,38 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 const STEPS = [
   {
     title: 'Bem-vindo ao Treino IA',
-    description: 'Um fluxo direto para saber o que treinar hoje, executar o treino e acompanhar sua evolução.',
+    description:
+      'Um fluxo direto para saber o que treinar hoje, executar o treino e acompanhar sua evolução.',
     emoji: '🏋️',
   },
   {
     title: 'Anamnese objetiva',
-    description: 'Informe objetivo, nível, dias disponíveis, tempo por treino, equipamentos e limitações.',
+    description:
+      'Informe objetivo, nível, dias disponíveis, tempo por treino, equipamentos e limitações.',
     emoji: '🤖',
   },
   {
     title: 'Plano atual',
-    description: 'O app gera um plano inicial com divisão semanal, exercícios, séries, repetições e descanso.',
+    description:
+      'O app gera um plano inicial com divisão semanal, exercícios, séries, repetições e descanso.',
     emoji: '📊',
   },
   {
     title: 'Modo Treino Ativo',
-    description: 'Acompanhe o treino do dia, registre carga, repetições, RPE e marque as séries concluídas.',
+    description:
+      'Acompanhe o treino do dia, registre carga, repetições, RPE e marque as séries concluídas.',
     emoji: '⏱️',
   },
   {
     title: 'Histórico e evolução',
-    description: 'Cada treino finalizado alimenta seu histórico, volume total e resumo de evolução.',
+    description:
+      'Cada treino finalizado alimenta seu histórico, volume total e resumo de evolução.',
     emoji: '📈',
   },
   {
     title: 'Recomendação simples',
-    description: 'Quando houver dados suficientes, você recebe um próximo ajuste simples para o plano.',
+    description:
+      'Quando houver dados suficientes, você recebe um próximo ajuste simples para o plano.',
     emoji: '🎯',
   },
   {
@@ -54,7 +60,11 @@ export function OnboardingTour({ onComplete, onSkip }: Props) {
     <div className="fixed inset-0 z-50 bg-brand-dark flex items-center justify-center p-6 print:hidden">
       <div className="w-full max-w-sm">
         <div className="flex justify-end mb-6">
-          <button type="button" onClick={onSkip} className="flex items-center gap-1 text-brand-muted text-sm hover:text-white transition-colors">
+          <button
+            type="button"
+            onClick={onSkip}
+            className="flex items-center gap-1 text-brand-muted text-sm hover:text-white transition-colors"
+          >
             <X size={16} /> Pular
           </button>
         </div>
@@ -86,7 +96,7 @@ export function OnboardingTour({ onComplete, onSkip }: Props) {
           {step > 0 && (
             <button
               type="button"
-              onClick={() => setStep(value => value - 1)}
+              onClick={() => setStep((value) => value - 1)}
               className="flex items-center gap-1 px-5 py-3 rounded-xl bg-white/10 border border-white/10 text-white font-semibold"
               aria-label="Anterior"
               title="Anterior"
@@ -96,10 +106,16 @@ export function OnboardingTour({ onComplete, onSkip }: Props) {
           )}
           <button
             type="button"
-            onClick={() => (isLast ? onComplete() : setStep(value => value + 1))}
+            onClick={() => (isLast ? onComplete() : setStep((value) => value + 1))}
             className="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl bg-brand-neon text-brand-dark font-black text-base"
           >
-            {isLast ? 'Começar' : <>Próximo <ChevronRight size={18} /></>}
+            {isLast ? (
+              'Começar'
+            ) : (
+              <>
+                Próximo <ChevronRight size={18} />
+              </>
+            )}
           </button>
         </div>
 

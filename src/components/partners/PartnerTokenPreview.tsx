@@ -24,10 +24,10 @@ export function PartnerTokenPreview() {
 
       {status.isBlocked && (
         <div className="mt-4 rounded-[16px] bg-brand-dark p-4">
-          <p className="font-mono text-xs uppercase tracking-widest text-brand-magenta">Dependência Externa</p>
-          <p className="mt-2 font-mono text-sm text-brand-light/80">
-            {status.message}
+          <p className="font-mono text-xs uppercase tracking-widest text-brand-magenta">
+            Dependência Externa
           </p>
+          <p className="mt-2 font-mono text-sm text-brand-light/80">{status.message}</p>
         </div>
       )}
     </div>

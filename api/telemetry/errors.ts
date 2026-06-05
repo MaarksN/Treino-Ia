@@ -1,5 +1,9 @@
 import { handleApiError, HttpError, json, readJsonObject } from '../_lib/http';
-import { sanitizeTelemetryMessage, sanitizeTelemetryMetadata, sanitizeTelemetryUrl } from '../_lib/piiRedaction';
+import {
+  sanitizeTelemetryMessage,
+  sanitizeTelemetryMetadata,
+  sanitizeTelemetryUrl,
+} from '../_lib/piiRedaction';
 import { getSupabaseAdmin, requireSupabaseUser } from '../_lib/server-supabase';
 
 export const config = {
@@ -43,7 +47,7 @@ function getAllowedOrigins(): Set<string> {
   return new Set(
     (process.env.TELEMETRY_ALLOWED_ORIGINS ?? '')
       .split(',')
-      .map(origin => origin.trim())
+      .map((origin) => origin.trim())
       .filter(Boolean),
   );
 }
@@ -123,7 +127,7 @@ export default async function handler(request: Request) {
     const events = parseEvents(body.events);
     const userId = await getTelemetryUserId(request);
 
-    const rows = events.map(event => {
+    const rows = events.map((event) => {
       if (typeof event.message !== 'string' || typeof event.source !== 'string') {
         throw new HttpError(400, 'Each error event requires message and source.');
       }
@@ -134,11 +138,13 @@ export default async function handler(request: Request) {
         message: sanitizeTelemetryMessage(event.message),
         stack: typeof event.stack === 'string' ? sanitizeTelemetryMessage(event.stack) : null,
         url: typeof event.url === 'string' ? sanitizeTelemetryUrl(event.url) : null,
-        user_agent: typeof event.userAgent === 'string' ? sanitizeTelemetryMessage(event.userAgent) : null,
+        user_agent:
+          typeof event.userAgent === 'string' ? sanitizeTelemetryMessage(event.userAgent) : null,
         metadata: sanitizeTelemetryMetadata(event.metadata),
-        created_at: typeof event.createdAt === 'number'
-          ? new Date(event.createdAt).toISOString()
-          : new Date().toISOString(),
+        created_at:
+          typeof event.createdAt === 'number'
+            ? new Date(event.createdAt).toISOString()
+            : new Date().toISOString(),
       };
     });
 
@@ -147,9 +153,7 @@ export default async function handler(request: Request) {
     }
 
     const supabase = getSupabaseAdmin();
-    const { error } = await supabase
-      .from('telemetry_error_events')
-      .insert(rows);
+    const { error } = await supabase.from('telemetry_error_events').insert(rows);
 
     if (error) {
       throw new Error('Failed to store telemetry.');

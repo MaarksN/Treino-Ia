@@ -37,14 +37,16 @@ describe('observabilitySink', () => {
   it('captures errors without throwing and redacts sensitive error details', async () => {
     const sink = new InMemoryObservabilitySink();
 
-    await expect(sink.captureError(new Error('Authorization: Bearer secret for user@example.com'), {
-      name: 'api.5xx',
-      severity: 'fatal',
-      source: 'api',
-      metadata: {
-        prompt: 'sensitive prompt',
-      },
-    })).resolves.toBeUndefined();
+    await expect(
+      sink.captureError(new Error('Authorization: Bearer secret for user@example.com'), {
+        name: 'api.5xx',
+        severity: 'fatal',
+        source: 'api',
+        metadata: {
+          prompt: 'sensitive prompt',
+        },
+      }),
+    ).resolves.toBeUndefined();
 
     const [event] = sink.getEvents();
     const serialized = JSON.stringify(event);

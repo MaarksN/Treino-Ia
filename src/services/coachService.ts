@@ -8,14 +8,14 @@ function getCoachClient() {
 export async function askWorkoutCoach(
   question: string,
   profile: UserProfile | null,
-  plan: WorkoutPlan
+  plan: WorkoutPlan,
 ): Promise<string> {
   const context = `
 Você é um coach premium de treino.
 Perfil: ${profile ? JSON.stringify(profile) : 'não informado'}
 Plano atual: ${plan.planName}
 Objetivo: ${plan.goalDescription}
-Dias: ${plan.days.map(day => `${day.dayName}: ${day.focus}`).join(' | ')}
+Dias: ${plan.days.map((day) => `${day.dayName}: ${day.focus}`).join(' | ')}
 Pergunta do aluno: ${question}
 
 Responda em português do Brasil, de forma objetiva, técnica e prática.
