@@ -91,6 +91,61 @@ function replaceLocal(record: AiRecommendationRecord): AiRecommendationRecord {
   return record;
 }
 
+type ReviewedDecisionStatus = Extract<AiRecommendationStatus, 'rejected' | 'dismissed'>;
+type ReviewedDecisionField = 'rejectedAt' | 'dismissedAt';
+
+function getReviewedDecisionRecord(
+  record: AiRecommendationRecord,
+  status: ReviewedDecisionStatus,
+  reviewedField: ReviewedDecisionField,
+  now: string,
+  decisionReason: string,
+): AiRecommendationRecord {
+  return {
+    ...record,
+    status,
+    reviewedAt: now,
+    [reviewedField]: now,
+    decisionReason,
+  };
+}
+
+async function updateReviewedDecision(
+  record: AiRecommendationRecord,
+  userId: string,
+  status: ReviewedDecisionStatus,
+  now: string,
+  decisionReason: string,
+): Promise<AiRecommendationRecord> {
+  const updatePayload =
+    status === 'rejected'
+      ? {
+          status,
+          reviewed_at: now,
+          rejected_at: now,
+          decided_by: userId,
+          decision_reason: decisionReason,
+        }
+      : {
+          status,
+          reviewed_at: now,
+          dismissed_at: now,
+          decided_by: userId,
+          decision_reason: decisionReason,
+        };
+
+  const { data, error } = await supabase
+    .from('ai_recommendations')
+    .update(updatePayload)
+    .eq('id', record.id)
+    .eq('user_id', userId)
+    .select('*')
+    .single();
+
+  if (error) throw error;
+  return mapRow(data as Record<string, unknown>);
+}
+
 export const aiRecommendationRepository = {
   async createPendingPlanRecommendation(input: {
     currentPlan: TrainingPlan;
@@ -222,34 +277,13 @@ export const aiRecommendationRepository = {
   ): Promise<AiRecommendationRecord> {
     const userId = await getOptionalUserId();
     const now = new Date().toISOString();
-    const next: AiRecommendationRecord = {
-      ...record,
-      status: 'rejected',
-      reviewedAt: now,
-      rejectedAt: now,
-      decisionReason,
-    };
+    const next = getReviewedDecisionRecord(record, 'rejected', 'rejectedAt', now, decisionReason);
 
     if (!userId) {
       return replaceLocal(next);
     }
 
-    const { data, error } = await supabase
-      .from('ai_recommendations')
-      .update({
-        status: 'rejected',
-        reviewed_at: now,
-        rejected_at: now,
-        decided_by: userId,
-        decision_reason: decisionReason,
-      })
-      .eq('id', record.id)
-      .eq('user_id', userId)
-      .select('*')
-      .single();
-
-    if (error) throw error;
-    return mapRow(data as Record<string, unknown>);
+    return updateReviewedDecision(record, userId, 'rejected', now, decisionReason);
   },
 
   async dismiss(
@@ -258,33 +292,12 @@ export const aiRecommendationRepository = {
   ): Promise<AiRecommendationRecord> {
     const userId = await getOptionalUserId();
     const now = new Date().toISOString();
-    const next: AiRecommendationRecord = {
-      ...record,
-      status: 'dismissed',
-      reviewedAt: now,
-      dismissedAt: now,
-      decisionReason,
-    };
+    const next = getReviewedDecisionRecord(record, 'dismissed', 'dismissedAt', now, decisionReason);
 
     if (!userId) {
       return replaceLocal(next);
     }
 
-    const { data, error } = await supabase
-      .from('ai_recommendations')
-      .update({
-        status: 'dismissed',
-        reviewed_at: now,
-        dismissed_at: now,
-        decided_by: userId,
-        decision_reason: decisionReason,
-      })
-      .eq('id', record.id)
-      .eq('user_id', userId)
-      .select('*')
-      .single();
-
-    if (error) throw error;
-    return mapRow(data as Record<string, unknown>);
+    return updateReviewedDecision(record, userId, 'dismissed', now, decisionReason);
   },
 };

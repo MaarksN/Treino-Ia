@@ -38,7 +38,7 @@ Atualizacao 2026-06-05: ver `docs/qa/technical-debt-execution-2026-06-05.md`. `f
 ## Testes
 
 - Coverage global abaixo de 60%.
-- `jscpd` ainda reporta 43 clones, acima da meta ideal `<30`.
+- `jscpd` reporta 23 clones, abaixo da meta ideal `<30`; manter gate para evitar regressao.
 - `ts-prune` ainda lista exports suspeitos para triagem.
 - Smokes reais bloqueados.
 
@@ -58,5 +58,5 @@ Atualizacao 2026-06-05: ver `docs/qa/technical-debt-execution-2026-06-05.md`. `f
 5. Stripe sandbox passa checkout, portal e webhook assinado/idempotente.
 6. Gemini proxy passa com auth, entitlement, rate limit e chave real.
 7. Backup/restore documentado e executado.
-8. Reduzir/aceitar formalmente clones restantes e exports suspeitos.
+8. Manter clones abaixo de `<30` e triar exports suspeitos.
 9. Smokes reais PASS em staging estrito.

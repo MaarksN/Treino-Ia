@@ -1,15 +1,7 @@
 import { DailyCheckin, ReadinessScore } from '../types';
+import { safeReadJson } from './storageUtils';
 
 const CHECKIN_KEY = '@TreinoApp:checkins';
-
-function safeRead<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
-  } catch {
-    return fallback;
-  }
-}
 
 export function calculateReadiness(checkin: DailyCheckin): ReadinessScore {
   const sleepScore = Math.min(checkin.sleepHours / 8, 1) * 35 + (checkin.sleepQuality / 5) * 10;
@@ -101,7 +93,7 @@ export function checkHydrationGoal(checkin: DailyCheckin, goalGlasses = 8): bool
 }
 
 export function loadCheckins(): DailyCheckin[] {
-  return safeRead<DailyCheckin[]>(CHECKIN_KEY, []);
+  return safeReadJson<DailyCheckin[]>(CHECKIN_KEY, []);
 }
 
 export function saveCheckin(checkin: DailyCheckin) {

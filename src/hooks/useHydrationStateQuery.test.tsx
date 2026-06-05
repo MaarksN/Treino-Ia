@@ -2,6 +2,8 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import type { QueryClient } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { loadHydrationState } from '../services/healthService';
+import { createDeferred } from '../test/deferred';
+import { mockHydrationEntry, mockHydrationGoal } from '../test/healthFixtures';
 import { createQueryClientWrapper, createTestQueryClient } from '../test/queryClient';
 import { hydrationStateQueryKey, useHydrationStateQuery } from './useHydrationStateQuery';
 
@@ -10,16 +12,6 @@ vi.mock('../services/healthService', () => ({
 }));
 
 type HydrationStateResult = Awaited<ReturnType<typeof loadHydrationState>>;
-
-function createDeferred<T>() {
-  let resolve!: (value: T) => void;
-  let reject!: (reason?: unknown) => void;
-  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
-    resolve = resolvePromise;
-    reject = rejectPromise;
-  });
-  return { promise, resolve, reject };
-}
 
 describe('useHydrationStateQuery', () => {
   let queryClient: QueryClient;
@@ -39,8 +31,8 @@ describe('useHydrationStateQuery', () => {
   it('starts in a loading state and resolves mocked hydration state into the query cache', async () => {
     const mockedResult: HydrationStateResult = {
       data: {
-        entries: [{ id: '1', date: '2026-05-24', time: '10:00', amountMl: 250, type: 'água' }],
-        goal: { dailyMl: 2500, remindEveryMinutes: 60 },
+        entries: [mockHydrationEntry],
+        goal: mockHydrationGoal,
       },
       dataMode: 'mock_dev_only',
       warning: 'mocked health storage',

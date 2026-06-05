@@ -1,4 +1,4 @@
-import { handleApiError, HttpError, json, readJsonObject } from '../_lib/http';
+import { guardApiMethod, handleApiError, HttpError, json, readJsonObject } from '../_lib/http';
 import {
   sanitizeTelemetryMessage,
   sanitizeTelemetryMetadata,
@@ -117,10 +117,8 @@ async function getTelemetryUserId(request: Request): Promise<string | null> {
 }
 
 export default async function handler(request: Request) {
-  if (request.method === 'OPTIONS') return json({ ok: true }, 200, request);
-  if (request.method !== 'POST') {
-    return json({ error: 'Method not allowed' }, 405, request);
-  }
+  const methodResponse = guardApiMethod(request, 'POST');
+  if (methodResponse) return methodResponse;
 
   try {
     const body = await readJsonObject(request, { maxBytes: MAX_TELEMETRY_BODY_BYTES });

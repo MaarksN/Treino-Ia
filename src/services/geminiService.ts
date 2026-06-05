@@ -270,6 +270,56 @@ function getAI() {
   return createGeminiProxyClient();
 }
 
+function parseWorkoutPlanResponse(jsonStr: string, errorMessage: string): WorkoutPlan {
+  try {
+    const parsedResult = safeAiJsonParser<WorkoutPlan>(
+      jsonStr,
+      (value): value is WorkoutPlan =>
+        Boolean(value) &&
+        typeof value === 'object' &&
+        Array.isArray((value as { days?: unknown }).days),
+    );
+    if (!parsedResult.ok) throw new Error('Invalid workout plan response');
+    const parsed = parsedResult.data;
+    parsed.id = crypto.randomUUID();
+    parsed.createdAt = Date.now();
+    parsed.days = parsed.days.map((day) => ({
+      ...day,
+      id: crypto.randomUUID(),
+      exercises: day.exercises.map((ex) => ({
+        ...ex,
+        id: crypto.randomUUID(),
+      })),
+    }));
+    return parsed;
+  } catch (error) {
+    console.error('Failed to parse Gemini response:', error);
+    throw new Error(errorMessage);
+  }
+}
+
+async function generateImageText(
+  prompt: string,
+  base64Data: string,
+  mimeType: string,
+  fallback: string,
+): Promise<string> {
+  const response = await getAI().models.generateContent({
+    model: getAiModelPolicy('training_plan').model,
+    contents: [
+      {
+        inlineData: {
+          data: base64Data,
+          mimeType,
+        },
+      },
+      prompt,
+    ],
+  });
+
+  return response.text || fallback;
+}
+
 export const workoutPlanSchema: Schema = {
   type: Type.OBJECT,
   properties: {
@@ -453,31 +503,7 @@ REGRAS OBRIGATÓRIAS (FALHAR NÃO É UMA OPÇÃO):
   });
 
   const jsonStr = response.text || '{}';
-  try {
-    const parsedResult = safeAiJsonParser<WorkoutPlan>(
-      jsonStr,
-      (value): value is WorkoutPlan =>
-        Boolean(value) &&
-        typeof value === 'object' &&
-        Array.isArray((value as { days?: unknown }).days),
-    );
-    if (!parsedResult.ok) throw new Error('Invalid workout plan response');
-    const parsed = parsedResult.data;
-    parsed.id = crypto.randomUUID();
-    parsed.createdAt = Date.now();
-    parsed.days = parsed.days.map((day) => ({
-      ...day,
-      id: crypto.randomUUID(),
-      exercises: day.exercises.map((ex) => ({
-        ...ex,
-        id: crypto.randomUUID(),
-      })),
-    }));
-    return parsed;
-  } catch (error) {
-    console.error('Failed to parse Gemini response:', error);
-    throw new Error('A resposta da IA veio inválida. Tente novamente.');
-  }
+  return parseWorkoutPlanResponse(jsonStr, 'A resposta da IA veio inválida. Tente novamente.');
 }
 
 export async function analyzeBodyImage(
@@ -493,20 +519,7 @@ O usuário enviou uma foto de progressão. Analise a imagem em relação ao biot
 4. Mantenha o formato Markdown, usando emojis e tom hardcore.
 IMPORTANTE: Não dê conselhos médicos, fale estritamente como um bodybuilder avaliando um atleta.`;
 
-  const response = await getAI().models.generateContent({
-    model: getAiModelPolicy('training_plan').model,
-    contents: [
-      {
-        inlineData: {
-          data: base64Image,
-          mimeType: mimeType,
-        },
-      },
-      prompt,
-    ],
-  });
-
-  return response.text || 'Análise de transformação falhou.';
+  return generateImageText(prompt, base64Image, mimeType, 'Análise de transformação falhou.');
 }
 
 export async function analyzeFoodImage(
@@ -522,20 +535,7 @@ Baseado no usuário (Peso: ${profile.weight}kg, Objetivo: ${profile.goal}):
 
 Formate em Markdown curto e grosso.`;
 
-  const response = await getAI().models.generateContent({
-    model: getAiModelPolicy('training_plan').model,
-    contents: [
-      {
-        inlineData: {
-          data: base64Image,
-          mimeType: mimeType,
-        },
-      },
-      prompt,
-    ],
-  });
-
-  return response.text || 'Não foi possível analisar a refeição.';
+  return generateImageText(prompt, base64Image, mimeType, 'Não foi possível analisar a refeição.');
 }
 
 export async function generateWorkoutHistoryReport(
@@ -590,33 +590,10 @@ REGRAS OBRIGATÓRIAS (FALHAR NÃO É UMA OPÇÃO):
   });
 
   const jsonStr = response.text || '{}';
-  try {
-    const parsedResult = safeAiJsonParser<WorkoutPlan>(
-      jsonStr,
-      (value): value is WorkoutPlan =>
-        Boolean(value) &&
-        typeof value === 'object' &&
-        Array.isArray((value as { days?: unknown }).days),
-    );
-    if (!parsedResult.ok) throw new Error('Invalid workout plan response');
-    const parsed = parsedResult.data;
-    parsed.id = crypto.randomUUID();
-    parsed.createdAt = Date.now();
-    parsed.days = parsed.days.map((day) => ({
-      ...day,
-      id: crypto.randomUUID(),
-      exercises: day.exercises.map((ex) => ({
-        ...ex,
-        id: crypto.randomUUID(),
-      })),
-    }));
-    return parsed;
-  } catch (error) {
-    console.error('Failed to parse Gemini response:', error);
-    throw new Error(
-      'Não foi possível entender o arquivo enviado. Verifique se ele contém um treino legível.',
-    );
-  }
+  return parseWorkoutPlanResponse(
+    jsonStr,
+    'Não foi possível entender o arquivo enviado. Verifique se ele contém um treino legível.',
+  );
 }
 
 export async function suggestExerciseVariations(

@@ -1,34 +1,11 @@
-import Stripe from 'stripe';
 import { describe, expect, it } from 'vitest';
+import { buildStripeEvent } from './stripe-test-fixtures';
 import { minimizeStripeWebhookPayload } from './stripe-webhook-payload';
-
-function buildEvent(
-  object: Record<string, unknown>,
-  overrides: Record<string, unknown> = {},
-): Stripe.Event {
-  return {
-    id: 'evt_123',
-    object: 'event',
-    api_version: '2024-06-20',
-    created: 1_735_689_600,
-    data: {
-      object,
-    },
-    livemode: false,
-    pending_webhooks: 1,
-    request: {
-      id: 'req_123',
-      idempotency_key: 'idem_should_not_persist',
-    },
-    type: 'customer.subscription.updated',
-    ...overrides,
-  } as unknown as Stripe.Event;
-}
 
 describe('minimizeStripeWebhookPayload', () => {
   it('keeps event audit fields and subscription object identifiers', () => {
     const payload = minimizeStripeWebhookPayload(
-      buildEvent({
+      buildStripeEvent({
         id: 'sub_123',
         object: 'subscription',
         customer: { id: 'cus_123', email: 'customer@example.com' },
@@ -73,7 +50,7 @@ describe('minimizeStripeWebhookPayload', () => {
 
   it('keeps checkout session subscription, amount and currency without free metadata', () => {
     const payload = minimizeStripeWebhookPayload(
-      buildEvent(
+      buildStripeEvent(
         {
           id: 'cs_123',
           object: 'checkout.session',
@@ -108,7 +85,7 @@ describe('minimizeStripeWebhookPayload', () => {
 
   it('does not include sensitive Stripe, customer or request details', () => {
     const payload = minimizeStripeWebhookPayload(
-      buildEvent(
+      buildStripeEvent(
         {
           id: 'pi_123',
           object: 'payment_intent',
@@ -188,7 +165,7 @@ describe('minimizeStripeWebhookPayload', () => {
         interval: 'month',
       },
     };
-    const event = buildEvent(subscription);
+    const event = buildStripeEvent(subscription);
 
     minimizeStripeWebhookPayload(event);
 
@@ -197,7 +174,7 @@ describe('minimizeStripeWebhookPayload', () => {
 
   it('handles unknown event objects without storing raw fields', () => {
     const payload = minimizeStripeWebhookPayload(
-      buildEvent(
+      buildStripeEvent(
         {
           object: 'unknown',
           metadata: {

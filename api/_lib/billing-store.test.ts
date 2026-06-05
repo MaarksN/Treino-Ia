@@ -5,51 +5,37 @@ import {
   upsertSubscriptionFromStripeSubscription,
 } from './billing-store';
 import { getSupabaseAdmin } from './server-supabase';
+import { buildStripeEvent } from './stripe-test-fixtures';
 
 vi.mock('./server-supabase', () => ({
   getSupabaseAdmin: vi.fn(),
 }));
 
-function buildEvent(): Stripe.Event {
-  return {
-    id: 'evt_123',
-    object: 'event',
-    api_version: '2024-06-20',
-    created: 1_735_689_600,
-    data: {
-      object: {
-        id: 'sub_123',
-        object: 'subscription',
-        customer: {
-          id: 'cus_123',
-          email: 'customer@example.com',
-        },
-        status: 'active',
-        metadata: {
-          user_id: 'user-1',
-          plan_id: 'pro',
-          email: 'metadata@example.com',
-        },
-        items: {
-          data: [
-            {
-              price: {
-                id: 'price_123',
-                product: 'prod_123',
-              },
-            },
-          ],
-        },
-      },
+function buildSubscriptionEvent(): Stripe.Event {
+  return buildStripeEvent({
+    id: 'sub_123',
+    object: 'subscription',
+    customer: {
+      id: 'cus_123',
+      email: 'customer@example.com',
     },
-    livemode: false,
-    pending_webhooks: 1,
-    request: {
-      id: 'req_123',
-      idempotency_key: 'idem_should_not_persist',
+    status: 'active',
+    metadata: {
+      user_id: 'user-1',
+      plan_id: 'pro',
+      email: 'metadata@example.com',
     },
-    type: 'customer.subscription.updated',
-  } as unknown as Stripe.Event;
+    items: {
+      data: [
+        {
+          price: {
+            id: 'price_123',
+            product: 'prod_123',
+          },
+        },
+      ],
+    },
+  });
 }
 
 function buildSupabaseMock(insertResult: unknown = { error: null }) {
@@ -76,7 +62,7 @@ describe('billing-store Stripe webhook recording', () => {
   it('persists a minimized webhook payload instead of the raw Stripe event', async () => {
     const { insert } = buildSupabaseMock();
 
-    await expect(recordStripeWebhookEvent(buildEvent())).resolves.toBe(true);
+    await expect(recordStripeWebhookEvent(buildSubscriptionEvent())).resolves.toBe(true);
 
     expect(insert).toHaveBeenCalledWith({
       id: 'evt_123',
@@ -119,7 +105,7 @@ describe('billing-store Stripe webhook recording', () => {
       },
     });
 
-    await expect(recordStripeWebhookEvent(buildEvent())).resolves.toBe(false);
+    await expect(recordStripeWebhookEvent(buildSubscriptionEvent())).resolves.toBe(false);
   });
 
   it('continues subscription updates from the original in-memory event object', async () => {

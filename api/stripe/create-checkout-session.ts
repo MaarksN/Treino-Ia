@@ -4,9 +4,15 @@ import {
   json,
   readJsonObject,
   HttpError,
+  guardApiMethod,
 } from '../_lib/http';
 import { requireSupabaseUser } from '../_lib/server-supabase';
-import { BILLING_PROVIDER_NOT_CONFIGURED, getStripeClient } from '../_lib/stripe-client';
+import {
+  billingProviderNotConfiguredResponse,
+  getStripeClient,
+  isBillingProviderConfigured,
+  isBillingProviderNotConfiguredError,
+} from '../_lib/stripe-client';
 import { resolveCheckoutPlan } from '../_lib/billing';
 import { JSON_BODY_LIMITS } from '../_lib/requestLimits';
 
@@ -15,16 +21,12 @@ export const config = {
 };
 
 export default async function handler(request: Request) {
-  if (request.method === 'OPTIONS') return json({ ok: true }, 200, request);
-  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405, request);
+  const methodResponse = guardApiMethod(request, 'POST');
+  if (methodResponse) return methodResponse;
 
   try {
-    if (!process.env.STRIPE_SECRET_KEY) {
-      return json(
-        { error: BILLING_PROVIDER_NOT_CONFIGURED, dataMode: 'not_configured' },
-        503,
-        request,
-      );
+    if (!isBillingProviderConfigured()) {
+      return billingProviderNotConfiguredResponse(request);
     }
 
     const user = await requireSupabaseUser(request);
@@ -70,12 +72,8 @@ export default async function handler(request: Request) {
 
     return json({ checkoutUrl: session.url, sessionId: session.id }, 200, request);
   } catch (error) {
-    if ((error as any)?.message === BILLING_PROVIDER_NOT_CONFIGURED) {
-      return json(
-        { error: BILLING_PROVIDER_NOT_CONFIGURED, dataMode: 'not_configured' },
-        503,
-        request,
-      );
+    if (isBillingProviderNotConfiguredError(error)) {
+      return billingProviderNotConfiguredResponse(request);
     }
     return handleApiError(error, request);
   }

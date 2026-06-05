@@ -1,4 +1,4 @@
-import { handleApiError, HttpError, json, readJsonObject } from '../_lib/http';
+import { guardApiMethod, handleApiError, HttpError, json, readJsonObject } from '../_lib/http';
 import { JSON_BODY_LIMITS } from '../_lib/requestLimits';
 import { getSupabaseAdmin, requireSupabaseUser } from '../_lib/server-supabase';
 
@@ -46,10 +46,8 @@ function parseOfflineAction(body: Record<string, unknown>): {
 }
 
 export default async function handler(request: Request) {
-  if (request.method === 'OPTIONS') return json({ ok: true }, 200, request);
-  if (request.method !== 'POST') {
-    return json({ error: 'Method not allowed' }, 405, request);
-  }
+  const methodResponse = guardApiMethod(request, 'POST');
+  if (methodResponse) return methodResponse;
 
   try {
     const user = await requireSupabaseUser(request);

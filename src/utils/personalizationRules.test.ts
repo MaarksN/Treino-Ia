@@ -7,6 +7,24 @@ import {
   validateAvailableMinutes,
 } from './personalizationRules';
 
+type PersonalizationProfile = Parameters<typeof computeDeterministicFlags>[0];
+
+const baseProfile: PersonalizationProfile = {
+  daysPerWeek: 4,
+  goal: 'Hipertrofia',
+  age: 30,
+  gender: 'Masculino',
+  height: 180,
+  weight: 80,
+  experienceLevel: 'Intermediário',
+  injuries: '',
+  equipment: '',
+};
+
+function buildProfile(overrides: Partial<PersonalizationProfile> = {}): PersonalizationProfile {
+  return { ...baseProfile, ...overrides };
+}
+
 describe('personalizationRules', () => {
   it('normaliza tempo disponível', () => {
     expect(validateAvailableMinutes(9)).toBe(15);
@@ -14,21 +32,13 @@ describe('personalizationRules', () => {
   });
 
   it('detecta risco e deload por fadiga', () => {
-    const flags = computeDeterministicFlags(
-      {
-        daysPerWeek: 5,
-        goal: 'Hipertrofia',
-        age: 30,
-        gender: 'Masculino',
-        height: 180,
-        weight: 80,
-        experienceLevel: 'Intermediário',
-        injuries: '',
-        equipment: '',
-      },
-      [],
-      { timestamp: Date.now(), sleepHours: 5, sorenessLevel: 3, stressLevel: 4, energyLevel: 4 },
-    );
+    const flags = computeDeterministicFlags(buildProfile({ daysPerWeek: 5 }), [], {
+      timestamp: Date.now(),
+      sleepHours: 5,
+      sorenessLevel: 3,
+      stressLevel: 4,
+      energyLevel: 4,
+    });
     expect(flags.deloadNeeded).toBe(true);
     expect(flags.recommendedFrequency).toBeLessThanOrEqual(4);
   });
@@ -39,21 +49,13 @@ describe('personalizationRules', () => {
   });
 
   it('reduz volume e intensidade por baixa recuperação', () => {
-    const flags = computeDeterministicFlags(
-      {
-        daysPerWeek: 4,
-        goal: 'Hipertrofia',
-        age: 30,
-        gender: 'Masculino',
-        height: 180,
-        weight: 80,
-        experienceLevel: 'Intermediário',
-        injuries: '',
-        equipment: '',
-      },
-      [],
-      { timestamp: Date.now(), sleepHours: 5, sorenessLevel: 2, stressLevel: 3, energyLevel: 3 },
-    );
+    const flags = computeDeterministicFlags(buildProfile(), [], {
+      timestamp: Date.now(),
+      sleepHours: 5,
+      sorenessLevel: 2,
+      stressLevel: 3,
+      energyLevel: 3,
+    });
 
     const guarded = enforceTrainingGuardrails(
       {
@@ -71,17 +73,7 @@ describe('personalizationRules', () => {
 
   it('detecta dor ou limitação e gera flag de substituição segura', () => {
     const flags = computeDeterministicFlags(
-      {
-        daysPerWeek: 4,
-        goal: 'Hipertrofia',
-        age: 30,
-        gender: 'Masculino',
-        height: 180,
-        weight: 80,
-        experienceLevel: 'Intermediário',
-        injuries: 'dor no ombro',
-        equipment: '',
-      },
+      buildProfile({ injuries: 'dor no ombro' }),
       [],
       undefined,
     );
@@ -101,21 +93,7 @@ describe('personalizationRules', () => {
       ],
     }));
 
-    const flags = computeDeterministicFlags(
-      {
-        daysPerWeek: 4,
-        goal: 'Hipertrofia',
-        age: 30,
-        gender: 'Masculino',
-        height: 180,
-        weight: 80,
-        experienceLevel: 'Intermediário',
-        injuries: '',
-        equipment: '',
-      },
-      sessions,
-      undefined,
-    );
+    const flags = computeDeterministicFlags(buildProfile(), sessions, undefined);
 
     expect(flags.plateauRisk).toBe('alto');
     expect(listDeterministicFlagLabels(flags)).toContain('plateau_detected');

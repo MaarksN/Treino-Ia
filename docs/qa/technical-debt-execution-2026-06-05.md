@@ -1,10 +1,16 @@
 # Execucao do plano de divida tecnica - 2026-06-05
 
-Status: NO-GO externo por env/secrets ausentes; gates locais PASS.
+Status: NO-GO externo por env/secrets ausentes; gates locais PASS; DT-008 quitada no criterio de clones.
 
 Branch: `codex/execute-technical-debt-plan`
 Base: `3edc977df841f0c148bf9a4abe7ec796d8db257c`
 Fonte dos prompts: `C:/Users/Marks/Desktop/Nova pasta/TREINO IA - PROMPTS PLANO DE DIVIDA TECNICA.html`
+
+Continuacao DT-008:
+
+- Branch: `codex/reduce-dt008-clones`
+- Base: `04423d83acb930f7d6d817ff89398045f734ed57`
+- Objetivo: reduzir clones restantes sem alterar comportamento de produto.
 
 ## Regras de seguranca
 
@@ -52,7 +58,7 @@ Fonte dos prompts: `C:/Users/Marks/Desktop/Nova pasta/TREINO IA - PROMPTS PLANO 
 | `npm audit --json`                                           | 0 vulnerabilidades                                             | PASS         |
 | `npx @lhci/cli@0.15.x autorun --config=./lighthouserc.json`  | Lighthouse CI PASS; relatorios temporarios publicados          | PASS         |
 | `npx --yes madge --circular src api --extensions ts,tsx`     | Sem dependencias circulares                                    | PASS         |
-| `npx --yes jscpd --min-lines 10 --reporters console src api` | Clones reduziram de 100 para 43; duplicacao total 0.92% linhas | PARTIAL      |
+| `npx --yes jscpd --min-lines 10 --reporters console src api` | Clones reduziram de 43 para 23; duplicacao total 0.46% linhas  | PASS         |
 | `npx --yes ts-prune --project tsconfig.json`                 | Lista de exports suspeitos gerada para triagem; comando exit 0 | PARTIAL      |
 | `npm run preflight:sprint3`                                  | 8 grupos de env ausentes                                       | BLOCKED      |
 | `SPRINT3_SMOKE_STRICT=true npm run smoke:sprint3`            | Bloqueado antes de rede: `SUPABASE_URL is required`            | BLOCKED      |
@@ -69,26 +75,26 @@ Relatorios LHCI temporarios:
 - DT-004: `npm run format` aplicado; `npm run format:check` passou.
 - DT-011: LHCI passou usando `dist` local servido pela CLI.
 - DT-003: warnings `act(...)` removidos com a retirada dos testes duplicados `.test.ts` antigos de `useWorkoutManager` e `useCheckinManager`; os equivalentes `.test.tsx` permanecem.
-- DT-008: extraida fabrica comum para `src/core/blocks/blocoXXRegistry.ts` e contrato comum de testes; clones reduziram de 100 para 43.
+- DT-008: extraida fabrica comum para `src/core/blocks/blocoXXRegistry.ts` e contrato comum de testes; na continuacao foram extraidos helpers de API, fixtures de testes, wrappers de acessibilidade e parsers Gemini; clones reduziram de 100 para 23.
 - DT-001/DT-002/DT-005/DT-012: adicionados smokes operacionais e workflow manual para staging sem gravar secrets.
 - DT-006/DT-009/DT-010: runbooks/ADR/OpenAPI atualizados para explicitar procedimento, estrategia e placeholder de staging.
 
 ## Status por divida
 
-| ID     | Status atual                                                                                                |
-| ------ | ----------------------------------------------------------------------------------------------------------- |
-| DT-001 | BLOCKED por secrets/env ausentes; preflight e smoke prontos para CI/shell seguro.                           |
-| DT-002 | BLOCKED por tokens A/B ausentes; `npm run smoke:tenant-ab` adicionado.                                      |
-| DT-003 | PARTIAL; gate tecnico passa, warnings removidos, cobertura global ainda abaixo de 60%.                      |
-| DT-004 | PASS.                                                                                                       |
-| DT-005 | BLOCKED por sandbox real ausente; smoke cobre Supabase, Gemini, Stripe e rate limit.                        |
-| DT-006 | PARTIAL; runbook de ensaio atualizado, execucao real de backup/restore ainda depende de staging.            |
-| DT-007 | BLOCKED por secrets Sentry ausentes.                                                                        |
-| DT-008 | PARTIAL; clones baixaram para 43, ainda acima da meta ideal `<30`; exports do `ts-prune` triados por lista. |
-| DT-009 | PASS documental; ADR aceita Vercel + Supabase para MVP/private beta sem Docker/IaC obrigatorio.             |
-| DT-010 | PARTIAL; OpenAPI nao aponta mais para prod falsa, mas URL real de staging ainda nao foi validada.           |
-| DT-011 | PASS local.                                                                                                 |
-| DT-012 | BLOCKED por token real ausente; `npm run smoke:compliance` adicionado com erasure destrutivo opt-in.        |
+| ID     | Status atual                                                                                                            |
+| ------ | ----------------------------------------------------------------------------------------------------------------------- |
+| DT-001 | BLOCKED por secrets/env ausentes; preflight e smoke prontos para CI/shell seguro.                                       |
+| DT-002 | BLOCKED por tokens A/B ausentes; `npm run smoke:tenant-ab` adicionado.                                                  |
+| DT-003 | PARTIAL; gate tecnico passa, warnings removidos, cobertura global ainda abaixo de 60%.                                  |
+| DT-004 | PASS.                                                                                                                   |
+| DT-005 | BLOCKED por sandbox real ausente; smoke cobre Supabase, Gemini, Stripe e rate limit.                                    |
+| DT-006 | PARTIAL; runbook de ensaio atualizado, execucao real de backup/restore ainda depende de staging.                        |
+| DT-007 | BLOCKED por secrets Sentry ausentes.                                                                                    |
+| DT-008 | PASS no criterio de clones; `jscpd` reporta 23 clones, abaixo da meta `<30`; exports do `ts-prune` seguem para triagem. |
+| DT-009 | PASS documental; ADR aceita Vercel + Supabase para MVP/private beta sem Docker/IaC obrigatorio.                         |
+| DT-010 | PARTIAL; OpenAPI nao aponta mais para prod falsa, mas URL real de staging ainda nao foi validada.                       |
+| DT-011 | PASS local.                                                                                                             |
+| DT-012 | BLOCKED por token real ausente; `npm run smoke:compliance` adicionado com erasure destrutivo opt-in.                    |
 
 ## Decisao
 
