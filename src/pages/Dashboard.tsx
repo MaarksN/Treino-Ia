@@ -135,6 +135,7 @@ export default function Dashboard() {
       nutritionPhotoAnalysis: isProductFeatureVisible('nutrition.photoAnalysis'),
       marketplace: isProductFeatureVisible('marketplace'),
       premiumIntegrations: isProductFeatureVisible('premiumIntegrations'),
+      platformHubs: isProductFeatureVisible('platformHubs'),
     }),
     [],
   );
@@ -956,6 +957,7 @@ export default function Dashboard() {
                 webxr: surface.webxr,
                 premiumIntegrations: surface.premiumIntegrations,
                 partnerTokens: surface.partnerTokens,
+                platformHubs: surface.platformHubs,
               }}
             />
 

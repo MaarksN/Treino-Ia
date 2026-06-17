@@ -60,6 +60,10 @@ const groups = [
     label: 'Origin allowlist',
     names: ['APP_URL', 'CORS_ALLOWED_ORIGINS', 'OAUTH_REDIRECT_ALLOWED_ORIGINS'],
   },
+  {
+    label: 'Scheduled worker secrets',
+    names: ['CRON_SECRET', 'RETENTION_WORKER_SECRET'],
+  },
 ];
 
 const allowedPublicEnv = new Set([
@@ -84,6 +88,56 @@ function recordMissing(label, names) {
   const message = `${label}: missing ${missing.join(', ')}`;
   if (allowMissing) warnings.push(message);
   else failures.push(message);
+}
+
+function isPlaceholderValue(value) {
+  return (
+    value === 'change_me' ||
+    value.startsWith('__REQUIRED') ||
+    value.startsWith('SUA_') ||
+    value.startsWith('MY_') ||
+    value.includes('SEU-PROJETO')
+  );
+}
+
+function validateRequiredValues() {
+  const requiredNames = groups.flatMap((group) => group.names);
+
+  for (const name of requiredNames) {
+    const value = env[name];
+    if (!value) continue;
+
+    if (isPlaceholderValue(value)) {
+      failures.push(`${name}: placeholder value is not allowed`);
+    }
+  }
+
+  for (const name of ['CRON_SECRET', 'RETENTION_WORKER_SECRET']) {
+    const value = env[name] || '';
+    if (value && value.length < 16) failures.push(`${name}: must be at least 16 chars`);
+  }
+
+  passes.push('Required env placeholder values checked');
+}
+
+function validateSupabaseConsistency() {
+  const publicUrl = env.VITE_SUPABASE_URL;
+  const serverUrl = env.SUPABASE_URL;
+
+  if (!publicUrl || !serverUrl) return;
+
+  try {
+    const publicOrigin = new URL(publicUrl).origin;
+    const serverOrigin = new URL(serverUrl).origin;
+
+    if (publicOrigin !== serverOrigin) {
+      failures.push('SUPABASE_URL must match VITE_SUPABASE_URL origin');
+    } else {
+      passes.push('Supabase public/server URL consistency checked');
+    }
+  } catch {
+    failures.push('SUPABASE_URL/VITE_SUPABASE_URL: invalid URL');
+  }
 }
 
 function parseOrigins(name) {
@@ -147,6 +201,11 @@ function validateOauthMode() {
       return;
     }
 
+    if (isPlaceholderValue(key)) {
+      failures.push('HEALTH_OAUTH_TOKEN_ENCRYPTION_KEY: placeholder value is not allowed');
+      return;
+    }
+
     try {
       if (Buffer.from(key, 'base64').length !== 32) {
         failures.push('HEALTH_OAUTH_TOKEN_ENCRYPTION_KEY: must be base64 for exactly 32 bytes');
@@ -193,6 +252,8 @@ function validatePublicSecrets() {
 }
 
 for (const group of groups) recordMissing(group.label, group.names);
+validateRequiredValues();
+validateSupabaseConsistency();
 validateOrigins();
 validateOauthMode();
 validatePublicSecrets();

@@ -14,6 +14,7 @@ describe('CI workflow', () => {
     expect(workflow).toContain('run: npm run typecheck');
     expect(workflow).toContain('run: npm test');
     expect(workflow).toContain('run: npm run build');
+    expect(workflow).toContain('run: npm run format:check');
   });
 
   it('skips browser E2E honestly when no test:e2e script is available', () => {
@@ -29,5 +30,15 @@ describe('CI workflow', () => {
     expect(workflow).toContain('PLAYWRIGHT_BROWSERS_PATH: /ms-playwright');
     expect(workflow).toContain('Verify Playwright Chromium');
     expect(workflow).not.toContain('npx playwright install --with-deps chromium');
+  });
+
+  it('runs essential security and maintainability gates', () => {
+    expect(workflow).toContain('  security-audit:');
+    expect(workflow).toContain('run: npm run security:audit');
+    expect(workflow).toContain('  circular-dependencies:');
+    expect(workflow).toContain('run: npm run check:circular');
+    expect(workflow).toContain('  yaml-lint:');
+    expect(workflow).toContain('uses: ibiqlik/action-yamllint@v3');
+    expect(workflow).toContain('run: npm run check:bundle-size');
   });
 });

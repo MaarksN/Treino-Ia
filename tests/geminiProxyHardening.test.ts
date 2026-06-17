@@ -1,7 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const checkRateLimit = vi.hoisted(() =>
+  vi.fn().mockResolvedValue({ allowed: true, remaining: 59, resetAt: Date.now() + 60_000 }),
+);
+
 vi.mock('../api/_lib/server-supabase', () => ({
   requireSupabaseUser: vi.fn().mockResolvedValue({ id: 'user-1' }),
+}));
+
+vi.mock('../api/_lib/distributedRateLimit', () => ({
+  checkRateLimit,
 }));
 
 vi.mock('../api/_lib/billing-entitlements', () => ({
@@ -31,6 +39,11 @@ describe('gemini proxy hardening', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
+    checkRateLimit.mockResolvedValue({
+      allowed: true,
+      remaining: 59,
+      resetAt: Date.now() + 60_000,
+    });
     process.env.GEMINI_API_KEY = 'test-key';
   });
 
@@ -86,5 +99,49 @@ describe('gemini proxy hardening', () => {
 
     expect(response.status).toBe(401);
     expect(body.error).toBe('Invalid or expired Supabase session');
+  });
+
+  it('returns rate-limit headers without calling Gemini when the user exceeds the window', async () => {
+    checkRateLimit.mockResolvedValueOnce({
+      allowed: false,
+      remaining: 0,
+      resetAt: Date.now() + 15_000,
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { default: handler } = await import('../api/gemini-proxy');
+    const response = await handler(geminiRequest());
+    const body = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(body.error).toContain('Muitas chamadas de IA');
+    expect(response.headers.get('retry-after')).toEqual(expect.any(String));
+    expect(response.headers.get('x-ratelimit-remaining')).toBe('0');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects unsupported payload parts before calling Gemini', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { default: handler } = await import('../api/gemini-proxy');
+    const response = await handler(
+      new Request('http://localhost/api/gemini-proxy', {
+        method: 'POST',
+        headers: {
+          authorization: 'Bearer test-token',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ fileData: { uri: 'gs://private' } }] }],
+        }),
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error).toBe('Parte Gemini não suportada pelo proxy.');
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

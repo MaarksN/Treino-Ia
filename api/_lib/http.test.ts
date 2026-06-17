@@ -5,6 +5,8 @@ import {
   handleApiError,
   json,
   readJsonObject,
+  SECURITY_HEADERS,
+  validateCorsOrigin,
 } from './http';
 
 describe('http helpers', () => {
@@ -60,6 +62,35 @@ describe('http helpers', () => {
     expect(blocked.headers.get('access-control-allow-origin')).toBeNull();
   });
 
+  it('returns typed CORS validation results for allowed and denied origins', () => {
+    vi.stubEnv('APP_URL', 'https://staging.treinoia.example');
+    vi.stubEnv('CORS_ALLOWED_ORIGINS', 'https://app.treinoia.example');
+
+    expect(
+      validateCorsOrigin(
+        new Request('https://api.treinoia.example/api/test', {
+          headers: { origin: 'https://app.treinoia.example' },
+        }),
+      ),
+    ).toMatchObject({
+      allowed: true,
+      origin: 'https://app.treinoia.example',
+      reason: 'allowlisted',
+    });
+
+    expect(
+      validateCorsOrigin(
+        new Request('https://api.treinoia.example/api/test', {
+          headers: { origin: 'https://evil.example' },
+        }),
+      ),
+    ).toMatchObject({
+      allowed: false,
+      origin: null,
+      reason: 'denied',
+    });
+  });
+
   it('keeps correlation ids allowed when a route customizes CORS headers', () => {
     const response = json({ ok: true }, 200, new Request('https://api.treinoia.example/api/test'), {
       headers: 'authorization, content-type',
@@ -67,6 +98,14 @@ describe('http helpers', () => {
 
     expect(response.headers.get('access-control-allow-headers')).toContain('x-correlation-id');
     expect(response.headers.get('access-control-expose-headers')).toBe('x-correlation-id');
+  });
+
+  it('adds security headers to JSON API responses', () => {
+    const response = json({ ok: true }, 200, new Request('https://api.treinoia.example/api/test'));
+
+    for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+      expect(response.headers.get(key)).toBe(value);
+    }
   });
 
   it('uses a trusted origin for redirects instead of raw request origin', () => {

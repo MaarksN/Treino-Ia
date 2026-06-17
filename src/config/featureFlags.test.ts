@@ -46,7 +46,16 @@ describe('product surface flags for private beta', () => {
 
     expect(isProductFeatureVisible('gamification.advanced')).toBe(true);
     expect(isProductFeatureVisible('advancedAi')).toBe(true);
+    expect(isProductFeatureVisible('platformHubs')).toBe(true);
     expect(isProductFeatureVisible('partnerTokens')).toBe(false);
+  });
+
+  it('keeps operational platform hubs hidden from user and beta audiences', () => {
+    expect(isProductFeatureVisible('platformHubs')).toBe(false);
+
+    setProductFeatureAudience('beta');
+
+    expect(isProductFeatureVisible('platformHubs')).toBe(false);
   });
 
   it('lets local overrides enable beta surfaces without enabling off surfaces', () => {

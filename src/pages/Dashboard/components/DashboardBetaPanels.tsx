@@ -122,6 +122,11 @@ const WebXRPreviewPanel = lazy(() =>
     default: module.WebXRPreviewPanel,
   })),
 );
+const ProductionReadinessPanel = lazy(() =>
+  import('../../../components/ops/ProductionReadinessPanel').then((module) => ({
+    default: module.ProductionReadinessPanel,
+  })),
+);
 
 interface DashboardBetaPanelsProps {
   profile: UserProfile;
@@ -144,6 +149,7 @@ interface DashboardBetaPanelsProps {
     webxr: boolean;
     premiumIntegrations: boolean;
     partnerTokens: boolean;
+    platformHubs: boolean;
   };
 }
 
@@ -302,6 +308,14 @@ export function DashboardBetaPanels({
             </div>
           </Suspense>
         </section>
+      )}
+
+      {flags.platformHubs && (
+        <ErrorBoundary section="ProductionReadinessPanel">
+          <Suspense fallback={<LazyPanelFallback />}>
+            <ProductionReadinessPanel />
+          </Suspense>
+        </ErrorBoundary>
       )}
     </>
   );

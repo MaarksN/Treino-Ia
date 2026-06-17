@@ -41,6 +41,7 @@ jobs:
           STRIPE_PRICE_ELITE_MONTHLY: ${{ secrets.STRIPE_PRICE_ELITE_MONTHLY }}
           STRIPE_PRICE_ELITE_YEARLY: ${{ secrets.STRIPE_PRICE_ELITE_YEARLY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          HEALTH_OAUTH_TOKEN_ENCRYPTION_KEY: ${{ secrets.HEALTH_OAUTH_TOKEN_ENCRYPTION_KEY }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
@@ -63,6 +64,7 @@ jobs:
             STRIPE_PRICE_ELITE_MONTHLY
             STRIPE_PRICE_ELITE_YEARLY
             GEMINI_API_KEY
+            HEALTH_OAUTH_TOKEN_ENCRYPTION_KEY
             SENTRY_AUTH_TOKEN
             SENTRY_ORG
             SENTRY_PROJECT
@@ -119,7 +121,8 @@ jobs:
           APP_URL: ${{ inputs.staging_app_url }}
           CORS_ALLOWED_ORIGINS: ${{ inputs.staging_app_url }}
           OAUTH_REDIRECT_ALLOWED_ORIGINS: ${{ inputs.staging_app_url }}
-          OAUTH_TOKEN_SECURITY_MODE: ${{ vars.OAUTH_TOKEN_SECURITY_MODE || 'plaintext_blocked' }}
+          OAUTH_TOKEN_SECURITY_MODE: ${{ vars.OAUTH_TOKEN_SECURITY_MODE || 'encrypted' }}
+          HEALTH_OAUTH_TOKEN_ENCRYPTION_KEY: ${{ secrets.HEALTH_OAUTH_TOKEN_ENCRYPTION_KEY }}
         run: npm run preflight:sprint3
 
       - name: Sprint 3 smoke

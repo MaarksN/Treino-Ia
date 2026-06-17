@@ -58,7 +58,7 @@ Vars opcionais no GitHub Actions:
 - `STRIPE_SMOKE_INTERVAL` (padrao `month`)
 - `GEMINI_SMOKE_EXPECT_SUCCESS` (padrao `false`)
 - `RATE_LIMIT_SMOKE_EXPECT_429` (padrao `false`; use `true` apenas quando a funcao publicada mantem bucket estavel no run)
-- `OAUTH_TOKEN_SECURITY_MODE` (padrao `plaintext_blocked`)
+- `OAUTH_TOKEN_SECURITY_MODE` (padrao `encrypted`; use `plaintext_blocked` apenas enquanto a chave de criptografia nao estiver pronta)
 
 Smokes reais adicionais, executados somente com usuarios descartaveis de staging:
 

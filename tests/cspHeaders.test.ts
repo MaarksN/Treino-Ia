@@ -20,6 +20,13 @@ function loadCspHeader() {
   return globalHeaders.find((header) => header.key === 'Content-Security-Policy')?.value ?? '';
 }
 
+function loadGlobalHeaders() {
+  const config = JSON.parse(readFileSync('vercel.json', 'utf8')) as VercelConfig;
+  const globalHeaders = config.headers?.find((entry) => entry.source === '/(.*)')?.headers ?? [];
+
+  return new Map(globalHeaders.map((header) => [header.key, header.value]));
+}
+
 function getDirective(csp: string, name: string): string[] {
   const directive = csp
     .split(';')
@@ -66,5 +73,15 @@ describe('CSP headers', () => {
     expect(getDirective(csp, 'frame-ancestors')).toEqual(["'none'"]);
     expect(getDirective(csp, 'worker-src')).toEqual(["'self'", 'blob:']);
     expect(getDirective(csp, 'media-src')).toEqual(["'self'", 'blob:']);
+  });
+
+  it('keeps deployment security headers enabled', () => {
+    const headers = loadGlobalHeaders();
+
+    expect(headers.get('X-Content-Type-Options')).toBe('nosniff');
+    expect(headers.get('X-Frame-Options')).toBe('DENY');
+    expect(headers.get('Referrer-Policy')).toBe('strict-origin-when-cross-origin');
+    expect(headers.get('Strict-Transport-Security')).toContain('includeSubDomains');
+    expect(headers.get('Permissions-Policy')).toContain('payment=()');
   });
 });

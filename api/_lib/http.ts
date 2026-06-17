@@ -1,4 +1,5 @@
 import { redactSensitiveData } from './redact';
+import { logSecurityEvent } from './securityLogger';
 
 export class HttpError extends Error {
   status: number;
@@ -10,10 +11,16 @@ export class HttpError extends Error {
   }
 }
 
-interface CorsOptions {
+export interface CorsOptions {
   methods?: string;
   headers?: string;
   correlationId?: string;
+}
+
+export interface CorsValidationResult {
+  allowed: boolean;
+  origin: string | null;
+  reason: 'no_request' | 'same_origin' | 'allowlisted' | 'local_development' | 'denied';
 }
 
 const DEFAULT_CORS_METHODS = 'GET, POST, OPTIONS';
@@ -22,6 +29,14 @@ const DEFAULT_CORS_HEADERS = `authorization, content-type, stripe-signature, x-c
 const DEFAULT_EXPOSED_HEADERS = CORRELATION_ID_HEADER;
 const CORRELATION_ID_PATTERN = /^[a-zA-Z0-9._:-]{8,128}$/;
 const requestCorrelationIds = new WeakMap<Request, string>();
+
+export const SECURITY_HEADERS: Readonly<Record<string, string>> = {
+  'x-content-type-options': 'nosniff',
+  'x-frame-options': 'DENY',
+  'referrer-policy': 'strict-origin-when-cross-origin',
+  'permissions-policy': 'camera=(), microphone=(), geolocation=(), payment=()',
+  'cross-origin-resource-policy': 'same-origin',
+};
 
 function splitOrigins(value?: string): string[] {
   return (value ?? '')
@@ -83,14 +98,27 @@ export function getAllowedApiOrigins(request?: Request): Set<string> {
   return origins;
 }
 
+export function validateCorsOrigin(request?: Request): CorsValidationResult {
+  if (!request) return { allowed: false, origin: null, reason: 'no_request' };
+
+  const origin = request.headers.get('origin')?.replace(/\/+$/, '') ?? null;
+  if (!origin)
+    return { allowed: true, origin: getApplicationOrigin(request), reason: 'same_origin' };
+
+  if (getAllowedApiOrigins(request).has(origin)) {
+    return { allowed: true, origin, reason: 'allowlisted' };
+  }
+
+  if (isLocalDevelopmentOrigin(origin)) {
+    return { allowed: true, origin, reason: 'local_development' };
+  }
+
+  return { allowed: false, origin: null, reason: 'denied' };
+}
+
 export function resolveAllowedApiOrigin(request?: Request): string | null {
-  const origin = request?.headers.get('origin')?.replace(/\/+$/, '');
-
-  if (!origin) return getApplicationOrigin(request);
-  if (getAllowedApiOrigins(request).has(origin)) return origin;
-  if (isLocalDevelopmentOrigin(origin)) return origin;
-
-  return null;
+  const validation = validateCorsOrigin(request);
+  return validation.allowed ? validation.origin : null;
 }
 
 export function getTrustedRequestOrigin(request: Request): string {
@@ -145,15 +173,36 @@ export function getCorrelationId(request?: Request): string {
   return correlationId;
 }
 
+export function applySecurityHeaders(response: Response): Response {
+  Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+
+  return response;
+}
+
 export function applyCorsHeaders(
   response: Response,
   request?: Request,
   options: CorsOptions = {},
 ): Response {
-  const origin = resolveAllowedApiOrigin(request);
+  applySecurityHeaders(response);
+
+  const validation = validateCorsOrigin(request);
+  const origin = validation.allowed ? validation.origin : null;
 
   if (origin) {
     response.headers.set('access-control-allow-origin', origin);
+  } else if (request && validation.reason === 'denied') {
+    logSecurityEvent({
+      type: 'cors_denied',
+      route: new URL(request.url).pathname,
+      correlationId: getCorrelationId(request),
+      metadata: {
+        origin: request.headers.get('origin'),
+        method: request.method,
+      },
+    });
   }
 
   response.headers.set('access-control-allow-methods', options.methods ?? DEFAULT_CORS_METHODS);

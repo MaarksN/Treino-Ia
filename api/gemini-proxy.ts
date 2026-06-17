@@ -2,12 +2,21 @@ import { pruneBoundedTtlCache, setBoundedTtlCacheEntry } from './_lib/boundedTtl
 import { getServerEntitlement, incrementUsageCounter } from './_lib/billing-entitlements';
 import { checkRateLimit } from './_lib/distributedRateLimit';
 import { fetchWithTimeout } from './_lib/fetchWithTimeout';
-import { applyCorsHeaders, handleApiError, HttpError, json, requireEnv } from './_lib/http';
+import { validateAndSerializeGeminiPayload } from './_lib/geminiPayload';
+import {
+  applyCorsHeaders,
+  getCorrelationId,
+  handleApiError,
+  HttpError,
+  json,
+  requireEnv,
+} from './_lib/http';
 import {
   isTransientFetchError,
   retryWithBackoff,
   shouldRetryGeminiStatus,
 } from './_lib/retryPolicy';
+import { logSecurityEvent } from './_lib/securityLogger';
 import { requireSupabaseUser } from './_lib/server-supabase';
 
 export const config = {
@@ -48,39 +57,6 @@ function withCorsHeaders(response: Response, request: Request) {
   return applyCorsHeaders(response, request, GEMINI_CORS_OPTIONS);
 }
 
-function isCacheableGeminiBody(bodyText: string) {
-  if (bodyText.length > 120_000) return false;
-  return !bodyText.includes('"inlineData"') && !bodyText.includes('"fileData"');
-}
-
-function ensureValidGeminiPayload(rawBody: string) {
-  if (!rawBody || rawBody.trim().length === 0) {
-    throw new HttpError(400, 'Payload vazio para Gemini proxy.');
-  }
-
-  if (rawBody.length > MAX_REQUEST_BYTES) {
-    throw new HttpError(413, 'Payload acima do limite permitido para Gemini proxy.');
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(rawBody);
-  } catch {
-    throw new HttpError(400, 'Payload JSON inválido para Gemini proxy.');
-  }
-
-  if (!parsed || typeof parsed !== 'object') {
-    throw new HttpError(400, 'Payload Gemini deve ser um objeto JSON.');
-  }
-
-  const candidate = parsed as { contents?: unknown };
-  if (!Array.isArray(candidate.contents) || candidate.contents.length === 0) {
-    throw new HttpError(400, 'Payload Gemini deve conter "contents" com ao menos um item.');
-  }
-
-  return JSON.stringify(parsed);
-}
-
 async function sha256(value: string) {
   const bytes = new TextEncoder().encode(value);
   const hash = await crypto.subtle.digest('SHA-256', bytes);
@@ -104,8 +80,25 @@ export default async function handler(request: Request) {
     }
 
     const rawBody = await request.text();
-    const bodyText = ensureValidGeminiPayload(rawBody);
-    const cacheable = isCacheableGeminiBody(bodyText);
+    const payload = (() => {
+      try {
+        return validateAndSerializeGeminiPayload(rawBody, { maxBytes: MAX_REQUEST_BYTES });
+      } catch (error) {
+        logSecurityEvent({
+          type: 'gemini_payload_rejected',
+          route: '/api/gemini-proxy',
+          subject: user.id,
+          correlationId: getCorrelationId(request),
+          metadata: {
+            status: error instanceof HttpError ? error.status : 500,
+            message: error instanceof Error ? error.message : 'unknown',
+          },
+        });
+        throw error;
+      }
+    })();
+    const bodyText = payload.bodyText;
+    const cacheable = payload.cacheable;
     const cacheKey = cacheable ? await sha256(`${user.id}:${bodyText}`) : '';
     pruneBoundedTtlCache(responseCache, {
       maxEntries: MAX_RESPONSE_CACHE_ENTRIES,
@@ -118,7 +111,29 @@ export default async function handler(request: Request) {
 
     if (!rateLimit.allowed) {
       const retryAfter = Math.max(1, Math.ceil((rateLimit.resetAt - Date.now()) / 1000));
-      throw new HttpError(429, `Muitas chamadas de IA. Tente novamente em ${retryAfter}s.`);
+      logSecurityEvent({
+        type: 'gemini_rate_limited',
+        route: '/api/gemini-proxy',
+        subject: user.id,
+        correlationId: getCorrelationId(request),
+        metadata: {
+          limit,
+          remaining: rateLimit.remaining,
+          resetAt: new Date(rateLimit.resetAt).toISOString(),
+        },
+      });
+
+      const response = cors(
+        {
+          error: `Muitas chamadas de IA. Tente novamente em ${retryAfter}s.`,
+          retryAfter,
+        },
+        429,
+        request,
+      );
+      response.headers.set('retry-after', retryAfter.toString());
+      response.headers.set('x-ratelimit-remaining', rateLimit.remaining.toString());
+      return response;
     }
 
     if (cached && cached.expiresAt > Date.now()) {
