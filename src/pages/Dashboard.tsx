@@ -348,7 +348,7 @@ export default function Dashboard() {
     if (!profile || !plan) return;
 
     if (route.id === 'nutrition' && !surface.nutritionSimple) {
-      pushAppRoute('overview');
+      pushAppRoute('today');
       return;
     }
 
