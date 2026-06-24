@@ -1,18 +1,16 @@
 import { type FormEvent, lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Dumbbell, UserRound } from 'lucide-react';
 import {
-  createDefaultProfile,
   DatabaseService,
   type ExerciseIntensityTechnique,
-  PersistenceStatus,
   TrainingPlan,
   UserProfile,
-  WorkoutSession,
+  createDefaultProfile,
+  normalizeProfile,
 } from '../services/database';
 import { CurrentPlanConsistencyHelper } from '../services/data/currentPlanConsistency';
 import {
   aiRecommendationRepository,
-  type AiRecommendationRecord,
 } from '../services/data/aiRecommendationRepository';
 import { calculateTrainingPlan } from '../rules/iaEngine';
 import { BottomNav } from '../components/BottomNav';
@@ -22,29 +20,19 @@ import { type User as StarterUser } from '../types';
 import { getDashboardMobileSections, type DashboardSectionId } from '../utils/dashboardNavigation';
 import {
   getAppRouteTargetId,
-  getCurrentAppRoute,
   pushAppRoute,
-  subscribeToAppRoute,
 } from '../navigation/appRouter';
 import { isProductFeatureVisible } from '../config/featureFlags';
 import { ActiveExerciseDraft } from './Dashboard/types';
 import {
-  createActiveDraft,
   persistStarterUser,
-  readStarterUser,
 } from './Dashboard/services/dashboardSession';
-import { validateDashboardProfileInput } from './Dashboard/services/dashboardValidation';
 import {
-  reorderExercisesInDay,
   updateExerciseNotes,
   updateExerciseTechnique,
 } from './Dashboard/services/workoutAuthoring';
-import { buildCompletedDashboardWorkout } from './Dashboard/services/dashboardWorkoutCompletion';
-import { triggerHapticFeedback } from '../services/hapticFeedback';
-import { type WorkoutImportFileDraft } from '../services/workoutImportPipeline';
 import { getCriticalContrastClass } from '../utils/accessibilityContrast';
-import { trackDay7Return, trackEvent, trackEventOnce } from '../utils/analytics';
-import { captureError } from '../utils/errorTelemetry';
+import { trackEventOnce } from '../utils/analytics';
 import {
   AnamnesisForm,
   WeeklyPlan,
@@ -60,10 +48,23 @@ import {
 import { buildGamificationRetentionState } from './Dashboard/services/gamificationRetentionEngine';
 import { buildRemoteGamifiedState } from './Dashboard/services/remoteGamifiedEngine';
 
-const PLAN_GENERATION_FEEDBACK_MS = 750;
+import { useDashboardData } from './Dashboard/hooks/useDashboardData';
+import {
+  updateProfileAndRecalculatePlan,
+  regeneratePlanFromHistory,
+  reorderExercises,
+} from './Dashboard/services/dashboardPlanService';
+import {
+  startWorkout as startWorkoutService,
+  finishWorkout as finishWorkoutService,
+} from './Dashboard/services/dashboardWorkoutService';
+import { handleSignOutAndReload } from './Dashboard/services/dashboardDataService';
+import { type WorkoutImportFileDraft } from '../services/workoutImportPipeline';
+
 const primaryActionClass = getCriticalContrastClass('primaryAction');
 const positiveStatusClass = getCriticalContrastClass('positiveStatus');
 const warningStatusClass = getCriticalContrastClass('warningStatus');
+
 const RegistrationForm = lazy(() =>
   import('../components/RegistrationForm').then((module) => ({ default: module.RegistrationForm })),
 );
@@ -78,23 +79,28 @@ const TrainingReportPanel = lazy(() =>
   })),
 );
 
-function wait(ms: number) {
-  return new Promise<void>((resolve) => setTimeout(resolve, ms));
-}
-
 function LazyPanelFallback() {
   return <Skeleton lines={3} />;
 }
 
 export default function Dashboard() {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [formProfile, setFormProfile] = useState<UserProfile>(() => createDefaultProfile());
-  const [plan, setPlan] = useState<TrainingPlan | null>(null);
-  const [history, setHistory] = useState<WorkoutSession[]>([]);
-  const [persistence, setPersistence] = useState<PersistenceStatus | null>(null);
+  const {
+    profile, setProfile,
+    formProfile, setFormProfile,
+    plan, setPlan,
+    history, setHistory,
+    persistence, setPersistence,
+    pendingRecommendation, setPendingRecommendation,
+    notice, setNotice,
+    error, setError,
+    loading,
+    route,
+    showStarterRegistration, setShowStarterRegistration,
+    showAnamnesis, setShowAnamnesis,
+    loadData
+  } = useDashboardData();
+
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
-  const [showStarterRegistration, setShowStarterRegistration] = useState(false);
-  const [showAnamnesis, setShowAnamnesis] = useState(false);
   const [activeDayIndex, setActiveDayIndex] = useState<number | null>(null);
   const [activeDraft, setActiveDraft] = useState<ActiveExerciseDraft[]>([]);
   const [activeFeedback, setActiveFeedback] = useState('');
@@ -103,19 +109,12 @@ export default function Dashboard() {
     plan: TrainingPlan;
   } | null>(null);
   const [activeSection, setActiveSection] = useState<DashboardSectionId>('overview');
-  const [notice, setNotice] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [showWorkoutImport, setShowWorkoutImport] = useState(false);
   const [workoutImportLoading, setWorkoutImportLoading] = useState(false);
-  const [pendingRecommendation, setPendingRecommendation] = useState<AiRecommendationRecord | null>(
-    null,
-  );
-  const [route, setRoute] = useState(() => getCurrentAppRoute());
 
   const surface = useMemo(
     () => ({
@@ -140,68 +139,11 @@ export default function Dashboard() {
     [],
   );
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setError('');
-
-    try {
-      const status = await DatabaseService.getPersistenceStatus();
-      const storedProfile = await DatabaseService.getProfile();
-      const storedHistory = await DatabaseService.getWorkoutHistory();
-      const starterUser = readStarterUser() as (StarterUser & { createdAt?: number }) | null;
-
-      setPersistence(status);
-      setHistory(storedHistory);
-      trackDay7Return(starterUser?.createdAt, {
-        hasProfile: Boolean(storedProfile),
-        historyCount: storedHistory.length,
-      });
-
-      if (!storedProfile) {
-        setFormProfile({
-          ...createDefaultProfile(),
-          name: starterUser?.name?.trim() || 'Atleta',
-        });
-        setAuthEmail(starterUser?.email?.trim() || '');
-        setShowStarterRegistration(!starterUser);
-        setShowAnamnesis(Boolean(starterUser));
-        setProfile(null);
-        setPlan(null);
-        setPendingRecommendation(null);
-        return;
-      }
-
-      const storedPlan = await DatabaseService.getCurrentPlan();
-      const currentPlan = storedPlan?.days?.length
-        ? storedPlan
-        : calculateTrainingPlan(storedProfile, storedHistory);
-
-      if (!storedPlan?.days?.length) {
-        const res = await CurrentPlanConsistencyHelper.setCurrentPlan(currentPlan);
-        if (res.status === 'local_fallback')
-          setNotice('Plano salvo localmente. Aguardando sincronização.');
-      }
-
-      setProfile(storedProfile);
-      setFormProfile(storedProfile);
-      setPlan(currentPlan);
-      setSelectedDayIndex(0);
-      setShowStarterRegistration(false);
-      setShowAnamnesis(false);
-      setPendingRecommendation(
-        await aiRecommendationRepository.getLatestPendingPlanRecommendation(),
-      );
-    } catch {
-      setError('Não consegui carregar os dados. Verifique a configuração local ou Supabase.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   const selectedDay = useMemo(
     () => plan?.days[selectedDayIndex] ?? plan?.days[0] ?? null,
     [plan, selectedDayIndex],
   );
+
   const mobileSections = useMemo(
     () =>
       getDashboardMobileSections(Boolean(profile && plan), {
@@ -230,12 +172,6 @@ export default function Dashboard() {
     [profile, history, surface.advancedGamification],
   );
 
-  useEffect(() => {
-    void loadData();
-  }, [loadData]);
-
-  useEffect(() => subscribeToAppRoute(setRoute), []);
-
   const handleProfileSubmit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
@@ -243,55 +179,32 @@ export default function Dashboard() {
       setError('');
       setNotice('');
 
-      const validation = validateDashboardProfileInput(formProfile);
-      if (!validation.success) {
-        setError(validation.message);
-        setSaving(false);
-        return;
-      }
-
-      const isFirstPlan = !profile || !plan;
+      const nextProfile = normalizeProfile(formProfile);
+      const nextPlan = calculateTrainingPlan(nextProfile, history);
+      setGenerationProgress({ profile: nextProfile, plan: nextPlan });
 
       try {
-        const updatedProfile = validation.data;
-        const startedAt = Date.now();
-        const nextPlan = calculateTrainingPlan(updatedProfile, history);
-        setGenerationProgress({ profile: updatedProfile, plan: nextPlan });
-
-        await DatabaseService.saveProfile(updatedProfile);
-        const res = await CurrentPlanConsistencyHelper.setCurrentPlan(nextPlan);
-        if (res.status === 'local_fallback')
-          setNotice('Plano salvo localmente. Aguardando sincronização.');
-        await wait(Math.max(0, PLAN_GENERATION_FEEDBACK_MS - (Date.now() - startedAt)));
-
-        setProfile(updatedProfile);
-        setFormProfile(updatedProfile);
-        setPlan(nextPlan);
-        setSelectedDayIndex(0);
-        setShowAnamnesis(false);
-        setNotice('Anamnese salva e plano semanal recalculado.');
-        setPersistence(await DatabaseService.getPersistenceStatus());
-        trackEvent('anamnesis_completed', {
-          goal: updatedProfile.goal,
-          level: updatedProfile.level,
-          daysPerWeek: updatedProfile.daysPerWeek,
-        });
-        if (isFirstPlan) {
-          trackEventOnce('first_plan_created', {
-            planId: nextPlan.id,
-            daysPerWeek: updatedProfile.daysPerWeek,
-            source: 'anamnesis_submit',
-          });
+        const result = await updateProfileAndRecalculatePlan(formProfile, history, profile, plan);
+        if (result) {
+          if (result.error && !result.plan) {
+            setError(result.error);
+          } else {
+            setProfile(result.profile);
+            setFormProfile(result.profile);
+            setPlan(result.plan);
+            setNotice(result.notice);
+            setError(result.error);
+            setSelectedDayIndex(0);
+            setShowAnamnesis(false);
+            setPersistence(await DatabaseService.getPersistenceStatus());
+          }
         }
-      } catch (saveError) {
-        captureError(saveError, 'Dashboard.saveAnamnesis');
-        setError('Não consegui salvar a anamnese agora.');
       } finally {
         setGenerationProgress(null);
         setSaving(false);
       }
     },
-    [formProfile, history, plan, profile],
+    [formProfile, history, plan, profile, setFormProfile, setNotice, setPersistence, setPlan, setProfile, setError],
   );
 
   const handleStarterRegister = useCallback((starterUser: StarterUser) => {
@@ -312,7 +225,7 @@ export default function Dashboard() {
       hasEmail: Boolean(persistedStarterUser.email),
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
+  }, [setFormProfile, setNotice, setError, setShowStarterRegistration, setShowAnamnesis]);
 
   const regeneratePlan = useCallback(async () => {
     if (!profile) return;
@@ -320,73 +233,67 @@ export default function Dashboard() {
     setError('');
     setNotice('');
 
+    const nextPlan = calculateTrainingPlan(profile, history);
+    setGenerationProgress({ profile, plan: nextPlan });
+
     try {
-      const startedAt = Date.now();
-      const updatedProfile = { ...profile, updatedAt: Date.now() };
-      const nextPlan = calculateTrainingPlan(updatedProfile, history);
-      setGenerationProgress({ profile: updatedProfile, plan: nextPlan });
-
-      const res = await CurrentPlanConsistencyHelper.setCurrentPlan(nextPlan);
-      if (res.status === 'local_fallback')
-        setNotice('Plano salvo localmente. Aguardando sincronização.');
-      await wait(Math.max(0, PLAN_GENERATION_FEEDBACK_MS - (Date.now() - startedAt)));
-
-      setPlan(nextPlan);
-      setSelectedDayIndex(0);
-      setNotice('Plano recalculado com base no histórico mais recente.');
-    } catch {
-      setError('Não consegui recalcular o plano agora.');
+      const result = await regeneratePlanFromHistory(profile, history);
+      if (result) {
+        setPlan(result.plan);
+        setNotice(result.notice);
+        setError(result.error);
+        setSelectedDayIndex(0);
+      }
     } finally {
       setGenerationProgress(null);
       setSaving(false);
     }
-  }, [history, profile]);
-
-  const persistEditedPlan = useCallback(async (nextPlan: TrainingPlan, successMessage: string) => {
-    setPlan(nextPlan);
-    setNotice(successMessage);
-    setError('');
-
-    try {
-      const res = await CurrentPlanConsistencyHelper.setCurrentPlan(nextPlan);
-      if (res.status === 'local_fallback')
-        setNotice('Plano salvo localmente. Aguardando sincronização.');
-    } catch {
-      setError('Alteração aplicada na tela, mas não consegui salvar o plano agora.');
-    }
-  }, []);
+  }, [history, profile, setNotice, setError, setPlan]);
 
   const moveSelectedExercise = useCallback(
-    (fromIndex: number, toIndex: number) => {
+    async (fromIndex: number, toIndex: number) => {
       if (!plan) return;
-      const nextPlan = reorderExercisesInDay(plan, selectedDayIndex, fromIndex, toIndex);
-      if (nextPlan === plan) return;
-      void persistEditedPlan(nextPlan, 'Ordem dos exercícios atualizada.');
+      setSaving(true);
+      const result = await reorderExercises(plan, selectedDayIndex, fromIndex, toIndex);
+      setPlan(result.plan);
+      setNotice(result.notice);
+      setError(result.error);
+      setSaving(false);
     },
-    [persistEditedPlan, plan, selectedDayIndex],
+    [plan, selectedDayIndex, setPlan, setNotice, setError],
   );
 
   const updateSelectedExerciseTechnique = useCallback(
-    (exerciseIndex: number, technique: ExerciseIntensityTechnique) => {
+    async (exerciseIndex: number, technique: ExerciseIntensityTechnique) => {
       if (!plan) return;
       const nextPlan = updateExerciseTechnique(plan, selectedDayIndex, exerciseIndex, technique);
-      void persistEditedPlan(nextPlan, 'Técnica do exercício atualizada.');
+      setPlan(nextPlan);
+      try {
+        const res = await CurrentPlanConsistencyHelper.setCurrentPlan(nextPlan);
+        if (res.status === 'local_fallback') {
+          setNotice('Técnica do exercício atualizada (local).');
+        } else {
+          setNotice('Técnica do exercício atualizada.');
+        }
+      } catch {
+        setError('Alteração aplicada na tela, mas não consegui salvar o plano agora.');
+      }
     },
-    [persistEditedPlan, plan, selectedDayIndex],
+    [plan, selectedDayIndex, setPlan, setNotice, setError],
   );
 
   const updateSelectedExerciseNotes = useCallback(
-    (exerciseIndex: number, notes: string) => {
+    async (exerciseIndex: number, notes: string) => {
       if (!plan) return;
       const nextPlan = updateExerciseNotes(plan, selectedDayIndex, exerciseIndex, notes);
       setPlan(nextPlan);
-      setNotice('');
-      setError('');
-      void CurrentPlanConsistencyHelper.setCurrentPlan(nextPlan).catch(() => {
+      try {
+        await CurrentPlanConsistencyHelper.setCurrentPlan(nextPlan);
+      } catch {
         setError('Nota aplicada na tela, mas não consegui salvar o plano agora.');
-      });
+      }
     },
-    [plan, selectedDayIndex],
+    [plan, selectedDayIndex, setPlan, setError],
   );
 
   const handleWorkoutImport = useCallback(async (draft: WorkoutImportFileDraft) => {
@@ -394,20 +301,14 @@ export default function Dashboard() {
     setNotice('');
     setError('');
 
-    try {
-      if (draft.status === 'blocked') {
-        setError(draft.warnings[0] ?? 'Arquivo bloqueado para importação.');
-        return;
-      }
-
-      setNotice(
-        `Arquivo ${draft.fileName} preparado localmente com crop ${draft.crop.width}% x ${draft.crop.height}%.`,
-      );
+    if (draft.status === 'blocked') {
+      setError(draft.warnings[0] ?? 'Arquivo bloqueado para importação.');
+    } else {
+      setNotice(`Arquivo ${draft.fileName} preparado localmente.`);
       setShowWorkoutImport(false);
-    } finally {
-      setWorkoutImportLoading(false);
     }
-  }, []);
+    setWorkoutImportLoading(false);
+  }, [setNotice, setError, setShowWorkoutImport]);
 
   const handleMobileNavChange = useCallback(
     (id: string) => {
@@ -423,83 +324,16 @@ export default function Dashboard() {
     [mobileSections],
   );
 
-  useEffect(() => {
-    if (!profile || !plan) return;
-
-    if (route.id === 'nutrition' && !surface.nutritionSimple) {
-      setNotice('Nutricao esta em beta e nao esta habilitada para este usuario.');
-      pushAppRoute('today');
-      return;
-    }
-
-    const routeTargetId = getAppRouteTargetId(route.id);
-    const routeSection = mobileSections.find((section) => section.targetId === routeTargetId);
-    const routeScrollTimeouts: number[] = [];
-
-    if (routeSection) {
-      const scrollToRouteSection = (behavior: ScrollBehavior) => {
-        const target = document.getElementById(routeSection.targetId);
-        if (!target) return;
-
-        target.scrollIntoView({ behavior, block: 'start' });
-        setActiveSection(routeSection.id);
-      };
-
-      routeScrollTimeouts.push(window.setTimeout(() => scrollToRouteSection('smooth'), 0));
-      routeScrollTimeouts.push(window.setTimeout(() => scrollToRouteSection('auto'), 800));
-    }
-
-    const handleScroll = () => {
-      const lastSection = mobileSections[mobileSections.length - 1];
-      const reachedPageEnd =
-        window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 8;
-
-      if (reachedPageEnd && lastSection) {
-        setActiveSection(lastSection.id);
-        return;
-      }
-
-      const current = mobileSections.reduce<DashboardSectionId>((active, section) => {
-        const element = document.getElementById(section.targetId);
-        if (!element) return active;
-        return element.getBoundingClientRect().top <= 140 ? section.id : active;
-      }, mobileSections[0]?.id ?? 'overview');
-
-      setActiveSection(current);
-    };
-
-    handleScroll();
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      routeScrollTimeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [mobileSections, plan, profile, route.id, surface.nutritionSimple]);
-
   const startActiveWorkout = useCallback(
     (dayIndex: number, options: { syncRoute?: boolean } = {}) => {
       if (!plan) return;
-      const day = plan.days[dayIndex];
-      setActiveDayIndex(dayIndex);
-      setActiveDraft(createActiveDraft(day, history));
+      const { activeDraft, activeDayIndex } = startWorkoutService(plan, dayIndex, history);
+      setActiveDayIndex(activeDayIndex);
+      setActiveDraft(activeDraft);
       setActiveFeedback('');
-      setNotice('');
       if (options.syncRoute !== false) {
         pushAppRoute('active-workout');
       }
-      trackEvent('workout_started', {
-        planId: plan.id,
-        dayId: day.id,
-        focus: day.focus,
-      });
-      if (history.length === 0) {
-        trackEventOnce('first_workout_started', {
-          planId: plan.id,
-          dayId: day.id,
-          focus: day.focus,
-        });
-      }
-      void triggerHapticFeedback('selection');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
     [history, plan],
@@ -510,6 +344,35 @@ export default function Dashboard() {
     startActiveWorkout(selectedDayIndex, { syncRoute: false });
   }, [activeDayIndex, plan, profile, route.id, selectedDayIndex, startActiveWorkout]);
 
+  useEffect(() => {
+    if (!profile || !plan) return;
+
+    if (route.id === 'nutrition' && !surface.nutritionSimple) {
+      pushAppRoute('overview');
+      return;
+    }
+
+    const routeTargetId = getAppRouteTargetId(route.id);
+    const routeSection = mobileSections.find((section) => section.targetId === routeTargetId);
+
+    if (routeSection) {
+      document.getElementById(routeSection.targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setActiveSection(routeSection.id);
+    }
+
+    const handleScroll = () => {
+      const current = mobileSections.reduce<DashboardSectionId>((active, section) => {
+        const element = document.getElementById(section.targetId);
+        if (!element) return active;
+        return element.getBoundingClientRect().top <= 140 ? section.id : active;
+      }, mobileSections[0]?.id ?? 'overview');
+      setActiveSection(current);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [mobileSections, plan, profile, route.id]);
+
   const updateDraft = useCallback((index: number, patch: Partial<ActiveExerciseDraft>) => {
     setActiveDraft((current) =>
       current.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)),
@@ -518,19 +381,11 @@ export default function Dashboard() {
 
   const updateDraftSet = useCallback(
     (exerciseIndex: number, setIndex: number, patch: Partial<ActiveExerciseDraft['sets'][0]>) => {
-      if (patch.completed === true) {
-        trackEvent('set_logged', {
-          exerciseIndex,
-          setIndex,
-        });
-      }
-
       setActiveDraft((current) =>
         current.map((item, i) => {
           if (i !== exerciseIndex) return item;
           const newSets = [...item.sets];
           newSets[setIndex] = { ...newSets[setIndex], ...patch };
-          // Se um set foi concluído, avaliar se o exercício inteiro foi
           const allSetsCompleted = newSets.every((s) => s.completed);
           return { ...item, sets: newSets, completed: allSetsCompleted };
         }),
@@ -541,240 +396,100 @@ export default function Dashboard() {
 
   const finishActiveWorkout = useCallback(async () => {
     if (!profile || !plan || activeDayIndex === null) return;
-
     setSaving(true);
-    setError('');
-
-    try {
-      const {
-        adjustedPlan,
-        completedExercises,
-        completedSession,
-        day,
-        finalHistory,
-        totalExercises,
-        totalVolume,
-      } = buildCompletedDashboardWorkout({
-        activeDayIndex,
-        activeDraft,
-        activeFeedback,
-        history,
-        plan,
-        profile,
-      });
-
-      const saveResult = await DatabaseService.saveWorkoutSessionWithStatus(completedSession);
-      let recommendation: AiRecommendationRecord | null = null;
-      try {
-        recommendation = await aiRecommendationRepository.createPendingPlanRecommendation({
-          currentPlan: plan,
-          proposedPlan: adjustedPlan,
-          reason: adjustedPlan.nextRecommendation,
-          legacySourceSessionId: completedSession.id,
-        });
-      } catch (recommendationError) {
-        trackEvent('ai_error', {
-          operation: 'create_pending_plan_recommendation',
-          source: 'finish_active_workout',
-        });
-        captureError(recommendationError, 'Dashboard.createPendingAiRecommendation');
-      }
-
-      setHistory(finalHistory);
-      setPendingRecommendation(recommendation);
-      setActiveDayIndex(null);
-      setActiveDraft([]);
-      const saveMessage =
-        'warning' in saveResult && saveResult.warning
-          ? `${saveResult.message} ${saveResult.warning}`
-          : saveResult.message;
-      setNotice(
-        recommendation
-          ? `${saveMessage} A IA gerou uma sugestao pendente para voce revisar.`
-          : `${saveMessage} Nao consegui gerar a sugestao da IA agora; seu historico foi mantido.`,
-      );
-      trackEvent('workout_completed', {
-        planId: plan.id,
-        dayId: day.id,
-        totalVolume,
-        completedExercises,
-        totalExercises,
-      });
-      if (history.length === 0) {
-        trackEventOnce('first_workout_completed', {
-          planId: plan.id,
-          dayId: day.id,
-          totalVolume,
-          completedExercises,
-          totalExercises,
-        });
-      }
-      if (recommendation) {
-        trackEvent('ai_suggestion_generated', {
-          recommendationId: recommendation.id,
-          sourceSessionId: completedSession.id,
-        });
-      }
-      pushAppRoute('history');
-      void triggerHapticFeedback('success');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (saveError) {
-      trackEvent('workout_save_failed', {
-        planId: plan.id,
-        dayId: plan.days[activeDayIndex]?.id,
-      });
-      captureError(saveError, 'Dashboard.finishActiveWorkout');
-      setError('Não consegui finalizar o treino agora.');
-    } finally {
-      setSaving(false);
-    }
-  }, [activeDayIndex, activeDraft, activeFeedback, history, plan, profile]);
+    const result = await finishWorkoutService(profile, plan, activeDayIndex, activeDraft, activeFeedback, history);
+    setHistory(result.history);
+    setPendingRecommendation(result.pendingRecommendation);
+    setNotice(result.notice);
+    setError(result.error);
+    setActiveDayIndex(null);
+    setActiveDraft([]);
+    pushAppRoute('history');
+    setSaving(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeDayIndex, activeDraft, activeFeedback, history, plan, profile, setHistory, setPendingRecommendation, setNotice, setError]);
 
   const acceptPendingRecommendation = useCallback(async () => {
     if (!pendingRecommendation) return;
-
     setSaving(true);
-    setError('');
-    setNotice('');
-
     try {
       const proposedPlan = pendingRecommendation.payload.proposedPlan;
-      const res = await CurrentPlanConsistencyHelper.setCurrentPlan(proposedPlan);
-      if (res.status === 'failed') {
-        throw new Error(res.error);
-      }
-
-      const applied = await aiRecommendationRepository.markApplied(
-        pendingRecommendation,
-        proposedPlan,
-      );
+      await CurrentPlanConsistencyHelper.setCurrentPlan(proposedPlan);
+      await aiRecommendationRepository.markApplied(pendingRecommendation, proposedPlan);
       setPlan(proposedPlan);
       setPendingRecommendation(null);
-      setSelectedDayIndex(0);
-      setNotice(
-        res.status === 'local_fallback'
-          ? 'Sugestao aplicada localmente. Aguardando sincronizacao.'
-          : 'Sugestao aceita e plano atualizado.',
-      );
-      trackEvent('ai_suggestion_accepted', {
-        recommendationId: applied.id,
-        planId: proposedPlan.id,
-      });
+      setNotice('Sugestao aceita e plano atualizado.');
     } catch {
       setError('Nao consegui aplicar a sugestao agora.');
-    } finally {
-      setSaving(false);
     }
-  }, [pendingRecommendation]);
+    setSaving(false);
+  }, [pendingRecommendation, setPlan, setPendingRecommendation, setNotice, setError]);
 
   const rejectPendingRecommendation = useCallback(async () => {
     if (!pendingRecommendation) return;
-
     setSaving(true);
-    setError('');
-    setNotice('');
-
     try {
-      const rejected = await aiRecommendationRepository.reject(pendingRecommendation);
+      await aiRecommendationRepository.reject(pendingRecommendation);
       setPendingRecommendation(null);
-      setNotice('Sugestao rejeitada. Seu plano atual foi mantido.');
-      trackEvent('ai_suggestion_rejected', {
-        recommendationId: rejected.id,
-      });
+      setNotice('Sugestao rejeitada.');
     } catch {
       setError('Nao consegui rejeitar a sugestao agora.');
-    } finally {
-      setSaving(false);
     }
-  }, [pendingRecommendation]);
+    setSaving(false);
+  }, [pendingRecommendation, setPendingRecommendation, setNotice, setError]);
 
   const dismissPendingRecommendation = useCallback(async () => {
     if (!pendingRecommendation) return;
-
     setSaving(true);
-    setError('');
-    setNotice('');
-
     try {
-      const dismissed = await aiRecommendationRepository.dismiss(pendingRecommendation);
+      await aiRecommendationRepository.dismiss(pendingRecommendation);
       setPendingRecommendation(null);
-      setNotice('Plano atual mantido. A sugestao foi arquivada.');
-      trackEvent('ai_suggestion_dismissed', {
-        recommendationId: dismissed.id,
-      });
+      setNotice('Sugestao arquivada.');
     } catch {
       setError('Nao consegui arquivar a sugestao agora.');
-    } finally {
-      setSaving(false);
     }
-  }, [pendingRecommendation]);
+    setSaving(false);
+  }, [pendingRecommendation, setPendingRecommendation, setNotice, setError]);
 
   const handleAuth = useCallback(
     async (mode: 'signin' | 'signup') => {
       setAuthLoading(true);
       setError('');
-      setNotice('');
-
       try {
         if (mode === 'signup') {
           await DatabaseService.signUp(authEmail, authPassword);
-          setNotice(
-            'Conta criada. Se o Supabase exigir confirmação, verifique seu e-mail antes de entrar.',
-          );
-          trackEvent('registration_completed', {
-            method: 'supabase_signup',
-          });
+          setNotice('Conta criada. Verifique seu e-mail.');
         } else {
           await DatabaseService.signIn(authEmail, authPassword);
           await DatabaseService.migrateLocalToCloud();
-          setNotice('Nuvem conectada. Dados locais migrados quando disponíveis.');
+          setNotice('Nuvem conectada.');
         }
         await loadData();
-      } catch (authError) {
-        captureError(authError, `Dashboard.${mode}`);
-        setError(
-          authError instanceof Error ? authError.message : 'Falha na autenticação Supabase.',
-        );
-      } finally {
-        setAuthLoading(false);
+      } catch (authError: any) {
+        setError(authError.message || 'Falha na autenticação.');
       }
+      setAuthLoading(false);
     },
-    [authEmail, authPassword, loadData],
+    [authEmail, authPassword, loadData, setNotice, setError],
   );
-
-  const handleSignIn = useCallback(() => {
-    void handleAuth('signin');
-  }, [handleAuth]);
-
-  const handleSignUp = useCallback(() => {
-    void handleAuth('signup');
-  }, [handleAuth]);
 
   const handleSignOut = useCallback(async () => {
     await DatabaseService.signOut();
     await loadData();
-  }, [loadData]);
+    setNotice('Sessão encerrada.');
+  }, [loadData, setNotice]);
 
-  const cancelActiveWorkout = useCallback(() => {
-    setActiveDayIndex(null);
-    pushAppRoute('plan');
-  }, []);
-
-  if (loading) {
-    return <DashboardSkeleton />;
-  }
+  if (loading) return <DashboardSkeleton />;
 
   if (activeDayIndex !== null && plan) {
-    const day = plan.days[activeDayIndex];
-
     return (
       <ErrorBoundary section="ActiveWorkout">
         <ActiveWorkout
-          day={day}
+          day={plan.days[activeDayIndex]}
           activeDraft={activeDraft}
           activeFeedback={activeFeedback}
           saving={saving}
-          onCancel={cancelActiveWorkout}
+          onCancel={() => setActiveDayIndex(null)}
           onUpdateDraft={updateDraft}
           onUpdateDraftSet={updateDraftSet}
           onFeedbackChange={setActiveFeedback}
@@ -795,9 +510,7 @@ export default function Dashboard() {
               <Dumbbell className="h-9 w-9" />
             </div>
             <div>
-              <p className="font-mono text-xs uppercase tracking-[0.35em] text-brand-magenta">
-                Beta privado
-              </p>
+              <p className="font-mono text-xs uppercase tracking-[0.35em] text-brand-magenta">Beta privado</p>
               <h1 className="font-display text-6xl uppercase leading-none tracking-widest text-brand-light text-shadow-neon md:text-7xl">
                 Treino <span className="block text-brand-neon">Inteligente</span>
               </h1>
@@ -808,10 +521,7 @@ export default function Dashboard() {
             {!showStarterRegistration && (
               <button
                 type="button"
-                onClick={() => {
-                  setShowAnamnesis((value) => !value);
-                  if (profile) setFormProfile(profile);
-                }}
+                onClick={() => setShowAnamnesis(!showAnamnesis)}
                 className={`rounded-full border-2 px-5 py-3 font-mono text-xs uppercase tracking-widest shadow-brutal-neon ${primaryActionClass}`}
               >
                 {profile ? 'Editar anamnese' : 'Criar anamnese'}
@@ -830,7 +540,7 @@ export default function Dashboard() {
             {surface.workoutImportManual && profile && plan && (
               <button
                 type="button"
-                onClick={() => setShowWorkoutImport((value) => !value)}
+                onClick={() => setShowWorkoutImport(!showWorkoutImport)}
                 className="rounded-full border-2 border-brand-light/20 bg-brand-gray px-5 py-3 font-mono text-xs uppercase tracking-widest text-brand-light transition-colors hover:border-brand-magenta hover:text-brand-magenta"
               >
                 Importar ficha
@@ -840,11 +550,7 @@ export default function Dashboard() {
         </header>
 
         {(notice || error) && (
-          <div
-            className={`mb-6 rounded-[24px] border-2 p-4 font-mono text-sm ${
-              error ? warningStatusClass : positiveStatusClass
-            }`}
-          >
+          <div className={`mb-6 rounded-[24px] border-2 p-4 font-mono text-sm ${error ? warningStatusClass : positiveStatusClass}`}>
             {error || notice}
           </div>
         )}
@@ -880,13 +586,13 @@ export default function Dashboard() {
             billingEnabled={false}
             onEmailChange={setAuthEmail}
             onPasswordChange={setAuthPassword}
-            onSignIn={handleSignIn}
-            onSignUp={handleSignUp}
+            onSignIn={() => handleAuth('signin')}
+            onSignUp={() => handleAuth('signup')}
             onSignOut={handleSignOut}
           />
         ) : null}
 
-        {!showStarterRegistration && showAnamnesis && (
+        {showAnamnesis && (
           <AnamnesisForm
             profile={formProfile}
             saving={saving}
@@ -895,7 +601,7 @@ export default function Dashboard() {
           />
         )}
 
-        {profile && plan ? (
+        {profile && plan && (
           <>
             <CoreOverview
               profile={profile}
@@ -969,20 +675,12 @@ export default function Dashboard() {
               billingEnabled={surface.marketplace}
               onEmailChange={setAuthEmail}
               onPasswordChange={setAuthPassword}
-              onSignIn={handleSignIn}
-              onSignUp={handleSignUp}
+              onSignIn={() => handleAuth('signin')}
+              onSignUp={() => handleAuth('signup')}
               onSignOut={handleSignOut}
             />
           </>
-        ) : !showStarterRegistration ? (
-          <section className="rounded-[28px] border-4 border-brand-neon bg-brand-gray p-8 text-center shadow-brutal-neon">
-            <UserRound className="mx-auto mb-4 h-10 w-10 text-brand-neon" />
-            <h2 className="font-display text-5xl uppercase text-brand-light">Crie sua anamnese</h2>
-            <p className="mx-auto mt-3 max-w-2xl font-mono text-sm text-brand-light/70">
-              O plano semanal, o modo treino ativo e o histórico dependem do perfil inicial.
-            </p>
-          </section>
-        ) : null}
+        )}
       </div>
 
       {profile && plan && (
