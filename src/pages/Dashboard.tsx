@@ -60,6 +60,8 @@ import {
 } from './Dashboard/services/dashboardWorkoutService';
 import { handleSignOutAndReload } from './Dashboard/services/dashboardDataService';
 import { type WorkoutImportFileDraft } from '../services/workoutImportPipeline';
+import { offlineSyncService } from '../utils/offlineSyncService';
+import { aiService } from '../services/aiService';
 
 const primaryActionClass = getCriticalContrastClass('primaryAction');
 const positiveStatusClass = getCriticalContrastClass('positiveStatus');
@@ -115,6 +117,17 @@ export default function Dashboard() {
   const [authLoading, setAuthLoading] = useState(false);
   const [showWorkoutImport, setShowWorkoutImport] = useState(false);
   const [workoutImportLoading, setWorkoutImportLoading] = useState(false);
+  const [aiInsight, setAiInsight] = useState<string | null>(null);
+
+  useEffect(() => {
+    offlineSyncService.init();
+  }, []);
+
+  useEffect(() => {
+    if (showAnamnesis && profile) {
+      setFormProfile(profile);
+    }
+  }, [showAnamnesis, profile, setFormProfile]);
 
   const surface = useMemo(
     () => ({
@@ -204,7 +217,7 @@ export default function Dashboard() {
         setSaving(false);
       }
     },
-    [formProfile, history, plan, profile, setFormProfile, setNotice, setPersistence, setPlan, setProfile, setError],
+    [formProfile, history, plan, profile, setFormProfile, setNotice, setPersistence, setPlan, setProfile, setError, setShowAnamnesis],
   );
 
   const handleStarterRegister = useCallback((starterUser: StarterUser) => {
@@ -226,6 +239,18 @@ export default function Dashboard() {
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [setFormProfile, setNotice, setError, setShowStarterRegistration, setShowAnamnesis]);
+
+  const getAiInsights = useCallback(async () => {
+    if (!profile || !plan) return;
+    setSaving(true);
+    const insight = await aiService.getPlanInsights({
+      profile,
+      history,
+      currentPlan: plan,
+    });
+    setAiInsight(insight);
+    setSaving(false);
+  }, [profile, plan, history]);
 
   const regeneratePlan = useCallback(async () => {
     if (!profile) return;
@@ -356,8 +381,13 @@ export default function Dashboard() {
     const routeSection = mobileSections.find((section) => section.targetId === routeTargetId);
 
     if (routeSection) {
-      document.getElementById(routeSection.targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      setActiveSection(routeSection.id);
+      setTimeout(() => {
+        const element = document.getElementById(routeSection.targetId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          setActiveSection(routeSection.id);
+        }
+      }, 100);
     }
 
     const handleScroll = () => {
@@ -371,7 +401,7 @@ export default function Dashboard() {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [mobileSections, plan, profile, route.id]);
+  }, [mobileSections, plan, profile, route.id, surface.nutritionSimple]);
 
   const updateDraft = useCallback((index: number, patch: Partial<ActiveExerciseDraft>) => {
     setActiveDraft((current) =>
@@ -474,7 +504,7 @@ export default function Dashboard() {
   );
 
   const handleSignOut = useCallback(async () => {
-    await DatabaseService.signOut();
+    await handleSignOutAndReload();
     await loadData();
     setNotice('Sessão encerrada.');
   }, [loadData, setNotice]);
@@ -502,7 +532,7 @@ export default function Dashboard() {
   }
 
   return (
-    <main className="min-h-screen bg-brand-dark text-brand-light px-4 py-8 pb-28 md:py-12">
+    <main id="main-content" className="min-h-screen bg-brand-dark text-brand-light px-4 py-8 pb-28 md:py-12">
       <div className="mx-auto max-w-6xl">
         <header className="mb-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
@@ -627,6 +657,23 @@ export default function Dashboard() {
             />
 
             <HistoryPanel history={history} />
+
+            {surface.advancedAi && (
+              <section className="mb-8 rounded-[28px] border-2 border-brand-neon bg-brand-dark p-6 shadow-brutal-neon">
+                <h2 className="font-display text-3xl uppercase text-brand-neon mb-4">IA Insights</h2>
+                {aiInsight ? (
+                  <p className="font-mono text-sm text-brand-light leading-relaxed">{aiInsight}</p>
+                ) : (
+                  <button
+                    onClick={getAiInsights}
+                    disabled={saving}
+                    className="rounded-full border border-brand-neon px-4 py-2 font-mono text-xs uppercase text-brand-neon hover:bg-brand-neon/10"
+                  >
+                    {saving ? 'Analisando...' : 'Gerar Insights do Plano'}
+                  </button>
+                )}
+              </section>
+            )}
 
             <Suspense fallback={<LazyPanelFallback />}>
               <TrainingReportPanel history={history} />

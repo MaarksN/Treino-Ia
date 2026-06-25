@@ -1,4 +1,4 @@
-import { memo, type PointerEvent, useCallback, useMemo, useRef, useState } from 'react';
+import { memo, useMemo, useRef } from 'react';
 import {
   Calculator,
   Camera,
@@ -14,14 +14,12 @@ import {
 } from 'lucide-react';
 import { type TrainingPlan } from '../../../services/database';
 import { type ActiveExerciseDraft, type DraftSet } from '../types';
-import { useRestTimer } from '../hooks/useRestTimer';
 import {
   applyAutofillSuggestion,
   buildActiveWorkoutSummary,
   calculateSetVolume,
   getRpeCalculatorOptions,
   getRpeGuidance,
-  parseRestSeconds,
 } from '../services/activeWorkoutEngine';
 import { getCriticalContrastClass } from '../../../utils/accessibilityContrast';
 import { triggerHapticFeedback } from '../../../services/hapticFeedback';
@@ -30,18 +28,13 @@ import {
   requestPictureInPictureForVideo,
 } from '../../../services/mediaPipService';
 import {
-  getWorkoutSwipeResult,
-  shouldIgnoreWorkoutSwipeTarget,
-  type SwipePoint,
-} from '../services/activeWorkoutInteractions';
-import {
   getAudioNoteGuard,
   getCameraFeedbackGuard,
 } from '../../../services/workoutCameraFeedbackService';
 import { OfflineMediaViewer } from './socialContent/OfflineMediaViewer';
 import { RetroSoundToggle } from './socialContent/RetroSoundToggle';
-import { retroSoundService } from '../services/socialContent/retroSoundService';
 import { getExerciseTechniqueLabel } from '../services/workoutAuthoring';
+import { useActiveWorkout } from '../hooks/useActiveWorkout';
 
 const fieldClass =
   'mt-2 w-full rounded-[22px] border-2 border-brand-light/15 bg-brand-gray px-4 py-3 font-mono text-sm text-brand-light outline-none transition-colors placeholder:text-brand-muted focus:border-brand-neon';
@@ -77,85 +70,37 @@ export const ActiveWorkout = memo(function ActiveWorkout({
   onFeedbackChange,
   onFinishWorkout,
 }: ActiveWorkoutProps) {
-  const [showRpeCalc, setShowRpeCalc] = useState<{ eIdx: number; sIdx: number } | null>(null);
-  const [focusedExerciseIndex, setFocusedExerciseIndex] = useState(0);
-  const swipeStartRef = useRef<SwipePoint | null>(null);
-  const exerciseRefs = useRef<Array<HTMLElement | null>>([]);
-  const { remainingSeconds, formatted, isRunning, isExpired, startRest, stopRest, resetRest } =
-    useRestTimer(90);
+  const {
+    showRpeCalc,
+    setShowRpeCalc,
+    focusedExerciseIndex,
+    exerciseRefs,
+    remainingSeconds,
+    formatted,
+    isRunning,
+    isExpired,
+    focusExercise,
+    handleSetCompletion,
+    handleRpeCalcSelection,
+    handlePointerDown,
+    handlePointerUp,
+    stopRest,
+    resetRest,
+    startRest,
+  } = useActiveWorkout({
+    activeDraft,
+    showMediaEnhancements,
+    onUpdateDraftSet,
+  });
+
   const summary = useMemo(() => buildActiveWorkoutSummary(activeDraft), [activeDraft]);
   const pipGuard = useMemo(() => getPictureInPictureGuard(), []);
   const cameraFeedbackGuard = useMemo(() => getCameraFeedbackGuard(), []);
   const audioNoteGuard = useMemo(() => getAudioNoteGuard(), []);
 
-  const focusExercise = useCallback(
-    (index: number) => {
-      const nextIndex = Math.min(Math.max(index, 0), Math.max(activeDraft.length - 1, 0));
-      setFocusedExerciseIndex(nextIndex);
-      void triggerHapticFeedback('selection');
-      window.requestAnimationFrame(() => {
-        exerciseRefs.current[nextIndex]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-      });
-    },
-    [activeDraft.length],
-  );
-
-  const handleSetCompletion = useCallback(
-    (eIdx: number, sIdx: number, exercise: ActiveExerciseDraft, checked: boolean) => {
-      onUpdateDraftSet(eIdx, sIdx, { completed: checked });
-      void triggerHapticFeedback(checked ? 'selection' : 'impact');
-      if (checked) {
-        if (showMediaEnhancements) retroSoundService.playBeep();
-        startRest(parseRestSeconds(exercise.targetRest));
-      }
-    },
-    [onUpdateDraftSet, showMediaEnhancements, startRest],
-  );
-
-  const handleRpeCalcSelection = useCallback(
-    (eIdx: number, sIdx: number, rpe: string) => {
-      onUpdateDraftSet(eIdx, sIdx, { rpe });
-      void triggerHapticFeedback('selection');
-      setShowRpeCalc(null);
-    },
-    [onUpdateDraftSet],
-  );
-
-  const handlePointerDown = useCallback((event: PointerEvent<HTMLElement>) => {
-    if (event.pointerType === 'mouse' || shouldIgnoreWorkoutSwipeTarget(event.target)) {
-      swipeStartRef.current = null;
-      return;
-    }
-
-    swipeStartRef.current = { x: event.clientX, y: event.clientY };
-  }, []);
-
-  const handlePointerUp = useCallback(
-    (event: PointerEvent<HTMLElement>) => {
-      const start = swipeStartRef.current;
-      swipeStartRef.current = null;
-      if (!start) return;
-
-      const result = getWorkoutSwipeResult(
-        start,
-        { x: event.clientX, y: event.clientY },
-        focusedExerciseIndex,
-        activeDraft.length,
-      );
-
-      if (result.action !== 'none') {
-        focusExercise(result.nextIndex);
-      }
-    },
-    [activeDraft.length, focusExercise, focusedExerciseIndex],
-  );
-
   return (
     <main
       className="min-h-screen bg-brand-dark text-brand-light px-4 py-8 md:py-12 relative pb-32"
-      onPointerCancel={() => {
-        swipeStartRef.current = null;
-      }}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       style={{ touchAction: 'pan-y' }}
