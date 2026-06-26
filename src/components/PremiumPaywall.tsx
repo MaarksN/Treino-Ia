@@ -125,10 +125,13 @@ export function PremiumFeatureGate({
     };
   }, []);
 
-  const allowed = useMemo(
-    () => hasBillingEntitlement(entitlement, requiredEntitlement),
-    [entitlement, requiredEntitlement],
-  );
+  const [allowed, setAllowed] = useState(false);
+
+  useEffect(() => {
+    if (entitlement) {
+      setAllowed(entitlement.entitlements.includes(requiredEntitlement));
+    }
+  }, [entitlement, requiredEntitlement]);
 
   if (loading) {
     return (

@@ -82,6 +82,7 @@ export interface WorkoutSession {
   feedback: string;
   nextRecommendation: string;
   exercises: WorkoutExerciseLog[];
+  averageRpe?: number;
 }
 
 export interface PersistenceStatus {

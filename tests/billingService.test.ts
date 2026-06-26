@@ -7,7 +7,15 @@ vi.mock('../src/services/supabaseClient', () => ({
     auth: {
       getSession: vi.fn(),
     },
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          maybeSingle: vi.fn(),
+        })),
+      })),
+    })),
   },
+  isSupabaseConfigured: true,
 }));
 
 describe('billingService', () => {
@@ -16,11 +24,12 @@ describe('billingService', () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
       data: {
         session: {
+          user: { id: 'user-123' },
           access_token: 'supabase-token',
         },
       },
       error: null,
-    } as Awaited<ReturnType<typeof supabase.auth.getSession>>);
+    } as any);
   });
 
   function getFetchHeaders(fetchMock: ReturnType<typeof vi.fn>, callIndex = 0): Headers {
@@ -28,30 +37,27 @@ describe('billingService', () => {
     return new Headers(init?.headers);
   }
 
-  it('busca entitlement com token Supabase', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      Response.json({
-        planId: 'free',
-        billingStatus: 'free',
-        isPremium: false,
-        entitlements: ['workouts.basic'],
-        usage: {
-          aiRequestsThisMonth: 0,
-          exportsThisMonth: 0,
-          prCount: 0,
-          bestStreak: 0,
-        },
-        subscription: null,
+  it('busca entitlement no Supabase', async () => {
+    const maybeSingleMock = vi.fn().mockResolvedValue({
+      data: {
+        status: 'active',
+        plan_type: 'pro_monthly',
+        stripe_subscription_id: 'sub_123',
+      },
+      error: null,
+    });
+
+    vi.mocked(supabase.from).mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: maybeSingleMock,
+        }),
       }),
-    );
-    vi.stubGlobal('fetch', fetchMock);
+    } as any);
 
     const entitlement = await fetchBillingEntitlement();
-
-    expect(fetchMock).toHaveBeenCalledWith('/api/billing/entitlement', expect.any(Object));
-    const headers = getFetchHeaders(fetchMock);
-    expect(headers.get('authorization')).toBe('Bearer supabase-token');
-    expect(entitlement.planId).toBe('free');
+    expect(entitlement.isPro).toBe(true);
+    expect(entitlement.planId).toBe('pro_monthly');
   });
 
   it('cria checkout Stripe sem estado premium local', async () => {
@@ -63,13 +69,13 @@ describe('billingService', () => {
     );
     vi.stubGlobal('fetch', fetchMock);
 
-    const session = await createCheckoutSession('pro', 'month');
+    const session = await createCheckoutSession('pro_monthly', 'month');
 
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/stripe/create-checkout-session',
       expect.objectContaining({
         method: 'POST',
-        body: JSON.stringify({ planId: 'pro', interval: 'month' }),
+        body: JSON.stringify({ planId: 'pro_monthly', interval: 'month' }),
       }),
     );
     const headers = getFetchHeaders(fetchMock);
@@ -90,7 +96,7 @@ describe('billingService', () => {
     );
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(createCheckoutSession('pro', 'month')).rejects.toThrow(
+    await expect(createCheckoutSession('pro_monthly', 'month')).rejects.toThrow(
       'BILLING_PROVIDER_NOT_CONFIGURED',
     );
   });

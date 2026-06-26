@@ -1,10 +1,6 @@
-import { guardApiMethod, handleApiError, json, HttpError } from '../_lib/http';
-import { assertBillingProviderConfigured, getStripeClient } from '../_lib/stripe-client';
-import {
-  recordStripeWebhookEvent,
-  upsertSubscriptionFromCheckoutSession,
-  upsertSubscriptionFromStripeSubscription,
-} from '../_lib/billing-store';
+import { guardApiMethod, handleApiError, json } from '../_lib/http';
+import { getStripeClient } from '../_lib/stripe-client';
+import { getSupabaseAdmin } from '../_lib/server-supabase';
 
 export const config = {
   runtime: 'nodejs',
@@ -14,52 +10,37 @@ export default async function handler(request: Request) {
   const methodResponse = guardApiMethod(request, 'POST');
   if (methodResponse) return methodResponse;
 
+  const stripe = getStripeClient();
+  const signature = request.headers.get('stripe-signature');
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!signature || !webhookSecret) {
+    return json({ error: 'Webhook secret or signature missing' }, 400);
+  }
+
   try {
-    const signature = request.headers.get('stripe-signature');
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    const body = await request.text();
+    const event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
 
-    assertBillingProviderConfigured();
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object as any;
+      const userId = session.client_reference_id || session.metadata?.user_id;
 
-    if (!webhookSecret || !signature) {
-      throw new HttpError(400, 'STRIPE webhook signature missing or secret not configured');
-    }
-
-    const stripe = getStripeClient();
-    const payload = await request.text();
-
-    let event;
-    try {
-      event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
-    } catch (err: any) {
-      throw new HttpError(400, `Webhook Error: ${err.message}`);
-    }
-
-    const isNew = await recordStripeWebhookEvent(event);
-    if (!isNew) {
-      return json({ received: true, ignored: true }, 200, request); // already processed
-    }
-
-    switch (event.type) {
-      case 'checkout.session.completed': {
-        const session = event.data.object;
-        if (session.mode === 'subscription') {
-          await upsertSubscriptionFromCheckoutSession(session as any);
-        }
-        break;
+      if (userId) {
+        const supabase = getSupabaseAdmin();
+        await supabase
+          .from('user_subscriptions')
+          .upsert({
+            user_id: userId,
+            stripe_customer_id: session.customer,
+            status: 'active',
+            plan_type: session.metadata?.plan_id || 'pro_monthly',
+            updated_at: new Date().toISOString(),
+          });
       }
-      case 'customer.subscription.created':
-      case 'customer.subscription.updated':
-      case 'customer.subscription.deleted': {
-        const subscription = event.data.object;
-        await upsertSubscriptionFromStripeSubscription(subscription as any);
-        break;
-      }
-      default:
-        // Unhandled event type
-        break;
     }
 
-    return json({ received: true }, 200, request);
+    return json({ received: true }, 200);
   } catch (error) {
     return handleApiError(error, request);
   }

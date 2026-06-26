@@ -1,11 +1,12 @@
 import { useMemo, useRef, useState, type DragEvent } from 'react';
-import { Activity, Crop, FileImage, FileText, UploadCloud } from 'lucide-react';
+import { Activity, Crop, FileImage, FileText, UploadCloud, Sparkles } from 'lucide-react';
 import {
   buildWorkoutImportDraft,
   cropImageDataUrl,
   DEFAULT_WORKOUT_IMPORT_CROP,
   getWorkoutImportGuard,
   normalizeCropRect,
+  performOcrWithGemini,
   type CropRectPercent,
   type WorkoutImportFileDraft,
 } from '../services/workoutImportPipeline';
@@ -84,6 +85,8 @@ export function ImportWorkoutView({ onImport, onCancel, isLoading }: Props) {
     }
   };
 
+  const [ocrLoading, setOcrLoading] = useState(false);
+
   const handlePrepareImport = async () => {
     if (!selectedFile) {
       setLocalError('Selecione uma imagem ou PDF antes de preparar.');
@@ -109,6 +112,23 @@ export function ImportWorkoutView({ onImport, onCancel, isLoading }: Props) {
     }
 
     await onImport(draft);
+  };
+
+  const handleOcr = async () => {
+    if (!selectedFile || !previewDataUrl) return;
+    setOcrLoading(true);
+    setLocalError('');
+    try {
+      const base64 = previewDataUrl.split(',')[1];
+      const result = await performOcrWithGemini(base64, selectedFile.type);
+      console.log('OCR Result:', result);
+      // In a real flow, this would populate the workout form
+      alert('Treino extraído com sucesso via IA! (Veja o console para os dados)');
+    } catch (err) {
+      setLocalError('IA falhou ao ler a ficha. Tente um recorte mais nítido.');
+    } finally {
+      setOcrLoading(false);
+    }
   };
 
   return (
@@ -244,14 +264,25 @@ export function ImportWorkoutView({ onImport, onCancel, isLoading }: Props) {
                 </label>
               ))}
             </div>
-            <button
-              type="button"
-              onClick={handlePrepareImport}
-              disabled={isLoading}
-              className="mt-5 w-full rounded-[18px] border-2 border-brand-neon bg-brand-neon px-6 py-3 font-mono text-xs uppercase tracking-widest text-brand-dark transition-transform hover:scale-[1.01] disabled:opacity-60"
-            >
-              Preparar arquivo
-            </button>
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={handlePrepareImport}
+                disabled={isLoading}
+                className="w-full rounded-[18px] border-2 border-brand-light bg-transparent px-4 py-3 font-mono text-xs uppercase tracking-widest text-brand-light transition-transform hover:scale-[1.01] disabled:opacity-60"
+              >
+                Só Preparar
+              </button>
+              <button
+                type="button"
+                onClick={handleOcr}
+                disabled={isLoading || ocrLoading || !previewDataUrl}
+                className="w-full rounded-[18px] border-2 border-brand-neon bg-brand-neon px-4 py-3 font-mono text-xs uppercase tracking-widest text-brand-dark transition-transform hover:scale-[1.01] disabled:opacity-60 flex items-center justify-center gap-2"
+              >
+                {ocrLoading ? <Activity className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                Extrair com IA
+              </button>
+            </div>
             {(localError || guard?.status === 'blocked') && (
               <p className="mt-3 rounded-[14px] border border-brand-magenta/50 bg-brand-magenta/10 px-3 py-2 font-mono text-xs leading-5 text-brand-light">
                 {localError || guard?.reason}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Activity, Bell, Camera, Droplets, Loader, Utensils } from 'lucide-react';
+import { Activity, Bell, Camera, Droplets, Loader, Utensils, Moon } from 'lucide-react';
 import { type MealEntry } from '../types';
 import { type TrainingPlan, type UserProfile, type WorkoutSession } from '../services/database';
 import { analyzePhotoMacros } from '../services/nutritionService';
@@ -20,6 +20,8 @@ import { getPhaseForDate, loadCycleEntries, PHASE_CONFIG } from '../utils/hormon
 import { showHydrationReminderNotification } from '../utils/pwaUtils';
 import { HormonalCycleTracker } from './HormonalCycleTracker';
 import { HydrationTracker } from './HydrationTracker';
+import { useMealEntries, useSaveMealMutation } from '../hooks/useNutrition';
+import { useSleepEntries, useSaveSleepMutation } from '../hooks/useLifestyle';
 import { MicrobiotaWidget } from './Nutrition/MicrobiotaWidget';
 import { HydrationManualScanner } from './Nutrition/HydrationManualScanner';
 import { PeriodicTable } from './Nutrition/PeriodicTable';
@@ -108,6 +110,12 @@ export function NutritionLifestyleHub({
     [macros, recommendation.level],
   );
   const latestSession = history[0];
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  const { data: serverMeals } = useMealEntries(todayStr);
+  const { data: sleepEntries } = useSleepEntries(7);
+  const saveMeal = useSaveMealMutation();
+  const saveSleep = useSaveSleepMutation();
 
   const handleHydrationNotification = async () => {
     await showHydrationReminderNotification(todayHydration, hydrationGoal.dailyMl);
@@ -371,6 +379,23 @@ export function NutritionLifestyleHub({
           </div>
 
           <HydrationTracker weightKg={bodyWeightKg} workoutMinutes={profile.timePerWorkout} />
+
+          <div className="rounded-[24px] border-2 border-brand-light/10 bg-brand-dark p-5">
+            <div className="mb-4 flex items-center gap-3">
+              <Moon className="h-5 w-5 text-brand-neon" />
+              <h3 className="font-display text-2xl uppercase text-brand-light">Sono Recente</h3>
+            </div>
+            <div className="space-y-3">
+              {sleepEntries?.map(entry => (
+                <div key={entry.id} className="flex justify-between items-center text-sm font-mono text-brand-light/70">
+                  <span>{entry.date}</span>
+                  <span className="text-brand-neon">{Math.round(entry.duration_minutes / 60)}h {entry.duration_minutes % 60}m</span>
+                </div>
+              ))}
+              {!sleepEntries?.length && <p className="text-xs text-brand-muted">Nenhum registro encontrado.</p>}
+            </div>
+          </div>
+
           {showAdvanced && <HormonalCycleTracker />}
         </aside>
       </div>

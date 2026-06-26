@@ -1,0 +1,43 @@
+name: Production Hardening & Security
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+      - run: npm ci
+      - name: Dependency Security Audit
+        run: npm audit --audit-level=high --omit=dev
+
+  env-preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+      - run: npm ci
+      - name: Sprint 3 Env Preflight
+        run: npm run preflight:sprint3
+        env:
+          SPRINT3_PREFLIGHT_ALLOW_MISSING: "true"
+
+  supabase-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Supabase CLI setup
+        run: npx supabase --version
+      - name: Lint Migrations
+        run: npx supabase db lint

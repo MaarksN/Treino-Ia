@@ -533,6 +533,9 @@ export default function Dashboard() {
 
   return (
     <main id="main-content" className="min-h-screen bg-brand-dark text-brand-light px-4 py-8 pb-28 md:py-12">
+      <a href="#dashboard-overview" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:bg-brand-neon focus:text-brand-dark focus:px-4 focus:py-2 focus:rounded-full font-mono text-xs uppercase tracking-widest">
+        Pular para o conteúdo
+      </a>
       <div className="mx-auto max-w-6xl">
         <header className="mb-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">

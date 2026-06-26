@@ -1,5 +1,7 @@
+import { generateGeminiContent } from './geminiProxyClient';
+
 export type WorkoutImportStatus = 'ready' | 'blocked';
-export type WorkoutImportOcrStatus = 'not_started';
+export type WorkoutImportOcrStatus = 'not_started' | 'processing' | 'completed' | 'failed';
 
 export interface CropRectPercent {
   x: number;
@@ -111,6 +113,34 @@ export function buildWorkoutImportDraft(params: {
     ocrStatus: 'not_started',
     warnings: guard.status === 'blocked' ? [guard.reason, ...warnings] : warnings,
   };
+}
+
+export async function performOcrWithGemini(base64: string, mimeType: string) {
+  const prompt = `
+    Analise esta imagem de uma ficha de treino de academia.
+    Extraia os exercícios em formato JSON:
+    [{"name": "Supino Reto", "sets": 3, "reps": "10-12", "rest": "90s"}]
+    Retorne apenas o JSON puro, sem markdown.
+  `;
+
+  try {
+    const response = await generateGeminiContent({
+      model: 'gemini-1.5-flash',
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: prompt },
+            { inlineData: { mimeType, data: base64 } }
+          ]
+        }
+      ]
+    });
+    return JSON.parse(response.text.replace(/```json|```/g, ''));
+  } catch (error) {
+    console.error('OCR failed:', error);
+    throw new Error('Falha no reconhecimento visual da ficha.');
+  }
 }
 
 export async function cropImageDataUrl(

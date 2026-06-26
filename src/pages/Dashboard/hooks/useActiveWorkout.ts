@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { type ActiveExerciseDraft, type DraftSet } from '../types';
 import { useRestTimer } from './useRestTimer';
 import {
@@ -10,6 +10,7 @@ import {
   shouldIgnoreWorkoutSwipeTarget,
 } from '../services/activeWorkoutInteractions';
 import { retroSoundService } from '../services/socialContent/retroSoundService';
+import { voiceCoachService } from '../../../services/voiceCoachService';
 
 interface UseActiveWorkoutProps {
   activeDraft: ActiveExerciseDraft[];
@@ -30,16 +31,28 @@ export function useActiveWorkout({
   const { remainingSeconds, formatted, isRunning, isExpired, startRest, stopRest, resetRest } =
     useRestTimer(90);
 
+  useEffect(() => {
+    if (isExpired && showMediaEnhancements) {
+      voiceCoachService.announceRestEnd();
+    }
+  }, [isExpired, showMediaEnhancements]);
+
   const focusExercise = useCallback(
     (index: number) => {
       const nextIndex = Math.min(Math.max(index, 0), Math.max(activeDraft.length - 1, 0));
       setFocusedExerciseIndex(nextIndex);
       void triggerHapticFeedback('selection');
+
+      const exercise = activeDraft[nextIndex];
+      if (exercise && showMediaEnhancements) {
+        voiceCoachService.announceExercise(exercise.name, exercise.targetSets, exercise.targetReps);
+      }
+
       window.requestAnimationFrame(() => {
         exerciseRefs.current[nextIndex]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       });
     },
-    [activeDraft.length],
+    [activeDraft, showMediaEnhancements],
   );
 
   const handleSetCompletion = useCallback(
