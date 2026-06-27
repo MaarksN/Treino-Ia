@@ -1,4 +1,4 @@
-import { isSupabaseConfigured, supabase } from './supabaseClient';
+export { isSupabaseConfigured, supabase } from './supabaseClient';
 import {
   buildTrainingPlanUpsert,
   buildTrainingProfileUpsert,

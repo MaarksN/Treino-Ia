@@ -44,6 +44,7 @@ import {
   AccountSection,
   CoreOverview,
   DashboardBetaPanels,
+  HardwareCapabilitiesPanel,
 } from './Dashboard/components';
 import { buildGamificationRetentionState } from './Dashboard/services/gamificationRetentionEngine';
 import { buildRemoteGamifiedState } from './Dashboard/services/remoteGamifiedEngine';
@@ -716,6 +717,8 @@ export default function Dashboard() {
                 platformHubs: surface.platformHubs,
               }}
             />
+
+            <HardwareCapabilitiesPanel />
 
             <AccountSection
               persistence={persistence}

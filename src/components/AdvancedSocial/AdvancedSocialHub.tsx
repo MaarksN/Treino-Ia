@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Users, Swords, Hexagon, Component, EyeOff } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { Users, Swords, Hexagon, Component, EyeOff, Loader2, MapPin } from 'lucide-react';
 import { UserProfile } from '../../services/database';
 import {
-  findFairRivalPlaceholder,
+  findFairRival,
   calculateLocalSkillTree,
   applySocialBlurPolicy,
   RivalMatch,
@@ -16,6 +16,8 @@ interface AdvancedSocialHubProps {
 export function AdvancedSocialHub({ profile }: AdvancedSocialHubProps) {
   const [showRival, setShowRival] = useState(false);
   const [rival, setRival] = useState<RivalMatch | null>(null);
+  const [location, setLocation] = useState<{ lat: number, lng: number } | null>(null);
+  const [locLoading, setLocLoading] = useState(false);
 
   const skillTree = calculateLocalSkillTree({
     strength: profile.timePerWorkout * 1.5,
@@ -25,14 +27,26 @@ export function AdvancedSocialHub({ profile }: AdvancedSocialHubProps) {
 
   const blurredContent = applySocialBlurPolicy('post-123', true, 16);
 
-  const handleFindRival = () => {
-    const newRival = findFairRivalPlaceholder(
-      profile.id,
-      profile.level === 'iniciante' ? 1 : profile.level === 'intermediario' ? 5 : 10,
-    );
+  const handleFindRival = async () => {
+    const newRival = await findFairRival(profile.id, profile.level);
     setRival(newRival);
     setShowRival(true);
   };
+
+  const handleRequestLocation = useCallback(() => {
+    setLocLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLocLoading(false);
+      },
+      (err) => {
+        console.error('Geo error:', err);
+        alert('Nao foi possivel obter sua localizacao.');
+        setLocLoading(false);
+      }
+    );
+  }, []);
 
   return (
     <section className="mb-8 rounded-[28px] border-4 border-brand-neon bg-brand-gray p-6 shadow-brutal-neon">
@@ -48,12 +62,29 @@ export function AdvancedSocialHub({ profile }: AdvancedSocialHubProps) {
             <Hexagon className="h-5 w-5" />
             Guildas Locais
           </h3>
-          <p className="text-sm text-brand-muted">
-            O compartilhamento de localização está desativado. Consinta para ver guildas próximas.
-          </p>
-          <button className="mt-4 rounded border-2 border-brand-neon px-4 py-2 font-mono text-xs uppercase text-brand-neon hover:bg-brand-neon hover:text-brand-dark">
-            Ativar Localização
-          </button>
+          {location ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-brand-neon">
+                <MapPin className="h-4 w-4" />
+                <span className="font-mono text-[10px] uppercase">Busca Ativa (2km)</span>
+              </div>
+              <p className="font-mono text-sm text-brand-light">Guilda: <strong>Vila Olimpia Iron</strong></p>
+              <p className="text-xs text-brand-muted">12 membros ativos proximos.</p>
+            </div>
+          ) : (
+            <>
+              <p className="text-sm text-brand-muted">
+                O compartilhamento de localização está desativado. Consinta para ver guildas próximas.
+              </p>
+              <button
+                onClick={handleRequestLocation}
+                disabled={locLoading}
+                className="mt-4 flex items-center gap-2 rounded border-2 border-brand-neon px-4 py-2 font-mono text-xs uppercase text-brand-neon hover:bg-brand-neon hover:text-brand-dark disabled:opacity-50"
+              >
+                {locLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Ativar Localização'}
+              </button>
+            </>
+          )}
         </div>
 
         {/* Rivais Justos */}

@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   requestGeoGuildConsent,
-  findFairRivalPlaceholder,
+  findFairRival,
   generateReplayDataAbstraction,
   calculateLocalSkillTree,
   applySocialBlurPolicy,
@@ -21,10 +21,10 @@ describe('Advanced Social Service', () => {
     expect(consent.agreedToLocationSharing).toBe(true);
   });
 
-  it('Item 72 - cria rival justo local', () => {
-    const rival = findFairRivalPlaceholder('u1', 5);
+  it('Item 72 - cria rival justo local', async () => {
+    const rival = await findFairRival('u1', 'intermediario');
     expect(rival.rivalLevel).toBe(5);
-    expect(rival.rivalId).toBe('placeholder-rival-u1');
+    expect(rival.rivalId).toContain('u1');
   });
 
   it('Item 73 - cria abstração de replay holográfico', () => {

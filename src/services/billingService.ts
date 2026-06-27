@@ -85,7 +85,7 @@ export const billingService = {
       subscription: {
         id: sub.stripe_subscription_id || 'sub_fake',
         status: sub.status,
-        current_period_end: sub.current_period_end ? new Date(sub.current_period_end).getTime() : Math.floor(Date.now() / 1000) + 2592000,
+        current_period_end: sub.current_period_end ? new Date(sub.current_period_end).getTime() : Date.now() + 2592000000,
         cancel_at_period_end: false,
       },
       entitlements: isPro ? ['premium_ai', 'unlimited_workouts', 'advanced_nutrition', 'ai.unlimited', 'export.clean', 'reports.executive', 'workouts.unlimited'] : [],

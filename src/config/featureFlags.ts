@@ -205,8 +205,8 @@ export const PRODUCT_SURFACE_FEATURES: Record<ProductSurfaceFeatureKey, ProductS
   },
   cameraFormCheck: {
     label: 'Camera e form check',
-    status: 'off',
-    note: 'Nao aparece sem backend/engine validado de analise de movimento.',
+    status: 'internal',
+    note: 'Analise de postura por camera (WASM/Local).',
   },
   webxr: {
     label: 'WebXR/AR',

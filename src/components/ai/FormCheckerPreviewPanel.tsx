@@ -1,12 +1,46 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import {
   getFormCheckerStatus,
   FORM_CHECKER_DISCLAIMER,
 } from '../../services/ai/formCheckerCapabilityService';
 import { InlineNotice } from '../ui/InlineNotice';
+import { Camera, CameraOff, Loader2 } from 'lucide-react';
 
 export function FormCheckerPreviewPanel() {
   const [status] = useState(() => getFormCheckerStatus());
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  const toggleCamera = useCallback(async () => {
+    if (isCameraActive) {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+      setIsCameraActive(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: 640, height: 480 },
+        audio: false
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      streamRef.current = stream;
+      setIsCameraActive(true);
+    } catch (err) {
+      console.error('Failed to open camera:', err);
+      alert('Nao foi possivel acessar a camera.');
+    } finally {
+      setLoading(false);
+    }
+  }, [isCameraActive]);
+
   return (
     <article
       className="rounded-[28px] border-2 border-brand-light/20 bg-brand-gray p-6"
@@ -36,9 +70,49 @@ export function FormCheckerPreviewPanel() {
           </li>
         ))}
       </ul>
-      {!status.canAnalyze && (
+      {!status.canAnalyze && !isCameraActive && (
         <p className="mt-3 font-mono text-xs text-brand-magenta">{status.reason}</p>
       )}
+
+      <div className="mt-6">
+        {isCameraActive ? (
+          <div className="relative aspect-video w-full overflow-hidden rounded-2xl border-4 border-brand-neon bg-brand-dark shadow-brutal-neon">
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="h-full w-full object-cover grayscale brightness-50"
+            />
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <div className="h-4/5 w-1/3 border-2 border-brand-neon border-dashed rounded-full opacity-50 animate-pulse" />
+              <p className="font-mono text-[10px] text-brand-neon uppercase mt-2">Alinhe seu corpo no guia</p>
+            </div>
+            <button
+              onClick={toggleCamera}
+              className="absolute bottom-4 right-4 rounded-full bg-brand-dark/80 p-2 text-brand-magenta hover:bg-brand-dark"
+            >
+              <CameraOff className="h-5 w-5" />
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={toggleCamera}
+            disabled={loading}
+            className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-brand-neon bg-transparent py-3 font-mono text-sm uppercase tracking-widest text-brand-neon hover:bg-brand-neon/10 disabled:opacity-50"
+          >
+            {loading ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <>
+                <Camera className="h-5 w-5" />
+                Ativar Analise em Tempo Real
+              </>
+            )}
+          </button>
+        )}
+      </div>
+
       <InlineNotice type="warning" title="Sem engine real">
         {FORM_CHECKER_DISCLAIMER}
       </InlineNotice>

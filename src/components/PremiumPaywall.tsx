@@ -130,6 +130,8 @@ export function PremiumFeatureGate({
   useEffect(() => {
     if (entitlement) {
       setAllowed(entitlement.entitlements.includes(requiredEntitlement));
+    } else {
+      setAllowed(false);
     }
   }, [entitlement, requiredEntitlement]);
 

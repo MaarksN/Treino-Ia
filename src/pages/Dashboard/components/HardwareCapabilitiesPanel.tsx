@@ -4,7 +4,7 @@ import { useWebXrCapability } from '../../../services/hardware/webXrAdapter';
 import { useBluetoothCapability } from '../../../services/hardware/webBluetoothScales';
 import { OuraUltrahumanProvider } from '../../../services/hardware/ouraUltrahumanProvider';
 import { IoTMatAdapter } from '../../../services/hardware/iotMatProvider';
-import { Settings, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Settings, CheckCircle, XCircle, AlertTriangle, Bluetooth, Loader2, Smartphone } from 'lucide-react';
 
 export function HardwareCapabilitiesPanel() {
   const nfc = useNfcCapability();
@@ -18,8 +18,17 @@ export function HardwareCapabilitiesPanel() {
     {
       id: 66,
       name: nfc.feature,
-      status: nfc.isSupported ? 'Disponível' : 'Não Suportado no Browser',
+      status: nfc.scannedData ? `Tag: ${nfc.scannedData}` : nfc.isSupported ? 'Disponível' : 'Não Suportado no Browser',
       isReady: nfc.isSupported,
+      action: nfc.isSupported ? (
+        <button
+          onClick={nfc.startScan}
+          disabled={nfc.isReading}
+          className="ml-auto rounded-full bg-brand-magenta p-1 text-brand-light hover:brightness-110 disabled:opacity-50"
+        >
+          {nfc.isReading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Smartphone className="h-3 w-3" />}
+        </button>
+      ) : null
     },
     {
       id: 67,
@@ -36,8 +45,17 @@ export function HardwareCapabilitiesPanel() {
     {
       id: 69,
       name: bluetooth.feature,
-      status: bluetooth.isSupported ? 'Disponível' : 'Não Suportado no Browser',
+      status: bluetooth.weight ? `${bluetooth.weight.toFixed(1)} kg` : bluetooth.isSupported ? 'Disponível' : 'Não Suportado no Browser',
       isReady: bluetooth.isSupported,
+      action: bluetooth.isSupported && !bluetooth.device ? (
+        <button
+          onClick={bluetooth.connect}
+          disabled={bluetooth.loading}
+          className="ml-auto rounded-full bg-brand-neon p-1 text-brand-dark hover:brightness-110 disabled:opacity-50"
+        >
+          {bluetooth.loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Bluetooth className="h-3 w-3" />}
+        </button>
+      ) : null
     },
     {
       id: 70,
@@ -52,7 +70,7 @@ export function HardwareCapabilitiesPanel() {
       <div className="flex items-center gap-3 mb-6">
         <Settings className="h-6 w-6 text-brand-neon" />
         <h2 className="font-display text-2xl uppercase tracking-widest text-brand-light">
-          Hardware & IoT (Lote 14)
+          Hardware & IoT
         </h2>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -68,10 +86,11 @@ export function HardwareCapabilitiesPanel() {
             ) : (
               <XCircle className="h-5 w-5 text-brand-muted" />
             )}
-            <div>
-              <p className="font-mono text-xs text-brand-light font-bold uppercase">{f.name}</p>
-              <p className="font-mono text-[10px] text-brand-light/60">{f.status}</p>
+            <div className="min-w-0 flex-1">
+              <p className="font-mono text-xs text-brand-light font-bold uppercase truncate">{f.name}</p>
+              <p className="font-mono text-[10px] text-brand-light/60 truncate">{f.status}</p>
             </div>
+            {f.action}
           </div>
         ))}
       </div>

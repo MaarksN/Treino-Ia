@@ -1,13 +1,40 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   checkImmersiveArSupport,
   getWebXRCapabilitySync,
   WEBXR_DISCLAIMER,
 } from '../../services/xr/webxrCapabilityService';
 import { InlineNotice } from '../ui/InlineNotice';
+import { Loader2, Eye } from 'lucide-react';
 
 export function WebXRPreviewPanel() {
   const [status, setStatus] = useState(() => getWebXRCapabilitySync());
+  const [sessionActive, setSessionActive] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const startAR = useCallback(async () => {
+    const nav: any = navigator;
+    if (!nav.xr) return;
+    setLoading(true);
+    try {
+      const session = await nav.xr.requestSession('immersive-ar', {
+        requiredFeatures: ['hit-test', 'local-floor'],
+      });
+      setSessionActive(true);
+
+      session.addEventListener('end', () => {
+        setSessionActive(false);
+      });
+
+      // Aqui entraria o loop de renderização Three.js/WebXR
+      // Para este Lote, ativamos a sessão real.
+    } catch (err) {
+      console.error('Failed to start AR session:', err);
+      alert('Nao foi possivel iniciar a sessao de RA.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (!status.apiPresent) return undefined;
@@ -91,6 +118,31 @@ export function WebXRPreviewPanel() {
         </div>
       </div>
       <p className="mt-3 font-mono text-xs text-brand-muted">{status.reason}</p>
+
+      {status.immersiveArSupported === 'supported' && !sessionActive && (
+        <button
+          onClick={startAR}
+          disabled={loading}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-brand-neon py-3 font-mono text-sm uppercase tracking-widest text-brand-dark hover:brightness-110 disabled:opacity-50"
+        >
+          {loading ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <>
+              <Eye className="h-5 w-5" />
+              Iniciar Experiência em RA
+            </>
+          )}
+        </button>
+      )}
+
+      {sessionActive && (
+        <div className="mt-4 rounded-xl border-2 border-brand-neon bg-brand-neon/10 p-4 text-center">
+          <p className="font-mono text-sm text-brand-neon font-bold uppercase">Sessão RA Ativa</p>
+          <p className="font-mono text-xs text-brand-light mt-1">Aponte a câmera para o chão para ver o guia.</p>
+        </div>
+      )}
+
       <InlineNotice type="info" title="Tecnologia experimental">
         {WEBXR_DISCLAIMER}
       </InlineNotice>

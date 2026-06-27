@@ -12,3 +12,4 @@ export * from './PendingAiRecommendationCard';
 export * from './CoreOverview';
 export * from './AccountSection';
 export * from './DashboardBetaPanels';
+export * from './HardwareCapabilitiesPanel';
