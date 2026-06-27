@@ -13,6 +13,7 @@ export interface PlanMarketplaceItem {
   description: string;
   author: string;
   price: number;
+  stripePriceId?: string;
   rating: number;
   durationWeeks: number;
 }
@@ -52,6 +53,7 @@ export const marketplaceCatalog: PlanMarketplaceItem[] = [
     description: 'Plano focado em ganho de massa muscular para usuários experientes.',
     author: 'Treino IA',
     price: 29.9,
+    stripePriceId: 'price_plan_hipertrofia_avancada',
     rating: 4.8,
     durationWeeks: 12,
   },
@@ -61,6 +63,7 @@ export const marketplaceCatalog: PlanMarketplaceItem[] = [
     description: 'Protocolo de alta intensidade para queima de gordura.',
     author: 'Coach Especialista',
     price: 19.9,
+    stripePriceId: 'price_plan_emagrecimento_acelerado',
     rating: 4.5,
     durationWeeks: 8,
   },
