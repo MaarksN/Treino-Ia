@@ -45,7 +45,7 @@
     "@vitejs/plugin-react": "^6.0.3",
     "dotenv": "^17.2.3",
     "lucide-react": "^1.17.0",
-    "motion": "^12.23.24",
+    "motion": "^12.42.0",
     "qrcode.react": "^4.2.0",
     "react": "^19.0.1",
     "react-dom": "^19.2.7",
