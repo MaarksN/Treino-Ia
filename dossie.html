@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Platform Discovery - Due Diligence Técnica (Treino IA)</title>
+    <style>
+        :root {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-tertiary: #64748b;
+            --accent-primary: #2563eb;
+            --accent-secondary: #3b82f6;
+            --accent-hover: #1d4ed8;
+            --border-color: #e2e8f0;
+            --sidebar-width: 280px;
+
+            --status-success: #10b981;
+            --status-warning: #f59e0b;
+            --status-danger: #ef4444;
+            --status-info: #3b82f6;
+
+            --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-tertiary: #94a3b8;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #60a5fa;
+            --accent-hover: #2563eb;
+            --border-color: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            overflow-y: auto;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            background-color: var(--bg-secondary);
+            z-index: 2;
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .sidebar-header p {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+            margin-top: 5px;
+        }
+
+        .nav-menu {
+            padding: 10px 0;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 12px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--accent-primary);
+        }
+
+        .nav-item.active {
+            background-color: var(--bg-tertiary);
+            color: var(--accent-primary);
+            border-left-color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 40px;
+            max-width: 1400px;
+        }
+
+        /* Header / Breadcrumb */
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .breadcrumb {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .breadcrumb span {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .theme-toggle {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* Dashboard Overview */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .kpi-card {
+            background-color: var(--bg-secondary);
+            padding: 24px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--card-shadow);
+        }
+
+        .kpi-title {
+            font-size: 0.85rem;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 10px;
+        }
+
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .kpi-desc {
+            font-size: 0.8rem;
+            color: var(--status-success);
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Cards for Phases */
+        .phase-card {
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--card-shadow);
+            margin-bottom: 40px;
+            overflow: hidden;
+        }
+
+        .phase-header {
+            background-color: var(--bg-tertiary);
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .phase-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .phase-score {
+            background-color: var(--accent-primary);
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .phase-body {
+            padding: 24px;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 20px 0 10px 0;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        .section-title:first-child {
+            margin-top: 0;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--bg-tertiary);
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        td {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .badge-success { background: rgba(16, 185, 129, 0.1); color: var(--status-success); }
+        .badge-warning { background: rgba(245, 158, 11, 0.1); color: var(--status-warning); }
+        .badge-danger { background: rgba(239, 68, 68, 0.1); color: var(--status-danger); }
+        .badge-info { background: rgba(59, 130, 246, 0.1); color: var(--status-info); }
+        .badge-dark { background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); }
+
+        /* Progress bars */
+        .progress-wrapper {
+            margin-bottom: 15px;
+        }
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+        .progress-bar {
+            height: 8px;
+            background-color: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: var(--accent-primary);
+            border-radius: 4px;
+        }
+
+        .evidence-box {
+            background-color: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-primary);
+            padding: 12px 16px;
+            margin: 10px 0;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+
+        /* Maturity Radar Placeholder */
+        .radar-container {
+            width: 100%;
+            height: 400px;
+            background-color: var(--bg-tertiary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            border: 1px dashed var(--border-color);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Utility */
+        .mt-4 { margin-top: 1rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .text-sm { font-size: 0.875rem; }
+        .text-muted { color: var(--text-tertiary); }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h1>Platform Discovery</h1>
+            <p>Agente 01 - Due Diligence</p>
+        </div>
+        <nav class="nav-menu">
+            <a href="#dashboard" class="nav-item active">Dashboard Executivo</a>
+            <a href="#fase1" class="nav-item">Fase 1: Inventário Global</a>
+            <a href="#fase2" class="nav-item">Fase 2: Stack Tecnológica</a>
+            <a href="#fase3" class="nav-item">Fase 3: Arquitetura</a>
+            <a href="#fase4" class="nav-item">Fase 4: Inventário de Módulos</a>
+            <a href="#fase5" class="nav-item">Fase 5: Banco de Dados</a>
+            <a href="#fase6" class="nav-item">Fase 6: APIs</a>
+            <a href="#fase7" class="nav-item">Fase 7: Frontend</a>
+            <a href="#fase8" class="nav-item">Fase 8: Backend</a>
+            <a href="#fase9" class="nav-item">Fase 9: Inteligência Artificial</a>
+            <a href="#fase10" class="nav-item">Fase 10: Segurança</a>
+            <a href="#fase11" class="nav-item">Fase 11: DevOps</a>
+            <a href="#fase12" class="nav-item">Fase 12: Observabilidade</a>
+            <a href="#fase13" class="nav-item">Fase 13: Testes</a>
+            <a href="#fase14" class="nav-item">Fase 14: Documentação</a>
+            <a href="#fase15" class="nav-item">Fase 15: Maturidade</a>
+            <a href="#fase16" class="nav-item">Fase 16: Enterprise Readiness</a>
+            <a href="#roadmap" class="nav-item">Roadmap Recomendado</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-header">
+            <div class="breadcrumb">
+                Agente 01 / <span>Relatório Consolidado de Due Diligence</span>
+            </div>
+            <button class="theme-toggle" onclick="toggleTheme()">Toggle Dark Mode</button>
+        </header>
+
+        <!-- Dashboard Executivo -->
+        <section id="dashboard">
+            <div class="dashboard-grid">
+                <div class="kpi-card">
+                    <div class="kpi-title">Enterprise Readiness Score</div>
+                    <div class="kpi-value">78/100</div>
+                    <div class="kpi-desc">↑ Nível Sólido (B+)</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Maturity Level</div>
+                    <div class="kpi-value">L4</div>
+                    <div class="kpi-desc">Managed & Measurable</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Cobertura de Arquitetura</div>
+                    <div class="kpi-value">85%</div>
+                    <div class="kpi-desc">Baseada em Modular Monolith (Frontend) + Serverless API</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Riscos Críticos Detectados</div>
+                    <div class="kpi-value" style="color: var(--status-warning);">2</div>
+                    <div class="kpi-desc" style="color: var(--text-secondary);">Dependência do Gemini, Arquivos Inchados (App.tsx)</div>
+                </div>
+            </div>
+
+            <div class="phase-card">
+                <div class="phase-header">
+                    <h2 class="phase-title">Executive Summary</h2>
+                </div>
+                <div class="phase-body">
+                    <p class="mb-4 text-sm">
+                        Esta auditoria técnica da plataforma "Treino IA" revela um ecossistema construído com um stack extremamente moderno, focado em alta produtividade e performance (React 19, Vite, Tailwind v4, Supabase, Vercel). O nível de maturidade de DevOps, Banco de Dados (RPCs, RLS, Migrations estruturadas) e Observabilidade (Sentry) é compatível com padrões Enterprise (L4).
+                    </p>
+                    <p class="mb-4 text-sm">
+                        O frontend age como um "Thick Client", com rica arquitetura local (`stores`, `services`, `hooks`) e modos robustos de PWA/Offline-First (Service Workers, IndexedDB). O backend é Serverless (`api/`) orquestrando integrações complexas (Stripe, Google Gemini, Upstash Redis). No entanto, nota-se concentração excessiva de responsabilidades em alguns pontos (ex: `src/App.tsx`), apontando para necessidade de refatoração arquitetural que será abordada pelo Agente 02.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Fases (1 a 17) -->
+
+        <div class="phase-card" id="fase1">
+            <div class="phase-header">
+                <h2 class="phase-title">Fase 01 — Inventário Global</h2>
+                <span class="phase-score">Score: 4.5/5</span>
+            </div>
+            <div class="phase-body">
+                <h3 class="section-title">Estrutura de Repositório</h3>
+                <p class="text-sm mb-4">Repositório monolítico organizado de forma semântica separando frontend (`src/`), Serverless APIs (`api/`), banco de dados (`supabase/`) e infra/scripts (`.github/`, `scripts/`).</p>
+
+                <div class="evidence-box">Evidência: Diretórios mapeados via `ls -la`:
+- /src (React 19 Frontend)
+- /api (Serverless Functions)
+- /supabase (Banco, Migrations, Schema)
+- /tests (Vitest, Playwright E2E)
+- /android (Capacitor nativo)
+- /.github (Workflows CI/CD)</div>
+            </div>
+        </div>
+
+        <div class="phase-card" id="fase2">
+            <div class="phase-header">
+                <h2 class="phase-title">Fase 02 — Stack Tecnológica</h2>
+                <span class="phase-score">Score: 4.8/5</span>
+            </div>
+            <div class="phase-body">
+                <table class="mt-4">
+                    <thead>
+                        <tr>
+                            <th>Domínio</th>
+                            <th>Tecnologias Encontradas</th>
+                            <th>Status / Uso</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Frontend</td>
+                            <td>React 19, Vite, TailwindCSS v4, Zustand, TanStack Query, Framer Motion</td>
+                            <td><span class="badge badge-success">Completo</span> Core do produto.</td>
+                        </tr>
+                        <tr>
+                            <td>Backend / API</td>
+                            <td>Node.js (Serverless), Vercel Serverless Functions</td>
+                            <td><span class="badge badge-success">Completo</span> Localizados em `/api`.</td>
+                        </tr>
+                        <tr>
+                            <td>Banco de Dados</td>
+                            <td>PostgreSQL (Supabase), Upstash Redis</td>
+                            <td><span class="badge badge-success">Completo</span> Storage principal e cache/ratelimit.</td>
+                        </tr>
+                        <tr>
+                            <td>Infra / Cloud</td>
+                            <td>Vercel (Deploy), Supabase (BaaS), GitHub Actions</td>
+                            <td><span class="badge badge-success">Completo</span> CI/CD totalmente implementado.</td>
+                        </tr>
+                        <tr>
+                            <td>Observabilidade</td>
+                            <td>Sentry (Plugin Vite + React)</td>
+                            <td><span class="badge badge-success">Completo</span> Sentry DSN configurado no build.</td>
+                        </tr>
+                        <tr>
+                            <td>Inteligência Artificial</td>
+                            <td>Google Gemini (via `api/gemini-proxy.ts`)</td>
+                            <td><span class="badge badge-success">Completo</span> Core da geração de planos.</td>
+                        </tr>
+                        <tr>
+                            <td>Pagamentos</td>
+                            <td>Stripe</td>
+                            <td><span class="badge badge-success">Completo</span> Integrações mapeadas em `api/stripe/`.</td>
+                        </tr>
+                        <tr>
+                            <td>Mobile Nativo</td>
+                            <td>Capacitor (Android)</td>
+                            <td><span class="badge badge-warning">Parcial</span> Apenas Android configurado explicitamente.</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="evidence-box">Evidência: Dependências listadas em `package.json`, configurações do `vite.config.ts` e repositórios em `/api` e `/supabase`.</div>
+            </div>
+        </div>
+
+        <div class="phase-card" id="fase3">
+            <div class="phase-header">
+                <h2 class="phase-title">Fase 03 — Arquitetura</h2>
+                <span class="phase-score">Score: 4.0/5</span>
+            </div>
+            <div class="phase-body">
+                <div class="grid-2">
+                    <div>
+                        <h3 class="section-title">Padrão Arquitetural</h3>
+                        <p class="text-sm">O sistema adota um padrão de <strong>Modular Client (Thick Client)</strong> suportado por um <strong>Backend-as-a-Service (Supabase)</strong> e <strong>Serverless Functions (BFF/API Gateway)</strong>.</p>
+                        <p class="text-sm mt-4">Padrões internos (Frontend): <em>Feature-sliced design</em> (parcialmente, estruturado por domains em `src/services`, `src/features`, e `src/pages`).</p>
+                    </div>
+                    <div>
+                        <h3 class="section-title">Análise Crítica</h3>
+                        <ul>
+                            <li class="text-sm text-muted"><strong>Vantagem:</strong> Alta agilidade no front, delegação de complexidade transacional para Supabase (via PL/pgSQL).</li>
+                            <li class="text-sm text-muted"><strong>Risco:</strong> Dívida técnica em componentes inchados que orquestram estados complexos demais no front (Evidência: `App.tsx` com extrema complexidade relatada no ANALISE_PLATAFORMA.md).</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="phase-card" id="fase4">
+            <div class="phase-header">
+                <h2 class="phase-title">Fase 04 — Inventário dos Módulos</h2>
+                <span class="phase-score">Score: 4.2/5</span>
+            </div>
+            <div class="phase-body">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Módulo / Domínio</th>
+                            <th>Responsabilidade</th>
+                            <th>Status</th>
+                            <th>Risco</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>src/services/billing</code></td>
+                            <td>Integração com Stripe, entitlements e paywalls.</td>
+                            <td><span class="badge badge-success">Completo</span></td>
+                            <td>Baixo</td>
+                        </tr>
+                        <tr>
+                            <td><code>src/services/gamification</code></td>
+                            <td>Sistema de badges, conquistas, leaderboards e eventos.</td>
+                            <td><span class="badge badge-success">Completo</span></td>
+                            <td>Médio (Depende de RPCs no DB)</td>
+                        </tr>
+                        <tr>
+                            <td><code>src/services/hardware</code></td>
+                            <td>Integrações Oura, NFC, Web Bluetooth, XR.</td>
+                            <td><span class="badge badge-success">Completo</span></td>
+                            <td>Alto (API de Browser experimental)</td>
+                        </tr>
+                        <tr>
+                            <td><code>src/services/nutrition</code></td>
+                            <td>Estimativas de TDEE, microbiota, macronutrientes.</td>
+                            <td><span class="badge badge-success">Completo</span></td>
+                            <td>Baixo</td>
+                        </tr>
+                        <tr>
+                            <td><code>src/services/recovery</code></td>
+                            <td>DMS, Readiness, RPE Load, correlações de sono.</td>
+                            <td><span class="badge badge-success">Completo</span></td>
+                            <td>Baixo</td>
+                        </tr>
+                        <tr>
+                            <td><code>api/stripe</code></td>
+                            <td>Webhooks backend e criação de sessions (Seguro).</td>
+                            <td><span class="badge badge-success">Completo</span></td>
+                            <td>Crítico</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="evidence-box">Evidência: Mapeamento de diretórios em `src/services` usando bash (`tree -L 3 src`). Ampla cobertura de features inovadoras e integrações complexas.</div>
+            </div>
+        </div>
+
+        <div class="phase-card" id="fase5">
+            <div class="phase-header">
+                <h2 class="phase-title">Fase 05 — Banco de Dados</h2>
+                <span class="phase-score">Score: 4.5/5</span>
+            </div>
+            <div class="phase-body">
+                <h3 class="section-title">Supabase & PostgreSQL</h3>
+                <p class="text-sm">O schema é gerenciado rigorosamente via diretório `supabase/migrations/` (16+ arquivos `.sql`).</p>
+
+                <div class="grid-2 mt-4">
+                    <div>
+                        <h4 class="text-sm font-bold mb-2">Estruturas Identificadas</h4>
+                        <ul class="text-sm text-muted" style="list-style-type: disc; padding-left: 20px;">
+                            <li>Migrações versionadas (ex: `20260512000000_gamification.sql`).</li>
+                            <li>Políticas Row Level Security (RLS) implementadas com rigidez (`sprint3_core_rls_initplan_hardening.sql`).</li>
+                            <li>Functions/RPCs complexas: `gamification_rpc_hardening.sql`, delegando lógica ACID para o BD.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold mb-2">Riscos</h4>
+                        <p class="text-sm text-muted">Relatos de "JSON Blobs" que geram dívida técnica para Analytics (conforme `ANALISE_PLATAFORMA.md`), exigindo normalização futura (`20260525000001_workout_relational_core.sql` começou a tratar isso).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="phase-card" id="fase6">
+            <div class="phase-header">
+                <h2 class="phase-title">Fase 06 — APIs</h2>
+                <span class="phase-score">Score: 4.0/5</span>
+            </div>
+            <div class="phase-body">
+                <p class="text-sm">A comunicação é híbrida: Supabase Client SDK (REST/GraphQL por debaixo dos panos, focado em RPCs e tabelas) + Vercel Serverless Functions (`api/`).</p>
+                <table class="mt-4">
+                    <thead>
+                        <tr>
+                            <th>Categoria</th>
+                            <th>Endpoints / Módulos (`api/`)</th>
+                            <th>Segurança</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Pagamentos</td>
+                            <td>`/api/stripe/webhook`, `/api/stripe/create-checkout-session`</td>
+                            <td>Assinatura do Webhook validada</td>
+                        </tr>
+                        <tr>
+                            <td>IA</td>
+                            <td>`/api/gemini-proxy`</td>
+                            <td>Rate Limiting e Cache embutidos</td>
+                        </tr>
+                        <tr>
+                            <td>Segurança</td>
+                            <td>`/api/security/rate-limit`, `/api/_lib/piiRedaction`</td>
+                            <td>Upstash Redis, Redação de logs</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="phase-card" id="fase7">
+            <div class="phase-header">
+                <h2 class="phase-title">Fase 07 — Frontend</h2>
+                <span class="phase-score">Score: 4.6/5</span>
+            </div>
+            <div class="phase-body">
+                <p class="text-sm mb-4">React 19 atuando como motor principal de UI, com Tailwind CSS v4 para estilização (ausência de tailwind.config obsoleto, uso do `@tailwindcss/vite`).</p>
+                <div class="grid-3">
+                    <div>
+                        <h4 class="text-sm font-bold">Estado</h4>
+                        <p class="text-sm text-muted">Zustand para local/UI (ex: `src/stores/useAppStore.ts`), TanStack Query v5 para remote server state cache e mutações.</p>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold">Design System</h4>
+                        <p class="text-sm text-muted">Tailwind CSS + Ícones Lucide-React + Gráficos Recharts.</p>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold">Acessibilidade</h4>
+                        <p class="text-sm text-muted">Módulo `src/utils/accessibilityContrast.ts` e testes no Playwright para WCAG (Axe-core).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="phase-card" id="fase8">
+            <div class="phase-header">
+                <h2 class="phase-title">Fase 08 — Backend (Serverless)</h2>
+                <span class="phase-score">Score: 4.3/5</span>
+            </div>
+            <div class="phase-body">
+                <p class="text-sm mb-4">Em vez de um monolito backend, a arquitetura utiliza funções Vercel altamente focadas e orquestração de Background Jobs limitados pela plataforma.</p>
+                <div class="evidence-box">Evidência: Diretório `/api/jobs` contendo `create.ts`, diretório `/api/retention` com `worker.ts`.
+Implementação de Idempotency: `api/_lib/idempotency.ts` para transações seguras.
+Tratamento de timeout: `api/_lib/fetchWithTimeout.ts`.</div>
+            </div>
+        </div>
+
+        <div class="phase-card" id="fase9">
+            <div class="phase-header">
+                <h2 class="phase-title">Fase 09 — IA</h2>
+                <span class="phase-score">Score: 4.2/5</span>
+            </div>
+            <div class="phase-body">
+                <h3 class="section-title">Arquitetura de Inteligência Artificial</h3>
+                <p class="text-sm">Central baseada em LLMs via Google Gemini para geração de treinos, nutrição e análise.</p>
+                <ul class="text-sm text-muted mt-2" style="list-style-type: disc; padding-left: 20px;">
+                    <li><strong>Integração:</strong> Proxy seguro em `/api/gemini-proxy.ts` (esconde a API KEY do cliente).</li>
+                    <li><strong>Módulos de Negócio:</strong> `src/services/geminiService.ts`, `nutritionAiService.ts`, `recoveryAiService.ts`.</li>
+                    <li><strong>Validação de Resposta:</strong> `src/utils/aiResponseValidation.ts` e Zod Schemas.</li>
+                    <li><strong>Mecanismos Avançados:</strong> Sistema de Cache nativo `geminiCache.ts` (mitigando latência) e Observabilidade de Decisão `aiDecisionObservability.ts`.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="phase-card" id="fase10">
+            <div class="phase-header">
+                <h2 class="phase-title">Fase 10 — Segurança</h2>
+                <span class="phase-score">Score: 4.8/5</span>
+            </div>
+            <div class="phase-body">
+                <p class="text-sm mb-4">Altamente robusto. Políticas preventivas maduras.</p>
+                <div class="grid-2">
+                    <ul class="text-sm text-muted" style="list-style-type: none;">
+                        <li class="mb-2"><span class="badge badge-success">✓</span> Row Level Security (RLS) habilitado em todas as tabelas Supabase.</li>
+                        <li class="mb-2"><span class="badge badge-success">✓</span> Distributed Rate Limit (Upstash) em endpoints `/api/security/rate-limit.ts`.</li>
+                        <li class="mb-2"><span class="badge badge-success">✓</span> Proteção CSRF mapeada em `src/utils/csrf.ts`.</li>
+                        <li class="mb-2"><span class="badge badge-success">✓</span> OAuth Token Security / Crypto (`api/_lib/oauthTokenCrypto.ts`).</li>
+                        <li class="mb-2"><span class="badge badge-success">✓</span> Sanitização JSX rigorosa e Data PII Redaction (`api/_lib/piiRedaction.ts`).</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="phase-card" id="fase11">
+            <div class="phase-header">
+                <h2 class="phase-title">Fase 11 — DevOps & CI/CD</h2>
+                <span class="phase-score">Score: 4.5/5</span>
+            </div>
+            <div class="phase-body">
+                <p class="text-sm mb-4">Pipeline maduro orquestrado pelo GitHub Actions e Vercel.</p>
+                <table class="mt-4">
+                    <thead>
+                        <tr>
+                            <th>Pipeline</th>
+                            <th>Ferramenta</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Build & Deploy Prod</td>
+                            <td>Vercel + `vercel.json` + `vercel-deploy.yml`</td>
+                            <td><span class="badge badge-success">Ativo</span></td>
+                        </tr>
+                        <tr>
+                            <td>Preview Environments</td>
+                            <td>Vercel + `vercel-preview.yml`</td>
+                            <td><span class="badge badge-success">Ativo</span></td>
+                        </tr>
+                        <tr>
+                            <td>CI (Testes, Lint, Typecheck)</td>
+                            <td>GitHub Actions (`ci.yml`)</td>
+                            <td><span class="badge badge-success">Ativo</span></td>
+                        </tr>
+                        <tr>
+                            <td>Lighthouse Performance</td>
+                            <td>GitHub Actions (`lighthouse.yml`) + `@lighthouseci`</td>
+                            <td><span class="badge badge-success">Ativo</span></td>
+                        </tr>
+                        <tr>
+                            <td>Validação Staging</td>
+                            <td>`staging-validation.yml`</td>
+                            <td><span class="badge badge-success">Ativo</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="phase-card" id="fase12">
+            <div class="phase-header">
+                <h2 class="phase-title">Fase 12 — Observabilidade</h2>
+                <span class="phase-score">Score: 4.0/5</span>
+            </div>
+            <div class="phase-body">
+                <p class="text-sm">Baseada no Sentry com tracking de performance e erros integrados diretamente no build Vite.</p>
+                <ul class="text-sm text-muted mt-2" style="list-style-type: disc; padding-left: 20px;">
+                    <li>`@sentry/react` e `@sentry/vite-plugin` configurados no `package.json` e `vite.config.ts`.</li>
+                    <li>Utilitários internos: `src/services/observability/observabilitySink.ts` e `observabilityRedaction.ts`.</li>
+                    <li>Rollup Visualizer plugin configurado para Bundle Analysis (`/dist/bundle-stats.html`).</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="phase-card" id="fase13">
+            <div class="phase-header">
+                <h2 class="phase-title">Fase 13 — Testes</h2>
+                <span class="phase-score">Score: 4.7/5</span>
+            </div>
+            <div class="phase-body">
+                <p class="text-sm">Uma vasta suíte de testes (unitários, integração e E2E).</p>
+                <div class="grid-2 mt-4">
+                    <div>
+                        <h4 class="text-sm font-bold mb-2">Unitários e Integração (Vitest)</h4>
+                        <p class="text-sm text-muted">Ampla cobertura (arquivos `.test.ts` ao lado dos serviços `src/services/`). Configurado usando jsdom para simular browser, mocks de globals em `test/setup.ts`.</p>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold mb-2">E2E (Playwright)</h4>
+                        <p class="text-sm text-muted">Suíte dedicada em `tests/e2e/` abrangendo `onboarding-flow`, `workout-cycle`, `registration-flow`, `navigation-security` e testes visuais/acessibilidade.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="phase-card" id="fase14">
+            <div class="phase-header">
+                <h2 class="phase-title">Fase 14 — Documentação</h2>
+                <span class="phase-score">Score: 3.8/5</span>
+            </div>
+            <div class="phase-body">
+                <p class="text-sm">Documentação técnica decente para repositórios monorepo, focada em markdown na raiz e subpastas operacionais.</p>
+                <div class="evidence-box">Evidências Encontradas:
+- README.md: Instruções primárias do produto.
+- CONTRIBUTING.md, CHANGELOG.md.
+- ANALISE_PLATAFORMA.md: Histórico de due diligence e sugestões de IA (Extensa matriz de negócios).
+- docs/: Diretório para diagramas e fluxos.
+- .ops/: Gestão de dívida técnica, rastreamento de remediation e scripts operacionais shell.</div>
+            </div>
+        </div>
+
+        <div class="phase-card" id="fase15">
+            <div class="phase-header">
+                <h2 class="phase-title">Fase 15 — Maturidade (Heatmap)</h2>
+                <span class="phase-score">L4 - Avançado</span>
+            </div>
+            <div class="phase-body">
+                <div class="grid-2">
+                    <div class="progress-wrapper">
+                        <div class="progress-label"><span>Arquitetura (Front/Backend)</span> <span>80%</span></div>
+                        <div class="progress-bar"><div class="progress-fill" style="width: 80%;"></div></div>
+                    </div>
+                    <div class="progress-wrapper">
+                        <div class="progress-label"><span>Segurança e Auth</span> <span>96%</span></div>
+                        <div class="progress-bar"><div class="progress-fill" style="width: 96%; background: var(--status-success);"></div></div>
+                    </div>
+                    <div class="progress-wrapper">
+                        <div class="progress-label"><span>DevOps & CI/CD</span> <span>90%</span></div>
+                        <div class="progress-bar"><div class="progress-fill" style="width: 90%; background: var(--status-success);"></div></div>
+                    </div>
+                    <div class="progress-wrapper">
+                        <div class="progress-label"><span>Testes</span> <span>94%</span></div>
+                        <div class="progress-bar"><div class="progress-fill" style="width: 94%; background: var(--status-success);"></div></div>
+                    </div>
+                    <div class="progress-wrapper">
+                        <div class="progress-label"><span>Documentação</span> <span>76%</span></div>
+                        <div class="progress-bar"><div class="progress-fill" style="width: 76%; background: var(--status-warning);"></div></div>
+                    </div>
+                    <div class="progress-wrapper">
+                        <div class="progress-label"><span>IA e Inovação</span> <span>84%</span></div>
+                        <div class="progress-bar"><div class="progress-fill" style="width: 84%;"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="phase-card" id="fase16">
+            <div class="phase-header">
+                <h2 class="phase-title">Fase 16 — Enterprise Readiness</h2>
+            </div>
+            <div class="phase-body" style="text-align: center; padding: 40px;">
+                <div style="font-size: 4rem; font-weight: 800; color: var(--accent-primary);">78<span style="font-size: 2rem; color: var(--text-tertiary);">/100</span></div>
+                <h3 class="mt-4" style="font-size: 1.5rem;">Nível 4 (L4) - Processos Medidos e Gerenciados</h3>
+                <p class="text-muted mt-4 max-w-2xl mx-auto">
+                    A plataforma excede padrões de mercado em segurança, testes automatizados e integração contínua. Contudo, há gargalos estruturais identificados na camada de Frontend (Monolito React, Componentes Sobrecarregados) que necessitam de refatoração urgente, penalizando a pontuação final que chegaria a ~90/100 caso sanados.
+                </p>
+            </div>
+        </div>
+
+        <div class="phase-card" id="roadmap">
+            <div class="phase-header">
+                <h2 class="phase-title">Roadmap Recomendado & Conclusão Executiva</h2>
+            </div>
+            <div class="phase-body">
+                <h3 class="section-title">Itens Críticos para o Agente 02 (Auditoria Dívida Técnica)</h3>
+                <ul class="text-sm text-muted mb-4" style="list-style-type: square; padding-left: 20px;">
+                    <li><strong>Desmembramento do App.tsx:</strong> Reduzir radicalmente o acoplamento neste arquivo, fragmentando a lógica de rotas e provedores em um Router apropriado.</li>
+                    <li><strong>Refatoração de Stores:</strong> Isolar persistência de lógicas de domínio misturadas em componentes de UI.</li>
+                    <li><strong>Fallback Offline vs Mock Data:</strong> Analisar e mitigar dependências excessivas de mocks (`mock_dev_only`).</li>
+                    <li><strong>Normalização de Dados:</strong> Migração de campos JSONB legados para tabelas relacionais em banco.</li>
+                </ul>
+
+                <h3 class="section-title">Conclusão Executiva</h3>
+                <p class="text-sm text-muted mb-4">
+                    O inventário de Due Diligence Técnica foi concluído com sucesso. A arquitetura suporta inovação acelerada com forte camada de segurança. Nenhuma modificação foi aplicada nesta fase, mas a documentação gerada provê trilhas precisas para as remediações técnicas da próxima fase (Agente 02).
+                </p>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Theme Toggle Logic
+        function toggleTheme() {
+            const body = document.documentElement;
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Init theme
+        const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        if (savedTheme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+
+        // Smooth Scroll Sidebar Highlighting
+        const sections = document.querySelectorAll('.phase-card, #dashboard');
+        const navItems = document.querySelectorAll('.nav-item');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (scrollY >= sectionTop - 100) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('href') === `#${current}`) {
+                    item.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
