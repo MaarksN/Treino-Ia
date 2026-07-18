@@ -361,6 +361,16 @@ export default function Dashboard() {
     }
 
     const handleScroll = () => {
+      const isAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 50;
+
+      if (isAtBottom) {
+        const lastSection = mobileSections[mobileSections.length - 1];
+        if (lastSection) {
+          setActiveSection(lastSection.id);
+          return;
+        }
+      }
+
       const current = mobileSections.reduce<DashboardSectionId>((active, section) => {
         const element = document.getElementById(section.targetId);
         if (!element) return active;
