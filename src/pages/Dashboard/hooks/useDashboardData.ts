@@ -17,7 +17,9 @@ export function useDashboardData() {
   const [plan, setPlan] = useState<TrainingPlan | null>(null);
   const [history, setHistory] = useState<WorkoutSession[]>([]);
   const [persistence, setPersistence] = useState<PersistenceStatus | null>(null);
-  const [pendingRecommendation, setPendingRecommendation] = useState<AiRecommendationRecord | null>(null);
+  const [pendingRecommendation, setPendingRecommendation] = useState<AiRecommendationRecord | null>(
+    null,
+  );
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -63,18 +65,29 @@ export function useDashboardData() {
   useEffect(() => subscribeToAppRoute(setRoute), []);
 
   return {
-    profile, setProfile,
-    formProfile, setFormProfile,
-    plan, setPlan,
-    history, setHistory,
-    persistence, setPersistence,
-    pendingRecommendation, setPendingRecommendation,
-    notice, setNotice,
-    error, setError,
+    profile,
+    setProfile,
+    formProfile,
+    setFormProfile,
+    plan,
+    setPlan,
+    history,
+    setHistory,
+    persistence,
+    setPersistence,
+    pendingRecommendation,
+    setPendingRecommendation,
+    notice,
+    setNotice,
+    error,
+    setError,
     loading,
-    route, setRoute,
-    showStarterRegistration, setShowStarterRegistration,
-    showAnamnesis, setShowAnamnesis,
-    loadData
+    route,
+    setRoute,
+    showStarterRegistration,
+    setShowStarterRegistration,
+    showAnamnesis,
+    setShowAnamnesis,
+    loadData,
   };
 }

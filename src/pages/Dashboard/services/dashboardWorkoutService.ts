@@ -4,7 +4,10 @@ import {
   type TrainingPlan,
   DatabaseService,
 } from '../../../services/database';
-import { aiRecommendationRepository, type AiRecommendationRecord } from '../../../services/data/aiRecommendationRepository';
+import {
+  aiRecommendationRepository,
+  type AiRecommendationRecord,
+} from '../../../services/data/aiRecommendationRepository';
 import { trackEvent, trackEventOnce } from '../../../utils/analytics';
 import { captureError } from '../../../utils/errorTelemetry';
 import { triggerHapticFeedback } from '../../../services/hapticFeedback';

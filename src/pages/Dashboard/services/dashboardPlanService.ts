@@ -6,9 +6,7 @@ import {
 } from '../../../services/database';
 import { CurrentPlanConsistencyHelper } from '../../../services/data/currentPlanConsistency';
 import { calculateTrainingPlan } from '../../../rules/iaEngine';
-import {
-  reorderExercisesInDay,
-} from './workoutAuthoring';
+import { reorderExercisesInDay } from './workoutAuthoring';
 import { trackEvent, trackEventOnce } from '../../../utils/analytics';
 import { captureError } from '../../../utils/errorTelemetry';
 import { validateDashboardProfileInput } from './dashboardValidation';
@@ -146,6 +144,10 @@ export async function reorderExercises(
     }
     return { plan: nextPlan, notice, error: '' };
   } catch (err) {
-    return { plan: nextPlan, notice: '', error: 'Alteração aplicada na tela, mas não consegui salvar o plano agora.' };
+    return {
+      plan: nextPlan,
+      notice: '',
+      error: 'Alteração aplicada na tela, mas não consegui salvar o plano agora.',
+    };
   }
 }

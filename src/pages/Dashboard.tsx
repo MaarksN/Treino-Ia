@@ -9,24 +9,17 @@ import {
   normalizeProfile,
 } from '../services/database';
 import { CurrentPlanConsistencyHelper } from '../services/data/currentPlanConsistency';
-import {
-  aiRecommendationRepository,
-} from '../services/data/aiRecommendationRepository';
+import { aiRecommendationRepository } from '../services/data/aiRecommendationRepository';
 import { calculateTrainingPlan } from '../rules/iaEngine';
 import { BottomNav } from '../components/BottomNav';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { Skeleton } from '../components/ui/Skeleton';
 import { type User as StarterUser } from '../types';
 import { getDashboardMobileSections, type DashboardSectionId } from '../utils/dashboardNavigation';
-import {
-  getAppRouteTargetId,
-  pushAppRoute,
-} from '../navigation/appRouter';
+import { getAppRouteTargetId, pushAppRoute } from '../navigation/appRouter';
 import { isProductFeatureVisible } from '../config/featureFlags';
 import { ActiveExerciseDraft } from './Dashboard/types';
-import {
-  persistStarterUser,
-} from './Dashboard/services/dashboardSession';
+import { persistStarterUser } from './Dashboard/services/dashboardSession';
 import {
   updateExerciseNotes,
   updateExerciseTechnique,
@@ -85,19 +78,29 @@ function LazyPanelFallback() {
 
 export default function Dashboard() {
   const {
-    profile, setProfile,
-    formProfile, setFormProfile,
-    plan, setPlan,
-    history, setHistory,
-    persistence, setPersistence,
-    pendingRecommendation, setPendingRecommendation,
-    notice, setNotice,
-    error, setError,
+    profile,
+    setProfile,
+    formProfile,
+    setFormProfile,
+    plan,
+    setPlan,
+    history,
+    setHistory,
+    persistence,
+    setPersistence,
+    pendingRecommendation,
+    setPendingRecommendation,
+    notice,
+    setNotice,
+    error,
+    setError,
     loading,
     route,
-    showStarterRegistration, setShowStarterRegistration,
-    showAnamnesis, setShowAnamnesis,
-    loadData
+    showStarterRegistration,
+    setShowStarterRegistration,
+    showAnamnesis,
+    setShowAnamnesis,
+    loadData,
   } = useDashboardData();
 
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
@@ -204,28 +207,42 @@ export default function Dashboard() {
         setSaving(false);
       }
     },
-    [formProfile, history, plan, profile, setFormProfile, setNotice, setPersistence, setPlan, setProfile, setError],
+    [
+      formProfile,
+      history,
+      plan,
+      profile,
+      setFormProfile,
+      setNotice,
+      setPersistence,
+      setPlan,
+      setProfile,
+      setError,
+    ],
   );
 
-  const handleStarterRegister = useCallback((starterUser: StarterUser) => {
-    const persistedStarterUser = persistStarterUser(starterUser);
-    const nextProfile = {
-      ...createDefaultProfile(),
-      name: persistedStarterUser.name || 'Atleta',
-    };
+  const handleStarterRegister = useCallback(
+    (starterUser: StarterUser) => {
+      const persistedStarterUser = persistStarterUser(starterUser);
+      const nextProfile = {
+        ...createDefaultProfile(),
+        name: persistedStarterUser.name || 'Atleta',
+      };
 
-    setFormProfile(nextProfile);
-    setAuthEmail(persistedStarterUser.email);
-    setShowStarterRegistration(false);
-    setShowAnamnesis(true);
-    setNotice('');
-    setError('');
-    trackEventOnce('registration_completed', {
-      method: 'starter_local',
-      hasEmail: Boolean(persistedStarterUser.email),
-    });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [setFormProfile, setNotice, setError, setShowStarterRegistration, setShowAnamnesis]);
+      setFormProfile(nextProfile);
+      setAuthEmail(persistedStarterUser.email);
+      setShowStarterRegistration(false);
+      setShowAnamnesis(true);
+      setNotice('');
+      setError('');
+      trackEventOnce('registration_completed', {
+        method: 'starter_local',
+        hasEmail: Boolean(persistedStarterUser.email),
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    [setFormProfile, setNotice, setError, setShowStarterRegistration, setShowAnamnesis],
+  );
 
   const regeneratePlan = useCallback(async () => {
     if (!profile) return;
@@ -296,19 +313,22 @@ export default function Dashboard() {
     [plan, selectedDayIndex, setPlan, setError],
   );
 
-  const handleWorkoutImport = useCallback(async (draft: WorkoutImportFileDraft) => {
-    setWorkoutImportLoading(true);
-    setNotice('');
-    setError('');
+  const handleWorkoutImport = useCallback(
+    async (draft: WorkoutImportFileDraft) => {
+      setWorkoutImportLoading(true);
+      setNotice('');
+      setError('');
 
-    if (draft.status === 'blocked') {
-      setError(draft.warnings[0] ?? 'Arquivo bloqueado para importação.');
-    } else {
-      setNotice(`Arquivo ${draft.fileName} preparado localmente.`);
-      setShowWorkoutImport(false);
-    }
-    setWorkoutImportLoading(false);
-  }, [setNotice, setError, setShowWorkoutImport]);
+      if (draft.status === 'blocked') {
+        setError(draft.warnings[0] ?? 'Arquivo bloqueado para importação.');
+      } else {
+        setNotice(`Arquivo ${draft.fileName} preparado localmente.`);
+        setShowWorkoutImport(false);
+      }
+      setWorkoutImportLoading(false);
+    },
+    [setNotice, setError, setShowWorkoutImport],
+  );
 
   const handleMobileNavChange = useCallback(
     (id: string) => {
@@ -356,12 +376,15 @@ export default function Dashboard() {
     const routeSection = mobileSections.find((section) => section.targetId === routeTargetId);
 
     if (routeSection) {
-      document.getElementById(routeSection.targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document
+        .getElementById(routeSection.targetId)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       setActiveSection(routeSection.id);
     }
 
     const handleScroll = () => {
-      const isAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 50;
+      const isAtBottom =
+        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 50;
 
       if (isAtBottom) {
         const lastSection = mobileSections[mobileSections.length - 1];
@@ -407,7 +430,14 @@ export default function Dashboard() {
   const finishActiveWorkout = useCallback(async () => {
     if (!profile || !plan || activeDayIndex === null) return;
     setSaving(true);
-    const result = await finishWorkoutService(profile, plan, activeDayIndex, activeDraft, activeFeedback, history);
+    const result = await finishWorkoutService(
+      profile,
+      plan,
+      activeDayIndex,
+      activeDraft,
+      activeFeedback,
+      history,
+    );
     setHistory(result.history);
     setPendingRecommendation(result.pendingRecommendation);
     setNotice(result.notice);
@@ -417,7 +447,18 @@ export default function Dashboard() {
     pushAppRoute('history');
     setSaving(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [activeDayIndex, activeDraft, activeFeedback, history, plan, profile, setHistory, setPendingRecommendation, setNotice, setError]);
+  }, [
+    activeDayIndex,
+    activeDraft,
+    activeFeedback,
+    history,
+    plan,
+    profile,
+    setHistory,
+    setPendingRecommendation,
+    setNotice,
+    setError,
+  ]);
 
   const acceptPendingRecommendation = useCallback(async () => {
     if (!pendingRecommendation) return;
@@ -520,7 +561,9 @@ export default function Dashboard() {
               <Dumbbell className="h-9 w-9" />
             </div>
             <div>
-              <p className="font-mono text-xs uppercase tracking-[0.35em] text-brand-magenta">Beta privado</p>
+              <p className="font-mono text-xs uppercase tracking-[0.35em] text-brand-magenta">
+                Beta privado
+              </p>
               <h1 className="font-display text-6xl uppercase leading-none tracking-widest text-brand-light text-shadow-neon md:text-7xl">
                 Treino <span className="block text-brand-neon">Inteligente</span>
               </h1>
@@ -560,7 +603,9 @@ export default function Dashboard() {
         </header>
 
         {(notice || error) && (
-          <div className={`mb-6 rounded-[24px] border-2 p-4 font-mono text-sm ${error ? warningStatusClass : positiveStatusClass}`}>
+          <div
+            className={`mb-6 rounded-[24px] border-2 p-4 font-mono text-sm ${error ? warningStatusClass : positiveStatusClass}`}
+          >
             {error || notice}
           </div>
         )}

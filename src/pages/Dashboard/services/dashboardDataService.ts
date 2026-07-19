@@ -7,7 +7,10 @@ import {
   TrainingPlan,
 } from '../../../services/database';
 import { CurrentPlanConsistencyHelper } from '../../../services/data/currentPlanConsistency';
-import { aiRecommendationRepository, type AiRecommendationRecord } from '../../../services/data/aiRecommendationRepository';
+import {
+  aiRecommendationRepository,
+  type AiRecommendationRecord,
+} from '../../../services/data/aiRecommendationRepository';
 import { calculateTrainingPlan } from '../../../rules/iaEngine';
 import { readStarterUser } from './dashboardSession';
 import { trackDay7Return } from '../../../utils/analytics';
@@ -67,7 +70,8 @@ export async function loadDashboardInitialData(): Promise<DashboardData> {
 
     data.profile = storedProfile;
     data.plan = currentPlan;
-    data.pendingRecommendation = await aiRecommendationRepository.getLatestPendingPlanRecommendation();
+    data.pendingRecommendation =
+      await aiRecommendationRepository.getLatestPendingPlanRecommendation();
   } catch (err) {
     captureError(err, 'dashboardDataService.loadDashboardInitialData');
     data.error = 'Não consegui carregar os dados. Verifique a configuração local ou Supabase.';
