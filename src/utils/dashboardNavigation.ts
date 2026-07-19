@@ -13,7 +13,7 @@ export interface DashboardSection {
 export const DASHBOARD_MOBILE_SECTIONS: DashboardSection[] = [
   {
     id: 'overview',
-    label: 'Inicio',
+    label: 'Início',
     icon: 'home',
     targetId: 'dashboard-overview',
     routeId: 'today',
@@ -21,7 +21,7 @@ export const DASHBOARD_MOBILE_SECTIONS: DashboardSection[] = [
   { id: 'plan', label: 'Plano', icon: 'workout', targetId: 'dashboard-plan', routeId: 'plan' },
   {
     id: 'history',
-    label: 'Historico',
+    label: 'Histórico',
     icon: 'history',
     targetId: 'dashboard-history',
     routeId: 'history',

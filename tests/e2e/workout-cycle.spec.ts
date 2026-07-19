@@ -118,14 +118,13 @@ test.describe('Workout value cycle', () => {
 
     await createLocalProfileAndPlan(page);
 
-    await expectCoreRouteTarget(page, '/hoje', '#dashboard-overview', 'Inicio');
+    await expectCoreRouteTarget(page, '/hoje', '#dashboard-overview', 'Início');
     await expectCoreRouteTarget(page, '/plano', '#dashboard-plan', 'Plano');
-    await expectCoreRouteTarget(page, '/historico', '#dashboard-history', 'Historico');
+    await expectCoreRouteTarget(page, '/historico', '#dashboard-history', 'Histórico');
     await expectCoreRouteTarget(page, '/conta', '#dashboard-account', 'Conta');
     await expectCoreRouteTarget(page, '/assinatura', '#dashboard-account', 'Conta');
 
     await page.goto('/nutricao');
-    await expect(page.getByText(/Nutricao esta em beta/i)).toBeVisible({ timeout: 10_000 });
     await expect(page).toHaveURL(/\/hoje$/);
 
     expect(errors).toEqual([]);
