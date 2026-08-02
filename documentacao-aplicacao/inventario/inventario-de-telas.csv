@@ -1,0 +1,7 @@
+Nº;Tela;Módulo;Finalidade;Recursos presentes;Arquivo da imagem
+1;Tela Inicial;Dashboard (Hoje);Visão global e atalhos;Painéis e atalhos rápidos;01-hoje.png
+2;Conta;Configuração;Gestão de perfil;Configurações e financeiro;01-conta.png
+3;Plano;Dashboard;Visualizar plano de treinos;Painel do plano;01-plano.png
+4;Treino Ativo;Operacional;Acompanhamento guiado do treino;Séries e inputs;02-treino-ativo.png
+5;Histórico;Relatórios;Consultas retrospectivas;Listas e gráficos;01-historico.png
+6;Nutrição;Módulo Integrado;Controle de dados corporais;Tabelas e visualização calorias;01-nutricao.png
